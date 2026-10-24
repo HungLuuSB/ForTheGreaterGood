@@ -34,9 +34,9 @@ return {
 				shellR = { 0, 0, 90 },
 			},
 		},
-		chs_bulwark = { -- S-157, Inferno's replacement: the beam head sinks into its armored sleeve, the barrel folds down
+		chs_bulwark = { -- S-157, Inferno's replacement: the beam head sinks onto its armored collar, the barrel folds down
 			retracted = {
-				turret = { 0, 0, 0, 0, -4.2, 0 },
+				turret = { 0, 0, 0, 0, -2.0, 0 },
 				barrel = { -35, 0, 0 },
 			},
 		},
