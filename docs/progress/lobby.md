@@ -10,6 +10,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Top bar:** the tabs are narrower, so "Settings" no longer runs into the player count on a 1548-pixel-wide window (`lobby_topbar_skirmish.jpg`). The room under client-B's new look: `lobby_room_newkit.jpg`.
 - **Published so far (by you):** the lobby is the start place of experience 10772730291 (place 109045403486391, "FTGG Testplace"), with "FTGG Match" (123800718230540) added. The lobby there was published before this summary's changes and before the Units tab's latest fixes: publish it again once the match place is in.
 - **Tests:** lobby specs 47 / 47; the lobby build check passes.
+- Ready to merge: `d1c6758` (rooms across lobby servers, invites, lobby settings on the profile, the match place from one setting, the reference UI changes, the Units tab, the Settings page on `Kit.options`, the playtest checklist; L-14..L-18; touches only `src/lobby`, `lobby.project.json`, the lobby docs and `docs/contracts/match.md` (lobby-only keys and the place setting; the match server's side unchanged, still version 1); includes merges of main up to `1536c94`)
 
 ## Summary (2026-10-24, the Units tab)
 
