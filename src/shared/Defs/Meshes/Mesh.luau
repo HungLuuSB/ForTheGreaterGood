@@ -19,8 +19,8 @@ local function isVec3(v: any): boolean
 	return type(v) == "table" and #v == 3 and type(v[1]) == "number" and type(v[2]) == "number" and type(v[3]) == "number"
 end
 
-local function isAttachmentPiece(name: string): boolean
-	return string.match(name, "^muzzle%d*$") ~= nil
+local function isAttachmentPiece(name: string): boolean -- as Blockout.isAttachmentPiece
+	return string.match(name, "^muzzle%d*$") ~= nil or string.match(name, "^%a+_muzzle%d*$") ~= nil
 end
 
 -- the beam shot (M-29, fx.md "Beam shot"): its textures and the values each
