@@ -39,6 +39,7 @@ FogBlanket.UPDATE = 1 / 15 -- seconds between vision reads and uploads (the sim 
 FogBlanket.STEP = 2 -- grid cells between vertices, at least (bigger maps space them wider: stepFor)
 FogBlanket.CHUNK = 32 -- vertex steps per chunk side
 FogBlanket.LIFT = 1 -- studs over the highest ground near a vertex
+FogBlanket.REACH = 1 -- how far round a vertex its height looks, as a share of half a vertex step
 FogBlanket.TRANSPARENCY = 0.02 -- the chunks' own (see above)
 FogBlanket.frozen = false -- debug: no updates (a test pattern stays)
 
@@ -92,15 +93,16 @@ local function clear(f: FogBlanket)
 	f.image, f.content, f.core, f.vision = nil, nil, nil, nil
 end
 
-local terrainOnly = RaycastParams.new()
-terrainOnly.FilterType = Enum.RaycastFilterType.Include
-terrainOnly.FilterDescendantsInstances = { workspace.Terrain }
-
--- The ground at a world point: the sim's ground or water, or the drawn
--- terrain, whichever is higher.
+-- The ground at a world point: the sim's ground or water, or what is drawn
+-- there (the voxel terrain, a baked map's rock details: C-213), whichever is
+-- higher.
 local function groundAt(world: World.World, x: number, z: number): number
 	local y = World.groundY(world, x, z, true)
-	local hit = workspace:Raycast(Vector3.new(x, y + 400, z), Vector3.new(0, -800, 0), terrainOnly)
+	local drawn = RaycastParams.new()
+	drawn.FilterType = Enum.RaycastFilterType.Include
+	local map = workspace:FindFirstChild("Map")
+	drawn.FilterDescendantsInstances = if map then { workspace.Terrain, map } else { workspace.Terrain }
+	local hit = workspace:Raycast(Vector3.new(x, y + 400, z), Vector3.new(0, -800, 0), drawn)
 	return if hit then math.max(y, hit.Position.Y) else y
 end
 
@@ -114,6 +116,9 @@ local function heightAt(world: World.World, x: number, z: number, r: number): nu
 		end
 	end
 	return y + FogBlanket.LIFT
+end
+local function vertexHeight(world: World.World, x: number, z: number, r: number): number
+	return if FogBlanket.REACH > 0 then heightAt(world, x, z, r * FogBlanket.REACH) else groundAt(world, x, z) + FogBlanket.LIFT
 end
 
 -- Grid cells between vertices on a map of `cellsX` × `cellsZ`: STEP, or wider
@@ -129,8 +134,10 @@ end
 -- UVs onto the whole image (u east, v south) kept half a pixel in from its
 -- edges (no wrap-around bleed).
 local function buildChunk(f: FogBlanket, world: World.World, grid: any, cx0: number, cz0: number, cx1: number, cz1: number)
-	local em = (AssetService :: any):CreateEditableMesh()
-	if em == nil then
+	local made, em = pcall(function()
+		return (AssetService :: any):CreateEditableMesh()
+	end)
+	if not made or em == nil then
 		f.stats.mode = "no editable-mesh memory"
 		return
 	end
@@ -141,7 +148,7 @@ local function buildChunk(f: FogBlanket, world: World.World, grid: any, cx0: num
 	for j = cz0, cz1 do
 		for i = cx0, cx1 do
 			local x, z = grid.originX + i * cell, grid.originZ + j * cell
-			local p = Vector3.new(x, heightAt(world, x, z, cell / 2), z)
+			local p = Vector3.new(x, vertexHeight(world, x, z, cell / 2), z)
 			local k = (j - cz0) * cols + (i - cx0)
 			ids[k] = em:AddVertex(p)
 			local u, v = (x - grid.originX) / grid.sizeX, (z - grid.originZ) / grid.sizeZ
@@ -192,15 +199,21 @@ function FogBlanket.setMap(f: FogBlanket, world: World.World, layers: any)
 	clear(f)
 	local grid = layers.grid
 	f.stats.chunks, f.stats.triangles = 0, 0
+	-- create, a first write and the content in one pcall: where the experience
+	-- doesn't allow EditableImage the create can succeed and the write throw (C-214)
+	local content: any = nil
 	local ok, img = pcall(function()
-		return (AssetService :: any):CreateEditableImage({ Size = Vector2.new(grid.cellsX, grid.cellsZ) })
+		local made = (AssetService :: any):CreateEditableImage({ Size = Vector2.new(grid.cellsX, grid.cellsZ) })
+		made:WritePixelsBuffer(Vector2.zero, Vector2.one, buffer.create(4))
+		content = (Content :: any).fromObject(made)
+		return made
 	end)
 	if not ok or img == nil then
 		f.stats.mode = if ok then "no editable-image memory" else `images unavailable: {img}`
 		return
 	end
 	f.image = img
-	f.content = (Content :: any).fromObject(img)
+	f.content = content
 	f.core = Core.new(grid.cellsX, grid.cellsZ, Grid.SENSOR_CELL_SIZE // Grid.CELL_SIZE)
 	f.radar = RadarFill.new(grid.cellsX, grid.cellsZ)
 	f.grid = grid
@@ -265,7 +278,14 @@ function FogBlanket.step(f: FogBlanket, world: World.World, dt: number, show: bo
 	Core.setOverlay(core, if radar and layer then layer.cells else nil, if layer then layer.version else 0, fogOn)
 	local r = Core.step(core, elapsed)
 	if r then
-		img:WritePixelsBuffer(Vector2.new(r.x, r.y), Vector2.new(r.w, r.h), Core.region(core, r))
+		local written = pcall(function()
+			img:WritePixelsBuffer(Vector2.new(r.x, r.y), Vector2.new(r.w, r.h), Core.region(core, r))
+		end)
+		if not written then
+			f.stats.mode = "image writes refused" -- the fog goes away rather than erroring every frame (C-214)
+			clear(f)
+			return
+		end
 		f.stats.uploads += 1
 		f.stats.written += r.w * r.h
 	end

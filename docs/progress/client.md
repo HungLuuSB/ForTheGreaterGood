@@ -29,6 +29,13 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Watchdog runs 2–3 for sim-A (request 65):** sim-A's fix removed the 96 ms Damage spike (now 5.7 ms at worst); no tick went over budget in the same 24 minutes. Commands and the Pathing spikes are unchanged. Run 2 was spoiled by other work on the machine, so I ran a clean run 3.
 - **Five more maps' mesh ground (models-C's eb9f88d) merged** (Coastline, Ridgeline, Twin Lakes, Crossroads, Normandy; all at review, off unless switched on in Studio). Not checked in Studio yet.
 - Ready to merge: `52103cd` (main 3471b0f merged in ba7e932: S-161..S-166; C-212; m-models eb9f88d merged in 3d80b8c; test 511, test_client 300, build passed)
+- Ready to merge: `5ffed26` (main 1536c94 merged; only sim.md changed; with C-212 the icon specs pass: test_client 300, build passed)
+- **Fog over the Canyon's mesas fixed (C-213):** the mesas are now fogged like the ground around them (the rock details on top used to poke through, leaving grey squares). `debug_out/screens/c213_canyon_fog_before.jpg` / `c213_canyon_fog_over_mesas.jpg`. A thin skirt still drapes off the mesa edges: the fog can't be finer than about 32 studs there.
+- **Kit crash fix for D (C-214):** a published experience without EditableImage allowed no longer crashes at the first panel; it just loses the stripes, shadow and charts.
+- Ready to merge: `e7c577c` (C-213, C-214; test_client 300, build passed)
+- **16 players' colours (C-215 groundwork):** until the palette grows to 16 (sim-A, with lobby-D's four colours), teams 13–16 draw as lighter twins of 1–4 instead of grey.
+- Ready to merge: `8a32e77` (C-215 groundwork: Render/TeamColors only; build passed)
+- Ready to merge: `99ee814` (C-214 follow-up: the vignette and the fog blanket survive an experience without EditableImage too; test_client 300, build passed)
 - Ready to merge: `196d8a7` (main f04d534 merged in 3d5fbf4, protocol 34; C-204 watchdog profile and speed fix (src/roblox), C-205, C-206, C-208; test 496, test_client 295, build passed)
 
 ## Summary (2026-10-24, point defence; new icon sheet)

@@ -44,16 +44,19 @@ local function vignette(state: State): ImageLabel?
 	if state.label or state.failed then
 		return state.label
 	end
-	local ok, image = pcall(function()
-		return AssetService:CreateEditableImage({ Size = Vector2.new(SIZE, SIZE) })
+	-- create, write and wrap in one pcall: where the experience doesn't allow
+	-- EditableImage the create can succeed and the write throw (C-214)
+	local ok, content = pcall(function()
+		local made = AssetService:CreateEditableImage({ Size = Vector2.new(SIZE, SIZE) })
+		made:WritePixelsBuffer(Vector2.zero, Vector2.new(SIZE, SIZE), CoreGrade.vignette(SIZE, 4, 6, 12))
+		return Content.fromObject(made)
 	end)
 	local playerGui = (Players.LocalPlayer :: Player):FindFirstChildOfClass("PlayerGui")
-	if not ok or image == nil or playerGui == nil then
+	if not ok or content == nil or playerGui == nil then
 		state.failed = true
-		warn("[Client] no vignette: the device's editable image budget is used up")
+		warn("[Client] no vignette: editable images unavailable (memory, or the experience's setting)")
 		return nil
 	end
-	image:WritePixelsBuffer(Vector2.zero, Vector2.new(SIZE, SIZE), CoreGrade.vignette(SIZE, 4, 6, 12))
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "FtggVignette"
 	gui.IgnoreGuiInset = true
@@ -63,7 +66,7 @@ local function vignette(state: State): ImageLabel?
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
 	label.Active = false
-	label.ImageContent = Content.fromObject(image)
+	label.ImageContent = content
 	label.Parent = gui
 	gui.Parent = playerGui
 	state.label = label
