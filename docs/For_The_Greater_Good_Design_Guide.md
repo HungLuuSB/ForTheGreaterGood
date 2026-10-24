@@ -904,6 +904,7 @@ Route these through the same team account so shortages affect them naturally:
 - Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time. Aircraft shot down in flight crash and burn: no wreck (a landed one can leave one; S-38).
 - Wrecks are static features stored in grid cells. They appear on the minimap and are rendered in the tactical tier.
 - A team knows a wreck once it has seen its spot, and learns it is gone only by seeing the spot again (like structure ghosts; S-26).
+- **Resurrect (S-168, the user):** the T1 workers (`canResurrect`: Mason, Scrapper) bring a wreck's unit back with RESURRECT. An untouched wreck costs power only: the unit's power cost, over its build time at the worker's build power. A partly reclaimed wreck must first be refilled with the worker's team's supply (at its reclaim rate) to what it held; then the resurrect runs. The unit returns at full health, owned by the worker's player (enemy wrecks too), on the wreck's spot; a structure once its footprint is free; within the unit cap. Commanders' wrecks can't be resurrected. Progress stays on the wreck; reclaiming it sets the refill back. Clients show a purple bar for resurrect progress and a dark-green one for the wreck's supply below 100%, name the wreck and its supply on hover, and show the reclaimable supply of areas when only workers are selected.
 
 ### 8.8 Networking
 

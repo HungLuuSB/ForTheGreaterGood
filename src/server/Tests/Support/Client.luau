@@ -123,7 +123,7 @@ export type View = {
 	tick: number, -- receive calls so far
 }
 
-export type Wreck = { defIndex: number, x: number, z: number, heading: number }
+export type Wreck = { defIndex: number, x: number, z: number, heading: number, supply: number, fullSupply: number, rez: number } -- supply, rez: S-168
 
 Client.BLEND_TICKS = 5 -- a correction is blended in over this many ticks
 Client.SNAP_STUDS = 60 -- larger errors snap: they only happen when a projectile comes back into view
@@ -378,7 +378,12 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			elseif kind == EK.WRECK then
 				local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 				assert(view.wrecks[e.wreckId :: number] == nil, `WRECK {e.wreckId} the client already has`)
-				view.wrecks[e.wreckId :: number] = { defIndex = e.defIndex :: number, x = x, z = z, heading = e.heading :: number }
+				view.wrecks[e.wreckId :: number] = { defIndex = e.defIndex :: number, x = x, z = z, heading = e.heading :: number, supply = e.supply :: number, fullSupply = e.fullSupply :: number, rez = 0 }
+				continue
+			elseif kind == EK.WRECK_STATE then
+				local wreck = view.wrecks[e.wreckId :: number]
+				assert(wreck ~= nil, `WRECK_STATE for wreck {e.wreckId} the client doesn't have`)
+				wreck.supply, wreck.rez = e.supply :: number, e.rez :: number
 				continue
 			elseif kind == EK.WRECK_GONE then
 				assert(view.wrecks[e.wreckId :: number] ~= nil, `WRECK_GONE for wreck {e.wreckId} the client doesn't have`)
