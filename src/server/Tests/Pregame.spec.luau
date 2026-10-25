@@ -1,7 +1,8 @@
 --!strict
--- The pre-game (S-169, the user): startMode "choose": players pick their
--- starts in their side's area, queue builds for their Commander, ready up;
--- a 5..1 countdown, then the match. Up to 16 players on any map.
+-- The pre-game (S-169, S-174, the user): startMode "choose": players pick
+-- their starts in their side's box, may switch faction, queue builds for
+-- their Commander, ready up; the host starts (or forces) a 3..1 countdown;
+-- the Commanders land, then the match. Up to 16 players on any map.
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 local StartAreas = require("@shared/Match/StartAreas")
@@ -30,13 +31,25 @@ local function ready(sim: Sim.Sim, player: number, on: boolean)
 	submit(sim, player, { cmdType = CT.READY, flags = 0, unitIds = {}, value = if on then 1 else 0 })
 end
 
--- `n` players on two sides (odd IDs west on Ridgeline, even ones east)
-local function newMatch(n: number, mapId: string?, ai: { [number]: string }?): Sim.Sim
+local function startCmd(sim: Sim.Sim, player: number, force: boolean)
+	submit(sim, player, { cmdType = CT.START, flags = 0, unitIds = {}, value = if force then 1 else 0 })
+end
+
+local function faction(sim: Sim.Sim, player: number, chaos: boolean)
+	submit(sim, player, { cmdType = CT.FACTION, flags = 0, unitIds = {}, value = if chaos then 1 else 0 })
+end
+
+-- `n` players on two sides (the first half side 1); `extra`: more match options
+local function newMatch(n: number, mapId: string?, ai: { [number]: string }?, extra: { [string]: any }?): Sim.Sim
 	local players = {}
 	for i = 1, n do
 		table.insert(players, { id = i, team = i, allyTeam = if i <= n // 2 then 1 else 2 })
 	end
-	return Sim.new({ seed = 3, players = players, mapId = mapId or "map:ridgeline", scenario = "standard_start", match = { mode = "TEAM", win = "COMMAND_ENDS", startMode = "choose", ai = ai } })
+	local match: any = { mode = "TEAM", win = "COMMAND_ENDS", startMode = "choose", ai = ai }
+	for k, v in extra or {} do
+		match[k] = v
+	end
+	return Sim.new({ seed = 3, players = players, mapId = mapId or "map:ridgeline", scenario = "standard_start", match = match })
 end
 
 local function commanderOf(sim: Sim.Sim, player: number): number
@@ -107,7 +120,7 @@ return function(t: RunAll.Context)
 		t.expect(Pregame.validPick(three, 2, s1[1] + 60, s1[2]), "60 studs away is fine")
 	end)
 
-	t.test("all ready: a 5 s countdown, then the Commanders stand on their picks and take their queues", function()
+	t.test("all ready (no host): a 3 s countdown, the Commanders land on their picks, then take their queues", function()
 		local sim = newMatch(2)
 		local g = (sim.map :: any).grid
 		local starts = (sim.map :: any).layers.starts
@@ -130,13 +143,22 @@ return function(t: RunAll.Context)
 		while sim.pregame do
 			Sim.step(sim)
 		end
-		t.equal(sim.tick - readyTick, Pregame.COUNTDOWN, "5 s later the match starts")
+		t.equal(sim.tick - readyTick, Pregame.COUNTDOWN, "3 s later the match starts")
 		t.equal(sim.match.startTick, sim.tick)
 		local c1, c2 = commanderOf(sim, 1), commanderOf(sim, 2)
 		t.expect(c1 ~= 0 and c2 ~= 0, "both Commanders")
 		t.expect(math.abs(sim.world.posX[c1] - p1[1]) < 1 and math.abs(sim.world.posZ[c1] - p1[2]) < 1, "player 1's on its pick")
+		-- the landing: orders wait, the queue comes first
+		local cell, ox, oz = g:encode(p1[1] - 80, p1[2])
+		submit(sim, 1, { cmdType = CT.MOVE, flags = Schema.CmdFlag.QUEUE, unitIds = { c1 }, cell = cell, offX = ox, offZ = oz })
+		for _ = 1, Schema.LANDING_TICKS - 1 do
+			Sim.step(sim)
+		end
+		t.equal(#(sim.orders.queue[c1] or {}), 0, "landing: no orders yet")
+		t.equal(sim.world.posX[c1], p1[1], "landing: it stays put")
+		Sim.step(sim)
 		local q = sim.orders.queue[c1]
-		t.expect(q ~= nil and #q == 2 and q[1].kind == "build" and q[2].kind == "build", "its queue: the two generators")
+		t.expect(q ~= nil and #q == 3 and q[1].kind == "build" and q[2].kind == "build" and q[3].kind == "move", "its queue: the two generators, then the held move")
 		t.expect((sim.world.posX[c2] - starts[2][1]) ^ 2 + (sim.world.posZ[c2] - starts[2][2]) ^ 2 < 1, "player 2 never picked: its side's start")
 		for _ = 1, 15 * 20 do
 			Sim.step(sim)
@@ -144,7 +166,7 @@ return function(t: RunAll.Context)
 		t.expect(sim.build.target[c1] ~= nil and sim.build.target[c1] ~= 0 or #(sim.orders.queue[c1] or {}) < 2, "the Commander is on its queue")
 	end)
 
-	t.test("un-readying cancels the countdown; the timeout starts the match anyway", function()
+	t.test("un-readying cancels the countdown; the pick time gives the unpicked a spot; MAX_WAIT starts the match anyway", function()
 		local sim = newMatch(2)
 		ready(sim, 1, true)
 		ready(sim, 2, true)
@@ -154,11 +176,146 @@ return function(t: RunAll.Context)
 		Sim.step(sim)
 		t.equal(sim.pregame.phase, "pick", "cancelled")
 		local deadline = sim.pregame.deadline
-		while sim.pregame and sim.tick < deadline + Pregame.COUNTDOWN + 2 do
+		while sim.tick < deadline do
 			Sim.step(sim)
 		end
-		t.equal(sim.pregame, nil, "the timeout readied everyone")
-		t.equal(sim.match.startTick, deadline + Pregame.COUNTDOWN)
+		t.expect(sim.pregame.picks[1] ~= nil and sim.pregame.picks[2] ~= nil, "pick time over: both have a spot")
+		t.equal(sim.pregame.phase, "pick", "player 2 still isn't ready")
+		local maxWait = sim.pregame.maxWait
+		while sim.pregame and sim.tick < maxWait + Pregame.COUNTDOWN + 2 do
+			Sim.step(sim)
+		end
+		t.equal(sim.pregame, nil, "the wait limit started the match")
+		t.equal(sim.match.startTick, maxWait + Pregame.COUNTDOWN)
+	end)
+
+	t.test("with a host: everyone ready isn't enough; the host starts, or forces a start nobody can cancel", function()
+		local sim = newMatch(2, nil, nil, { host = 2 })
+		ready(sim, 1, true)
+		ready(sim, 2, true)
+		Sim.step(sim)
+		Sim.step(sim)
+		t.equal(sim.pregame.phase, "pick", "all ready: waiting for the host")
+		startCmd(sim, 1, false)
+		Sim.step(sim)
+		t.equal(sim.pregame.phase, "pick", "only the host starts")
+		startCmd(sim, 2, false)
+		Sim.step(sim)
+		t.equal(sim.pregame.phase, "countdown", "the host started it")
+		ready(sim, 1, false)
+		Sim.step(sim)
+		t.equal(sim.pregame.phase, "pick", "an un-ready cancels a normal start")
+		startCmd(sim, 2, false)
+		Sim.step(sim)
+		t.equal(sim.pregame.phase, "pick", "a normal start needs everyone ready")
+		startCmd(sim, 2, true)
+		Sim.step(sim)
+		t.equal(sim.pregame.phase, "countdown", "/forcestart")
+		ready(sim, 2, false)
+		local started = sim.tick
+		while sim.pregame do
+			Sim.step(sim)
+		end
+		t.equal(sim.tick - started, Pregame.COUNTDOWN, "a forced countdown isn't cancelled")
+		t.throws(function()
+			newMatch(2, nil, nil, { host = 5 })
+		end, "host must be a player")
+	end)
+
+	t.test("faction: switched while not ready, it changes the Commander and clears the queue (S-174)", function()
+		local sim = newMatch(2)
+		t.equal(sim.players[1].faction, "order", "the default: by team parity")
+		local g = (sim.map :: any).grid
+		local starts = (sim.map :: any).layers.starts
+		pick(sim, 1, starts[1][1], starts[1][2])
+		local cell, ox, oz = g:encode(starts[1][1] + 60, starts[1][2])
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = {}, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		faction(sim, 1, true)
+		Sim.step(sim)
+		t.equal(sim.players[1].faction, "chaos")
+		t.equal(sim.pregame.builds[1], nil, "the Order queue is gone")
+		t.expect(sim.pregame.picks[1] ~= nil, "the pick stays")
+		ready(sim, 1, true)
+		Sim.step(sim)
+		faction(sim, 1, false)
+		Sim.step(sim)
+		t.equal(sim.players[1].faction, "chaos", "a ready player can't switch")
+		ready(sim, 2, true)
+		while sim.pregame do
+			Sim.step(sim)
+		end
+		local c1 = commanderOf(sim, 1)
+		t.equal(sim.defs.unitByIndex[sim.world.defIndex[c1]].id, "chs_warlord", "a Chaos Commander")
+		t.equal(Sim.runReplay(sim.replay, sim.tick).players[1].faction, "chaos", "the replay switches too")
+	end)
+
+	t.test("F31: 16 players with 9 Chaos: teams are player IDs, factions per player", function()
+		local players = {}
+		for i = 1, 16 do
+			table.insert(players, { id = i, team = i, allyTeam = if i <= 8 then 1 else 2, faction = if i <= 9 then "chaos" else "order" })
+		end
+		local sim = Sim.new({ seed = 3, players = players, mapId = "map:plains", scenario = "standard_start", match = { mode = "TEAM", win = "COMMAND_ENDS", startMode = "choose" } })
+		for pid = 1, 16 do
+			ready(sim, pid, true)
+		end
+		while sim.pregame do
+			Sim.step(sim)
+		end
+		local chaos = 0
+		for pid = 1, 16 do
+			if sim.defs.unitByIndex[sim.world.defIndex[commanderOf(sim, pid)]].id == "chs_warlord" then
+				chaos += 1
+			end
+		end
+		t.equal(chaos, 9)
+		t.throws(function()
+			Sim.new({ seed = 3, players = { { id = 1, team = 1, faction = "legion" :: any } }, mapId = "map:plains" })
+		end, "faction must be")
+	end)
+
+	t.test("the lobby's spawn boxes replace the map's; picks must be inside them", function()
+		local sim = newMatch(2, "map:plains", nil, { startBoxes = { [1] = { 0, 0, 0.25, 1 }, [2] = { 0.75, 0, 1, 1 } } })
+		local b1 = sim.pregame.boxes[1]
+		local half = (sim.map :: any).grid.cellsX * 4
+		t.expect(math.abs(b1[1] + half) < 1 and math.abs(b1[3] + half / 2) < 1, `box 1 is the west quarter ({b1[1]}..{b1[3]})`)
+		pick(sim, 1, -half / 2 + 40, 0)
+		Sim.step(sim)
+		t.expect(sim.pregame.picks[1] == nil, "outside the drawn box: refused")
+		pick(sim, 1, -half / 2 - 200, 0)
+		Sim.step(sim)
+		t.expect(sim.pregame.picks[1] ~= nil, "inside it")
+		t.throws(function()
+			newMatch(2, "map:plains", nil, { startBoxes = { [1] = { 0.5, 0, 0.25, 1 } } })
+		end, "is empty")
+		t.throws(function()
+			newMatch(2, "map:plains", nil, { startBoxes = { [3] = { 0, 0, 0.25, 1 } } })
+		end, "not in the match")
+		local again = Sim.runReplay(sim.replay, sim.tick)
+		t.deepEqual(again.pregame.boxes[1], sim.pregame.boxes[1], "the replay has the same boxes")
+	end)
+
+	t.test("the AI waits for the first human pick, then takes the spots left", function()
+		local sim = newMatch(4, "map:plains", { [2] = "normal", [3] = "normal", [4] = "normal" })
+		local brains = Skirmish.forMatch(sim)
+		for _ = 1, 30 do
+			for _, b in brains do
+				Skirmish.tick(b)
+			end
+			Sim.step(sim)
+		end
+		t.equal(sim.pregame.picks[2], nil, "no human pick yet: the AI waits")
+		local starts = (sim.map :: any).layers.starts
+		pick(sim, 1, starts[2][1], starts[2][2]) -- the human takes side 1's second hint
+		for _ = 1, 3 do
+			for _, b in brains do
+				Skirmish.tick(b)
+			end
+			Sim.step(sim)
+		end
+		local p2 = sim.pregame.picks[2]
+		t.expect(p2 ~= nil, "the ally AI picked")
+		t.expect((p2[1] - starts[2][1]) ^ 2 + (p2[2] - starts[2][2]) ^ 2 > 1, "not the human's spot")
+		t.expect(sim.pregame.ready[2] and sim.pregame.ready[3] and sim.pregame.ready[4], "the AI is ready")
 	end)
 
 	t.test("16 players on a two-start map: 8v8, every Commander spaced and in its side's area", function()
@@ -221,7 +378,7 @@ return function(t: RunAll.Context)
 		t.equal(sim.match.unitCap, 0, "no unit cap (S-170)")
 	end)
 
-	t.test("the wire: everyone sees every pick; queues go to allies only; COUNTDOWN 5..1, then 0 with the ENTERs", function()
+	t.test("the wire: everyone sees every pick, faction and host; boxes and the clock; queues go to allies only; COUNTDOWN 3..1, then 0 with the ENTERs", function()
 		local sim = newMatch(4, "map:twin_lakes")
 		local g = (sim.map :: any).grid
 		local views = {}
@@ -245,6 +402,11 @@ return function(t: RunAll.Context)
 		t.expect(math.abs((views[3].pregame[1].x :: number) - starts[1][1]) < 0.1, "where it is")
 		t.equal(#(views[2].prebuilds[1] or {}), 1, "an ally sees its queue")
 		t.equal(views[3].prebuilds[1], nil, "an enemy doesn't")
+		t.expect(bit32.band(views[1].pregame[4].flags, Schema.PregameFlag.CHAOS) ~= 0 and bit32.band(views[1].pregame[1].flags, Schema.PregameFlag.CHAOS) == 0, "factions")
+		local vb = (views[2].startBoxes :: any)[1]
+		local sb = sim.pregame.boxes[1]
+		t.expect(vb ~= nil and math.abs(vb[1] - sb[1]) <= 1 and math.abs(vb[4] - sb[4]) <= 1, "the spawn boxes")
+		t.equal((views[2].pickClock :: any).seconds, 150, "150 s to pick")
 		for pid = 1, 4 do
 			ready(sim, pid, true)
 		end
@@ -261,7 +423,7 @@ return function(t: RunAll.Context)
 				end
 			end
 		end
-		t.deepEqual(views[1].countdown, { 5, 4, 3, 2, 1, 0 }, "5..1, then 0")
+		t.deepEqual(views[1].countdown, { 3, 2, 1, 0 }, "3..1, then 0")
 		t.expect(zeroTick ~= nil and zeroTick == enterTick, `COUNTDOWN 0 and the Commanders' ENTERs on one tick ({zeroTick}, {enterTick})`)
 	end)
 

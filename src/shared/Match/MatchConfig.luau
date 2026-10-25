@@ -10,7 +10,7 @@
 
 local MatchConfig = {}
 
-MatchConfig.CONFIG_VERSION = 1 -- every record carries `version`; another one is refused
+MatchConfig.CONFIG_VERSION = 2 -- every record carries `version`; another one is refused (2: host, startBoxes; S-174)
 MatchConfig.MODES = table.freeze({ "FFA", "TEAM" })
 MatchConfig.WINS = table.freeze({ "COMMAND_ENDS", "ANNIHILATION" })
 MatchConfig.LEVELS = table.freeze({ "easy", "normal", "hard" }) -- AI levels
@@ -66,6 +66,11 @@ export type MatchConfig = {
 	players: { Player },
 	spectators: { { user: number, name: string } },
 	lobby: { placeId: number, jobId: string, roomId: string, roomName: string },
+	host: number, -- the room host's UserId (a player or a spectator): starts the match from the pre-game (S-174)
+	-- each side's spawn box as the host drew it: allyTeam → { x0, z0, x1, z1 },
+	-- fractions of the map from its low-X / low-Z corner (0..1, x0 < x1,
+	-- z0 < z1); absent: the map's own boxes (S-174)
+	startBoxes: { [number]: { number } }?,
 }
 
 local function isInt(v: any, lo: number, hi: number): boolean
@@ -162,6 +167,31 @@ function MatchConfig.validate(c: any): string?
 	local l = c.lobby
 	if type(l) ~= "table" or type(l.placeId) ~= "number" or type(l.jobId) ~= "string" or type(l.roomId) ~= "string" then
 		return "lobby"
+	end
+	if type(c.host) ~= "number" or not users[c.host] then
+		return "host"
+	end
+	if c.startBoxes ~= nil then
+		if type(c.startBoxes) ~= "table" then
+			return "startBoxes"
+		end
+		local sides: { [number]: boolean } = {}
+		for _, p in c.players do
+			sides[p.allyTeam] = true
+		end
+		for ally, b in c.startBoxes do
+			if not sides[ally] or type(b) ~= "table" or #b ~= 4 then
+				return `startBoxes[{tostring(ally)}]`
+			end
+			for k = 1, 4 do
+				if type(b[k]) ~= "number" or b[k] ~= b[k] or b[k] < 0 or b[k] > 1 then
+					return `startBoxes[{ally}]`
+				end
+			end
+			if b[1] >= b[3] or b[2] >= b[4] then
+				return `startBoxes[{ally}]: empty`
+			end
+		end
 	end
 	return nil
 end

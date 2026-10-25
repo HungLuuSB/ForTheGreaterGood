@@ -6,9 +6,12 @@
 -- Binary layout (little-endian, via Packer):
 --   header   magic "FTGR" | format u8 | protocol u16 | defsHash u32 | seed u32
 --            | mapId (len u8 + bytes) | scenario (len u8 + bytes)
---            | playerCount u8 | (player u8, team u8, allyTeam u8) × playerCount
+--            | playerCount u8 | (player u8, team u8, allyTeam u8, faction u8
+--              (1 order, 2 chaos; format 5)) × playerCount
 --            | hasMatch u8 [| mode u8 (1 FFA, 2 TEAM) | win u8 (1 COMMAND_ENDS,
---              2 ANNIHILATION) | unitCap u16 | startMode u8 (1 fixed, 2 choose; format 4)]
+--              2 ANNIHILATION) | unitCap u16 | startMode u8 (1 fixed, 2 choose; format 4)
+--              | host u8 (0 none) | boxCount u8 | (allyTeam u8, x0 z0 x1 z1 u16
+--              as 65535ths of the map) × boxCount (format 5)]
 --            | cheats u8 (bit 0 allowed, bit 1 used, bit 2 offline; S-102)
 --   entries  kind u8, then
 --            COMMAND     tick u32 | player u8 | length u16 | payload (Schema command record)
@@ -19,11 +22,11 @@ local Packer = require("@shared/Net/Packer")
 local Replay = {}
 
 Replay.MAGIC = "FTGR"
-Replay.FORMAT_VERSION = 4 -- 2: ally teams and match options in the header; 3: cheat flags (S-102); 4: start mode (S-169)
+Replay.FORMAT_VERSION = 5 -- 2: ally teams and match options in the header; 3: cheat flags (S-102); 4: start mode (S-169); 5: factions, host, spawn boxes (S-174)
 Replay.Kind = table.freeze({ COMMAND = 1, CHECKPOINT = 2 })
 
-export type PlayerInfo = { id: number, team: number, allyTeam: number? }
-export type MatchInfo = { mode: "FFA" | "TEAM", win: "COMMAND_ENDS" | "ANNIHILATION", unitCap: number?, friendlyFire: boolean?, startMode: ("fixed" | "choose")? }
+export type PlayerInfo = { id: number, team: number, allyTeam: number?, faction: ("order" | "chaos")? }
+export type MatchInfo = { mode: "FFA" | "TEAM", win: "COMMAND_ENDS" | "ANNIHILATION", unitCap: number?, friendlyFire: boolean?, startMode: ("fixed" | "choose")?, host: number?, startBoxes: { [number]: { number } }? }
 
 export type Header = {
 	protocolVersion: number,
@@ -94,6 +97,7 @@ function Replay.serialize(log: Log): buffer
 		w:writeU8(p.id)
 		w:writeU8(p.team)
 		w:writeU8(p.allyTeam or p.team)
+		w:writeU8(if (p.faction or (if p.team % 2 == 1 then "order" else "chaos")) == "order" then 1 else 2)
 	end
 	local m = h.match
 	if m then
@@ -102,6 +106,19 @@ function Replay.serialize(log: Log): buffer
 		w:writeU8(if m.win == "COMMAND_ENDS" then 1 else 2)
 		w:writeU16(m.unitCap or 0)
 		w:writeU8(if m.startMode == "choose" then 2 else 1)
+		w:writeU8(m.host or 0)
+		local allies = {}
+		for ally in m.startBoxes or {} do
+			table.insert(allies, ally)
+		end
+		table.sort(allies)
+		w:writeU8(#allies)
+		for _, ally in allies do
+			w:writeU8(ally)
+			for _, v in (m.startBoxes :: any)[ally] do
+				w:writeU16(math.floor(v * 65535 + 0.5))
+			end
+		end
 	else
 		w:writeU8(0)
 	end
@@ -143,7 +160,11 @@ function Replay.parse(buf: buffer): Log
 		players = {},
 	}
 	for _ = 1, r:readU8() do
-		table.insert(header.players, { id = r:readU8(), team = r:readU8(), allyTeam = r:readU8() })
+		local id, team, ally, faction = r:readU8(), r:readU8(), r:readU8(), r:readU8()
+		if faction ~= 1 and faction ~= 2 then
+			error(`Replay: bad faction {faction} for player {id}`, 2)
+		end
+		table.insert(header.players, { id = id, team = team, allyTeam = ally, faction = if faction == 1 then "order" else "chaos" })
 	end
 	local hasMatch = r:readU8()
 	if hasMatch == 1 or hasMatch == 2 then
@@ -151,13 +172,25 @@ function Replay.parse(buf: buffer): Log
 		if (mode ~= 1 and mode ~= 2) or (win ~= 1 and win ~= 2) or (startMode ~= 1 and startMode ~= 2) then
 			error(`Replay: bad match options (mode {mode}, win {win}, start mode {startMode})`, 2)
 		end
-		header.match = {
+		local m: MatchInfo = {
 			mode = if mode == 1 then "FFA" else "TEAM",
 			win = if win == 1 then "COMMAND_ENDS" else "ANNIHILATION",
 			unitCap = if cap > 0 then cap else nil,
 			friendlyFire = if hasMatch == 2 then false else nil,
 			startMode = if startMode == 2 then "choose" else nil,
 		}
+		local host = r:readU8()
+		m.host = if host > 0 then host else nil
+		local count = r:readU8()
+		if count > 0 then
+			local boxes = {}
+			for _ = 1, count do
+				local ally = r:readU8()
+				boxes[ally] = { r:readU16() / 65535, r:readU16() / 65535, r:readU16() / 65535, r:readU16() / 65535 }
+			end
+			m.startBoxes = boxes
+		end
+		header.match = m
 	end
 	local cheatFlags = r:readU8()
 	header.cheats = if bit32.band(cheatFlags, 1) ~= 0 then true else nil
