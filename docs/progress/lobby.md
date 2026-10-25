@@ -15,6 +15,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
   - `lobby_room_seat_no_picker`, `lobby_room_ai_no_picker`: the seat editors without the colour grid, shorter to fit;
   - `lobby_room_spectator_colours`: as a spectator, team 1 Blue, team 2 Red and Orange.
 - Smart App Control blocked `lune.exe` and `rojo.exe` on the morning of 2026-10-26 (unsigned); the user turned it off.
+- Ready to merge: `192cab0` (automatic player colours in the room and results from your view, S-172; no colour picker; `MatchConfig.seats` / `MatchConfig.colors`; L-19; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md` (the `color` row: still sent, unused); still version 1)
 
 ## Summary (2026-10-24, the beta merge: new start rules and limits)
 
