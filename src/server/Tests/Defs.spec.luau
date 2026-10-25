@@ -80,10 +80,10 @@ return function(t: RunAll.Context)
 		local set = Defs.load()
 		local lancer = set.units.ord_lancer
 		t.equal(lancer.categoryMask, Categories.Bit.GROUND + Categories.Bit.ARMORED)
-		t.equal(lancer.weapons[1].weaponIndex, set.weapons.ord_light_cannon.index)
-		t.equal(lancer.maxRange, 190) -- ord_light_cannon's range (S-22, S-62, S-157)
-		t.equal(set.units.chs_ravager.maxRange, 155)
-		local cannon = set.weapons.ord_light_cannon
+		t.equal(lancer.weapons[1].weaponIndex, set.weapons.ord_lancer_cannon.index)
+		t.equal(lancer.maxRange, 95) -- ord_lancer_cannon's range: 190 halved (S-22, S-62, S-157, S-179)
+		t.equal(set.units.chs_ravager.maxRange, 78)
+		local cannon = set.weapons.ord_lancer_cannon
 		t.equal(cannon.targetMask, Categories.mask({ "GROUND", "NAVAL", "STRUCTURE" }))
 		t.deepEqual(cannon.priorityMasks, { Categories.Bit.ARMORED, Categories.Bit.GROUND, Categories.Bit.STRUCTURE })
 	end)

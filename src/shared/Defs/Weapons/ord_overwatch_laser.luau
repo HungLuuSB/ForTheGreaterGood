@@ -2,13 +2,15 @@
 -- Overwatch's green lasers (S-157, the user: "2 gun barrels that shoot
 -- left-right-left, faster, deal more damage, more range"): the slot's two
 -- muzzles take turns; the reload is the time between barrels.
+-- S-179, the playtest's balance notes: a T1 defence's damage × 2 (too weak against T1 units)
 return {
 	id = "ord_overwatch_laser",
 	type = "HITSCAN",
 	range = 240,
+	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.4,
 	accuracy = 0.3,
-	damage = { LIGHT = 62, ARMORED = 58, STRUCTURE = 40, SHIP = 48, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 124, ARMORED = 116, STRUCTURE = 80, SHIP = 96, AIR = 0, SUB = 0 },
 	aoe = 0,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "ARMORED", "GROUND", "STRUCTURE" },

@@ -101,6 +101,17 @@ return function(t: RunAll.Context)
 		end, "seed")
 	end)
 
+	t.test("match errors (S-180): every code has a title and a description; outside errors are cleaned", function()
+		for code, entry in MatchConfig.ERRORS do
+			t.expect((code >= 101 and code <= 121) or (code >= 201 and code <= 299), `code {code} in a range`)
+			t.expect(#entry.title > 0 and #entry.description > 0, `{code}: text`)
+		end
+		t.deepEqual(MatchConfig.cleanError({ code = 113 }), { code = 113, detail = nil })
+		t.equal(MatchConfig.cleanError({ code = 999 }), nil, "an unlisted code")
+		t.equal(MatchConfig.cleanError("113"), nil)
+		t.equal(#((MatchConfig.cleanError({ code = 202, detail = string.rep("x", 500) }) :: any).detail), MatchConfig.ERROR_DETAIL_MAX)
+	end)
+
 	t.test("results records are checked against their config", function()
 		local c = teamConfig()
 		local r: any = {

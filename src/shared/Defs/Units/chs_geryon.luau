@@ -12,7 +12,8 @@ return Templates.extend(Templates.Structure, {
 	tier = 1,
 	categories = { "STRUCTURE" },
 	cost = { supply = 220, power = 1800, buildTime = 4800 },
-	health = 1500,
+	-- S-179, the playtest's balance notes: health × 2
+	health = 3000,
 	footprint = 2, -- size shows tech level (S-104)
 	sensors = { sight = 240 },
 	weapons = { { def = "chs_geryon_laser", turretPiece = "turret", pitchPiece = "mount", muzzle = "muzzle1", muzzles = { "muzzle1", "muzzle2", "muzzle3" }, drumPiece = "drum" } },

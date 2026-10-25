@@ -94,7 +94,8 @@ return function(t: RunAll.Context)
 	t.test("a blip is drawn at its unit (sent as its cell); weapons aim at the hidden point (S-131, S-134)", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
 		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0)
-		local radar = Spawn.unit(sim, "chs_watcher", 2, -450, 0)
+		-- beyond the Watcher's sight, inside its radar
+		local radar = Spawn.unit(sim, "chs_watcher", 2, -(sim.defs.units.chs_watcher.sensors.radar :: number) * 0.8, 0)
 		quiet(sim, { tank, radar })
 		local apart = 0
 		for _ = 1, 90 do
@@ -135,7 +136,8 @@ return function(t: RunAll.Context)
 		local w = sim.world
 		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0)
 		local jammer = Spawn.unit(sim, "ord_veil", 1, 40, 0)
-		local radar = Spawn.unit(sim, "chs_watcher", 2, -450, 0)
+		-- beyond the Watcher's sight, inside its radar
+		local radar = Spawn.unit(sim, "chs_watcher", 2, -(sim.defs.units.chs_watcher.sensors.radar :: number) * 0.8, 0)
 		quiet(sim, { tank, radar })
 		-- jamming, not its upkeep (D108), is tested here: keep the Veil powered
 		local acc = sim.eco.accounts[1]
@@ -162,8 +164,9 @@ return function(t: RunAll.Context)
 	-- S-72: plain radars drain power too; in a stall their radius shrinks.
 	t.test("a radar tower costs power upkeep and loses reach in a power stall", function()
 		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:128" })
-		local tower = Spawn.unit(sim, "chs_eye", 2, -300, 0) -- radar 560
-		local tank = Spawn.unit(sim, "ord_lancer", 1, 230, 0) -- 530 studs off: near the edge
+		local reach = sim.defs.units.chs_eye.sensors.radar :: number
+		local tower = Spawn.unit(sim, "chs_eye", 2, -300, 0)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, -300 + reach * 0.95, 0) -- near the edge, beyond its sight
 		quiet(sim, { tower, tank })
 		local acc = sim.eco.accounts[2]
 		local function run(n: number, power: boolean)
@@ -176,7 +179,7 @@ return function(t: RunAll.Context)
 		t.equal(Sensors.level(sim, 2, tank), L.RADAR, "powered: on radar")
 		t.expect(acc.power.demand >= sim.defs.units.chs_eye.sensors.radarDrain :: number, `the tower's upkeep is power demand ({acc.power.demand})`)
 		run(150, false)
-		t.equal(Sensors.level(sim, 2, tank), L.HIDDEN, "no power: the radius shrank below 530 studs")
+		t.equal(Sensors.level(sim, 2, tank), L.HIDDEN, `no power: the radius shrank below {reach * 0.95} studs`)
 		run(30, true)
 		t.equal(Sensors.level(sim, 2, tank), L.RADAR, "power back: on radar again")
 	end)
@@ -186,7 +189,8 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local jammer = Spawn.unit(sim, "ord_veil", 1, 0, 0) -- jam 300
 		local tank = Spawn.unit(sim, "ord_lancer", 1, 250, 0) -- inside the jam, near its edge
-		local radar = Spawn.unit(sim, "chs_watcher", 2, -300, 0) -- radar 600 reaches the tank
+		-- beyond the tank, outside the jam: its radar reaches the tank, its sight doesn't
+		local radar = Spawn.unit(sim, "chs_watcher", 2, 250 + (sim.defs.units.chs_watcher.sensors.radar :: number) * 0.8, 0)
 		quiet(sim, { jammer, tank, radar })
 		local acc = sim.eco.accounts[1]
 		local function run(n: number, power: boolean)
@@ -206,14 +210,16 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a stealth unit shows on radar only within range × signature", function()
-		local defs = testDefs({ shade = { sensors = { radarSignature = 0.3, sight = 60 } } })
+		-- signature 0.6: the Oracle's reduced reach (radar × 0.6) lies beyond its sight, so the walk has a radar-only band
+		local defs = testDefs({ shade = { sensors = { radarSignature = 0.6, sight = 60 } } })
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128", defs = defs })
 		local w = sim.world
-		local radar = Spawn.unit(sim, "ord_oracle", 1, -400, 0) -- radar 760, sight 120
+		local radar = Spawn.unit(sim, "ord_oracle", 1, -400, 0)
 		local shade = Spawn.unit(sim, "neu_shade", 2, 300, 20, -math.pi / 2)
 		quiet(sim, { shade })
 		moveTo(sim, 2, { shade }, -470, 20)
-		local reach = (sim.defs.units.ord_oracle.sensors.radar :: number) * 0.3
+		local reach = (sim.defs.units.ord_oracle.sensors.radar :: number) * 0.6
+		t.expect(reach > (sim.defs.units.ord_oracle.sensors.sight :: number), "the reduced reach lies beyond sight")
 		local s = sim.sensors
 		local seen = {}
 		for _ = 1, 1200 do
@@ -234,8 +240,9 @@ return function(t: RunAll.Context)
 	t.test("units only shoot what their team knows", function()
 		local defs = testDefs({ blind = { sensors = { sight = 40 } } })
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:64", defs = defs })
-		local shooter = Spawn.unit(sim, "neu_blind", 1, -75, 0, math.pi / 2)
-		local enemy = Spawn.unit(sim, "chs_ravager", 2, 75, 0, -math.pi / 2)
+		local half = sim.defs.weapons.ord_lancer_cannon.range * 0.4 -- in range, beyond the blind tank's sight
+		local shooter = Spawn.unit(sim, "neu_blind", 1, -half, 0, math.pi / 2)
+		local enemy = Spawn.unit(sim, "chs_ravager", 2, half, 0, -math.pi / 2)
 		quiet(sim, { enemy })
 		local shots = 0
 		local function count()
@@ -249,8 +256,8 @@ return function(t: RunAll.Context)
 			Sim.step(sim)
 			count()
 		end
-		t.equal(shots, 0, "150 studs: in range but unseen, so no shots")
-		local spotter = Spawn.unit(sim, "ord_oracle", 1, 20, 60) -- sight 120 covers the enemy
+		t.equal(shots, 0, `{2 * half} studs: in range but unseen, so no shots`)
+		local spotter = Spawn.unit(sim, "ord_oracle", 1, 0, 60) -- sight 120 covers the enemy
 		quiet(sim, { spotter })
 		for _ = 1, 120 do
 			Sim.step(sim)
@@ -263,15 +270,17 @@ return function(t: RunAll.Context)
 		local function shell(spotted: boolean): (number, number)
 			local sim = Sim.new({ seed = 5, players = PLAYERS, mapId = "flat:128" })
 			local w = sim.world
-			local gun = Spawn.unit(sim, "ord_verdict", 1, -200, 0, math.pi / 2)
-			local target = Spawn.unit(sim, "chs_ravager", 2, 200, 0)
+			-- 0.8 × the howitzer's range apart: in range, beyond the Verdict's sight
+			local half = sim.defs.weapons.ord_howitzer.range * 0.4
+			local gun = Spawn.unit(sim, "ord_verdict", 1, -half, 0, math.pi / 2)
+			local target = Spawn.unit(sim, "chs_ravager", 2, half, 0)
 			quiet(sim, { target })
 			World.setHealth(w, target, 1e9)
 			if spotted then
-				local scout = Spawn.unit(sim, "ord_lancer", 1, 60, 0) -- sight 200 covers the target
+				local scout = Spawn.unit(sim, "ord_lancer", 1, half - 40, 0) -- sight 200 covers the target
 				quiet(sim, { scout })
 			else
-				Spawn.unit(sim, "ord_oracle", 1, -220, 60) -- radar only
+				Spawn.unit(sim, "ord_oracle", 1, -half - 20, 60) -- radar only
 			end
 			local shots, hits = 0, 0
 			for _ = 1, 15 * 120 do

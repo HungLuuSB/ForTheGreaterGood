@@ -18,6 +18,7 @@ return Templates.extend(Templates.Builder, {
 	buildRange = 60, -- 70% of 80 (client request 7, S-19), + 4 for the bigger body (S-124: the reach from its edge stays)
 	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_vehplant", "ord_airfield", "ord_shipyard", "ord_sentry_tower", "ord_watchtower" },
 	production = { supply = 1, power = 20 },
+	deathBlast = { damage = 4000, aoe = 120, edge = 0.15 }, -- a Commander goes up in a huge blast, smaller than a nuke's 150 (S-178, F15)
 	model = "ord_sovereign",
 	icon = "commander",
 })

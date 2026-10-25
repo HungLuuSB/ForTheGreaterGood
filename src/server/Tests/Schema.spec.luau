@@ -432,7 +432,7 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeEvent, clock)), "1f 96 01")
 		t.equal(Schema.eventBytes(clock), 3)
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, clock), Schema.decodeEvent)[1], clock)
-		expectRejected(t, Schema.decodeEvent, { 31, 10, 4 }, "pick clock flags 4")
+		expectRejected(t, Schema.decodeEvent, { 31, 10, 8 }, "pick clock flags 8")
 		local boxes: Schema.Event = { kind = EKp.START_BOXES, boxes = { { allyTeam = 2, x0 = -1024, z0 = -300, x1 = -600, z1 = 300 } } }
 		t.equal(hex(encodeOne(Schema.encodeEvent, boxes)), "20 01 02 00 fc d4 fe a8 fd 2c 01")
 		t.equal(Schema.eventBytes(boxes), 11)
@@ -608,7 +608,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 33, 1, 0 }, "unknown event kind 33") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29, 25 since 31, 26 since 34, 27 since 35, 28..30 since 36, 31..32 since 37
+		expectRejected(t, Schema.decodeEvent, { 34, 1, 0 }, "unknown event kind 34") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29, 25 since 31, 26 since 34, 27 since 35, 28..30 since 36, 31..33 since 37
 		expectRejected(t, Schema.decodeEvent, { 18, 10, 0, 0, 0, 0 }, "alert kind 10")
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind
@@ -770,7 +770,7 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 24, 0, 1, 0, 1, 0 }, "unknown cmdType 24") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36), 22 FACTION and 23 START (protocol 37)
+		expectRejected(t, cmd, { 27, 0, 1, 0, 1, 0 }, "unknown cmdType 27") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36), 22 FACTION, 23 START, 24 SHARE_UNITS, 25 SHARE_RESOURCE and 26 REQUEST (protocol 37)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
 		expectRejected(t, cmd, { CT.STOP, 8, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137)

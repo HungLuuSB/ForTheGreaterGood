@@ -29,6 +29,7 @@ export type State = {
 	ghostIds: { [number]: { number } }, -- team → structure IDs (insertion order)
 	-- per team: radar emitters (unit IDs, ids order) and the best radar error
 	radars: { [number]: { number } },
+	radarLos: { [number]: any }, -- radar unit → { cell, gen, seen: sensor cell → sees it over the terrain } (S-182); a cache, not hashed
 	radarError: { [number]: number },
 	-- per team: naval units and ASW helicopters, which detect submerged
 	-- submarines within CLOSE_SONAR studs (ids order)
@@ -71,6 +72,7 @@ function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 		vis = vis,
 		ghosts = ghosts,
 		ghostIds = ghostIds,
+		radarLos = {},
 		radars = (function()
 			local r = {}
 			for _, team in teams do

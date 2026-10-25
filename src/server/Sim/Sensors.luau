@@ -36,6 +36,12 @@
 -- TRACKED (`tracked`, Sensors.isTracked): as a radar contact it wobbles by
 -- the team's best trackError instead of its radarError, and its type is
 -- known. Jamming hides from tracking radar too, with no burn-through.
+--
+-- Radar needs line of sight (S-182, the user's playtest F28): a unit is on
+-- radar only if one of the team's radars that covers it sees it over the
+-- terrain, from the top of the radar to the middle of the unit. Hills hide
+-- units (and low aircraft) from radar. Results for ground targets are
+-- cached per (radar, sensor cell) until the radar moves to another cell.
 -- Tracking radars drain trackDrain power per second, jammers jamDrain
 -- (Sensors.drainStep, an economy consumer; D104, D108). Their track and jam
 -- radii scale with the share of that power they get, in whole sensor cells,
@@ -46,6 +52,7 @@ local Categories = require("@shared/Defs/Categories")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Hash = require("@shared/Util/Hash")
+local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
 local SensorsState = require("./SensorsState")
@@ -314,11 +321,69 @@ local function closeSonarDetects(sim: Types.Sim, s: State, team: number, id: num
 	return false
 end
 
+Sensors.RADAR_MAST = 4 -- studs above a radar unit's top its antenna sees from (S-182)
+Sensors.LOS_STEP = 12 -- studs between terrain samples on a radar sight line
+Sensors.LOS_END = 8 -- studs at each end left unchecked (the ground the units stand on)
+Sensors.CELL_SLACK = 24 -- studs: a radar circle's stamped cells reach this far past its radius (16-stud cells)
+
+-- Whether the terrain lets the straight line (x0, y0, z0) → (x1, y1, z1)
+-- through: every LOS_STEP studs the line is above the ground.
+function Sensors.terrainClear(sim: Types.Sim, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean
+	local c = sim.combat
+	if c.layers == nil then
+		return true
+	end
+	local dx, dz = x1 - x0, z1 - z0
+	local dist = math.sqrt(dx * dx + dz * dz)
+	local last = dist - Sensors.LOS_END
+	if last <= Sensors.LOS_END then
+		return true
+	end
+	local ux, uz, slope = dx / dist, dz / dist, (y1 - y0) / dist
+	local d = Sensors.LOS_END
+	while d <= last do
+		if y0 + d * slope < Combat.groundHeight(c, x0 + ux * d, z0 + uz * d) then
+			return false
+		end
+		d += Sensors.LOS_STEP
+	end
+	return true
+end
+
+-- Does radar unit `r` see unit `id` over the terrain? Ground targets are
+-- cached per sensor cell while `r` stays in its cell.
+local function radarSees(sim: Types.Sim, s: State, r: number, id: number, cell: number): boolean
+	local w = sim.world
+	local c = sim.combat
+	local airborne = (w.alt[id] or 0) > 0
+	local cache = s.radarLos[r]
+	local rcell = select(3, Sensors.cellOf(s, w.posX[r], w.posZ[r]))
+	if cache == nil or cache.cell ~= rcell or cache.gen ~= w.gen[r] then
+		cache = { cell = rcell, gen = w.gen[r], seen = {} }
+		s.radarLos[r] = cache
+	end
+	if not airborne then
+		local hit = cache.seen[cell]
+		if hit ~= nil then
+			return hit
+		end
+	end
+	local pr, pt = c.profiles[w.defIndex[r]], c.profiles[w.defIndex[id]]
+	local y0 = Combat.unitBase(c, w, r) + pr.height + Sensors.RADAR_MAST
+	local y1 = Combat.unitBase(c, w, id) + pt.height * 0.5
+	local seen = Sensors.terrainClear(sim, w.posX[r], y0, w.posZ[r], w.posX[id], y1, w.posZ[id])
+	if not airborne then
+		cache.seen[cell] = seen
+	end
+	return seen
+end
+
 -- Radar detection of unit `id` by `observer`, given the observer's radar
 -- map already covers the unit's cell (guide 11.4):
 --   * jamming: units inside their own team's jam map are invisible to radar;
---   * stealth: with radarSignature < 1, the unit must be within
---     radar range × signature of one of the observer's radar emitters.
+--   * one of the observer's radars within its (powered) radius, × the
+--     unit's radarSignature when stealthy, must see it over the terrain
+--     (S-182).
 function Sensors.radarDetects(sim: Types.Sim, s: State, observer: number, id: number, cell: number): boolean
 	local w = sim.world
 	local ownJam = s.maps[w.ally[id]]
@@ -326,14 +391,14 @@ function Sensors.radarDetects(sim: Types.Sim, s: State, observer: number, id: nu
 		return false
 	end
 	local signature = sim.defs.unitByIndex[w.defIndex[id]].sensors.radarSignature
-	if signature >= 1 then
-		return true
-	end
+	-- (the map stamps whole sensor cells: a cell's slack for normal units)
+	local slack = if signature >= 1 then Sensors.CELL_SLACK else 0
+	signature = math.min(signature, 1)
 	local x, z = w.posX[id], w.posZ[id]
 	for _, r in s.radars[observer] do
-		local reach = radiiOf(sim, r)[3] * signature -- the radar's powered radius (S-72)
+		local reach = radiiOf(sim, r)[3] * signature + slack -- the radar's powered radius (S-72)
 		local dx, dz = w.posX[r] - x, w.posZ[r] - z
-		if dx * dx + dz * dz <= reach * reach then
+		if dx * dx + dz * dz <= reach * reach and radarSees(sim, s, r, id, cell) then
 			return true
 		end
 	end
@@ -733,6 +798,7 @@ table.insert(Lifecycle.removalHooks, function(sim: Types.Sim, id: number)
 		s.tracked[team][id] = nil
 	end
 	s.powerScale[id] = nil
+	s.radarLos[id] = nil
 end)
 
 return Sensors

@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 480, power = 8000, buildTime = 14000 },
 	health = 2600,
-	movement = { maxSpeed = 190, minSpeed = 120, accel = 80, brake = 60, turnRate = 35 },
+	movement = { maxSpeed = 190, minSpeed = 120, accel = 80, brake = 60, turnRate = 52 },
 	sensors = { sight = 190 },
 	weapons = { { def = "chs_heavy_bomb", muzzle = "muzzle" } },
 	pieces = { "base", "bay", "pylon", "muzzle" },

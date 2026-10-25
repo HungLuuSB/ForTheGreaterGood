@@ -2,6 +2,7 @@
 -- Gauntlet's lobbed shell (S-157, the user: "shoot high trajectory
 -- projectile, medium range"): the high arc, over walls and ridges; slow to
 -- land, so it hits what stands still.
+-- S-179, the playtest's balance notes: a T1 defence's damage × 2 (too weak against T1 units)
 return {
 	id = "ord_gauntlet_shell",
 	type = "BALLISTIC",
@@ -11,7 +12,7 @@ return {
 	gravity = 60,
 	highArc = true,
 	accuracy = 1.5,
-	damage = { LIGHT = 230, ARMORED = 210, STRUCTURE = 270, SHIP = 180, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 460, ARMORED = 420, STRUCTURE = 540, SHIP = 360, AIR = 0, SUB = 0 },
 	aoe = 10,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

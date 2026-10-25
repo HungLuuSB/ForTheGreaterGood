@@ -1,5 +1,6 @@
 --!strict
 -- Move states (guide 10.1, S-34): what idle units do on their own.
+local Defs = require("@shared/Defs/Defs")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
@@ -8,7 +9,7 @@ local RunAll = require("./RunAll")
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 3 } }
 local MS = World.MoveState
 
--- A Lancer (range 200) at (-200, 0), a Ravager that holds fire `gap` studs
+-- A Lancer at (-200, 0), a Ravager that holds fire `gap` studs
 -- east of it, and a scout of the Lancer's side next to the Ravager (so the
 -- team sees it: Maneuver chases only what the team sees), on `mapId`.
 local function scene(mapId: string, state: number, gap: number, ravagerHealth: number?): (Sim.Sim, number, number)
@@ -28,6 +29,14 @@ local function scene(mapId: string, state: number, gap: number, ravagerHealth: n
 	return sim, lancer, enemy
 end
 
+-- The Lancer's weapon range (S-179 halved it): "just out of range" is
+-- range + 110, inside the Maneuver leash (Orders.MANEUVER_LEASH = 150).
+local function lancerRange(): number
+	local d = Defs.load()
+	return d.weapons[d.units.ord_lancer.weapons[1].def].range
+end
+local NEAR_GAP = lancerRange() + 110
+
 local function run(sim: Sim.Sim, ticks: number, each: (() -> boolean)?)
 	for _ = 1, ticks do
 		Sim.step(sim)
@@ -46,7 +55,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("Maneuver closes in on an enemy just out of range, fights, and walks back", function()
-		local sim, lancer, enemy = scene("flat:96", MS.MANEUVER, 300, 2000)
+		local sim, lancer, enemy = scene("flat:96", MS.MANEUVER, NEAR_GAP, 1600) -- as many shots as before S-179 (damage × 0.8)
 		local w = sim.world
 		local farthest = 0
 		run(sim, 15 * 40, function()
@@ -59,7 +68,9 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("Maneuver doesn't chase beyond its leash; Roam does, and stays", function()
-		local sim, lancer = scene("flat:128", MS.MANEUVER, 520) -- 520 > 200 + 150
+		-- 520 > range + leash (150), and < range + Orders.ROAM_CHASE (500)
+		t.expect(520 > lancerRange() + 150 and 520 < lancerRange() + 500, "the gap is past the leash, within Roam's chase")
+		local sim, lancer = scene("flat:128", MS.MANEUVER, 520)
 		run(sim, 300)
 		t.expect(math.abs(sim.world.posX[lancer] + 200) < 1, "Maneuver: too far, stays")
 
@@ -100,7 +111,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a command replaces the automatic chase and re-anchors the unit", function()
-		local sim, lancer = scene("flat:96", MS.MANEUVER, 300, 1e9)
+		local sim, lancer = scene("flat:96", MS.MANEUVER, NEAR_GAP, 1e9)
 		local w = sim.world
 		run(sim, 60)
 		t.expect(w.posX[lancer] + 200 > 10, "it set off on its own")

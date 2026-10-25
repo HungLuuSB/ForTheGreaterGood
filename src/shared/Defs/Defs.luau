@@ -133,6 +133,7 @@ export type WeaponDef = {
 	damage: { [string]: number }, -- every armor class present after build
 	aoe: number?,
 	edgeEffectiveness: number?,
+	closeDamage: number?, -- lasers (S-178): damage × this at point blank, falling linearly to × 1 at full range
 	targets: { string },
 	targetMask: number, -- derived
 	priority: { string }?,
@@ -392,6 +393,7 @@ local WEAPON_SPEC: Spec = {
 		damage = { kind = "record", fields = damageFields },
 		aoe = opt(NON_NEGATIVE),
 		edgeEffectiveness = opt(FRACTION),
+		closeDamage = opt({ kind = "number", min = 1, max = 3 }),
 		targets = { kind = "list", item = CATEGORY, minItems = 1 },
 		priority = { kind = "list", optional = true, item = CATEGORY },
 		turret = {
@@ -853,6 +855,26 @@ end
 -- Build
 --------------------------------------------------------------------------------
 
+-- Every unit explodes when it dies (S-178, the user's playtest F15): the
+-- blast grows with what the unit is worth and with the power it makes or
+-- holds, so energy buildings go up hard and a base packed with them can
+-- chain. Defs that set `deathBlast` (fusion reactors, Commanders) keep it.
+--   damage = 0.4 × (supply + power / 10 of its cost)
+--            + 8 × power produced per second + 0.5 × power storage
+--   aoe    = 8 + 5 × footprint + 0.6 × sqrt(damage), at most 90 studs
+--   edge   = 0.3
+Defs.BLAST_DEFAULT = table.freeze({ worth = 0.4, production = 8, storage = 0.5, edge = 0.3, maxAoe = 90 })
+function Defs.defaultDeathBlast(u: any): { damage: number, aoe: number, edge: number }
+	local k = Defs.BLAST_DEFAULT
+	local cost = u.cost or {}
+	local worth = (cost.supply or 0) + (cost.power or 0) / 10
+	local power = (u.production and u.production.power or 0) + (if u.wind then u.wind.max * 0.5 else 0)
+	local damage = k.worth * worth + k.production * power + k.storage * (u.storage and u.storage.power or 0)
+	damage = math.max(10, math.floor(damage + 0.5))
+	local aoe = math.min(k.maxAoe, math.floor(8 + 5 * (u.footprint or 1) + 0.6 * math.sqrt(damage) + 0.5))
+	return { damage = damage, aoe = aoe, edge = k.edge }
+end
+
 local function deepCopy(v: any): any
 	if type(v) ~= "table" then
 		return v
@@ -920,6 +942,9 @@ function Defs.build(raw: RawDefs): DefSet
 			maxRange = math.max(maxRange, w.range)
 		end
 		u.maxRange = maxRange
+		if u.deathBlast == nil and not u.retired then
+			u.deathBlast = Defs.defaultDeathBlast(u)
+		end
 		units[id] = u
 		unitByIndex[index] = u
 	end

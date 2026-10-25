@@ -17,7 +17,7 @@ return Templates.extend(Templates.Unit, {
 	health = 900,
 	movement = { maxSpeed = 34, accel = 10, brake = 14, turnRate = 70 },
 	sensors = { sight = 220 },
-	weapons = { { def = "ord_naval_gun", turretPiece = "turret1", muzzle = "muzzle1" } },
+	weapons = { { def = "ord_sentry_gun", turretPiece = "turret1", muzzle = "muzzle1" } },
 	pieces = { "base", "turret1", "turret2", "muzzle1", "muzzle2" },
 	model = "ord_sentry",
 	icon = "corvette",
