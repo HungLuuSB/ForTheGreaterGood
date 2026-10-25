@@ -246,6 +246,12 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			end
 			world.pregame.boxes = boxes
 			world.pregame.version += 1
+		elseif EK.SHARE ~= nil and kind == EK.SHARE then
+			-- a gift or a request for help in the ally team (protocol 37, S-176)
+			table.insert(world.shares, e)
+			if #world.shares > 20 then
+				table.remove(world.shares, 1)
+			end
 		elseif EK.PREBUILD ~= nil and kind == EK.PREBUILD then
 			-- a player's queued builds for its Commander, the whole list
 			local list = {}
@@ -478,6 +484,7 @@ function NetIn.apply(world: World.World, channel: string, msg: buffer, now: numb
 		-- own, a spectator every team's: keep the own team's
 		local own = (records :: any)[1]
 		for _, r in records :: any do
+			world.teamEco[r.team] = r -- allies' too, when sent (F23)
 			if r.team == world.me.team then
 				own = r
 			end

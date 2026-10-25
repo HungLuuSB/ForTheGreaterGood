@@ -25,9 +25,10 @@ export type Piece = { name: string, vx: number, vy: number, vz: number, spin: { 
 export type Plan = { kind: "shake" | "fling" | "crash", duration: number, wreck: boolean, pieces: { Piece } }
 
 -- muzzles are attachments, not parts to fling: `muzzle`, `muzzle2`, and
--- prefixed ones like Bulwark's `laser_muzzle1` (models-C's Blockout rule)
+-- prefixed ones like Bulwark's `laser_muzzle1` or the Dragon's
+-- `laser_l_muzzle` (models-C's Blockout rule, widened for S-181)
 local function isAttachment(name: string): boolean
-	return string.match(name, "^muzzle%d*$") ~= nil or string.match(name, "^%a+_muzzle%d*$") ~= nil
+	return string.match(name, "^muzzle%d*$") ~= nil or string.match(name, "^%a[%a_]*_muzzle%d*$") ~= nil
 end
 
 -- The animation for a death of unit `id` (a def with `pieces`).

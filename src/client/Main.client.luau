@@ -91,6 +91,7 @@ local PregameMarks = require("./Render/PregameMarks")
 local PregamePanel = require("./UI/PregamePanel")
 local Landing = require("./Render/Landing")
 local CommanderNames = require("./Render/CommanderNames")
+local TeamPanel = require("./UI/TeamPanel")
 local TeamColors = require("./Render/TeamColors")
 
 local defs = Defs.load()
@@ -390,6 +391,7 @@ local pregamePanel = PregamePanel.new({
 })
 local pregameSeen = { active = false, started = false, homed = false } -- for the camera's jumps
 local commanderNames = CommanderNames.new() -- each Commander's player name over it
+local teamPanel = TeamPanel.new(api) -- players by team, sharing with allies (F23)
 local landing = Landing.new() -- the Commanders drop in with a star flare as the match starts (S-174)
 UnitRenderer.lift = Landing.lift(world)
 Controls.pregameClick = function(ground: Vector3?): boolean
@@ -1207,6 +1209,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	IdleStrip.step(idleStrip, #idle.builders, #idle.factories, SettingsMenu.binds.idle or "")
 	IdleMarks.step(idleMarks, world, idle.builders, strategic, workspace.CurrentCamera)
 	CommanderNames.step(commanderNames, world, strategic, workspace.CurrentCamera)
+	TeamPanel.step(teamPanel, api, now)
 	PregameMarks.step(pregameMarks, world, Pregame.areas(world), if pg.active then Controls.hover() else nil, workspace.CurrentCamera)
 	PregamePanel.step(pregamePanel, world, now)
 	BuildMenuUI.step(buildMenu, api)

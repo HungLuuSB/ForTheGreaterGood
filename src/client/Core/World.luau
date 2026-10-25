@@ -190,6 +190,8 @@ export type World = {
 	shields: { [number]: { charge: number, flags: number } }, -- shield generators' domes by unit id (SHIELD, protocol 24, S-79): charge 0..1 of capacity, Schema.ShieldFlag bits
 	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
 	pregame: Pregame, -- the pre-game's picks and countdown (C-218)
+	teamEco: { [number]: Schema.Eco }, -- every Eco record by team: the own, allies' (when the server sends them) and, for spectators, all (F23)
+	shares: { Schema.Event }, -- SHARE events (gifts and requests, S-176) the team panel drains
 }
 
 -- An empty world waiting for the server's WELCOME (net.md section 10).
@@ -230,6 +232,8 @@ function World.new(defs: Defs.DefSet): World
 		lastShot = {},
 		deathWrecks = {},
 		pregame = World.newPregame(),
+		teamEco = {},
+		shares = {},
 	}
 end
 
@@ -264,6 +268,8 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.lastShot)
 	table.clear(world.deathWrecks)
 	world.pregame = World.newPregame() -- a join during the pre-game sends it all again
+	table.clear(world.teamEco)
+	table.clear(world.shares)
 	world.strategicTick = -1
 	world.economy = nil
 	world.latestTick = rec.tick :: number -- unwraps wire ticks from here on
