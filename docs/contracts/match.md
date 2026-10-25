@@ -42,6 +42,7 @@ Built by `src/lobby/shared/MatchConfig.luau` (`MatchConfig.build`). The shapes, 
 | `win` | `"COMMAND_ENDS"` \| `"ANNIHILATION"` | guide 16.2 |
 | `friendlyFire` | boolean | S-73 |
 | `cheats` | boolean | the host's toggle; cheat commands still need the CheatConfig allow-list (C-119). Matches with cheats don't count on profiles |
+| `startBoxes` | `{ [allyTeam]: { x0, z0, x1, z1 } }`? | the host's spawn boxes (F26, 2026-10-26): fractions of the map, 0..1, x0 < x1, z0 < z1, f = (coord - origin) / size (x0 / z0 the low-X / low-Z edge). Every side's box once the host moved or resized any (the others are the defaults: `StartAreas.boxes` for the match's sides, as fractions); absent when untouched (the match uses its own). Teams only; the match place passes it as the Sim config's `match.startBoxes` |
 | `host` | number | the room host's UserId (F32, 2026-10-26). The match place maps it to a player ID, or to none when the host spectates (then the match starts once everyone is ready) |
 | `players` | array | one per seat, in sim player order (below) |
 | `spectators` | array of `{ user, name }` | members who watch |

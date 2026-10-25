@@ -65,7 +65,7 @@ local function run(room: Rooms.Room)
 		return
 	end
 	local matchId = HttpService:GenerateGUID(false)
-	local config = MatchConfig.build(room, matchId, rng:NextInteger(1, 2 ^ 31 - 1), os.time(), { placeId = game.PlaceId, jobId = game.JobId })
+	local config = MatchConfig.build(room, matchId, rng:NextInteger(1, 2 ^ 31 - 1), os.time(), { placeId = game.PlaceId, jobId = game.JobId }, Rooms.mapOf(Ctx.maps, room.settings.mapId))
 	local bad = MatchConfig.validate(config)
 	if bad then
 		fail(room, `the config failed its own check ({bad})`, {})

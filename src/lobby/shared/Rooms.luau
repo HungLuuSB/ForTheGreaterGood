@@ -14,10 +14,11 @@
 -- and back to setup with the results.
 
 local Config = require("./Config")
+local SpawnBoxes = require("./SpawnBoxes")
 
 local Rooms = {}
 
-export type MapInfo = { id: string, name: string, starts: number }
+export type MapInfo = { id: string, name: string, starts: number, geo: SpawnBoxes.Geometry? }
 
 export type Member = {
 	user: number,
@@ -41,6 +42,7 @@ export type Settings = {
 	win: string,
 	friendlyFire: boolean,
 	cheats: boolean,
+	boxes: { [string]: SpawnBoxes.Box }?, -- the host's spawn box edits by team (F26); the map's or mode's change clears them
 }
 
 export type Room = {
@@ -314,6 +316,7 @@ end
 --   { op = "addAi", faction?, level?, team? }                                  host
 --   { op = "ai", index, faction?, level?, team?, color? }                      host, an AI slot
 --   { op = "removeAi", index }                                                 host
+--   { op = "box", team, box } | { op = "resetBoxes" }                          host, Teams (F26)
 --   { op = "mine", faction?, team?, color? }                                   a seated member
 --   { op = "spectate" } | { op = "play", team? }                               a member
 --   { op = "ready", value }                                                    a seated member
@@ -396,6 +399,9 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 		else
 			return "Bad setting"
 		end
+		if key == "mapId" or key == "mode" then
+			room.settings.boxes = nil -- the defaults change with the map and the sides
+		end
 		unready(room)
 		changed(room)
 		return nil
@@ -436,6 +442,30 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 			room.slots[msg.index].level = msg.level
 		end
 		return Rooms.editSlot(room, msg.index, msg)
+	elseif op == "box" then
+		if room.settings.mode ~= "TEAM" then
+			return "Spawn boxes are per team: switch to Teams"
+		end
+		if not isInt(msg.team, 1, Config.MAX_ALLY_TEAMS) or table.find(SpawnBoxes.teams(room.slots), msg.team) == nil then
+			return "No one plays on that team"
+		end
+		local box, err = SpawnBoxes.clean(msg.box)
+		if box == nil then
+			return err
+		end
+		local boxes = room.settings.boxes or {}
+		boxes[tostring(msg.team)] = box
+		room.settings.boxes = boxes
+		unready(room)
+		changed(room)
+		return nil
+	elseif op == "resetBoxes" then
+		if room.settings.boxes ~= nil then
+			room.settings.boxes = nil
+			unready(room)
+			changed(room)
+		end
+		return nil
 	elseif op == "removeAi" then
 		if not isInt(msg.index, 1, #room.slots) or room.slots[msg.index].kind ~= "ai" then
 			return "Not an AI slot"

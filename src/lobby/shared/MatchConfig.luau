@@ -6,6 +6,7 @@
 -- lobby has one place to require. Pure Luau, tested under Lune.
 
 local Rooms = require("./Rooms")
+local SpawnBoxes = require("./SpawnBoxes")
 local Shared = require("@shared/Match/MatchConfig")
 local TeamColors = require("@shared/Match/TeamColors")
 
@@ -88,8 +89,10 @@ end
 -- MatchConfig.seats order. Every player's `start` is 0: starts are picked
 -- in the match's pre-game (S-171; the map's starts are only hints). `color`
 -- is still the seat's unique palette index (validated, unused: the match
--- colours players by TeamColors.forViewer, S-172).
-function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now: number, lobby: Lobby): MatchConfig
+-- colours players by TeamColors.forViewer, S-172). `startBoxes` (F26) is
+-- every side's box by ally team, sent only when the host moved or resized
+-- one (Teams); `map` gives the defaults for the boxes the host left alone.
+function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now: number, lobby: Lobby, map: Rooms.MapInfo?): MatchConfig
 	local players: { Player } = {}
 	local aiNumber = 0
 	for _, seat in MatchConfig.seats(room) do
@@ -114,6 +117,21 @@ function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now:
 			ai = if s.kind == "ai" then s.level else nil,
 		})
 	end
+	local startBoxes: { [number]: SpawnBoxes.Box }? = nil
+	local teams = SpawnBoxes.teams(room.slots)
+	if room.settings.mode == "TEAM" and SpawnBoxes.touched(teams, room.settings.boxes) then
+		local byTeam = SpawnBoxes.forTeams(map and map.geo, teams, room.settings.boxes)
+		local list: { [number]: SpawnBoxes.Box } = {}
+		local count = 0
+		for ally, team in teams do
+			list[ally] = byTeam[team]
+			count += if byTeam[team] then 1 else 0
+		end
+		-- every side has a box, or none is sent (the match uses its own)
+		if count == #teams then
+			startBoxes = list
+		end
+	end
 	local spectators = {}
 	for _, m in room.members do
 		if Rooms.slotOf(room, m.user) == nil then
@@ -131,6 +149,7 @@ function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now:
 		friendlyFire = room.settings.friendlyFire,
 		cheats = room.settings.cheats,
 		host = room.host, -- the room host's UserId (F32): the match's pre-game starts it; seated or not
+		startBoxes = startBoxes,
 		players = players,
 		spectators = spectators,
 		lobby = { placeId = lobby.placeId, jobId = lobby.jobId, roomId = room.id, roomName = room.name },

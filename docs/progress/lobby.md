@@ -11,7 +11,10 @@ From the user's playtest feedback (`FTGG-FEEDBACK.txt`; sim-A's plan in `docs/pr
 - **F35:** your seat editor says the faction is a first choice that can change in the match (`lobby_room_faction_note_f35`).
 - **Tests:** lobby specs 50 / 50; the build check passes.
 - Ready to merge: `7e667f4` (F25 AI team in one request, F31 spec, F32 `host` in the config, F35 faction note; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
-- **Next: F26** (spawn boxes edited by the host).
+- **F26: spawn boxes edited by the host.** In Teams, the room's map shows every team's box in its colour as you see it. The defaults are the match's own: `StartAreas.boxes` for the room's sides, from each map's bounds, start hints and boxes, which the server now sends with the previews. The host drags a side to resize or the inside to move; sides within 3% of the map's edge snap to it, the smallest box is 4% of the map, and the box is sent when the drag ends. "Reset boxes" (beside the map, host only, once a box was edited) brings back the defaults. A new map or mode resets them too. The config's `startBoxes` carries every side's box by ally team once one was edited, and is omitted otherwise (`SpawnBoxes`, L-20).
+  - **Specs** (`SpawnBoxes.spec`, 4 tests): cleaning and snapping; the defaults equal `StartAreas` on The Plains for 2 to 8 sides; only the host edits, Teams only, seated teams only, resets on map and mode changes; the config's boxes by ally team, an emptied team's edit left out.
+  - **Studio** (`debug_out/screens/`): `lobby_room_spawn_boxes` (three teams' defaults), `lobby_room_spawn_boxes_dragged` (team 1's east side dragged, its west side snapped; team 3 moved down and snapped to the corner), `lobby_room_spawn_boxes_reset_button`, `lobby_room_spawn_boxes_after_reset`. A forced start with edited boxes passed the shared check and launched.
+  - **Note for sim-A:** with 3 sides on The Plains, side 2 gets starts 6-10, which lie in two corners. Its default box spans the map's middle column (`lobby_room_spawn_boxes`).
 
 ## Summary (2026-10-26: automatic colours, S-172)
 

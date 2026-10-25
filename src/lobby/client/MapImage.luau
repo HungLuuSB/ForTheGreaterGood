@@ -57,6 +57,7 @@ end
 
 export type MapImage = {
 	frame: Frame,
+	image: ImageLabel, -- the map itself (for overlays: its fractions are the map's)
 	set: (map: any?, colors: { [number]: Color3 }?) -> (),
 	setGrey: (grey: boolean) -> (), -- the greyscale picture (or back to color)
 }
@@ -90,6 +91,7 @@ function MapImage.new(parent: Instance, markers: boolean?, fill: boolean?): MapI
 	local isGrey = false
 	return {
 		frame = holder,
+		image = image,
 		setGrey = function(grey: boolean)
 			isGrey = grey
 			if shown and shown.preview then

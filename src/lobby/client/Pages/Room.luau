@@ -9,7 +9,8 @@
 -- every request anyway. A click on a seat opens its editor: your own
 -- faction and team; the host's AI (level, faction, team, remove) and kick.
 -- Colours are automatic (S-172), as the match shows them to you: you and
--- your allies cold, enemies warm (MatchConfig.colors).
+-- your allies cold, enemies warm (MatchConfig.colors). In Teams the map
+-- shows each team's spawn box; the host drags them (F26, BoxEditor).
 
 local Players = game:GetService("Players")
 local SocialService = game:GetService("SocialService")
@@ -18,6 +19,8 @@ local TextChatService = game:GetService("TextChatService")
 local Config = require("../../shared/Config")
 local Listing = require("../../shared/Listing")
 local MatchConfig = require("../../shared/MatchConfig")
+local SpawnBoxes = require("../../shared/SpawnBoxes")
+local BoxEditor = require("../BoxEditor")
 local MapImage = require("../MapImage")
 local Net = require("../Net")
 local Ui = require("../Ui")
@@ -239,6 +242,18 @@ function Room.new(frame: Frame, _router: any): any
 	local rightCol = Ui.frame(frame, "Setup", UDim2.new(0.36, 0, 1, 0), UDim2.new(0.64, 0, 0, 0))
 	local mapHolder = Ui.frame(rightCol, "MapHolder", UDim2.new(1, 0, 1, -(rulesH + 44 + Kit.SPACE.s * 2)))
 	local mapImage = MapImage.new(mapHolder)
+	local boxEditor = BoxEditor.new(mapImage.image, function(team: number, box: { number })
+		Net.send({ op = "box", team = team, box = box })
+	end)
+	-- at the column's corner, beside the map (not over a box to drag)
+	local resetBoxes = Ui.button(mapHolder, "Reset boxes", "ghost", function()
+		Net.send({ op = "resetBoxes" })
+	end, 100, 26)
+	resetBoxes.TextSize = 12
+	resetBoxes.AnchorPoint = Vector2.new(0, 1)
+	resetBoxes.Position = UDim2.new(0, 0, 1, 0)
+	resetBoxes.ZIndex = 9
+	resetBoxes.Visible = false
 	local rules = Ui.card(rightCol, "Rules", UDim2.new(1, 0, 0, rulesH), UDim2.new(0, 0, 1, -(rulesH + 44 + Kit.SPACE.s)), 0.12)
 	Kit.pad(rules, Kit.SPACE.s, Kit.SPACE.s)
 	Kit.list(rules, RULE_GAP)
@@ -540,6 +555,28 @@ function Room.new(frame: Frame, _router: any): any
 		-- map
 		local map = Net.map(room.settings.mapId)
 		mapImage.set(map) -- the starts are hints: players pick theirs in the match
+
+		-- spawn boxes (Teams): each team's, in the colour of its first seat as
+		-- you see it (yours for your own team)
+		local shownBoxes: { BoxEditor.Team } = {}
+		local teamMode = room.settings.mode == "TEAM"
+		if teamMode then
+			local teams = SpawnBoxes.teams(room.slots)
+			local boxes = SpawnBoxes.forTeams(map and map.geo, teams, room.settings.boxes)
+			for _, team in teams do
+				local seatOf: number? = if mySlot and room.slots[mySlot].team == team then mySlot else nil
+				for i, s in room.slots do
+					if seatOf == nil and s.team == team then
+						seatOf = i
+					end
+				end
+				if boxes[team] and seatOf then
+					table.insert(shownBoxes, { team = team, box = boxes[team], color = Ui.rgb(colors[seatOf]) })
+				end
+			end
+		end
+		boxEditor.set(shownBoxes, host and setup and teamMode)
+		resetBoxes.Visible = host and setup and teamMode and SpawnBoxes.touched(SpawnBoxes.teams(room.slots), room.settings.boxes)
 
 		-- rules: BAR's rows, editable for the host while the room is open
 		Ui.clear(rules)

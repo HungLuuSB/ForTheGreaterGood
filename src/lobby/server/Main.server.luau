@@ -39,6 +39,7 @@ local Listing = require("../shared/Listing")
 local Lobbies = require("./Lobbies")
 local MapPreview = require("../shared/MapPreview")
 local MapRegistry = require("@shared/Grid/MapRegistry")
+local StartAreas = require("@shared/Match/StartAreas")
 local MatchStore = require("./Services/MatchStore")
 local Places = require("./Places")
 local Profile = require("../shared/Profile")
@@ -144,7 +145,9 @@ task.spawn(function()
 		local ok, layers = pcall(MapRegistry.load, id)
 		if ok and layers then
 			local entry = MapRegistry.NAMED[name] or MapRegistry.HANDMADE[name]
-			table.insert(list, { id = id, name = entry.name, starts = #layers.starts })
+			-- the shape the spawn box defaults need (F26): bounds, start hints and the map's own boxes, in studs
+			local geo = { bounds = StartAreas.bounds(layers.grid), starts = layers.starts, startBoxes = layers.startBoxes }
+			table.insert(list, { id = id, name = entry.name, starts = #layers.starts, geo = geo })
 			previews[id] = MapPreview.build(layers, 128)
 		else
 			warn(`[Lobby] map {id}: {layers}`)
@@ -167,7 +170,7 @@ getMaps.OnServerInvoke = function(_player: Player): any
 	local out = {}
 	for _, m in Ctx.maps do
 		local p = previews[m.id]
-		table.insert(out, { id = m.id, name = m.name, starts = m.starts, preview = p })
+		table.insert(out, { id = m.id, name = m.name, starts = m.starts, geo = m.geo, preview = p })
 	end
 	return { ready = true, maps = out }
 end
