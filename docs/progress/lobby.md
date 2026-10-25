@@ -11,6 +11,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Studio** (same server): Lobby → stand-in match → back as host; changing the win rule and the real Start button worked, and a second match launched (`lobby_host_back_from_match`).
 - **By design, not changed:** a host back early while others still play sees the room "In match" (Rejoin) until that match ends.
 - Lobby specs 55 / 55; the build check passes.
+- Ready to merge: `0ed1299` (the host keeps the room after a match; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-26: beta feedback F25, F31, F32, F35)
 
