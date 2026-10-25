@@ -34,7 +34,6 @@ return {
 	parts = parts,
 	visualPieces = legs,
 	attachments = {
-		-- the def fires from `arm_l` / `arm_r`; these are at the lenses (asked sim-A to point the weapon at them)
 		{ name = "arm_l_muzzle", parent = "arm_l", at = { -1.2, AY, -2.35 } },
 		{ name = "arm_r_muzzle", parent = "arm_r", at = { 1.2, AY, -2.35 } },
 	},

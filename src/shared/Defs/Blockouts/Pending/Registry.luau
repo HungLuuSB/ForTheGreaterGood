@@ -39,7 +39,7 @@ return {
 		chs_tinker = { id = "chs_tinker", model = "chs_tinker", faction = "chaos", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "nano" }, moveClass = "WALKER" },
 		ord_lazarus = { id = "ord_lazarus", model = "ord_lazarus", faction = "order", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "nano" }, moveClass = "WALKER" },
 		chs_graverobber = { id = "chs_graverobber", model = "chs_graverobber", faction = "chaos", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "nano" }, moveClass = "WALKER" },
-		ord_glint = { id = "ord_glint", model = "ord_glint", faction = "order", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "arm_l", "arm_r" }, moveClass = "WALKER" },
+		ord_glint = { id = "ord_glint", model = "ord_glint", faction = "order", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "arm_l", "arm_r", "arm_l_muzzle", "arm_r_muzzle" }, moveClass = "WALKER" },
 		chs_skitter = { id = "chs_skitter", model = "chs_skitter", faction = "chaos", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "muzzle" }, moveClass = "WALKER" },
 		ord_mace = { id = "ord_mace", model = "ord_mace", faction = "order", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "muzzle" }, moveClass = "WALKER" },
 		chs_thug = { id = "chs_thug", model = "chs_thug", faction = "chaos", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "muzzle" }, moveClass = "WALKER" },
