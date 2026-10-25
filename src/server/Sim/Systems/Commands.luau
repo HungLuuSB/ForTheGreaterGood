@@ -220,7 +220,18 @@ function Commands.step(sim: Types.Sim)
 	local used: { [number]: number } = {} -- player → unit IDs applied this tick
 	local waiting: { [number]: boolean } = {} -- player → a command of theirs waits: later ones too
 	local keep = {}
+	-- the Commanders are landing (S-174): orders wait, then the pre-game
+	-- queues go first
+	local landing = sim.landing
+	if landing and sim.tick >= landing.untilTick then
+		Pregame.land(sim)
+		landing = nil
+	end
 	for _, q in queue do
+		if landing and q.cmd.cmdType ~= CT.CAMERA and q.cmd.cmdType ~= CT.CHEAT then
+			table.insert(keep, q)
+			continue
+		end
 		local n = #q.cmd.unitIds
 		local u = used[q.player] or 0
 		if waiting[q.player] or (u > 0 and u + n > Commands.UNITS_PER_TICK) then

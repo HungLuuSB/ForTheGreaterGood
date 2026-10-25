@@ -105,7 +105,11 @@ function Sim.new(config: Config): Sim
 		if ally ~= math.floor(ally) or ally < 1 or ally > Sim.MAX_TEAMS then
 			error(`Sim.new: allyTeam must be an integer in 1..{Sim.MAX_TEAMS}, got {ally}`, 2)
 		end
-		players[p.id] = { id = p.id, team = p.team, allyTeam = ally }
+		local faction = p.faction or (if p.team % 2 == 1 then "order" else "chaos")
+		if faction ~= "order" and faction ~= "chaos" then
+			error(`Sim.new: faction must be "order" or "chaos", got {tostring(faction)}`, 2)
+		end
+		players[p.id] = { id = p.id, team = p.team, allyTeam = ally, faction = faction }
 		table.insert(order, p.id)
 	end
 	table.sort(order)
@@ -133,7 +137,37 @@ function Sim.new(config: Config): Sim
 	if choose and scenario ~= "standard_start" then
 		error("Sim.new: startMode \"choose\" needs the standard_start scenario", 2)
 	end
-	local matchInfo = if config.match then { mode = config.match.mode, win = config.match.win, unitCap = unitCap, friendlyFire = if config.match.friendlyFire == false then false else nil, startMode = if choose then "choose" :: "choose" else nil } else nil
+	local host = config.match and config.match.host
+	if host ~= nil and (not choose or players[host] == nil) then
+		error(`Sim.new: host must be a player of a "choose" match, got {tostring(host)}`, 2)
+	end
+	-- the lobby's spawn boxes, quantized as the replay stores them (S-174)
+	local startBoxes: { [number]: { number } }? = nil
+	if config.match and config.match.startBoxes then
+		if not choose then
+			error("Sim.new: startBoxes need startMode \"choose\"", 2)
+		end
+		local boxes = {}
+		for ally, b in config.match.startBoxes do
+			if table.find(allyTeams, ally) == nil then
+				error(`Sim.new: startBoxes names ally team {tostring(ally)}, not in the match`, 2)
+			end
+			local q = {}
+			for k = 1, 4 do
+				local v = b[k]
+				if type(v) ~= "number" or v ~= v or v < 0 or v > 1 then
+					error(`Sim.new: startBoxes[{ally}] needs 4 fractions in 0..1`, 2)
+				end
+				q[k] = math.floor(v * 65535 + 0.5) / 65535
+			end
+			if q[1] >= q[3] or q[2] >= q[4] then
+				error(`Sim.new: startBoxes[{ally}] is empty`, 2)
+			end
+			boxes[ally] = q
+		end
+		startBoxes = boxes
+	end
+	local matchInfo = if config.match then { mode = config.match.mode, win = config.match.win, unitCap = unitCap, friendlyFire = if config.match.friendlyFire == false then false else nil, startMode = if choose then "choose" :: "choose" else nil, host = host, startBoxes = startBoxes } else nil
 
 	local cheats = config.cheats == true or (config.match ~= nil and config.match.cheats == true)
 	local offline = config.offline == true
@@ -143,7 +177,7 @@ function Sim.new(config: Config): Sim
 	local map = if layers then Passability.build(layers) else nil
 	local headerPlayers = {}
 	for i, id in order do
-		headerPlayers[i] = { id = id, team = players[id].team, allyTeam = players[id].allyTeam }
+		headerPlayers[i] = { id = id, team = players[id].team, allyTeam = players[id].allyTeam, faction = players[id].faction }
 	end
 
 	local sim: Sim = {
@@ -201,7 +235,7 @@ function Sim.new(config: Config): Sim
 		sim.pregame = Pregame.new(sim, function(s)
 			setup(s)
 			Stats.sample(s)
-		end)
+		end, host, startBoxes)
 		return sim
 	end
 	setup(sim)
