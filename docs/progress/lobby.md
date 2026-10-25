@@ -2,6 +2,20 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: automatic colours, S-172)
+
+- **sim-A's request:** after the beta publish, the room still had the colour picker. Players' colours are now automatic in the lobby too:
+  - **Room:** the seat editor's colour grid is gone. Every seat's swatch (seat chips, the "You" row) comes from `TeamColors.forViewer` from your seat: you Blue, your allies cold, enemies warm; spectators see the lowest ally team as the cold side.
+  - **Same IDs as the match:** `MatchConfig.seats(room)` is the config's player order (each seat's player ID and ally team), split out of `MatchConfig.build`. `MatchConfig.colors(room, viewer)` calls `forViewer` with those IDs and the viewer's own ID (0 for a spectator), as sim-A asked and as B does in the match.
+  - **Results panel:** colours from your view, using the players' place in the list as their ID.
+  - **Contract:** `color` is still sent: a unique palette index, validated, unused. Still version 1.
+  - **The Plains** was already in the map picker (the server lists every hand-made map: "The Plains (16)").
+- **Checked:** lobby specs 48 / 48 (one new: seat colours from each viewer, the same as `forViewer` on the built config); the lobby build check passes. In Studio on the published lobby place ("FTGG Testplace"), a Teams room on The Plains (`debug_out/screens/`):
+  - `lobby_room_auto_colours`: you Blue, your AI ally Cyan; team 2 Red, Orange, Fuchsia; team 3 Yellow;
+  - `lobby_room_seat_no_picker`, `lobby_room_ai_no_picker`: the seat editors without the colour grid, shorter to fit;
+  - `lobby_room_spectator_colours`: as a spectator, team 1 Blue, team 2 Red and Orange.
+- Smart App Control blocked `lune.exe` and `rojo.exe` on the morning of 2026-10-26 (unsigned); the user turned it off.
+
 ## Summary (2026-10-24, the beta merge: new start rules and limits)
 
 - **sim-A's beta merge failed 3 lobby specs** after S-169 / S-171 raised the shared limits. Fixed on `m-lobby` with sim-A's `c06d3ca` merged in:
@@ -10,7 +24,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
   - **Room UI:** the seat editor lists only the teams the map allows, and its colour grid has a third row for the 16 colours. The room's map markers no longer take player colours, since starts are hints.
   - **Contract:** `docs/contracts/match.md` updated (start 0, the limits); still version 1.
 - **Checked in Studio:** The Plains (16 starts) is in the map list; a 4-against-4 Teams room on it, the seat editor with 8 teams and 16 colours (`lobby_room_plains_seat.jpg`), and a forced start whose config passed the shared check and launched.
-- **Not done yet (after the beta):** the automatic colours in the room (`TeamColors.forViewer`) and removing the colour picker; The Plains' skirmish note.
+- **Not done yet (after the beta):** the automatic colours in the room (`TeamColors.forViewer`) and removing the colour picker (done 2026-10-26, above); The Plains' skirmish note.
 - **Tests:** lobby specs 47 / 47; the lobby build check passes.
 - Ready to merge: `63ca504` (rooms to the new limits, start 0 for every player, seat editor for 8 teams and 16 colours, specs and contract; includes sim-A's `c06d3ca`; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
 

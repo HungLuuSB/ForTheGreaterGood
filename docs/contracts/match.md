@@ -54,7 +54,7 @@ Each `players[i]`:
 | `start` | integer | **`0`: picked in the match's pre-game** (S-171, 2026-10-24: no fixed starts; the map's starts are only hints for the AI). `== id` is still accepted from lobbies published before and means the same |
 | `faction` | `"order"` \| `"chaos"` | |
 | `allyTeam` | integer 1..n | FFA: `== id`. TEAM: 1..number of ally teams, numbered in team order |
-| `color` | integer 1..12 | index into the palette below; unique per match |
+| `color` | integer 1..#COLORS | index into the palette below; unique per match. Validated but unused since S-172: the match and the lobby colour players by `TeamColors.forViewer` with `id` |
 | `user` | number? | a human's UserId (absent for an AI) |
 | `name` | string | display name; `"AI 1 (normal)"` for an AI |
 | `ai` | `"easy"` \| `"normal"` \| `"hard"`? | present only for an AI |

@@ -1,10 +1,12 @@
 --!strict
 -- The match config and results record (L-4, docs/contracts/match.md):
 -- built from a room, players ordered by start and ally team, validated, and
--- tampered or malformed records refused.
+-- tampered or malformed records refused; seat colours as the match shows
+-- them (S-172).
 
 local MatchConfig = require("../shared/MatchConfig")
 local Rooms = require("../shared/Rooms")
+local TeamColors = require("@shared/Match/TeamColors")
 local RunAll = require("../../server/Tests/RunAll")
 
 local MAPS: { Rooms.MapInfo } = { { id = "map:quad", name = "Quad", starts = 4 } }
@@ -54,6 +56,30 @@ return function(t: RunAll.Context)
 		t.equal(c.players[2].allyTeam, 2)
 		t.deepEqual(c.spectators, { { user = 30, name = "Cee" } })
 		t.deepEqual(MatchConfig.users(c), { 10, 20, 30 })
+	end)
+
+	t.test("seat colours: forViewer on the config's player IDs, from each viewer's seat", function()
+		local r = teamRoom()
+		local function names(viewer: number?): { string }
+			local out = {}
+			for i, c in MatchConfig.colors(r, viewer) do
+				out[i] = c.name
+			end
+			return out
+		end
+		-- by slot: Host (team 3), Bee (team 1), AI hard (team 3), AI easy (team 1)
+		t.deepEqual(names(10), { "Blue", "Red", "Cyan", "Orange" })
+		t.deepEqual(names(20), { "Red", "Blue", "Orange", "Cyan" })
+		t.deepEqual(names(nil), { "Red", "Blue", "Orange", "Cyan" }, "a spectator: the lowest ally team is cold")
+		t.deepEqual(names(30), names(nil), "a member without a seat watches")
+		-- the same colours the match computes from the config it's sent
+		local c = MatchConfig.build(r, "m1", 1, 0, LOBBY)
+		local byId = TeamColors.forViewer(3, c.players :: any)
+		local mine = MatchConfig.colors(r, 10)
+		for _, seat in MatchConfig.seats(r) do
+			t.equal(mine[seat.slot], byId[seat.id])
+			t.equal(c.players[seat.id].allyTeam, seat.allyTeam)
+		end
 	end)
 
 	t.test("validate refuses tampered configs", function()

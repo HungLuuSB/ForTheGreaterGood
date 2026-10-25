@@ -126,3 +126,8 @@ The user approved it (queue item 5). "Invite" in the room calls `SocialService:P
 - **Read-only client modules added to `lobby.project.json`:** `Render/Models`, `Render/BlockoutBuilder`, `Core/PortraitStage`, `UI/IconAtlas` (with the kit's rule: client-B keeps their API stable).
 - **Alternatives:** a flat ViewportFrame preview (no terrain water, no shadows, the lobby's lighting doesn't reach it); a `role` field on the defs (sim-A's files; the lobby's table works now and the spec catches drift).
 
+## L-19 (2026-10-26): automatic player colours in the room
+
+- **Decision:** sim-A's request after the beta publish (S-172, the user's rule: colours are automatic). The room has no colour picker. Every seat shows `TeamColors.forViewer` from the viewer's seat: you Blue, allies cold, enemies warm; a spectator sees the lowest ally team as cold. The IDs passed to `forViewer` are the config's player IDs (`MatchConfig.seats`, the order `MatchConfig.build` sends), so a player's colour in the room is the one the match shows them. The results panel does the same with the players' list order.
+- **The colour index stays in the contract:** each seat still gets a unique palette index (validated by the shared check), so the config keeps its shape and older match servers still accept it.
+- **Alternatives:** keep the picker as a preference (the match would ignore it, which misleads); send the viewer's colours from the server (each viewer needs its own, and the client already has everything `forViewer` needs).

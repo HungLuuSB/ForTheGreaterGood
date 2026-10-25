@@ -1,10 +1,13 @@
 --!strict
 -- A finished match's summary, shown once when you're back in the room
 -- (L-4): victory or defeat, the map, mode and length, and every player's
--- result and numbers from the match server's results record.
+-- result and numbers from the match server's results record. Colours are
+-- the match's, from your view (S-172): players are listed in config order,
+-- so a player's place in the list is its player ID.
 
 local Players = game:GetService("Players")
 
+local TeamColors = require("@shared/Match/TeamColors")
 local Ui = require("../Ui")
 
 local Kit = Ui.Kit
@@ -28,11 +31,16 @@ function Results.new(gui: ScreenGui): any
 	local function show(r: any)
 		local me = Players.LocalPlayer.UserId
 		local mine = nil
-		for _, p in r.players do
+		local myId = 0
+		local ids = {}
+		for i, p in r.players do
 			if p.user == me then
 				mine = p
+				myId = i
 			end
+			table.insert(ids, { id = i, allyTeam = p.allyTeam })
 		end
+		local colors = TeamColors.forViewer(myId, ids)
 		local headline, color
 		if r.outcome == "abandoned" then
 			headline, color = "Match abandoned", Kit.COLOR.dim
@@ -69,13 +77,13 @@ function Results.new(gui: ScreenGui): any
 		local f = Kit.text(p.content, facts, "small")
 		f.LayoutOrder = 2
 		local rows = {}
-		for _, pl in r.players do
+		for i, pl in r.players do
 			local s = pl.stats or {}
 			table.insert(rows, {
 				function(cell: Frame)
 					local l = Kit.list(cell, 6, true)
 					l.VerticalAlignment = Enum.VerticalAlignment.Center
-					Ui.swatch(cell, Ui.color(pl.color), 12)
+					Ui.swatch(cell, Ui.rgb(colors[i]), 12)
 					Ui.label(cell, pl.name, "label", if pl.user == me then Kit.COLOR.accent else Kit.COLOR.text, 1)
 				end,
 				Ui.label2(pl.faction),
