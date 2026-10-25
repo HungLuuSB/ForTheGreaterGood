@@ -749,6 +749,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `eb247e1` (T2 structure meshes at the S-104 sizes, queue item 5: 26 new builds for the advanced factories, extractors, fusion plants, T2 sensors, jammers and defences, all `review` (nothing new draws in game); `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs; includes the merge of `main` fb13cd4). Their wrecks follow.
 - Ready to merge: `c79300b` (wrecks for every mesh that had none, queue items 5/6: the 26 T2 structures' and 30 more, all `review`; the regenerated status table, item 7; `assets/models/*/export_wreck`, manifest, `place/MeshMaterials.model.json`, docs). The WIP commit before it (7a1c5b1) only adds the T2 wreck exports.
 - Ready to merge: `b59167b` (F18 blockouts, includes `f7de8cb`: the six T2 defences as real towers, the six T1 laser and beam towers (Sentry / Guard, Overwatch / Geryon, Beamer / Twin Guard) taller and heavier; `src/shared/Defs/Blockouts/`, docs. The T2 defences draw these in game at once, their meshes being `review`; footprints, pieces and build pads unchanged).
+- Ready to merge: `3af3b38` (S-181 blockouts in `Blockouts/Pending/`, not registered, so nothing changes in game; `Blockout.isAttachmentPiece` takes `laser_l_muzzle`-style names; new `Blockouts/Bots.luau`). Safe to merge before or after S-181; the registration follows once S-181 is in `main`.
 
 ## Requests
 
