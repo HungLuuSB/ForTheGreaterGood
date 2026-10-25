@@ -5,6 +5,7 @@ local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local Packer = require("@shared/Net/Packer")
 local Passability = require("@shared/Grid/Passability")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local RunAll = require("./RunAll")
 
@@ -95,10 +96,11 @@ return function(t: RunAll.Context)
 		acc.supply.stored, acc.power.stored = 0, 0
 		local start = layers.starts[1]
 		Spawn.unit(sim, "ord_sovereign", 1, start[1], start[2])
-		-- a deposit cell around the west start, and an empty cell
+		-- a deposit patch near the west start (its centre: S-184), and an empty cell
 		local sx, sz = g:cellAt(start[1], start[2])
 		local dx, dz = g:cellCenter(sx + 4, sz + 4)
-		Spawn.unit(sim, "ord_extractor", 1, dx, dz)
+		local px, pz = PlacementRules.depositNear(layers, dx, dz, 16)
+		Spawn.unit(sim, "ord_extractor", 1, px :: number, pz :: number)
 		local ex, ez = g:cellCenter(sx + 1, sz + 1)
 		Spawn.unit(sim, "ord_extractor", 1, ex, ez) -- no deposit: produces nothing
 		Spawn.unit(sim, "ord_generator", 1, start[1], start[2] - 40)

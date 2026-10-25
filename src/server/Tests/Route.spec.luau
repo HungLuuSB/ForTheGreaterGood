@@ -180,19 +180,19 @@ return function(t: RunAll.Context)
 		t.equal(failure, "start_blocked")
 	end)
 
-	t.test("a 1-cell gap passes footprint 1 but not footprint 2", function()
+	t.test("a 1-cell gap passes footprints 1 and 2 (S-185) but not footprint 3", function()
 		local pm = wallMap(1) -- the gap is the single cell (16, 31) on the map edge
 		local gapPm = flatWith(32, 32, function(cx, cz)
 			return if cx == 16 and cz ~= 20 then 10 else 0
 		end)
 		for _, case in { { pm, "edge gap" }, { gapPm, "interior gap" } } do
 			local small = Quadtree.build(case[1], "TRACKED", Passability.requiredClearance(1))
-			local big = Quadtree.build(case[1], "TRACKED", Passability.requiredClearance(2))
+			local big = Quadtree.build(case[1], "TRACKED", Passability.requiredClearance(3))
 			local g = small.grid
 			local start, goal = g:index(5, 10), g:index(26, 10)
 			t.expect(Route.find(small, start, goal) ~= nil, `footprint 1 through the {case[2]}`)
 			local route, failure = Route.find(big, start, goal)
-			t.equal(route, nil, `footprint 2 must not pass the {case[2]}`)
+			t.equal(route, nil, `footprint 3 must not pass the {case[2]}`)
 			t.equal(failure, "unreachable")
 		end
 	end)

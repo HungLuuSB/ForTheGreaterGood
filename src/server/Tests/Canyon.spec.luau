@@ -82,6 +82,7 @@ return function(t: RunAll.Context)
 				table.insert(cells, i)
 			end
 		end
+		home, glitter = home / 4, glitter / 4 -- 2 × 2 patches (S-184)
 		t.equal(home, 8)
 		t.expect(glitter >= 70, `glitter deposits ({glitter})`)
 		for _, mc in LAND do

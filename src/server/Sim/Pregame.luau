@@ -90,10 +90,8 @@ function Pregame.new(sim: Types.Sim, setup: (sim: Types.Sim) -> (), host: number
 	local sides = StartAreas.sides(sim.allyTeams, #layers.starts)
 	local g = map.grid
 	local deposits = {}
-	for i = 0, g.cellCount - 1 do
-		if Layers.getSupply(layers, i) > 0 then
-			table.insert(deposits, { g:cellCenter(g:coords(i)) })
-		end
+	for _, d in layers.deposits or {} do
+		table.insert(deposits, { d[1], d[2] }) -- each 2 × 2 patch once (S-184)
 	end
 	local bounds = StartAreas.bounds(g)
 	local boxes = StartAreas.boxes(sides, layers.starts, bounds, layers.startBoxes)

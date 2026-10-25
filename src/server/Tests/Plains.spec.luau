@@ -13,14 +13,12 @@ return function(t: RunAll.Context)
 	local g = layers.grid
 	local n = g.cellsX
 
+	-- deposit patches (S-184) whose centre is within r of (x, z)
 	local function depositsNear(x: number, z: number, r: number): number
 		local c = 0
-		for i = 0, g.cellCount - 1 do
-			if Layers.getSupply(layers, i) > 0 then
-				local dx, dz = g:cellCenter(g:coords(i))
-				if (dx - x) ^ 2 + (dz - z) ^ 2 <= r * r then
-					c += 1
-				end
+		for _, d in layers.deposits :: { { number } } do
+			if (d[1] - x) ^ 2 + (d[2] - z) ^ 2 <= r * r then
+				c += 1
 			end
 		end
 		return c
@@ -59,12 +57,7 @@ return function(t: RunAll.Context)
 		for i, s in layers.starts do
 			t.equal(depositsNear(s[1], s[2], 80), 3, `hint {i}`)
 		end
-		local total = 0
-		for i = 0, g.cellCount - 1 do
-			if Layers.getSupply(layers, i) > 0 then
-				total += 1
-			end
-		end
+		local total = #(layers.deposits :: { any })
 		t.expect(total >= 16 * 3 + 60, `{total} deposits`)
 	end)
 

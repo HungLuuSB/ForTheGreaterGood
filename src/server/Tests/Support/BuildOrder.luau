@@ -49,12 +49,10 @@ end
 local function nearestDeposits(layers: Layers.Layers, x: number, z: number): { { number } }
 	local g = layers.grid
 	local found = {}
-	for i = 0, g.cellCount - 1 do
-		if Layers.getSupply(layers, i) > 0 then
-			local cx, cz = g:coords(i)
-			local wx, wz = g:cellCenter(cx, cz)
-			table.insert(found, { wx, wz, (wx - x) ^ 2 + (wz - z) ^ 2, i })
-		end
+	for i, d in layers.deposits or {} do
+		-- each 2 × 2 patch's centre (S-184)
+		local wx, wz = d[1], d[2]
+		table.insert(found, { wx, wz, (wx - x) ^ 2 + (wz - z) ^ 2, i })
 	end
 	table.sort(found, function(a, b)
 		if a[3] ~= b[3] then
@@ -86,8 +84,8 @@ function BuildOrder.new(sim: Sim.Sim): Driver
 			steps = {
 				{ def = p .. "extractor", x = deposits[1][1], z = deposits[1][2], facing = 0 },
 				{ def = p .. "extractor", x = deposits[2][1], z = deposits[2][2], facing = 0 },
-				{ def = p .. "generator", x = x - 24 * toward, z = z - 16, facing = 0 },
-				{ def = p .. "generator", x = x - 24 * toward, z = z + 16, facing = 0 },
+				{ def = p .. "generator", x = x - 48 * toward, z = z - 16, facing = 0 }, -- (clear of the 2 × 2 deposit patches, S-184)
+				{ def = p .. "generator", x = x - 48 * toward, z = z + 16, facing = 0 },
 				{ def = p .. "vehplant", x = x + 64 * toward, z = z, facing = if toward > 0 then 1 else 3 },
 			},
 			next = 1,

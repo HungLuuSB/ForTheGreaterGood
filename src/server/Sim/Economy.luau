@@ -40,6 +40,7 @@ export type Resource = {
 	ratio: number, -- 0..1 for the current window
 	spent: number, -- spent so far this window
 	reclaimed: number, -- reclaimed so far this window
+	reclaimRate: number?, -- per second over the last window: reclaim and gifts (S-183: shown with the income)
 	wasted: number, -- total overflow lost to full storage
 	priorityDemand: number?, -- per second, of `demand`: missile refills, served first (S-66)
 	priorityRatio: number?, -- 0..1: their progress ratio this window (S-66)
@@ -160,6 +161,7 @@ local function settleStored(r: Resource, window: number): number
 	r.gathered += r.income * window + r.reclaimed
 	r.drawn += r.spent
 	r.spent = 0
+	r.reclaimRate = r.reclaimed / window
 	r.reclaimed = 0
 	local overflow = 0
 	if stored > r.storage then

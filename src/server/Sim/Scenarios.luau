@@ -6,6 +6,7 @@
 local Nav = require("./Nav")
 local Spawn = require("./Spawn")
 local Types = require("./Types")
+local World = require("./World")
 
 local Scenarios: { [string]: (Types.Sim) -> () } = {}
 
@@ -108,7 +109,12 @@ Scenarios.ew_test = function(sim: Types.Sim)
 	Spawn.unit(sim, "ord_aegis", a, -450, 0)
 	Spawn.unit(sim, "ord_lancer", a, 100, 150, math.pi)
 	Spawn.unit(sim, "ord_generator", a, -450, 200)
-	Spawn.unit(sim, "ord_guardian", a, -250, -250)
+	-- the helicopter holds its fire and is tough, so the four IR towers keep
+	-- launching and its flares get to beat one (S-178 made it turn 1.5x as
+	-- fast and its rockets reach half as far: it used to win the duel first)
+	local heli = Spawn.unit(sim, "ord_guardian", a, -250, -250)
+	sim.world.fireState[heli] = World.FireState.HOLD_FIRE
+	World.setHealth(sim.world, heli, sim.world.health[heli] * 10)
 	Spawn.unit(sim, "chs_wasp", b, 100, 0)
 	Spawn.unit(sim, "chs_shroud", b, 120, -40)
 	for i = 0, 3 do

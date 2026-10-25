@@ -35,10 +35,12 @@ function PlacementRules.terrainOk(pm: Passability.PassMap, i: number, placement:
 	return if placement == "land" then land elseif placement == "water" then sea else (land or sea)
 end
 
+PlacementRules.DEPOSIT_CELLS = 4 -- a deposit is a 2 × 2 patch (S-184)
+
 -- Supply under a footprint of `size` cells snapped at (x, z): the sum of its
--- cells' deposits (S-104). An extractor works any deposit its footprint
--- covers, so a footprint-2 or -3 extractor finds a one-cell deposit wherever
--- the snap puts its corner or centre.
+-- cells' deposits (S-104), per patch (S-184: a patch's four cells count
+-- as its value once, so an extractor exactly on it, or an advanced one
+-- centred over it, gets the full value; one half off it, half).
 function PlacementRules.supplyUnder(layers: Layers.Layers, size: number, x: number, z: number): number
 	local g = layers.grid
 	local x0, z0 = PlacementRules.snap(g, size, x, z)
@@ -50,7 +52,23 @@ function PlacementRules.supplyUnder(layers: Layers.Layers, size: number, x: numb
 			end
 		end
 	end
-	return sum
+	return sum / PlacementRules.DEPOSIT_CELLS
+end
+
+-- The deposit patch nearest (x, z) within `radius` studs: its centre and
+-- value, or nil (S-184; build ghosts and the AI snap extractors to it).
+function PlacementRules.depositNear(layers: Layers.Layers, x: number, z: number, radius: number): (number?, number?, number?)
+	local best, bestD = nil, radius * radius
+	for _, d in layers.deposits or {} do
+		local dd = (d[1] - x) ^ 2 + (d[2] - z) ^ 2
+		if dd <= bestD then
+			best, bestD = d, dd
+		end
+	end
+	if best == nil then
+		return nil, nil, nil
+	end
+	return best[1], best[2], best[3]
 end
 
 return PlacementRules

@@ -206,7 +206,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		for slot, ws in def.weapons do
 			weapons[slot] = defs.weaponByIndex[ws.weaponIndex]
 		end
-		local height = Combat.UNIT_HEIGHT * def.footprint
+		local height = def.height or Combat.UNIT_HEIGHT * def.footprint
 		local radius = def.footprint * Combat.RADIUS_PER_FOOTPRINT
 		maxRadius = math.max(maxRadius, radius)
 		if def.movement then
@@ -215,7 +215,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		profiles[index] = {
 			radius = radius,
 			height = height,
-			muzzleHeight = height * Combat.MUZZLE_HEIGHT,
+			muzzleHeight = def.muzzleHeight or height * Combat.MUZZLE_HEIGHT,
 			armorClass = def.armorClass,
 			categoryMask = def.categoryMask,
 			maxHealth = def.health,
