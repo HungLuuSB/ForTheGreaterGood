@@ -12,6 +12,8 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 600, power = 6000, buildTime = 12000 },
 	health = 3800, -- faction pass (S-62)
 	footprint = 3,
+	height = 25, -- a tall tower (S-184; models-C's F18 blockouts)
+	muzzleHeight = 19,
 	sensors = { sight = 160 },
 	weapons = { { def = "chs_fortress_mortar", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "muzzle" },
