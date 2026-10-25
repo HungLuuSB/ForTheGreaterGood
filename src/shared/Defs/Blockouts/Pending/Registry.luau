@@ -8,8 +8,49 @@
 -- fields each was built for (a proposal for the sim session, M-17).
 
 return {
-	blockouts = {},
-	defs = {},
+	blockouts = {
+		-- S-181 (the playtest's new units, defs on m-sim-2 2b3ca0e): move up and register once they're in main
+		ord_botlab = require("./ord_botlab"),
+		chs_botlab = require("./chs_botlab"),
+		ord_advbotlab = require("./ord_advbotlab"),
+		chs_advbotlab = require("./chs_advbotlab"),
+		ord_artisan = require("./ord_artisan"),
+		chs_tinker = require("./chs_tinker"),
+		ord_lazarus = require("./ord_lazarus"),
+		chs_graverobber = require("./chs_graverobber"),
+		ord_glint = require("./ord_glint"),
+		chs_skitter = require("./chs_skitter"),
+		ord_mace = require("./ord_mace"),
+		chs_thug = require("./chs_thug"),
+		ord_kestrel = require("./ord_kestrel"),
+		chs_needle = require("./chs_needle"),
+		ord_fatboy = require("./ord_fatboy"),
+		chs_tzar = require("./chs_tzar"),
+		chs_centurion = require("./chs_centurion"),
+		chs_dragon = require("./chs_dragon"),
+		ord_liche = require("./ord_liche"),
+	},
+	defs = {
+		ord_botlab = { id = "ord_botlab", model = "ord_botlab", faction = "order", tier = 1, domain = "structure", footprint = 4, pieces = { "base" } },
+		chs_botlab = { id = "chs_botlab", model = "chs_botlab", faction = "chaos", tier = 1, domain = "structure", footprint = 4, pieces = { "base" } },
+		ord_advbotlab = { id = "ord_advbotlab", model = "ord_advbotlab", faction = "order", tier = 2, domain = "structure", footprint = 5, pieces = { "base" } },
+		chs_advbotlab = { id = "chs_advbotlab", model = "chs_advbotlab", faction = "chaos", tier = 2, domain = "structure", footprint = 5, pieces = { "base" } },
+		ord_artisan = { id = "ord_artisan", model = "ord_artisan", faction = "order", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "nano" }, moveClass = "WALKER" },
+		chs_tinker = { id = "chs_tinker", model = "chs_tinker", faction = "chaos", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "nano" }, moveClass = "WALKER" },
+		ord_lazarus = { id = "ord_lazarus", model = "ord_lazarus", faction = "order", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "nano" }, moveClass = "WALKER" },
+		chs_graverobber = { id = "chs_graverobber", model = "chs_graverobber", faction = "chaos", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "nano" }, moveClass = "WALKER" },
+		ord_glint = { id = "ord_glint", model = "ord_glint", faction = "order", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "arm_l", "arm_r" }, moveClass = "WALKER" },
+		chs_skitter = { id = "chs_skitter", model = "chs_skitter", faction = "chaos", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "muzzle" }, moveClass = "WALKER" },
+		ord_mace = { id = "ord_mace", model = "ord_mace", faction = "order", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "muzzle" }, moveClass = "WALKER" },
+		chs_thug = { id = "chs_thug", model = "chs_thug", faction = "chaos", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "muzzle" }, moveClass = "WALKER" },
+		ord_kestrel = { id = "ord_kestrel", model = "ord_kestrel", faction = "order", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "launcher", "muzzle" }, moveClass = "WALKER" },
+		chs_needle = { id = "chs_needle", model = "chs_needle", faction = "chaos", tier = 1, domain = "ground", footprint = 1, pieces = { "base", "torso", "launcher", "muzzle" }, moveClass = "WALKER" },
+		ord_fatboy = { id = "ord_fatboy", model = "ord_fatboy", faction = "order", tier = 2, domain = "ground", footprint = 2, pieces = { "base", "cannon", "muzzle" }, moveClass = "WALKER" },
+		chs_tzar = { id = "chs_tzar", model = "chs_tzar", faction = "chaos", tier = 2, domain = "ground", footprint = 2, pieces = { "base", "turret", "muzzle" }, moveClass = "HEAVY_TRACKED" },
+		chs_centurion = { id = "chs_centurion", model = "chs_centurion", faction = "chaos", tier = 2, domain = "ground", footprint = 2, pieces = { "base", "torso", "muzzle" }, moveClass = "WALKER" },
+		chs_dragon = { id = "chs_dragon", model = "chs_dragon", faction = "chaos", tier = 2, domain = "air", footprint = 3, pieces = { "base", "belly", "flame", "laser_l", "laser_l_muzzle", "laser_r", "laser_r_muzzle" }, moveClass = "HELI" },
+		ord_liche = { id = "ord_liche", model = "ord_liche", faction = "order", tier = 2, domain = "air", footprint = 2, pieces = { "base", "bay", "muzzle" }, moveClass = "JET" },
+	},
 	poses = {
 		-- anti-nukes: ready to launch
 		ord_providence = {
