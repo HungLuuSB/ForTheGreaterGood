@@ -1,0 +1,18 @@
+--!strict
+-- Tzar's plasma cannon (S-181, the playtest's new units).
+return {
+	id = "chs_tzar_cannon",
+	type = "BALLISTIC",
+	range = 270,
+	reload = 4.5,
+	projectileSpeed = 150,
+	gravity = 60,
+	accuracy = 2,
+	damage = { LIGHT = 1100, ARMORED = 980, STRUCTURE = 1300, SHIP = 1000, AIR = 0, SUB = 0 },
+	aoe = 40,
+	edgeEffectiveness = 0.3,
+	targets = { "GROUND", "NAVAL", "STRUCTURE" },
+	priority = { "STRUCTURE", "ARMORED", "GROUND" },
+	turret = { yawRate = 50, pitchRate = 30, tolerance = 2, minPitch = 0, maxPitch = 60, arc = 360 },
+	fx = { trail = "plasma", color = { r = 255, g = 110, b = 30 }, impact = "explosion_huge", sound = "plasma_heavy" },
+}

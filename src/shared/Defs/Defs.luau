@@ -174,6 +174,7 @@ export type WeaponDef = {
 	canTargetRadar: boolean?,
 	beamDuration: number?, -- BEAM: seconds the beam lingers; its damage is dealt over that time (S-113)
 	pierce: boolean?, -- with beamDuration: the beam's line hurts every enemy it crosses, hit or miss (S-115)
+	fullLength: boolean?, -- with pierce: the line runs on past the target to the weapon's full range (S-181: the Centurion clears lines)
 	shieldMass: number?, -- weight against shield fields (1 = a typical shell); default from damage (ShieldField.mass, S-79)
 	shotCost: { supply: number?, power: number? }?, -- drawn from the team's stores per shot; no shot without it (S-96)
 	-- HITSCAN (S-157, the Beamer): each hit deals `from` .. `to` (the damage
@@ -440,6 +441,7 @@ local WEAPON_SPEC: Spec = {
 		canTargetRadar = { kind = "boolean", optional = true },
 		beamDuration = opt(POSITIVE),
 		pierce = { kind = "boolean", optional = true },
+		fullLength = { kind = "boolean", optional = true },
 		shieldMass = opt(POSITIVE),
 		shotCost = { kind = "record", optional = true, fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) } },
 		ramp = {
@@ -799,7 +801,9 @@ function Defs.validate(raw: RawDefs): { string }
 			end
 		end
 
-		local isBuilder = u.buildOptions ~= nil
+		-- helpers (S-181: Lazarus, Graverobber) repair, reclaim and resurrect
+		-- with build power and a build range, but build nothing
+		local isBuilder = u.buildOptions ~= nil or (u.canResurrect == true and u.domain ~= "structure")
 		if isBuilder and u.buildPower == nil then
 			report("buildPower: builders (units with buildOptions) need buildPower > 0")
 		elseif not isBuilder and u.buildPower ~= nil then

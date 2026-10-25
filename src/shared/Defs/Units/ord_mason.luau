@@ -13,6 +13,6 @@ return Templates.extend(Templates.Builder, {
 	buildPower = 110, -- faction pass (S-62)
 	canResurrect = true, -- T1 workers resurrect wrecks (S-168, the user)
 	buildRange = 45, -- 70% of 64 (client request 7, S-19)
-	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_vehplant", "ord_advvehplant", "ord_sentry_tower", "ord_beamer", "ord_overwatch", "ord_gauntlet", "ord_vigil", "ord_watchtower", "ord_curtain", "ord_barrier" },
+	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_vehplant", "ord_botlab", "ord_advvehplant", "ord_sentry_tower", "ord_beamer", "ord_overwatch", "ord_gauntlet", "ord_vigil", "ord_watchtower", "ord_curtain", "ord_barrier" },
 	model = "ord_mason",
 })

@@ -267,6 +267,16 @@ local function fire(
 			ey = Combat.groundHeight(c, ex, ez)
 		end
 	end
+	if weapon.beamDuration and weapon.fullLength and weapon.pierce then
+		-- a full-length hit-ray (S-181): on along the aim to the weapon's range
+		local dx, dz = ex - w.posX[id], ez - w.posZ[id]
+		local d = math.sqrt(dx * dx + dz * dz)
+		if d > 1e-6 and d < weapon.range then
+			local k = weapon.range / d
+			ex, ez = w.posX[id] + dx * k, w.posZ[id] + dz * k
+			ey = Combat.groundHeight(c, ex, ez)
+		end
+	end
 	if weapon.beamDuration then
 		-- a lingering beam (S-113 .. S-123): its full shot is kept, the first
 		-- up enemy dome on its line ends it there (hit = false, the dome
