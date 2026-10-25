@@ -12,6 +12,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Checked in Studio on FTGG Match (Coastline vs a Normal AI): picking, faction switch, Ready, Start, countdown, the landing flare, /forcestart, the build menu, the name labels.
 - Ready to merge: `a0e3bad` (C-217..C-220 with m-sim-2 72fb087 merged; test_client 306, test 539, build passed)
 - **Match failures reach the lobby (C-221, F38):** whenever the match server sends someone back (a refused setup, not in the match, a stale game version, the match already over, nobody arrived, a server error), the return carries D's error code and detail, and so does the result record, so the lobby can show it. Not tried live yet (it needs both places published).
+- Ready to merge: `2b1fde9` (C-221; src/roblox and a spec; test_client 307, test 539, build passed)
 
 ## Summary (2026-10-24, playtest logging, BAR settings, HUD, watchdog run, facing arrow, bars under units)
 
