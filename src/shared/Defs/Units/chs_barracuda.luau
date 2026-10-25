@@ -17,7 +17,7 @@ return Templates.extend(Templates.Unit, {
 	health = 980,
 	movement = { maxSpeed = 32, accel = 10, brake = 14, turnRate = 65 },
 	sensors = { sight = 200 },
-	weapons = { { def = "chs_naval_gun", turretPiece = "turret1", muzzle = "muzzle1" } },
+	weapons = { { def = "chs_barracuda_gun", turretPiece = "turret1", muzzle = "muzzle1" } },
 	pieces = { "base", "turret1", "turret2", "muzzle1", "muzzle2" },
 	model = "chs_barracuda",
 	icon = "corvette",

@@ -25,8 +25,10 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(bit32.band(w.state[jet], World.State.LANDED) ~= 0, "it landed on the pad")
-		local tank = Spawn.unit(sim, "chs_ravager", 2, -100, 0, math.pi / 2)
-		local sam = Spawn.unit(sim, "chs_hornet", 2, -100, 40, math.pi / 2)
+		-- in the Ravager's cannon range of the parked jet (and the Hornet's SAM range)
+		local x = w.posX[jet] - sim.defs.weapons.chs_ravager_cannon.range * 0.8
+		local tank = Spawn.unit(sim, "chs_ravager", 2, x, w.posZ[jet], math.pi / 2)
+		local sam = Spawn.unit(sim, "chs_hornet", 2, x, w.posZ[jet] + 40, math.pi / 2)
 		World.setFireState(w, pad, World.FireState.HOLD_FIRE)
 		local hits, samShots = 0, 0
 		local hp = w.health[jet]

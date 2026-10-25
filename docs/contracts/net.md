@@ -156,8 +156,9 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | `PREGAME 28` | `player u8, flags u8 (PICKED 1, READY 2, AI 4, CHAOS 8, HOST 16), cell u16, offX u8, offZ u8`, 7 B (protocol 36, S-169; CHAOS and HOST protocol 37) | Section 9b. |
 | `COUNTDOWN 29` | `seconds u8`, 2 B | Section 9b. |
 | `PREBUILD 30` | `player u8, count u8, count × (defIndex u16, cell u16, offX u8, offZ u8, facing u8)`, 3 + 7 × count B | Section 9b. |
-| `PICK_CLOCK 31` | `seconds u8, flags u8 (ALL_READY 1, MAX_WAIT 2)`, 3 B (protocol 37, S-174) | Section 9b. |
+| `PICK_CLOCK 31` | `seconds u8, flags u8 (ALL_READY 1, MAX_WAIT 2, LOADING 4)`, 3 B (protocol 37, S-174) | Section 9b. |
 | `START_BOXES 32` | `count u8, count × (allyTeam u8, x0 i16, z0 i16, x1 i16, z1 i16)`, 2 + 9 × count B | Section 9b. |
+| `SHARE 33` | `from u8, to u8 (0 = a request), what u8 (ShareKind: UNITS 1, SUPPLY 2, POWER 3, ASK_UNITS 4, ASK_SUPPLY 5, ASK_POWER 6), amount u32`, 8 B (protocol 37, S-176) | A gift or a request for help, to the giver's ally team and spectators. Commands: `SHARE_UNITS 24` (unit IDs, value = the ally player; complete own units, not Commanders: re-made for the ally with new IDs), `SHARE_RESOURCE 25` (params `toPlayer u8, resource u8 (SUPPLY / POWER), amount u32`, no unit IDs; capped by what the giver can spend this window), `REQUEST 26` (value = ASK_*; no unit IDs). |
 | `SIGHT_ROWS 11` | `firstRow u8, rowCount u8, rowBytes u8, bits`, 4 + rowCount × rowBytes B | Section 7a. |
 | `SIGHT_CELLS 12` | `count u8, cell u16 × count`, 2 + 2 × count B | Section 7a. |
 
@@ -275,7 +276,7 @@ Test and cheat commands are **ordinary commands**: sent on the Cmd channel, queu
   - CAMERA and CHEAT work as usual; anything else is ignored until the match starts.
 - **Events:**
   - `PREGAME` for every player, to everyone, when its pick, ready, AI, faction (CHAOS set = Chaos, else Order) or host flag changes (and after a join): `cell/offX/offZ` = the pick when PICKED is set.
-  - `PICK_CLOCK`, to everyone, when it changes (about once a second): the pick time left (150..0; at 0 everyone without a pick got one), flag ALL_READY when every player is ready; with flag MAX_WAIT, `seconds` counts down instead to the forced start (the last 30 s before `Pregame.MAX_WAIT`, 300 s).
+  - `PICK_CLOCK`, to everyone, when it changes (about once a second): the pick time left (150..0; at 0 everyone without a pick got one), flag ALL_READY when every player is ready; with flag MAX_WAIT, `seconds` counts down instead to the forced start (the last 30 s before `Pregame.MAX_WAIT`, 300 s). With flag LOADING the clocks haven't started: they start once every human player's first command has arrived (the client's CAMERA after WELCOME), or after `Pregame.LOAD_WAIT` (60 s); `seconds` holds at 150 until then.
   - `START_BOXES`, to everyone, once after a join while the pre-game lasts: every side's box.
   - `PREBUILD` for the receiver and its allies (spectators: everyone), when the list changes (and after a join): the full list in order; `count` 0 = none.
   - `COUNTDOWN`: 3, 2, 1 while it runs (one each second; 5..1 before protocol 37), 255 when it's cancelled, **0 on the tick the match starts**, in the same outbox as the Commanders' ENTERs (and their first State records).
@@ -353,7 +354,7 @@ precision u8        Pinpointer precision, floor(p × 255)  (protocol 32, S-147)
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
 | 34 | Event `OWN_STATUS 26`: own units off camera, health / build / queue head on change, capped per tick (S-158) |
-| 37 | Pre-game v2 (section 9b, S-174): commands FACTION 22, START 23; PREGAME flags CHAOS 8, HOST 16; events PICK_CLOCK 31, START_BOXES 32; a 3 s countdown, then the landing (`Schema.LANDING_TICKS`) |
+| 37 | Pre-game v2 (section 9b, S-174): commands FACTION 22, START 23; PREGAME flags CHAOS 8, HOST 16; events PICK_CLOCK 31, START_BOXES 32; a 3 s countdown, then the landing (`Schema.LANDING_TICKS`). Sharing (S-176): commands SHARE_UNITS 24, SHARE_RESOURCE 25, REQUEST 26; event SHARE 33 |
 | 36 | Up to 16 teams: strategic records 7 B (team 4 bits); commands START_POS 20, READY 21, and BUILD / STOP with no unit IDs in the pre-game; events PREGAME 28, COUNTDOWN 29, PREBUILD 30 (section 9b, S-169); every match has the pre-game, spawn boxes (S-171) |
 | 35 | Command RESURRECT 19; WRECK carries `supply`, `fullSupply` (14 B); event WRECK_STATE 27 (S-168) |
 | 33 | Command PRIORITY 18 and unit state bit LOW_PRIORITY 128: resource priority (S-156) |

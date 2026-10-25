@@ -94,7 +94,12 @@ return function(t: RunAll.Context)
 		local wallR = Spawn.unit(sim2, "ord_barrier", 1, 0, 8)
 		local behind = Spawn.unit(sim2, "ord_lancer", 1, -20, 0)
 		World.setFireState(w2, behind, World.FireState.HOLD_FIRE)
-		local gun = Spawn.unit(sim2, "chs_ravager", 2, 120, 0, -math.pi / 2)
+		-- the Lancer in the Ravager's range (78 since S-179) from the start, and
+		-- the Ravager holds its spot: a Maneuver approach would pick a wall
+		-- segment as its target first and keep it
+		local gunX = sim2.defs.weapons[sim2.defs.units.chs_ravager.weapons[1].def].range - 25
+		local gun = Spawn.unit(sim2, "chs_ravager", 2, gunX, 0, -math.pi / 2)
+		World.setMoveState(w2, gun, World.MoveState.HOLD_POSITION)
 		local onWall, onTank = 0, 0
 		local fired = shotsBy(sim2, gun, 300, function(unit)
 			if unit == wall or unit == wallL or unit == wallR then

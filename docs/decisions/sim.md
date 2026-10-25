@@ -2492,3 +2492,69 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Replays:** format 5: each player's faction, the host and the boxes in the header.
 - **MatchConfig v2** (the lobby ↔ match contract): `host` (the room host's UserId, a player or spectator) and optional `startBoxes`, both validated; version 1 records are refused (both places publish together).
 - **Tests:** `Pregame.spec` (13: the 3 s countdown and the landing holding a queued move behind the pre-game queue; un-ready cancels, the pick time picks, MAX_WAIT starts; the host's start and force start; the faction switch and its replay; 16 players with 9 Chaos; the drawn boxes and their replay; the AI waiting for a human pick; the wire with factions, boxes, clock and 3..0), `Schema.spec` (golden bytes for 37), `Replay.spec`, `MatchConfig.spec`.
+
+## S-175 — Teams: Command Ends counts the ally team's Commanders (the user's playtest, F7) (2026-10-26)
+
+- **Asked:** in Teams, a player whose Commander dies keeps playing; the team all explode only when none of its Commanders is alive.
+- **Now:** `Match.step` with COMMAND_ENDS counts Commanders per ally team; an ally team with none left is out, all its players at once, and everything they own self-destructs (S-144's few-a-tick pace). In FFA every player is its own ally team, so nothing changes there. A player without a Commander keeps its economy, factories and units.
+- **Tests:** `Match.spec` (a player without a Commander plays on; the ally team's last Commander takes both players out at once; their units are gone 30 ticks later).
+
+## S-176 — Sharing between allies: units, resources, requests (the playtest, F23; F22 already existed) (2026-10-26)
+
+- **Asked:** a team panel with Share (1 click: ask for units, 2 clicks: give the selection), Orb and Energy (1 click: ask; drag up: give from your bank); F22 "share resources when overflow".
+- **F22** was already in the sim since guide 8.4: overflow goes to allies with room (`Economy.shareOverflow`, `Match.spec`). Nothing changed; B's panel can show it.
+- **Built (`Sim/Share`, protocol 37):** commands `SHARE_UNITS 24` (value = ally player; complete own units, never a Commander), `SHARE_RESOURCE 25` (new "share" params: toPlayer u8, resource u8, amount u32), `REQUEST 26` (value = `ShareKind.ASK_UNITS / ASK_SUPPLY / ASK_POWER`). Event `SHARE 33` (from, to, what, amount; 8 B) to the giver's ally team and spectators.
+  - A given unit is re-made for the receiver where it stands (health, heading, missile stock, on/off and priority switches kept; a new ID, no orders, factory queue dropped; aircraft re-made flying). Simpler and safer than re-keying every per-owner cache; the cost is the new ID.
+  - A resource gift is capped by what the giver may still spend this window (`Economy.allowance`): counted as the giver's spending and credited to the receiver at the window's settle like reclaim, so no store goes negative and the receiver's overflow moves on.
+- **Tests:** `Share.spec` (units with health and flying aircraft, never a Commander or to an enemy; a resource gift; the wire to allies only; record round-trips).
+
+## S-177 — Wind is a fixed wave within the map's range, not random (the user via B) (2026-10-26)
+
+- **Asked (relayed by client-B):** "Wind should not be RNG"; the top bar shows wind min / max / current and tidal, as BAR's does.
+- **Now:** `Economy.windAt(range, tick)`: two slow sine waves (173 s and 61 s) between the map's `layers.wind = { min, max }` (fractions of a turbine's max; default 0.1..0.9). The same on every match on a map, smooth (under 1% of the range per economy step), no seed. The wire is unchanged (Eco `wind` = the current fraction × 255); the client reads min / max from the map's layers and tidal from the tidal generator's def (25 power/s; per-map tidal is not built).
+- **Tests:** `Economy.spec` (stays within the range, varies over most of it, smooth, the same for every seed; turbine income follows it).
+
+## S-178 — Combat from the playtest: lasers up close, death blasts, nukes, air turns, carpet bombs (F12, F15, F16, F17, F33) (2026-10-26)
+
+- **F12 lasers:** weapon field `closeDamage` (×1.5 on the nine laser and beam weapons): damage × 1.5 at point blank, falling linearly to × 1 at full range (`Combat.nearFactor`), for hitscan shots, lingering beams and hit-rays.
+- **F15 death blasts:** every unit now explodes when it dies (`Defs.defaultDeathBlast`, unless the def sets its own): damage 0.4 × (supply + power / 10 of its cost) + 8 × power produced a second + 0.5 × power storage, aoe 8 + 5 × footprint + 0.6 × √damage (at most 90), edge 0.3. A generator 226 / 27 studs, a Lancer 136 / 20, a scout 40 / 17. Commanders: 4,000 in 120 studs, edge 0.15 (a nuke is 150); fusion reactors keep 2,500 / 120, so a cluster still chains. No blast for a self-destruct (an eliminated player's units: chains would break S-164's per-tick budget) or for a structure an upgrade frame stands on.
+- **F16 nukes:** strategic blasts do 33% to Commanders (`Combat.STRATEGIC_COMMANDER`); edge effectiveness 0.3 → 0.05 (400 at the rim, 8,000 at the centre), so the edge visibly matters.
+- **F17:** every aircraft turns 1.5× as fast (at most 210°/s).
+- **F33 carpet bombing:** bombs drop in salvos of 3 along the heading (0.2 s apart; heavy bombs 0.25 s), each half the old bomb; the rest of a bomb salvo falls even once the target is behind (Weapons). B draws the three impact points for a manual attack.
+- **Tests:** `DeathBlast.spec` (every unit blasts by its worth; quiet self-destructs), `Air.spec` (only a carpet's lead bomb is judged for the lead point; jets inside their tighter turn circle), `Defenses.spec`, `Towers.spec` (laser damage with `nearFactor`), `Match.spec` (tanks clear of their Commander's blast; a 2v2 can end in a draw when Commanders blast each other).
+
+## S-179 — Balance notes from the playtest (BAL1–4) (2026-10-26)
+
+- **Asked:** artillery tanks far too strong (both factions); T1 defences too weak against T1 units (health and damage); every T1 unit's range halved, radar and jammer included, T1 anti-air excepted; T1 damage down (an extractor survives 4 shots).
+- **Done:**
+  - **T1 mobile units:** weapon range × 0.5 (not anti-air, not bombs) and damage × 0.8: Lancer 190 → 95 (structure damage 118 → 94: four shells leave an Order extractor at 22 health), Ravager 155 → 78, MGs, naval guns and torpedoes, T1 air rockets. T1 bombs × 0.8.
+  - **Artillery:** Verdict and Hellmouth range halved and damage × 0.6; T2 artillery (Judgement and Hydra MLRS, Cyclops) damage × 0.8. Their shells are slower (howitzer 220 → 130, mortar 210 → 112 studs/s): with only the range halved the low arc went flat (about 9 studs high at full range) and artillery could no longer fire over a 20-stud ridge (a test subagent caught it; guide 10.8, S-32). Now about 30–35° at full range, peaking around 33 studs; slower shells are also easier to dodge.
+  - **T1 radar and jammers** (Oracle, Watcher, Watchtower, Eye; Curtain, Smog): range × 0.5.
+  - **T1 defences** (Sentry, Guard, Twin Guard, Overwatch, Beamer, Geryon, Gauntlet, Talos, Spike, Bulwark, Moat, Riptide, Undertow, Fang): health × 2 and damage × 2. Measured: a tower holds against 8 scouts and 2 T1 tanks; 3–4 tanks take it; a T2 tank still beats one (with 38–100% health left).
+  - Weapons shared between a changed and an unchanged unit were split: `ord_lancer_cannon`, `ord_bulwark_cannon`, `chs_ravager_cannon`, `chs_spike_cannon`, `chs_barracuda_gun`, `chs_riptide_gun`, `ord_sentry_gun`, `ord_moat_gun`, `chs_fang_torpedo`, `ord_undertow_torpedo`, `chs_bulwark_laser` (copies; the originals stay with their T2 users).
+- **Not run:** the balance checkpoint (only on "run the balance checkpoint"). Expect the AI's T1 play to need the AI rework (the user's request after this round).
+- **Tests:** about 40 tests placed T1 units at their old ranges; their geometry follows the new ranges (spec by spec in the commit).
+
+## S-180 — Match connection errors shown in the lobby (the user; D and B) (2026-10-26)
+
+- **Asked:** "Any failed attempt to connect to the game match must be displayed on the lobby when return with error code + description."
+- **Shared:** `MatchConfig.ERRORS[code] = { title, description }` (lobby-D's table, contract match.md section 11: 1xx lobby side, 2xx match side), `ERROR_DETAIL_MAX` 200, `MatchConfig.cleanError`; `validateResult` checks an optional `error`. D shows them (panels, results); B sends them back (teleport data `{ matchId, error }`, result `error`).
+- **Tests:** `MatchConfig.spec`.
+
+## S-182 — Radar needs line of sight; homing missiles check their line of fire; the pre-game clocks wait for loading (F28, F29; client-B) (2026-10-26)
+
+- **F28 (the playtest):** "Radar should not pick up units without direct LoS: SAMs target air instantly in range even though they're well covered." Now a unit is on radar only when one of the team's radars that covers it sees it over the terrain: a straight line from 4 studs above the radar's top to the middle of the unit, above the ground every 12 studs (`Sensors.terrainClear`). Hills hide ground units and low aircraft. Ground results are cached per (radar, sensor cell) while the radar stays in its cell; aircraft are checked each time. The radar map still stamps whole cells, so the exact-radius check allows 24 studs of slack for normal units (stealthy ones keep the exact range × signature). Sight is unchanged (no terrain occlusion for sight).
+- **F29:** "a Sanction targeting a unit behind a mountain always hits the mountain." Homing missiles now pass `Combat.lineOfFire` too: a straight line from the muzzle, or for vertical launchers from the top of their climb. A battery doesn't fire at a tank tucked behind a ridge, and Targeting picks a target it can reach; a SAM won't fire at a helicopter behind a hill.
+- **Pre-game loading (client-B's Studio run: 41 s of loading came out of the 150 s pick time):** the clocks start once every human's first command has arrived (the client sends CAMERA after WELCOME), or after `Pregame.LOAD_WAIT` (60 s). PICK_CLOCK holds at 150 with flag LOADING (4) until then. Commands are recorded, so replays start the clocks on the same tick.
+- **Tests:** `LineOfFire.spec` (SAM across the ridge blocked, above it clear, a Sanction dives over it from afar but not onto a tank right behind; radar through the gap but not across the ridge), `Pregame.spec` (the clocks wait for two humans, not the AI; LOAD_WAIT), `Tracking.spec`.
+
+## S-181 — New units from the playtest: bots, Tzar, Centurion, Dragon, Liche (2026-10-26)
+
+- **Asked:** new T2 air (Chaos "Dragon", a flying fortress with a fire gun pouring onto the ground and two green lasers; Order "Liche", a strategic bomber: devastating bomb, long reload, fast, slow turn), a T1 transport per faction, and a new BOT type (steep terrain, fast, turns almost instantly in place) with a constructor, scouts, Mace / Thug, Lazarus / Graverobber helpers, AA bots, Centurion (Chaos), Fatboy (Order) and its counterpart Tzar (a Chaos T2 vehicle, a little less range, more damage, faster reload).
+- **Built (19 units, 10 weapons):**
+  - Factories: `ord_botlab` "Bot Lab" and `chs_botlab` "Bot Pit" (T1; Commanders, Masons / Scrappers and the bot constructors build them), `ord_advbotlab` / `chs_advbotlab` (T2; Architect / Forgemaster and the bot constructors).
+  - T1 bots (all move class WALKER, 40° slopes, turn rate 380–500°/s): constructors `ord_artisan` "Artisan" / `chs_tinker` "Tinker" (less build power and health than the Mason / Scrapper); scouts `ord_glint` "Glint" (tougher, arm lasers alternating) / `chs_skitter` "Skitter" (fastest, plasma spray); `ord_mace` "Mace" (skirmisher, long slow plasma, 125 range: outranges T1 tanks) / `chs_thug` "Thug" (tough assault bot, 70 range); helpers `ord_lazarus` "Lazarus" / `chs_graverobber` "Graverobber" (repair, reclaim, resurrect, build nothing: a builder kind without a build list, allowed for resurrecting units); AA `ord_kestrel` "Kestrel" / `chs_needle` "Needle" (the factions' IR SAMs).
+  - T2: `ord_fatboy` "Fatboy" (WALKER, 4,800 health, plasma 300 range, 900/800/1,100 in 48 studs, 6 s); `chs_tzar` "Tzar" (heavy tracked, 270 range, 1,100/980/1,300 in 40 studs, 4.5 s; Advanced Vehicle Foundry); `chs_centurion` "Centurion" (WALKER, 5,200 health, a red hit-ray beam to full range: new weapon field `fullLength` runs a piercing beam past its target to the weapon's range, so it cuts through a line); `chs_dragon` "Dragon" (HELI, 9,000 health, a downward fire gun and two green lasers; Advanced Airfield); `ord_liche` "Liche" (JET, 260 speed, turn rate 40, one 3,000–4,000 bomb in 55 studs, 20 s rearm; Advanced Airfield).
+- **Not built:** the T1 transports. They need a load / unload mechanic (carried units leave the world and ride along, unload at a point, die with the transport) that touches movement, targeting, sensors and the wire. They're the next item for the sim after this round.
+- **Numbers are first guesses** (no balance checkpoint run). Models (C), icons (B) and Codex roles (D) follow.
+- **Tests:** `NewUnits.spec` (every new unit has a builder of its faction; bots are WALKERs turning fast; helpers build nothing; Tzar vs Fatboy trade-off; a Glint kills a scout; the Centurion's beam hurts a whole line; the Dragon fires both weapons; the Liche drops one bomb a sortie).

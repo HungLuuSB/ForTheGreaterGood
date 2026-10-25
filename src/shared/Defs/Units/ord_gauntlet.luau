@@ -11,7 +11,8 @@ return Templates.extend(Templates.Structure, {
 	tier = 1,
 	categories = { "STRUCTURE" },
 	cost = { supply = 240, power = 2000, buildTime = 5200 },
-	health = 1000,
+	-- S-179, the playtest's balance notes: health × 2
+	health = 2000,
 	footprint = 2, -- size shows tech level (S-104)
 	sensors = { sight = 240 },
 	weapons = { { def = "ord_gauntlet_shell", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },

@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 37 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174)
+Schema.PROTOCOL_VERSION = 37 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174); SHARE_UNITS, SHARE_RESOURCE and REQUEST commands, SHARE events (S-176)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -106,6 +106,9 @@ Schema.CmdType = table.freeze({
 	READY = 21, -- pre-game only: value 1 ready, 0 not (S-169)
 	FACTION = 22, -- pre-game only, while not ready: value 0 Order, 1 Chaos; clears the sender's pre-game builds (S-174; protocol 37)
 	START = 23, -- pre-game only, from the match's host: value 0 start (everyone ready), 1 force start (S-174)
+	SHARE_UNITS = 24, -- the unit IDs (own, complete, not a Commander) go to ally player `value` (S-176; protocol 37)
+	SHARE_RESOURCE = 25, -- share params: give `amount` of `resource` to ally player `toPlayer` (S-176)
+	REQUEST = 26, -- value = Schema.ShareKind ASK_UNITS / ASK_SUPPLY / ASK_POWER: ask the allies for help (S-176)
 })
 
 -- CHEAT commands (S-102, net.md "Cheat commands"): what to do.
@@ -149,8 +152,10 @@ Schema.MoveState = table.freeze({ HOLD_POSITION = 0, MANEUVER = 1, ROAM = 2 })
 --   cheat   op u8, arg u8, team u8 (0 = the sender's), defIndex u16 (0 = none),
 --           amount u32, x i16, z i16 (world studs), radius u16 (studs)
 --           (unit count 0..MAX: KILL SELECTED's units; S-102)
+--   share   toPlayer u8, resource u8 (ShareKind.SUPPLY / POWER), amount u32
+--           (unit count 0; S-176)
 --   none
-type ParamKind = "pos" | "target" | "build" | "value" | "camera" | "cheat" | "none"
+type ParamKind = "pos" | "target" | "build" | "value" | "camera" | "cheat" | "share" | "none"
 
 local CT = Schema.CmdType
 local PARAMS: { [number]: ParamKind } = {
@@ -177,11 +182,14 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.READY] = "value",
 	[CT.FACTION] = "value",
 	[CT.START] = "value",
+	[CT.SHARE_UNITS] = "value",
+	[CT.SHARE_RESOURCE] = "share",
+	[CT.REQUEST] = "value",
 }
 -- commands that may carry no unit IDs besides CAMERA and CHEAT (S-169): the
 -- pre-game's START_POS and READY, and BUILD / STOP for the Commander that
 -- doesn't exist yet (its pre-game build queue)
-local NO_UNITS_OK: { [number]: boolean } = { [CT.START_POS] = true, [CT.READY] = true, [CT.FACTION] = true, [CT.START] = true, [CT.BUILD] = true, [CT.STOP] = true }
+local NO_UNITS_OK: { [number]: boolean } = { [CT.START_POS] = true, [CT.READY] = true, [CT.FACTION] = true, [CT.START] = true, [CT.BUILD] = true, [CT.STOP] = true, [CT.REQUEST] = true }
 local VALUE_MAX: { [number]: number } = {
 	[CT.SET_FIRE_STATE] = 2,
 	[CT.SET_MOVE_STATE] = 2,
@@ -191,6 +199,8 @@ local VALUE_MAX: { [number]: number } = {
 	[CT.READY] = 1,
 	[CT.FACTION] = 1,
 	[CT.START] = 1,
+	[CT.SHARE_UNITS] = 255, -- a player ID
+	[CT.REQUEST] = 6, -- Schema.ShareKind (ASK_* only: Share checks)
 	[CT.CANCEL] = 50, -- a factory queue holds at most 50 items (D62)
 }
 
@@ -226,6 +236,9 @@ export type Command = {
 	x: number?, -- world studs (i16)
 	z: number?,
 	radius: number?, -- studs (u16)
+	-- share (S-176; amount as cheat)
+	toPlayer: number?,
+	resource: number?, -- Schema.ShareKind.SUPPLY / POWER
 }
 
 function Schema.encodeCommand(w: Writer, cmd: Command)
@@ -240,9 +253,9 @@ function Schema.encodeCommand(w: Writer, cmd: Command)
 		error("Schema: LINE flag only applies to position commands", 2)
 	end
 	local count = #cmd.unitIds
-	if kind == "camera" then
+	if kind == "camera" or kind == "share" then
 		if count ~= 0 then
-			error("Schema: CAMERA commands carry no unit IDs", 2)
+			error("Schema: CAMERA and SHARE_RESOURCE commands carry no unit IDs", 2)
 		end
 	elseif kind == "cheat" or NO_UNITS_OK[cmd.cmdType] then
 		if count > Schema.MAX_UNITS_PER_COMMAND then
@@ -296,6 +309,14 @@ function Schema.encodeCommand(w: Writer, cmd: Command)
 		w:writeU8(minZ)
 		w:writeU8(maxX)
 		w:writeU8(maxZ)
+	elseif kind == "share" then
+		local resource = required(cmd.resource, "resource")
+		if resource ~= Schema.ShareKind.SUPPLY and resource ~= Schema.ShareKind.POWER then
+			error(`Schema: share resource {resource}`, 2)
+		end
+		w:writeU8(required(cmd.toPlayer, "toPlayer"))
+		w:writeU8(resource)
+		w:writeU32(required(cmd.amount, "amount"))
 	elseif kind == "cheat" then
 		local op, arg = required(cmd.cheatOp, "cheatOp"), cmd.cheatArg or 0
 		if op < 1 or op > CHEAT_OP_MAX or arg > CHEAT_ARG_MAX[op] then
@@ -329,9 +350,9 @@ function Schema.decodeCommand(r: Reader): Command
 	end
 
 	local count = r:readU16()
-	if kind == "camera" then
+	if kind == "camera" or kind == "share" then
 		if count ~= 0 then
-			fail(r, `CAMERA with {count} unit IDs`)
+			fail(r, `{if kind == "camera" then "CAMERA" else "SHARE_RESOURCE"} with {count} unit IDs`)
 		end
 	elseif kind == "cheat" or NO_UNITS_OK[cmdType] then
 		if count > Schema.MAX_UNITS_PER_COMMAND then
@@ -383,6 +404,14 @@ function Schema.decodeCommand(r: Reader): Command
 			fail(r, "camera rectangle has min > max")
 		end
 		cmd.minX, cmd.minZ, cmd.maxX, cmd.maxZ = minX, minZ, maxX, maxZ
+	elseif kind == "share" then
+		cmd.toPlayer = r:readU8()
+		local resource = r:readU8()
+		if resource ~= Schema.ShareKind.SUPPLY and resource ~= Schema.ShareKind.POWER then
+			fail(r, `share resource {resource}`)
+		end
+		cmd.resource = resource
+		cmd.amount = r:readU32()
 	elseif kind == "cheat" then
 		local op, arg = r:readU8(), r:readU8()
 		if op < 1 or op > CHEAT_OP_MAX or arg > CHEAT_ARG_MAX[op] then
@@ -971,8 +1000,13 @@ end
 --   PICK_CLOCK  seconds u8 (pick time left; 0 once over: unpicked players
 --               got a spot; with MAX_WAIT, the seconds to the forced start)
 --               | flags u8 (PickClockFlag: ALL_READY 1 (the host may
---               start), MAX_WAIT 2): to everyone, when it changes
+--               start), MAX_WAIT 2, LOADING 4 (humans still loading: the
+--               clock hasn't started)): to everyone, when it changes
 --               (protocol 37, S-174)                                    =  3 bytes
+--   SHARE       from u8 | to u8 (0 for a request) | what u8 (ShareKind) |
+--               amount u32 (units given, or resource given; 0 for a request):
+--               a gift or a request for help between allies, to the
+--               sender's ally team and spectators (protocol 37, S-176)  =  8 bytes
 --   START_BOXES count u8 | count × (allyTeam u8 | x0 i16 | z0 i16 | x1 i16 |
 --               z1 i16, world studs): every side's spawn box, to everyone,
 --               once after a join during the pre-game (protocol 37)  = 2 + 9 × count
@@ -1020,6 +1054,7 @@ Schema.EventKind = table.freeze({
 	PREBUILD = 30, -- variable size (Schema.eventBytes)
 	PICK_CLOCK = 31, -- protocol 37 (S-174)
 	START_BOXES = 32, -- variable size
+	SHARE = 33, -- protocol 37 (S-176)
 })
 -- CHEAT_RESULT result codes (S-102)
 Schema.CheatResult = table.freeze({
@@ -1048,10 +1083,11 @@ local ALERT_MAX = 9
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 14, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7, [23] = 13, [24] = 3, [25] = 4, [26] = 9, [27] = 6, [28] = 7, [29] = 2, [31] = 3 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 14, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7, [23] = 13, [24] = 3, [25] = 4, [26] = 9, [27] = 6, [28] = 7, [29] = 2, [31] = 3, [33] = 8 })
+Schema.ShareKind = table.freeze({ UNITS = 1, SUPPLY = 2, POWER = 3, ASK_UNITS = 4, ASK_SUPPLY = 5, ASK_POWER = 6 }) -- SHARE what; REQUEST value (ASK_*); SHARE_RESOURCE resource (SUPPLY, POWER) (S-176)
 Schema.PregameFlag = table.freeze({ PICKED = 1, READY = 2, AI = 4, CHAOS = 8, HOST = 16 }) -- PREGAME flags (S-169; CHAOS, HOST protocol 37)
 local PREGAME_FLAGS_MAX = 31
-Schema.PickClockFlag = table.freeze({ ALL_READY = 1, MAX_WAIT = 2 }) -- PICK_CLOCK flags (S-174)
+Schema.PickClockFlag = table.freeze({ ALL_READY = 1, MAX_WAIT = 2, LOADING = 4 }) -- PICK_CLOCK flags (S-174): LOADING = humans still loading, the clock waits
 Schema.LANDING_TICKS = 23 -- the Commanders land (1.5 s) after COUNTDOWN 0 and take no orders until then (S-174)
 Schema.START_BOXES_MAX = 16
 Schema.COUNTDOWN_STARTED = 0 -- COUNTDOWN seconds: the match starts
@@ -1095,6 +1131,9 @@ export type Event = {
 	pregameFlags: number?, -- PREGAME: Schema.PregameFlag bits
 	seconds: number?, -- COUNTDOWN, PICK_CLOCK
 	clockFlags: number?, -- PICK_CLOCK: Schema.PickClockFlag bits
+	toPlayer: number?, -- SHARE: the receiver (0 for a request; `player` the sender)
+	shareKind: number?, -- SHARE: Schema.ShareKind
+	amount: number?, -- SHARE: units or resource given
 	boxes: { { allyTeam: number, x0: number, z0: number, x1: number, z1: number } }?, -- START_BOXES (world studs)
 	builds: { { defIndex: number, cell: number, offX: number, offZ: number, facing: number } }?, -- PREBUILD
 	charge: number?, -- SHIELD: 0..255 of capacity
@@ -1296,10 +1335,20 @@ function Schema.encodeEvent(w: Writer, e: Event)
 	elseif kind == EK.COUNTDOWN then
 		w:writeU8(required(e.seconds, "seconds"))
 		return
+	elseif kind == EK.SHARE then
+		local what = required(e.shareKind, "shareKind")
+		if what < 1 or what > 6 then
+			error(`Schema: share kind {what}`, 2)
+		end
+		w:writeU8(required(e.player, "player"))
+		w:writeU8(e.toPlayer or 0)
+		w:writeU8(what)
+		w:writeU32(e.amount or 0)
+		return
 	elseif kind == EK.PICK_CLOCK then
 		w:writeU8(required(e.seconds, "seconds"))
 		local flags = required(e.clockFlags, "clockFlags")
-		if flags > 3 then
+		if flags > 7 then
 			error(`Schema: pick clock flags {flags} have reserved bits`, 2)
 		end
 		w:writeU8(flags)
@@ -1547,10 +1596,20 @@ function Schema.decodeEvent(r: Reader): Event
 	elseif kind == EK.COUNTDOWN then
 		e.seconds = r:readU8()
 		return e
+	elseif kind == EK.SHARE then
+		e.player = r:readU8()
+		e.toPlayer = r:readU8()
+		local what = r:readU8()
+		if what < 1 or what > 6 then
+			fail(r, `share kind {what}`)
+		end
+		e.shareKind = what
+		e.amount = r:readU32()
+		return e
 	elseif kind == EK.PICK_CLOCK then
 		e.seconds = r:readU8()
 		local flags = r:readU8()
-		if flags > 3 then
+		if flags > 7 then
 			fail(r, `pick clock flags {flags}`)
 		end
 		e.clockFlags = flags

@@ -26,7 +26,9 @@ local function dome(seed: number, fraction: number?): (Sim.Sim, number)
 end
 
 -- A shell of `weaponId` from (x, 20, z), on the low arc that lands on the
--- dome's centre (straight at it without gravity), for `team`'s side.
+-- dome's centre (straight at it without gravity), for `team`'s side. A
+-- shell that can't carry that far (the S-179 mortar: 112 studs/s, about 209
+-- studs at most) starts closer on the same bearing, at 0.9 × its reach.
 local function fire(sim: Sim.Sim, weaponId: string, x: number, z: number, side: number?): number
 	local weapon = sim.defs.weapons[weaponId]
 	local g = weapon.gravity or 0
@@ -37,6 +39,11 @@ local function fire(sim: Sim.Sim, weaponId: string, x: number, z: number, side: 
 	local speed = weapon.projectileSpeed or 300
 	local dx, dz = CX - x, CZ - z
 	local d = math.sqrt(dx * dx + dz * dz)
+	local reach = if g > 0 then 0.9 * speed ^ 2 / g else math.huge
+	if d > reach then
+		dx, dz = dx / d * reach, dz / d * reach
+		x, z, d = CX - dx, CZ - dz, reach
+	end
 	local a = if g > 0 then 0.5 * math.asin(math.min(1, g * d / speed ^ 2)) else 0
 	local vh = speed * math.cos(a)
 	return Combat.spawnProjectile(sim.combat, x, 20, z, dx / d * vh, speed * math.sin(a), dz / d * vh, weapon.index, 0, side or 2, 10) :: number
@@ -570,12 +577,14 @@ return function(t: RunAll.Context)
 			for i = 1, 4 do
 				Spawn.unit(sim, "ord_generator", 1, -330 + i * 20, -330)
 			end
-			local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 40)
+			-- the tank near the dome's east edge (radius 120): the Ravagers'
+			-- 78-stud guns (S-179) reach it from outside the dome
+			local tank = Spawn.unit(sim, "ord_lancer", 1, 90, 0)
 			World.setHealth(w, tank, 1e7)
 			World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 			local ids = {}
 			for i = 1, n do
-				table.insert(ids, Spawn.unit(sim, "chs_ravager", 2, 190 + (i % 3) * 14, 40 + (i - n / 2) * 12, -math.pi / 2))
+				table.insert(ids, Spawn.unit(sim, "chs_ravager", 2, 190 + (i % 3) * 14, (i - n / 2) * 12, -math.pi / 2))
 			end
 			local wr = Packer.Writer.new()
 			Schema.encodeCommand(wr, { cmdType = Schema.CmdType.ATTACK, flags = 0, unitIds = ids, targetId = tank })
@@ -589,11 +598,14 @@ return function(t: RunAll.Context)
 			end
 			return at30, Shield.fraction(sim, gen) or 0
 		end
-		local heavy30, heavy60 = siege(10)
-		local light30, light60 = siege(4)
-		t.expect(heavy30 < 0.15 and heavy60 < 0.15, `10 tanks bring it down within 30 s (at 30 s {heavy30}, at 60 s {heavy60})`)
-		t.expect(light60 < 0.9 and light60 > 0.5, `4 tanks wear it down slowly ({light30} at 30 s, {light60} at 60 s)`)
-		print(string.format("    Phalanx charge: 10 Ravagers %.0f%% / %.0f%%, 4 Ravagers %.0f%% / %.0f%% (30 s / 60 s)", heavy30 * 100, heavy60 * 100, light30 * 100, light60 * 100))
+		-- S-179 cut the Ravager's damage (so its shells' mass) × 0.8: 12 and 5
+		-- tanks put about the mass on the dome that 10 and 4 did before
+		local HEAVY, LIGHT = 12, 5
+		local heavy30, heavy60 = siege(HEAVY)
+		local light30, light60 = siege(LIGHT)
+		t.expect(heavy30 < 0.15 and heavy60 < 0.15, `{HEAVY} tanks bring it down within 30 s (at 30 s {heavy30}, at 60 s {heavy60})`)
+		t.expect(light60 < 0.9 and light60 > 0.5, `{LIGHT} tanks wear it down slowly ({light30} at 30 s, {light60} at 60 s)`)
+		print(string.format("    Phalanx charge: %d Ravagers %.0f%% / %.0f%%, %d Ravagers %.0f%% / %.0f%% (30 s / 60 s)", HEAVY, heavy30 * 100, heavy60 * 100, LIGHT, light30 * 100, light60 * 100))
 	end)
 
 	t.test("TOGGLE switches a dome off and on: off it's down, draws no power, keeps its charge (S-154, the user)", function()
