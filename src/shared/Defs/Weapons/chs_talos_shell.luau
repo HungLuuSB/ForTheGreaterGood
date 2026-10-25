@@ -1,6 +1,7 @@
 --!strict
 -- Talos's lobbed shell (S-157): Gauntlet's Chaos counterpart, shorter,
 -- a little heavier and wider.
+-- S-179, the playtest's balance notes: a T1 defence's damage × 2 (too weak against T1 units)
 return {
 	id = "chs_talos_shell",
 	type = "BALLISTIC",
@@ -10,7 +11,7 @@ return {
 	gravity = 60,
 	highArc = true,
 	accuracy = 1.5,
-	damage = { LIGHT = 250, ARMORED = 225, STRUCTURE = 290, SHIP = 195, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 500, ARMORED = 451, STRUCTURE = 580, SHIP = 389, AIR = 0, SUB = 0 },
 	aoe = 12,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

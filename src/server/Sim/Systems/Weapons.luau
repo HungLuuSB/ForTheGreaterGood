@@ -317,14 +317,15 @@ local function fire(
 		end
 	end
 	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
+	local near = Combat.nearFactor(weapon, dist) -- lasers hit harder up close (S-178)
 	if hit and scale ~= nil then
 		-- a ramping weapon (S-157): its target only, at the ramp's share
 		c.stats.hits += 1
 		local tp = c.profiles[w.defIndex[target]]
-		Combat.queueDamage(c, target, weapon.damage[Combat.armorOf(w, target, tp)] * scale, id, w.owner[id])
+		Combat.queueDamage(c, target, weapon.damage[Combat.armorOf(w, target, tp)] * scale * near, id, w.owner[id])
 	elseif hit then
 		c.stats.hits += 1
-		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target)
+		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target, nil, near)
 	elseif (weapon.aoe or 0) > 0 then
 		-- a miss still explodes on the ground beyond/beside the target
 		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], 0)
@@ -352,6 +353,9 @@ local function rayShare(sim: Types.Sim, b: Combat.Beam, sx: number, sz: number, 
 			local px, pz = sx + dx * t - w.posX[u], sz + dz * t - w.posZ[u]
 			if px * px + pz * pz <= tp.radius * tp.radius then
 				local amount = (weapon.damage[Combat.armorOf(w, u, tp)] or 0) / b.total
+				if weapon.closeDamage then
+					amount *= Combat.nearFactor(weapon, math.sqrt((w.posX[u] - w.posX[b.shooter]) ^ 2 + (w.posZ[u] - w.posZ[b.shooter]) ^ 2))
+				end
 				Combat.queueDamage(c, u, amount, b.shooter, w.owner[b.shooter])
 			end
 		end
@@ -470,6 +474,9 @@ local function beamTick(sim: Types.Sim, b: Combat.Beam): boolean
 		if u ~= 0 then
 			local tp = c.profiles[w.defIndex[u]]
 			local amount = (weapon.damage[Combat.armorOf(w, u, tp)] or 0) / b.total
+			if weapon.closeDamage then
+				amount *= Combat.nearFactor(weapon, math.sqrt((w.posX[u] - w.posX[id]) ^ 2 + (w.posZ[u] - w.posZ[id]) ^ 2))
+			end
 			Combat.queueDamage(c, u, amount, id, w.owner[id])
 		end
 	end
@@ -710,7 +717,7 @@ return function(sim: Types.Sim)
 			if salvoLeft ~= nil and salvoLeft > 0 then
 				local wait = w.wSalvoWait[key] - DT
 				w.wSalvoWait[key] = wait
-				if not canFire then
+				if not canFire and weapon.type ~= "BOMB" then -- a carpet keeps falling along the heading (S-178)
 					w.wSalvo[key] = 0
 				elseif wait <= 1e-9 then
 					w.wSalvo[key] = salvoLeft - 1

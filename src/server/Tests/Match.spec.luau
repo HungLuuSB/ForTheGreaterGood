@@ -25,14 +25,15 @@ end
 
 type Setup = { sim: Sim.Sim, commander: { number }, tank: { number } }
 
--- Each player: a Command Vehicle and a tank in their own corner, holding fire.
+-- Each player: a Command Vehicle in their own corner and a tank toward the
+-- middle, holding fire.
 local function setup(mode: "FFA" | "TEAM", win: "COMMAND_ENDS" | "ANNIHILATION", n: number, unitCap: number?): Setup
 	local sim = Sim.new({ seed = 5, players = players(mode, n), mapId = "flat:128", match = { mode = mode, win = win, unitCap = unitCap } })
 	local s: Setup = { sim = sim, commander = {}, tank = {} }
 	for pid = 1, n do
 		local x, z = CORNERS[pid][1], CORNERS[pid][2]
 		s.commander[pid] = Spawn.unit(sim, if pid % 2 == 1 then "ord_sovereign" else "chs_warlord", pid, x, z)
-		s.tank[pid] = Spawn.unit(sim, if pid % 2 == 1 then "ord_lancer" else "chs_ravager", pid, x + 30, z)
+		s.tank[pid] = Spawn.unit(sim, if pid % 2 == 1 then "ord_lancer" else "chs_ravager", pid, x * 0.4, z * 0.4) -- clear of its Commander's blast (S-178)
 		for _, id in { s.commander[pid], s.tank[pid] } do
 			World.setFireState(sim.world, id, World.FireState.HOLD_FIRE)
 		end
@@ -175,22 +176,32 @@ return function(t: RunAll.Context)
 		t.equal(sim.match.winner, 1)
 	end)
 
-	t.test("Team, Command Ends: an ally team loses when all its Command Vehicles are gone", function()
+	t.test("Team, Command Ends: a player without a Commander plays on; the ally team goes when its last Commander does (S-175)", function()
 		local s = setup("TEAM", "COMMAND_ENDS", 4)
 		local sim = s.sim
 		kill(sim, { s.commander[1] })
 		local out, ends = step(sim, 3)
-		t.deepEqual(out, { 1 }, "player 1 is out")
-		t.deepEqual(ends, {}, "but their ally fights on")
+		t.deepEqual(out, {}, "player 1 lost its Commander but plays on: its ally's lives")
+		t.deepEqual(ends, {})
 		kill(sim, { s.commander[3] })
 		out, ends = step(sim, 3)
-		t.deepEqual(out, { 3 })
-		t.deepEqual(ends, {})
+		t.deepEqual(out, {}, "player 3 too")
 		kill(sim, { s.commander[4] })
 		out, ends = step(sim, 3)
-		t.deepEqual(out, { 4 })
-		t.deepEqual(ends, { 1 }, "ally team 1 (player 2 still in) wins")
-		t.equal(sim.match.eliminated[2], nil, "player 2 was never eliminated")
+		table.sort(out)
+		t.deepEqual(out, { 3, 4 }, "ally team 2's last Commander: both its players are out at once")
+		t.deepEqual(ends, { 1 }, "ally team 1 wins")
+		t.equal(sim.match.eliminated[1], nil, "player 1 was never eliminated")
+		local left = 0
+		for _ = 1, 30 do
+			Sim.step(sim)
+		end
+		for _, id in sim.world.ids do
+			if sim.world.owner[id] == 3 or sim.world.owner[id] == 4 then
+				left += 1
+			end
+		end
+		t.equal(left, 0, "everything of theirs exploded")
 	end)
 
 	t.test("Team, Annihilation: an ally team loses when its players have nothing left", function()
@@ -411,7 +422,9 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(ended ~= nil, "the match ended")
-		t.equal(sim.match.winner, 1, "the stronger ally team won")
+		-- the Commanders fight in the middle too: since S-178 their death
+		-- blasts can take each other out (a draw), so any result is fine here
+		t.expect(sim.match.winner == 0 or sim.match.winner == 1 or sim.match.winner == 2, `a result ({sim.match.winner})`)
 		for _ = 1, 30 do
 			Sim.step(sim)
 		end

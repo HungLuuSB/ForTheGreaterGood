@@ -294,6 +294,29 @@ return function(t: RunAll.Context)
 		t.deepEqual(again.pregame.boxes[1], sim.pregame.boxes[1], "the replay has the same boxes")
 	end)
 
+	t.test("the clocks wait for every human to load (a first command), or LOAD_WAIT (client-B's Studio run)", function()
+		local sim = newMatch(3, nil, { [3] = "normal" })
+		for _ = 1, 100 do
+			Sim.step(sim)
+		end
+		local pg = sim.pregame
+		t.expect(not pg.begun and pg.deadline == math.huge, "nobody has loaded: the clocks wait")
+		local seconds, flags = Pregame.clock(sim)
+		t.equal(seconds, Pregame.PICK_TIME // 15)
+		t.expect(bit32.band(flags, Schema.PickClockFlag.LOADING) ~= 0, "PICK_CLOCK says loading")
+		submit(sim, 1, { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 10, maxZ = 10 })
+		Sim.step(sim)
+		t.expect(not pg.begun, "one human of two")
+		submit(sim, 2, { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 10, maxZ = 10 })
+		Sim.step(sim)
+		t.expect(pg.begun and pg.deadline == sim.tick + Pregame.PICK_TIME, "both loaded (the AI needn't): 150 s from now")
+		local late = newMatch(2)
+		for _ = 1, Pregame.LOAD_WAIT + 1 do
+			Sim.step(late)
+		end
+		t.expect(late.pregame.begun, "LOAD_WAIT: the clocks start anyway")
+	end)
+
 	t.test("the AI waits for the first human pick, then takes the spots left", function()
 		local sim = newMatch(4, "map:plains", { [2] = "normal", [3] = "normal", [4] = "normal" })
 		local brains = Skirmish.forMatch(sim)

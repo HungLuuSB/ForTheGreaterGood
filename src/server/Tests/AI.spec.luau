@@ -132,9 +132,11 @@ return function(t: RunAll.Context)
 		local x, z = brain.homeX + brain.toward * 200, brain.homeZ + 150
 		local gun = Spawn.unit(sim, defId, 1, x, z)
 		World.setFireState(w, gun, World.FireState.HOLD_FIRE)
-		local tank = Spawn.unit(sim, "chs_ravager", 2, x + brain.toward * 120, z)
+		-- well inside the Verdict's kite radius (same spot for the Lancer)
+		local near = sim.defs.weapons.ord_howitzer.range * Skirmish.KITE_RANGE * 0.6
+		local tank = Spawn.unit(sim, "chs_ravager", 2, x + brain.toward * near, z)
 		World.setFireState(w, tank, World.FireState.HOLD_FIRE)
-		local spotter = Spawn.unit(sim, "ord_herald", 1, x + brain.toward * 100, z + 40)
+		local spotter = Spawn.unit(sim, "ord_herald", 1, x + brain.toward * near * 0.8, z + 40)
 		World.setFireState(w, spotter, World.FireState.HOLD_FIRE)
 		run(sim, { brain }, 4, false)
 		t.equal(Sensors.level(sim, 1, tank), Sensors.Level.VISIBLE, "the tank is seen")

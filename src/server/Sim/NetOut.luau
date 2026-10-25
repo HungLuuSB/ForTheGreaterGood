@@ -1324,6 +1324,12 @@ function NetOut.step(sim: Types.Sim)
 			sightEvents(sim, pn, net.sight[ally], events)
 		end
 		pregameEvents(sim, g, pn, ally, events)
+		-- gifts and requests between allies (S-176): the giver's ally team and spectators
+		for _, e in sim.share.events do
+			if ally == SPECTATOR or sim.players[e.from].allyTeam == ally then
+				table.insert(events, { kind = Schema.EventKind.SHARE, player = e.from, toPlayer = e.to, shareKind = e.kind, amount = math.clamp(e.amount, 0, 0xFFFFFFFF) })
+			end
+		end
 		wreckEvents(sim, g, pn, net.wrecks[ally], events)
 		if sensorTick then
 			wreckStateEvents(sim, pn, ally, events)

@@ -16,6 +16,11 @@
 -- land for Schema.LANDING_TICKS (the client's star flare), taking no orders
 -- (Commands holds them), and then take their queues as build orders.
 --
+-- The clocks (PICK_TIME, MAX_WAIT) start once every human player has loaded:
+-- sent its first command (the client's CAMERA after WELCOME), or after
+-- LOAD_WAIT (client-B's Studio run: 41 s of loading came out of the pick
+-- time). Commands are recorded, so a replay starts them on the same tick.
+--
 -- The map's start positions are hints (S-171): the AI, and anyone who
 -- didn't pick, takes its side's k-th hint as the side's k-th player; past
 -- the hints (or with the hint taken), the best free spot in the box:
@@ -40,6 +45,7 @@ Pregame.PICK_TIME = 150 * 15 -- ticks: then the unpicked get a spot (S-174)
 Pregame.MAX_WAIT = 300 * 15 -- ticks: then the match starts anyway, ready or not
 Pregame.COUNTDOWN = 3 * 15 -- ticks
 Pregame.WARN = 30 * 15 -- ticks before MAX_WAIT: PICK_CLOCK counts down to it
+Pregame.LOAD_WAIT = 60 * 15 -- ticks: the clocks start then even if a human hasn't loaded
 Pregame.SCAN_STEP = 16 -- studs between candidate spots in a box (bestSpot)
 Pregame.DEPOSIT_RADIUS = 160 -- studs: deposits that count for a spot
 Pregame.CLAIM_RADIUS = 100 -- studs: deposits this near another pick are taken
@@ -47,7 +53,10 @@ Pregame.CLAIM_RADIUS = 100 -- studs: deposits this near another pick are taken
 export type Build = { defIndex: number, x: number, z: number, facing: number }
 export type State = {
 	phase: "pick" | "countdown",
-	deadline: number, -- tick the pick time ends on
+	loaded: { [number]: boolean }, -- players whose first command arrived
+	begun: boolean, -- everyone loaded (or LOAD_WAIT): the clocks run
+	loadUntil: number, -- tick the clocks start on at the latest
+	deadline: number, -- tick the pick time ends on (math.huge until begun)
 	autoPicked: boolean, -- the pick time is over: everyone has a spot
 	maxWait: number, -- tick the match starts on, ready or not
 	countdownEnd: number?, -- tick the match starts on
@@ -94,9 +103,12 @@ function Pregame.new(sim: Types.Sim, setup: (sim: Types.Sim) -> (), host: number
 	end
 	return {
 		phase = "pick",
-		deadline = sim.tick + Pregame.PICK_TIME,
+		loaded = {},
+		begun = false,
+		loadUntil = sim.tick + Pregame.LOAD_WAIT,
+		deadline = math.huge,
 		autoPicked = false,
-		maxWait = sim.tick + Pregame.MAX_WAIT,
+		maxWait = math.huge,
 		countdownEnd = nil,
 		forced = false,
 		host = host,
@@ -242,6 +254,7 @@ end
 -- Others (CAMERA, CHEAT) go on as usual; the rest is ignored.
 function Pregame.command(sim: Types.Sim, player: number, cmd: Schema.Command): boolean
 	local pg = sim.pregame :: State
+	pg.loaded[player] = true
 	local t = cmd.cmdType
 	if t == CT.CAMERA or t == CT.CHEAT then
 		return false
@@ -359,6 +372,9 @@ end
 function Pregame.clock(sim: Types.Sim): (number, number)
 	local pg = sim.pregame :: State
 	local flags = if allReady(sim) then Schema.PickClockFlag.ALL_READY else 0
+	if not pg.begun then
+		return Pregame.PICK_TIME // 15, flags + Schema.PickClockFlag.LOADING
+	end
 	if pg.phase == "pick" and sim.tick >= pg.maxWait - Pregame.WARN then
 		return math.max(0, math.ceil((pg.maxWait - sim.tick) / 15)), flags + Schema.PickClockFlag.MAX_WAIT
 	end
@@ -369,6 +385,19 @@ end
 -- and the start.
 function Pregame.step(sim: Types.Sim)
 	local pg = sim.pregame :: State
+	if not pg.begun then
+		local all = true
+		for _, pid in sim.playerOrder do
+			if not sim.match.ai[pid] and not pg.loaded[pid] then
+				all = false
+			end
+		end
+		if all or sim.tick >= pg.loadUntil then
+			pg.begun = true
+			pg.deadline = sim.tick + Pregame.PICK_TIME
+			pg.maxWait = sim.tick + Pregame.MAX_WAIT
+		end
+	end
 	if not pg.autoPicked and sim.tick >= pg.deadline then
 		autoPick(sim)
 	end

@@ -1,5 +1,6 @@
 --!strict
 -- MLRS rockets: long-range saturation, inaccurate; can fire at radar contacts.
+-- S-179, the playtest's balance notes: T2 artillery: damage × 0.8
 return {
 	id = "ord_mlrs",
 	type = "BALLISTIC",
@@ -10,7 +11,7 @@ return {
 	gravity = 60,
 	accuracy = 1.32, -- faction pass, tuned (S-62)
 	salvo = { count = 4, delay = 0.3 }, -- 4 precise rockets (S-69)
-	damage = { LIGHT = 58, ARMORED = 45, STRUCTURE = 54, SHIP = 45, AIR = 0, SUB = 0 }, -- per rocket: 90% of what one shot did (S-69, tuned)
+	damage = { LIGHT = 46, ARMORED = 36, STRUCTURE = 43, SHIP = 36, AIR = 0, SUB = 0 }, -- per rocket: 90% of what one shot did (S-69, tuned)
 	aoe = 16,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

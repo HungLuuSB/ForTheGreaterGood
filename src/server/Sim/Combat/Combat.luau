@@ -8,6 +8,7 @@
 -- the terrain under the unit's center (plus altitude for air units).
 
 local Aim = require("@shared/Combat/Aim")
+local Categories = require("@shared/Defs/Categories")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
@@ -445,10 +446,20 @@ Combat.LOF_END = 6 -- studs at the target end left unchecked (the ground it stan
 -- terrain: a straight line for hitscan and beams, the shell's low arc for
 -- ballistic weapons (so artillery lobs over a ridge a tank shell hits), or
 -- its high arc for `highArc` ones (S-157).
--- Homing missiles, torpedoes and bombs aren't checked: they steer or fall.
+-- Homing missiles (S-182, the playtest's F29: a Sanction kept firing into
+-- the mountain between it and its target) fly about straight once launched:
+-- the line from the muzzle, or for vertical launchers from the top of their
+-- climb, to the target. Torpedoes and bombs aren't checked: they run along
+-- the water or fall.
 -- Every LOF_STEP studs, the shot must be above the ground there.
 function Combat.lineOfFire(c: Combat, weapon: Defs.WeaponDef, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean
 	local wtype = weapon.type
+	if wtype == "HOMING" and c.layers ~= nil then
+		if weapon.launch == "vertical" then
+			y0 = math.max(y0, Combat.groundHeight(c, x0, z0)) + (weapon.climbHeight or 0)
+		end
+		wtype = "HITSCAN" -- a straight line from here on
+	end
 	if (wtype ~= "HITSCAN" and wtype ~= "BEAM" and wtype ~= "BALLISTIC") or c.layers == nil then
 		return true
 	end
@@ -484,7 +495,7 @@ end
 -- is (kx, kz; defIndex nil when the type is unknown).
 function Combat.unitLineOfFire(c: Combat, w: World.World, id: number, weapon: Defs.WeaponDef, t: number, defIndex: number?, kx: number, kz: number): boolean
 	local wtype = weapon.type
-	if wtype ~= "HITSCAN" and wtype ~= "BEAM" and wtype ~= "BALLISTIC" then
+	if wtype ~= "HITSCAN" and wtype ~= "BEAM" and wtype ~= "BALLISTIC" and wtype ~= "HOMING" then
 		return true
 	end
 	local _, ty = Combat.knownAimPoint(c, w, t, defIndex, kx, kz)
@@ -559,6 +570,19 @@ function Combat.armorOf(w: World.World, id: number, p: UnitProfile): string
 	return p.armorClass
 end
 
+-- A laser's damage multiplier at `dist` (S-178, F12): weapon.closeDamage at
+-- point blank, falling linearly to 1 at its full range; 1 for the rest.
+function Combat.nearFactor(weapon: Defs.WeaponDef, dist: number): number
+	local close = weapon.closeDamage
+	if close == nil then
+		return 1
+	end
+	return close + (1 - close) * math.clamp(dist / weapon.range, 0, 1)
+end
+
+local COMMANDER_BIT = Categories.Bit.COMMANDER
+Combat.STRATEGIC_COMMANDER = 0.33 -- strategic blasts (nukes) do a third to Commanders (S-178, F16)
+
 -- Explosion at (x, y, z) from `weapon` fired by `attacker` of ally team `team`.
 -- `direct` (0 = none) is the unit the projectile struck: it takes full
 -- damage. (Projectiles never strike allies directly, guide 10.6, so `direct`
@@ -575,14 +599,18 @@ function Combat.explode(
 	attacker: number,
 	team: number,
 	direct: number,
-	player: number? -- default: the attacker's owner
+	player: number?, -- default: the attacker's owner
+	mult: number? -- damage multiplier (a laser up close, S-178)
 )
 	local aoe = weapon.aoe or 0
 	local edge = weapon.edgeEffectiveness or 0
+	local m = mult or 1
+	local strategic = weapon.strategic == true
 	player = player or (if attacker ~= 0 then w.owner[attacker] else 0)
 	if direct ~= 0 and w.slot[direct] ~= nil then
 		local p = c.profiles[w.defIndex[direct]]
-		Combat.queueDamage(c, direct, weapon.damage[Combat.armorOf(w, direct, p)], attacker, player)
+		local cm = if strategic and bit32.band(p.categoryMask, COMMANDER_BIT) ~= 0 then Combat.STRATEGIC_COMMANDER else 1
+		Combat.queueDamage(c, direct, weapon.damage[Combat.armorOf(w, direct, p)] * m * cm, attacker, player)
 	end
 	if aoe <= 0 then
 		return
@@ -599,7 +627,10 @@ function Combat.explode(
 		local d = Ballistics.distanceToCylinder(x, y, z, w.posX[id], w.posZ[id], p.radius, base, base + p.height)
 		local f = Ballistics.falloff(d, aoe, edge)
 		if f > 0 then
-			Combat.queueDamage(c, id, weapon.damage[Combat.armorOf(w, id, p)] * f, attacker, player)
+			if strategic and bit32.band(p.categoryMask, COMMANDER_BIT) ~= 0 then
+				f *= Combat.STRATEGIC_COMMANDER
+			end
+			Combat.queueDamage(c, id, weapon.damage[Combat.armorOf(w, id, p)] * f * m, attacker, player)
 		end
 	end
 end

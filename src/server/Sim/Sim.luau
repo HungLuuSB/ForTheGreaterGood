@@ -36,6 +36,7 @@ local Pregame = require("./Pregame")
 local _Placement = require("./Placement") -- registers its Lifecycle removal hook
 local Replay = require("./Replay")
 local Scenarios = require("./Scenarios")
+local Share = require("./Share")
 local Types = require("./Types")
 local World = require("./World")
 
@@ -225,6 +226,7 @@ function Sim.new(config: Config): Sim
 		playerStats = Stats.new(order),
 		statSeries = Stats.newSeries(0),
 		alerts = Alerts.new(order),
+		share = Share.new(),
 		cheats = CheatsState.new(cheats, offline),
 		net = nil :: any,
 	}

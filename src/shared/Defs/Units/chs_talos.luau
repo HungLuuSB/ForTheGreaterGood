@@ -11,7 +11,8 @@ return Templates.extend(Templates.Structure, {
 	tier = 1,
 	categories = { "STRUCTURE" },
 	cost = { supply = 220, power = 1850, buildTime = 4800 },
-	health = 1050,
+	-- S-179, the playtest's balance notes: health × 2
+	health = 2100,
 	footprint = 2, -- size shows tech level (S-104)
 	sensors = { sight = 220 },
 	weapons = { { def = "chs_talos_shell", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },

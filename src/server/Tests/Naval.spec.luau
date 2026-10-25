@@ -286,7 +286,7 @@ return function(t: RunAll.Context)
 		t.equal(a.world.slot[as] ~= nil, b.world.slot[bs] ~= nil, "sub alive")
 	end)
 
-	-- A shooter on the beach and a stationary enemy corvette 150 studs offshore.
+	-- A shooter on the beach and a stationary enemy corvette `gap` studs from it.
 	local function shore(seed: number, shooter: string, gap: number): (Sim.Sim, number, number)
 		local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = MAP })
 		local gun = Spawn.unit(sim, shooter, 1, SHORE_X - 30, 0, math.pi / 2)
@@ -331,7 +331,9 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a tank on the beach hits a stationary ship with its shells", function()
-		local sim, gun, ship = shore(31, "ord_lancer", 150)
+		-- the ship at 0.8 × the Lancer's range (95 since S-179), 46 studs offshore
+		local d = Defs.load()
+		local sim, gun, ship = shore(31, "ord_lancer", math.floor(d.weapons[d.units.ord_lancer.weapons[1].def].range * 0.8))
 		local fired, hit = shots(sim, gun, ship, 450)
 		t.expect(fired >= 10, `the tank fired ({fired})`)
 		t.expect(hit >= fired * 0.6, `{hit} of {fired} shells hit the ship`)

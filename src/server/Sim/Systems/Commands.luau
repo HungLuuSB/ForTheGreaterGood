@@ -32,6 +32,7 @@ local Build = require("../Build")
 local Cheats = require("../Cheats")
 local Orders = require("../Orders")
 local Pregame = require("../Pregame")
+local Share = require("../Share")
 local Sensors = require("../Sensors")
 local Nav = require("../Nav")
 local NetOut = require("../NetOut")
@@ -181,6 +182,15 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	elseif cmdType == CT.CHEAT then
 		Cheats.apply(sim, player, cmd) -- (S-102) answered CHEATS_OFF unless the match allows them
 		return
+	elseif cmdType == CT.SHARE_UNITS then
+		Share.giveUnits(sim, player, cmd.value :: number, cmd.unitIds) -- (S-176)
+		return
+	elseif cmdType == CT.SHARE_RESOURCE then
+		Share.giveResource(sim, player, cmd.toPlayer :: number, cmd.resource :: number, cmd.amount :: number)
+		return
+	elseif cmdType == CT.REQUEST then
+		Share.request(sim, player, cmd.value :: number)
+		return
 	end
 	for _, id in cmd.unitIds do
 		if w.owner[id] ~= player then
@@ -216,6 +226,7 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 end
 
 function Commands.step(sim: Types.Sim)
+	Share.clear(sim)
 	local queue = sim.queue
 	local used: { [number]: number } = {} -- player → unit IDs applied this tick
 	local waiting: { [number]: boolean } = {} -- player → a command of theirs waits: later ones too

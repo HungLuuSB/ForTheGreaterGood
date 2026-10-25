@@ -1,4 +1,5 @@
 --!strict
+-- S-179, the playtest's balance notes: T1 radar / jammer range halved
 local Templates = require("../Templates")
 
 -- Placeholder (guide 13.5 "Radar tower", T1); stats to balance in M8.
@@ -12,7 +13,7 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 70, power = 1000, buildTime = 2000 },
 	health = 690, -- faction pass (S-62)
 	footprint = 1,
-	sensors = { sight = 160, radar = 700, radarError = 16, radarDrain = 3 }, -- upkeep: S-72
+	sensors = { sight = 160, radar = 350, radarError = 16, radarDrain = 3 }, -- upkeep: S-72
 	icon = "radar",
 	model = "ord_watchtower",
 })

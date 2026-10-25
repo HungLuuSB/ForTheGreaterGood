@@ -1,15 +1,16 @@
 --!strict
 -- Attack helicopter rockets: unguided, against ground and ships.
+-- S-179, the playtest's balance notes: a T1 unit's range halved, damage × 0.8 (four Lancer shells no longer kill an extractor)
 return {
 	id = "ord_rockets",
 	type = "BALLISTIC",
 	rocket = true, -- point defence intercepts it (S-149)
-	range = 220,
+	range = 110,
 	reload = 0.8,
 	projectileSpeed = 300,
 	gravity = 20,
 	accuracy = 1.5,
-	damage = { LIGHT = 170, ARMORED = 150, STRUCTURE = 130, SHIP = 140, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 136, ARMORED = 120, STRUCTURE = 104, SHIP = 112, AIR = 0, SUB = 0 },
 	aoe = 6,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

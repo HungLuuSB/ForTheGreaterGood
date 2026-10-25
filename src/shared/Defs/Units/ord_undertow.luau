@@ -10,10 +10,11 @@ return Templates.extend(Templates.Structure, {
 	tier = 1,
 	categories = { "STRUCTURE" },
 	cost = { supply = 150, power = 1200, buildTime = 3000 },
-	health = 1400,
+	-- S-179, the playtest's balance notes: health × 2
+	health = 2800,
 	footprint = 1,
 	sensors = { sight = 140, sonar = 260 },
-	weapons = { { def = "ord_torpedo", turretPiece = "launcher", muzzle = "muzzle" } },
+	weapons = { { def = "ord_undertow_torpedo", turretPiece = "launcher", muzzle = "muzzle" } },
 	pieces = { "base", "launcher", "turret", "muzzle" },
 	icon = "torpedo",
 	placement = "water",
