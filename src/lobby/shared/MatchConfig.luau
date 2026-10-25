@@ -5,6 +5,7 @@
 -- `@shared/Match/MatchConfig` (S-145); this module re-exports them, so the
 -- lobby has one place to require. Pure Luau, tested under Lune.
 
+local MatchErrors = require("./MatchErrors")
 local Rooms = require("./Rooms")
 local SpawnBoxes = require("./SpawnBoxes")
 local Shared = require("@shared/Match/MatchConfig")
@@ -182,6 +183,8 @@ function MatchConfig.summary(c: MatchConfig, r: Result, mapName: string): any
 		winner = r.winner,
 		seconds = r.seconds,
 		cheatsUsed = r.cheatsUsed,
+		reason = (r :: any).reason,
+		error = MatchErrors.clean((r :: any).error), -- F38: why the match failed as a whole
 		players = players,
 	}
 end

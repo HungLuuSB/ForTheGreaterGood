@@ -14,6 +14,7 @@ local Config = require("../shared/Config")
 local Ctx = require("./Ctx")
 local Directory = require("./Directory")
 local MatchConfig = require("../shared/MatchConfig")
+local MatchErrors = require("../shared/MatchErrors")
 local Profile = require("../shared/Profile")
 local Profiles = require("./Profiles")
 local Rooms = require("../shared/Rooms")
@@ -59,8 +60,8 @@ local function record(user: number, c: MatchConfig.MatchConfig, r: MatchConfig.R
 	Ctx.store.remove(`player/{user}`)
 end
 
--- The match is over (r nil: abandoned, `reason` says why).
-local function finish(room: Rooms.Room, c: MatchConfig.MatchConfig, r: MatchConfig.Result?, reason: string?)
+-- The match is over (r nil: abandoned, `reason` and `err` say why).
+local function finish(room: Rooms.Room, c: MatchConfig.MatchConfig, r: MatchConfig.Result?, reason: string?, err: MatchErrors.Error?)
 	if room.matchId ~= c.matchId then
 		return
 	end
@@ -71,7 +72,7 @@ local function finish(room: Rooms.Room, c: MatchConfig.MatchConfig, r: MatchConf
 		for _, p in c.players do
 			table.insert(players, { name = p.name, user = p.user, ai = p.ai, faction = p.faction, allyTeam = p.allyTeam, color = p.color, won = false })
 		end
-		room.results = { matchId = c.matchId, mapName = mapName(c.mapId), mode = c.mode, outcome = "abandoned", reason = reason, seconds = 0, cheatsUsed = false, players = players }
+		room.results = { matchId = c.matchId, mapName = mapName(c.mapId), mode = c.mode, outcome = "abandoned", reason = reason, error = err, seconds = 0, cheatsUsed = false, players = players }
 	end
 	local here: { [number]: boolean } = {}
 	for _, m in room.members do
@@ -145,6 +146,7 @@ function Returns.watch(room: Rooms.Room, c: MatchConfig.MatchConfig, startedAt: 
 						endedAt = os.time(),
 						cheatsUsed = false,
 						by = "lobby",
+						error = { code = 120 }, -- F38
 						players = (function()
 							local out = {}
 							for i in c.players do
@@ -154,7 +156,7 @@ function Returns.watch(room: Rooms.Room, c: MatchConfig.MatchConfig, startedAt: 
 						end)(),
 					}, Config.RESULT_TTL)
 				end
-				finish(room, c, nil, "The match server stopped answering")
+				finish(room, c, nil, "The match server stopped answering", { code = 120 })
 				break
 			end
 		end
@@ -175,7 +177,8 @@ end
 
 -- A player joined this server, or the Studio stand-in match sent them back.
 -- `hint` is the teleport data's match ID (checked, never trusted alone).
-function Returns.arrive(player: Player, hint: any)
+-- Returns the match's result, if there is one.
+local function land(player: Player, hint: any): MatchConfig.Result?
 	local user = player.UserId
 	local ok, stored = Ctx.store.get(`player/{user}`)
 	local matchId: string? = if ok and type(stored) == "string" then stored else nil
@@ -183,11 +186,11 @@ function Returns.arrive(player: Player, hint: any)
 		matchId = hint -- the key may have expired: the config's player list decides
 	end
 	if matchId == nil then
-		return
+		return nil
 	end
 	local c = readConfig(matchId)
 	if c == nil or table.find(MatchConfig.users(c), user) == nil then
-		return
+		return nil
 	end
 	local r = readResult(c)
 	local room = roomOfMatch(matchId)
@@ -195,7 +198,7 @@ function Returns.arrive(player: Player, hint: any)
 		if r and os.time() - r.endedAt > Config.AWAY_GRACE then
 			-- long over: just its history entry, no room
 			record(user, c, r)
-			return
+			return r
 		end
 		local _, saved = Ctx.store.get(`room/{matchId}`)
 		room = Directory.recreate(c, saved, user)
@@ -213,6 +216,17 @@ function Returns.arrive(player: Player, hint: any)
 		record(user, c, r)
 	end
 	Ctx.publish()
+	return r
+end
+
+-- A player arrives (see `land`). `sentBack` is the match server's error
+-- from the teleport data (F38, cleaned): shown in their error panel, unless
+-- the match's results carry it already (they show with the results).
+function Returns.arrive(player: Player, hint: any, sentBack: MatchErrors.Error?)
+	local r = land(player, hint)
+	if sentBack and not (r and MatchErrors.clean((r :: any).error)) then
+		Ctx.matchError(player.UserId, sentBack)
+	end
 end
 
 return Returns

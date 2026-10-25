@@ -104,6 +104,7 @@ Written once by the match server when the match ends for the humans (the sim's `
 | `endedAt` | number | `os.time()` |
 | `cheatsUsed` | boolean | any cheat command applied (`sim.cheats.used`) |
 | `reason` | string? | optional, for `abandoned` |
+| `error` | `{ code, detail? }`? | why the match failed as a whole (section 11): 2xx from the match server (a refused config, nobody arrived, everyone left, a server error), or 120 written by a lobby that stopped hearing from it. Optional; the lobby shows it with the results |
 | `players` | array | `players[i]` for config `players[i]`: `{ id, won, outAt?, stats? }` |
 
 Which outcome (client-B's `MatchContract.outcomeOf`): the sim's end gives `"finished"` + `winner`, or `"draw"` (no ally team left). Before that, every human gone from the server gives `"abandoned"`; one ally team standing gives `"finished"` + that team; every human out while AI teams still fight gives `"finished"` with no `winner` (a loss for the humans, not a draw).
@@ -139,7 +140,7 @@ Lobby servers are the only writers (UpdateAsync, retried with backoff, waiting f
 
 ## 9. Refusals
 
-The match server refuses a match whose config is missing, fails validation or has another `version`: it writes `result/<matchId>` with `outcome = "abandoned"` and `reason`, then sends everyone back. The lobby shows the reason in the room.
+The match server refuses a match whose config is missing, fails validation or has another `version`: it writes `result/<matchId>` with `outcome = "abandoned"`, `reason` and `error` (201, 202 or 203, section 11), then sends everyone back with the same `error` in their teleport data. The lobby shows it.
 
 ## 10. What only a published test can check
 
@@ -159,6 +160,49 @@ Studio can't reserve or teleport, and MemoryStore / DataStore need a published p
 12. Lobby settings saved on the profile (L-16) and back on the next visit.
 
 The ordered plan for a 4-tester session is in [`../progress/lobby.md`](../progress/lobby.md), "Live playtest".
+
+## 11. Errors (F38, 2026-10-26)
+
+The user's rule: "any failed attempt to connect to the game match must be displayed on the lobby when return with error code + description". Every failure has a number. The lobby shows it in a panel the player dismisses, with the code, a title, the description and the detail. That happens when the lobby itself fails to start or send them (1xx), or when they come back from a match server that couldn't take them or failed (2xx).
+
+**Shape:** `{ code: number, detail: string? }`. `detail` is free text for the curious, up to 200 characters (an engine message, the validator's reason). The lobby drops unknown codes and cuts long details.
+
+**How 2xx reach the lobby:**
+- **One player sent back** (they weren't listed, the server was full, the game versions differ): teleport data `{ matchId, error = { code, detail? } }` on their return teleport.
+- **The whole match failed** (a refused config, players didn't arrive, everyone left, a server error): the result record's `error` (section 5), and the same `error` in every returning player's teleport data. The lobby shows it once, with the results.
+
+| Code | Title | Description |
+|---|---|---|
+| **1xx** | **lobby side** | |
+| 101 | No match place | The lobby couldn't find the game's match place. |
+| 102 | Bad match setup | The lobby built a match setup that failed its own check. (detail: the validator's reason) |
+| 103 | No match server | Roblox didn't give the lobby a server for the match. (detail: the ReserveServer error) |
+| 104 | Match store unavailable | The lobby couldn't save the match setup (MemoryStore). |
+| 105 | Room changed | The room changed while the match was starting. |
+| 106 | Nobody to send | None of the room's players were on this lobby server. |
+| 110 | Teleport failed | Roblox couldn't send the players to the match server. (TeleportAsync threw, or TeleportResult `Failure`) |
+| 111 | Match server not found | The teleport couldn't find the match server. (`GameNotFound`) |
+| 112 | Match server closed | The match server shut down before you arrived. (`GameEnded`) |
+| 113 | Match server full | The match server had no room for you. (`GameFull`) |
+| 114 | Teleport not allowed | Roblox refused the teleport to the match. (`Unauthorized`) |
+| 115 | Too many teleports | Roblox is limiting teleports right now. (`Flooded`) |
+| 116 | Already teleporting | Another teleport was still in progress. (`IsTeleporting`) |
+| 120 | Match server stopped answering | The match server stopped reporting, so the match was ended. (the lobby's heartbeat timeout) |
+| 121 | Match not found | The running match's details have expired; it can't be rejoined. |
+| **2xx** | **match side** | |
+| 201 | No match setup | The match server found no setup for itself. (no `server/<id>` or `config/<id>`) |
+| 202 | Bad match setup | The match server refused the lobby's match setup. (detail: the validator's reason) |
+| 203 | Version mismatch | The lobby and the match place are on different versions. (config `version`) |
+| 204 | Game version mismatch | Your game client and the match server are on different versions. (protocol or defs REJECT) |
+| 205 | Not in this match | You aren't one of this match's players or spectators. |
+| 206 | Match full | The match had no free seat for you. |
+| 207 | Match already over | The match ended before you arrived. |
+| 208 | Players didn't arrive | Not everyone reached the match in time, so it didn't start. (the start timeout) |
+| 209 | Everyone left | Every player left, so the match was abandoned. |
+| 210 | Match server error | The match server hit an error and ended the match. (detail: the error) |
+| 299 | Match server problem | The match server sent you back for a reason it didn't name. |
+
+The table lives in code as `src/lobby/shared/MatchErrors.luau`, until sim-A moves it to `@shared/Match/MatchConfig` (`ERRORS`) for both places.
 
 ## Changes
 

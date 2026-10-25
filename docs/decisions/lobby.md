@@ -138,3 +138,10 @@ The user approved it (queue item 5). "Invite" in the room calls `SocialService:P
 - **Defaults:** `StartAreas.boxes` for the room's sides (its seated teams, ascending, numbered like the config's ally teams), from the map's bounds, start hints and own boxes, which the server reads from the layers and sends with the previews. So an untouched room shows the boxes the match would use.
 - **Contract:** `startBoxes` by ally team, every side's box once any was edited (the others are the defaults), else absent; `host` (F32). Both are in match.md v2 (sim-A's S-174).
 - **Alternatives:** a larger editor dialog (the room's map is about 230 px on a small screen, but dragging on it worked in Studio); boxes in free for all (16 boxes on one map; FFA keeps the match's defaults).
+
+## L-21 (2026-10-26): match errors with codes (F38)
+
+- **Decision:** the user's rule that every failed attempt to reach a match shows on the lobby with a code and a description. One numbered list: 1xx for the lobby's side, 2xx for the match server's, with a title and a one-line description each, and an optional free-text detail (200 characters). The table is in contract section 11 and `src/lobby/shared/MatchErrors.luau`, and a spec keeps the two equal. sim-A moves it to `@shared/Match/MatchConfig` for both places.
+- **Transport:** the match server sends 2xx in the return teleport data (`error`) and, for a match that failed as a whole, in the result's `error`. The lobby cleans both (listed codes only), shows a whole-match error once with the results, and the rest in a panel.
+- **Delivery:** pending errors travel in the player's view (`errors`, three at most) until the player dismisses them (`dismissError`). A push sent at arrival could arrive before the client listens.
+- **Alternatives:** toasts (gone in 5 s, no room for a code and a description); the room's notice alone (only for players in a room, and not per player).

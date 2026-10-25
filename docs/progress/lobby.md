@@ -2,6 +2,22 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: match errors with codes, F38)
+
+- **The user's rule:** "any failed attempt to connect to the game match must be displayed on the lobby when return with error code + description". One numbered list (`MatchErrors`, contract section 11, L-21):
+  - **1xx, the lobby's side:** no match place, a bad setup, no server, the match store, room changed, nobody to send, teleport failures by TeleportResult, the match server going silent (120), rejoin with the match gone.
+  - **2xx, the match server's side:** no or bad setup, version mismatches, not listed, full, already over, players didn't arrive, everyone left, a server error, unnamed.
+- **Shown:** a panel the player dismisses: "Couldn't reach the match", the code, title, description and detail.
+  - **Start failures:** every room member present gets it, and the room's notice carries the code.
+  - **A player's own failed teleport:** after the retries, for that player.
+  - **Rejoin:** its errors too.
+  - **A player sent back with `error` in the teleport data:** shown on arrival.
+  - **A match that failed as a whole:** the result's `error` shows in the results panel instead, once.
+  - Errors wait in the player's view until dismissed, so one raised during arrival isn't lost.
+- **Studio:** the stand-in match refuses with codes (201, 202, 203, 205), and `StandInFail = "match:<code>"` stages any 2xx. Checked (`debug_out/screens/`): `lobby_error_103_start` (reserve failed), `lobby_error_206_sent_back`, `lobby_error_120_results` (the lobby's heartbeat timeout), `lobby_error_209_results` (shown once, with the results), `lobby_error_114_teleport` (a player's teleport, after the retries).
+- **Specs** (`MatchErrors.spec`, 5 tests): the list, the contract's table equal to the code's, cleaning, the teleport mapping, results carrying the error. Lobby specs 60 / 60; the build check passes.
+- **For B and sim-A:** the match place reports 2xx in the return teleport data and the result's `error`; sim-A moves the list to `MatchConfig.ERRORS`, then the lobby reads it from there.
+
 ## Summary (2026-10-26: the host back from a match)
 
 - **The user's bug:** after a match, the host came back to a lobby and couldn't control the room, so they made a new one. Two causes, both fixed:

@@ -22,6 +22,7 @@ local Units = require("./Pages/Units")
 local ProfilePage = require("./Pages/Profile")
 local Settings = require("./Pages/Settings")
 local Loading = require("./Overlays/Loading")
+local MatchError = require("./Overlays/MatchError")
 local Results = require("./Overlays/Results")
 
 local Kit = Ui.Kit
@@ -235,6 +236,7 @@ end)
 
 local loading = Loading.new(gui)
 local results = Results.new(gui)
+local matchError = MatchError.new(gui)
 
 -- views -----------------------------------------------------------------------
 
@@ -260,6 +262,7 @@ Net.onView(function(v: any)
 	end
 	body.Visible = not loading.update(v)
 	results.update(v)
+	matchError.update(v)
 end)
 Net.onStandIn(function(_s: any)
 	if Net.view then

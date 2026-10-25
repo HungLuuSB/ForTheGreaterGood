@@ -1,13 +1,15 @@
 --!strict
 -- A finished match's summary, shown once when you're back in the room
 -- (L-4): victory or defeat, the map, mode and length, and every player's
--- result and numbers from the match server's results record. Colours are
+-- result and numbers from the match server's results record; a match that
+-- failed as a whole shows its error code and why (F38). Colours are
 -- the match's, from your view (S-172): players are listed in config order,
 -- so a player's place in the list is its player ID.
 
 local Players = game:GetService("Players")
 
 local TeamColors = require("@shared/Match/TeamColors")
+local MatchErrors = require("../../shared/MatchErrors")
 local Ui = require("../Ui")
 
 local Kit = Ui.Kit
@@ -53,7 +55,8 @@ function Results.new(gui: ScreenGui): any
 		else
 			headline, color = "Defeat", Kit.COLOR.defeat
 		end
-		local p = Kit.panel(gui, "Match results", Vector2.new(860, 215 + 36 * (#r.players + 1)))
+		local err = MatchErrors.clean(r.error)
+		local p = Kit.panel(gui, "Match results", Vector2.new(860, 215 + 36 * (#r.players + 1) + (if err then 48 else 0)))
 		p.root.ZIndex = 45
 		p.scrim.ZIndex = 44
 		local function close()
@@ -68,7 +71,7 @@ function Results.new(gui: ScreenGui): any
 		h.Size = UDim2.new(1, 0, 0, 40)
 		h.LayoutOrder = 1
 		local facts = `{r.mapName}  ·  {Ui.modeName(r.mode, #r.players)}  ·  {Ui.clock(r.seconds or 0)}`
-		if r.reason then
+		if r.reason and err == nil then -- an error line says it better
 			facts ..= `  ·  {r.reason}`
 		end
 		if r.cheatsUsed then
@@ -76,6 +79,14 @@ function Results.new(gui: ScreenGui): any
 		end
 		local f = Kit.text(p.content, facts, "small")
 		f.LayoutOrder = 2
+		if err then
+			local entry = MatchErrors.LIST[err.code]
+			local e = Kit.text(p.content, `{MatchErrors.line(err)}: {entry.description}{if err.detail then ` ({err.detail})` else ""}`, "label", Kit.COLOR.defeat)
+			e.Name = "MatchError"
+			e.TextWrapped = true
+			e.Size = UDim2.new(1, 0, 0, 40)
+			e.LayoutOrder = 3
+		end
 		local rows = {}
 		for i, pl in r.players do
 			local s = pl.stats or {}
@@ -104,9 +115,9 @@ function Results.new(gui: ScreenGui): any
 			{ title = "KILLED", width = 0.1, align = "right" },
 			{ title = "LOST", width = 0.09, align = "right" },
 			{ title = "DAMAGE", width = 0.12, align = "right" },
-		}, rows, 36, 3)
+		}, rows, 36, 4)
 		local b = Ui.frame(p.content, "Buttons", UDim2.new(1, 0, 0, 36))
-		b.LayoutOrder = 4
+		b.LayoutOrder = 5
 		local bl = Kit.list(b, Kit.SPACE.s, true)
 		bl.HorizontalAlignment = Enum.HorizontalAlignment.Right
 		Ui.button(b, "Back to the room", "primary", close, 170, 34)
