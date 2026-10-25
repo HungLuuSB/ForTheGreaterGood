@@ -42,6 +42,7 @@ Built by `src/lobby/shared/MatchConfig.luau` (`MatchConfig.build`). The shapes, 
 | `win` | `"COMMAND_ENDS"` \| `"ANNIHILATION"` | guide 16.2 |
 | `friendlyFire` | boolean | S-73 |
 | `cheats` | boolean | the host's toggle; cheat commands still need the CheatConfig allow-list (C-119). Matches with cheats don't count on profiles |
+| `host` | number | the room host's UserId (F32, 2026-10-26). The match place maps it to a player ID, or to none when the host spectates (then the match starts once everyone is ready) |
 | `players` | array | one per seat, in sim player order (below) |
 | `spectators` | array of `{ user, name }` | members who watch |
 | `lobby` | `{ placeId, jobId, roomId, roomName }` | where the room lives (for the return trip) |

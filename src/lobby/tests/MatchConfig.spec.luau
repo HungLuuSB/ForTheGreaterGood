@@ -41,6 +41,7 @@ return function(t: RunAll.Context)
 			{ 4, 0, 2, "AI 2 (hard)", 0 },
 		})
 		t.equal(c.players[2].ai, "easy")
+		t.equal(c.host, 10, "the room host (F32)")
 		t.equal(c.lobby.roomId, "r1")
 		t.equal(c.version, 1)
 	end)
@@ -79,6 +80,28 @@ return function(t: RunAll.Context)
 		for _, seat in MatchConfig.seats(r) do
 			t.equal(mine[seat.slot], byId[seat.id])
 			t.equal(c.players[seat.id].allyTeam, seat.allyTeam)
+		end
+	end)
+
+	t.test("16 seats in any faction mix start and pass the shared check (F31)", function()
+		local maps = { { id = "map:plains", name = "The Plains", starts = 16 } }
+		for _, mode in { "TEAM", "FFA" } do
+			local r = assert(Rooms.new("r3", { name = "Full", privacy = "public", maxPlayers = 16 }, 10, "Host", maps))
+			Rooms.apply(r, maps, 10, { op = "set", key = "mode", value = mode })
+			Rooms.apply(r, maps, 10, { op = "mine", faction = "order", team = 1 })
+			for i = 2, 16 do
+				-- 9 Chaos and 7 Order, 8 against 8 in Teams
+				t.equal(Rooms.apply(r, maps, 10, { op = "addAi", faction = if i <= 10 then "chaos" else "order", team = if i <= 8 then 1 else 2 }), nil)
+			end
+			t.equal(#r.slots, 16)
+			t.equal(Rooms.checkStart(r, maps, 10, true), nil, mode)
+			local c = MatchConfig.build(r, "m3", 1, 0, LOBBY)
+			t.equal(MatchConfig.validate(c), nil, mode)
+			local chaos = 0
+			for _, p in c.players do
+				chaos += if p.faction == "chaos" then 1 else 0
+			end
+			t.equal(chaos, 9)
 		end
 	end)
 

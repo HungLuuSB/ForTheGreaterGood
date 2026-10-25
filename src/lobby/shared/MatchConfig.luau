@@ -130,6 +130,7 @@ function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now:
 		win = room.settings.win,
 		friendlyFire = room.settings.friendlyFire,
 		cheats = room.settings.cheats,
+		host = room.host, -- the room host's UserId (F32): the match's pre-game starts it; seated or not
 		players = players,
 		spectators = spectators,
 		lobby = { placeId = lobby.placeId, jobId = lobby.jobId, roomId = room.id, roomName = room.name },

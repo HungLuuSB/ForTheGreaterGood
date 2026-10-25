@@ -2,6 +2,16 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: beta feedback F25, F31, F32, F35)
+
+From the user's playtest feedback (`FTGG-FEEDBACK.txt`; sim-A's plan in `docs/progress/playtest-2026-10-26.md`):
+- **F25 (an AI added to team 7 landed on team 2):** a new AI always sat on team 1 or 2, and the room moved it with a second request 0.3 s later, aimed at "the last seat"; if the view hadn't arrived, that moved a different AI or none. `addAi` and `play` now take the team in the same request (checked against the map's sides). Specs: back-to-back requests to teams 7, 2, 7, 8; team 9 and team 5 on a four-start map refused; a spectator joins team 3 in one request. Studio: five requests sent back to back and two quick clicks on Team 3's Add AI all land on their teams (`lobby_room_ai_teams_f25`).
+- **F31 (the 16-player crash):** the match place numbered teams by faction parity (B fixes it). The room already seats 16 in any mix; a new spec builds 16 seats, 9 Chaos and 7 Order, 8 against 8 and free for all on The Plains, and checks the start rules and the shared config check.
+- **F32:** the config carries `host` (the room host's UserId), seated or not. Contract row added.
+- **F35:** your seat editor says the faction is a first choice that can change in the match (`lobby_room_faction_note_f35`).
+- **Tests:** lobby specs 50 / 50; the build check passes.
+- **Next: F26** (spawn boxes edited by the host), planned below once approved.
+
 ## Summary (2026-10-26: automatic colours, S-172)
 
 - **sim-A's request:** after the beta publish, the room still had the colour picker. Players' colours are now automatic in the lobby too:

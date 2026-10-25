@@ -80,7 +80,7 @@ local function editSeat(gui: Instance, index: number)
 	end
 	local m = memberOf(room, s.user)
 	local title = if s.kind == "ai" then "AI player" elseif mine then "Your seat" else (if m then m.name else "Player")
-	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 260 else 215))
+	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 260 else 240))
 	Kit.list(p.content, Kit.SPACE.s)
 	local function send(fields: any)
 		local msg = table.clone(fields)
@@ -96,6 +96,12 @@ local function editSeat(gui: Instance, index: number)
 		Kit.segmented(Kit.row(p.content, "Faction", 1), options(Config.FACTIONS), s.faction, function(v)
 			send({ faction = v })
 		end, 90)
+		if mine then
+			-- F35: the match's pre-game has the last word on factions
+			local note = Kit.text(p.content, "A first choice: you can change it in the match before it starts.", "small", Kit.COLOR.dim)
+			note.Size = UDim2.new(1, 0, 0, 16)
+			note.LayoutOrder = 1
+		end
 		if room.settings.mode == "TEAM" then
 			local teams = {}
 			local sides = sidesFor(room)
@@ -463,15 +469,7 @@ function Room.new(frame: Frame, _router: any): any
 		local order = 0
 		local function addAiButton(team: number?): { any }
 			return { "Add AI", function()
-				Net.send({ op = "addAi" })
-				if team then
-					task.delay(0.3, function()
-						local r = Net.view and Net.view.room
-						if r then
-							Net.send({ op = "ai", index = #r.slots, team = team })
-						end
-					end)
-				end
+				Net.send({ op = "addAi", team = team })
 			end }
 		end
 		if room.settings.mode == "TEAM" then
@@ -495,10 +493,7 @@ function Room.new(frame: Frame, _router: any): any
 						if mySlot then
 							Net.send({ op = "mine", team = team })
 						else
-							Net.send({ op = "play" })
-							task.delay(0.3, function()
-								Net.send({ op = "mine", team = team })
-							end)
+							Net.send({ op = "play", team = team })
 						end
 					end, 60 })
 				end

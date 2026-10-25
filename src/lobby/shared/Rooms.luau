@@ -184,8 +184,9 @@ local function maxSides(map: MapInfo): number
 end
 Rooms.maxSides = maxSides
 
--- Seats a member if the map has room; returns whether they sit.
-local function seat(room: Room, maps: { MapInfo }, user: number, faction: string?): boolean
+-- Seats a member if the map has room (on `team` if given); returns whether
+-- they sit.
+local function seat(room: Room, maps: { MapInfo }, user: number, faction: string?, team: number?): boolean
 	local map = mapOf(maps, room.settings.mapId)
 	if map == nil or #room.slots >= capacity(room, map) then
 		return false
@@ -194,7 +195,7 @@ local function seat(room: Room, maps: { MapInfo }, user: number, faction: string
 		kind = "human",
 		user = user,
 		faction = faction or "order",
-		team = lightTeam(room),
+		team = team or lightTeam(room),
 		color = freeColor(room),
 		level = "normal",
 	})
@@ -310,11 +311,11 @@ end
 
 -- Applies member `from`'s request. Returns nil, or why it was refused.
 --   { op = "set", key = "mapId" | "mode" | "win" | "friendlyFire" | "cheats", value }   host
---   { op = "addAi", faction?, level? }                                         host
+--   { op = "addAi", faction?, level?, team? }                                  host
 --   { op = "ai", index, faction?, level?, team?, color? }                      host, an AI slot
 --   { op = "removeAi", index }                                                 host
 --   { op = "mine", faction?, team?, color? }                                   a seated member
---   { op = "spectate" } | { op = "play" }                                      a member
+--   { op = "spectate" } | { op = "play", team? }                               a member
 --   { op = "ready", value }                                                    a seated member
 --   { op = "kick", user }                                                      host
 function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): string?
@@ -342,7 +343,11 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 		if Rooms.slotOf(room, from) then
 			return nil
 		end
-		if not seat(room, maps, from) then
+		local map = mapOf(maps, room.settings.mapId)
+		if msg.team ~= nil and not (map and isInt(msg.team, 1, maxSides(map))) then
+			return "Bad team"
+		end
+		if not seat(room, maps, from, nil, msg.team) then
 			return "No free seat on this map"
 		end
 		changed(room)
@@ -405,11 +410,16 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 		if msg.level ~= nil and not find(Config.LEVELS, msg.level) then
 			return "Bad level"
 		end
+		-- the team in the same request (F25: a second "ai" request aimed at
+		-- the last seat could reach the room before or after another change)
+		if msg.team ~= nil and not isInt(msg.team, 1, maxSides(map)) then
+			return "Bad team"
+		end
 		table.insert(room.slots, {
 			kind = "ai",
 			user = nil,
 			faction = msg.faction or "chaos",
-			team = lightTeam(room),
+			team = msg.team or lightTeam(room),
 			color = freeColor(room),
 			level = msg.level or "normal",
 		})
