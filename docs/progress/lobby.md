@@ -15,6 +15,8 @@ From the user's playtest feedback (`FTGG-FEEDBACK.txt`; sim-A's plan in `docs/pr
   - **Specs** (`SpawnBoxes.spec`, 4 tests): cleaning and snapping; the defaults equal `StartAreas` on The Plains for 2 to 8 sides; only the host edits, Teams only, seated teams only, resets on map and mode changes; the config's boxes by ally team, an emptied team's edit left out.
   - **Studio** (`debug_out/screens/`): `lobby_room_spawn_boxes` (three teams' defaults), `lobby_room_spawn_boxes_dragged` (team 1's east side dragged, its west side snapped; team 3 moved down and snapped to the corner), `lobby_room_spawn_boxes_reset_button`, `lobby_room_spawn_boxes_after_reset`. A forced start with edited boxes passed the shared check and launched.
   - **Note for sim-A:** with 3 sides on The Plains, side 2 gets starts 6-10, which lie in two corners. Its default box spans the map's middle column (`lobby_room_spawn_boxes`).
+- **Contract v2:** merged sim-A's `72fb087` (CONFIG_VERSION 2, `host`, `startBoxes`). The lobby specs follow the shared version and check that v2 refuses a host outside the match and boxes for a missing side. A forced start with an edited box passed the check in Studio. Lobby specs 54 / 54; the build check passes.
+- Ready to merge: `99c27ae` (F26 spawn boxes, `9a57381`, plus the merge of sim-A's `72fb087` and the v2 specs; must land with `72fb087`; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
 
 ## Summary (2026-10-26: automatic colours, S-172)
 
