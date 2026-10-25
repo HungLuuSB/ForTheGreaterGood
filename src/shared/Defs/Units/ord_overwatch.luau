@@ -13,8 +13,8 @@ return Templates.extend(Templates.Structure, {
 	-- S-179, the playtest's balance notes: health × 2
 	health = 2800,
 	footprint = 2, -- size shows tech level (S-104)
-	height = 20, -- a tall tower (S-184; models-C's F18 blockouts)
-	muzzleHeight = 17.5,
+	height = 18.7, -- a tall tower (S-184; models-C's F18 blockouts, measured)
+	muzzleHeight = 16.4,
 	sensors = { sight = 260 },
 	weapons = { { def = "ord_overwatch_laser", turretPiece = "turret", pitchPiece = "mount", muzzle = "muzzle1", muzzles = { "muzzle1", "muzzle2" } } },
 	pieces = { "base", "turret", "mount", "muzzle1", "muzzle2" }, -- the mount pitches both barrels (models-C, the user)

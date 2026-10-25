@@ -205,7 +205,10 @@ return function(t: RunAll.Context)
 		local gen = Spawn.unit(sim, "ord_phalanx", 1, 0, -100)
 		local mason = Spawn.unit(sim, "ord_mason", 1, 0, -40)
 		World.setHealth(w, mason, 1e6)
-		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi)
+		-- in range of the Mason from outside the dome (S-185: a Maneuver unit
+		-- no longer drives 80 studs on its own to get a shot)
+		local reach = sim.defs.weapons[sim.defs.units.chs_ravager.weapons[1].def].range
+		Spawn.unit(sim, "chs_ravager", 2, 0, -40 + reach * 0.9, math.pi)
 		local c = sim.combat
 		local turned, through, back, landed, inCore = 0, 0, 0, 0, 0
 		local watch: { [number]: boolean } = {}

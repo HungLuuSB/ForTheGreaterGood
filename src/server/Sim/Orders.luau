@@ -64,7 +64,14 @@ Orders.CHASE_STEP = 24 -- studs: re-aim a chase move when the target moved this 
 Orders.CHASE_EVERY = 15 -- ticks between chase moves
 Orders.ATTACK_REACH = 0.9 -- of the unit's longest weapon range
 Orders.AUTO_PERIOD = 15 -- ticks between an idle unit's move-state checks (staggered by ID)
-Orders.MANEUVER_LEASH = 150 -- studs a Maneuver unit goes from its anchor to get a shot
+Orders.MANEUVER_LEASH = 150 -- studs a Maneuver unit goes from its anchor to get a shot, at most
+Orders.MANEUVER_LEASH_RANGE = 1 -- × its range, at least MANEUVER_LEASH_MIN (S-185, the playtest's F5: with T1 ranges halved, 150 studs let units wander off)
+Orders.MANEUVER_LEASH_MIN = 60
+
+-- How far a Maneuver unit leaves its anchor for a shot (S-185).
+function Orders.leash(d: Defs.UnitDef): number
+	return math.clamp(d.maxRange * Orders.MANEUVER_LEASH_RANGE, Orders.MANEUVER_LEASH_MIN, Orders.MANEUVER_LEASH)
+end
 Orders.ROAM_CHASE = 500 -- studs beyond its range a Roam unit looks for something to chase
 Orders.ANCHOR_SLACK = 24 -- studs: a Maneuver unit farther than this from its anchor walks back
 Orders.HOLD_EVERY = 2 -- ticks between a unit's attack-move / patrol hold checks, spread by ID (S-107)
@@ -603,7 +610,8 @@ local function autoUnit(sim: Types.Sim, id: number)
 	local ax, az = o.anchorX[id], o.anchorZ[id]
 	local x, z = w.posX[id], w.posZ[id]
 	local away2 = (x - ax) ^ 2 + (z - az) ^ 2
-	if state == MANEUVER and away2 > (Orders.MANEUVER_LEASH + Orders.ANCHOR_SLACK) ^ 2 then
+	local leash = Orders.leash(d)
+	if state == MANEUVER and away2 > (leash + Orders.ANCHOR_SLACK) ^ 2 then
 		if not (head and head.kind == "move") then
 			giveAuto(sim, id, "move", ax, az) -- too far: back to the anchor
 		end
@@ -616,7 +624,7 @@ local function autoUnit(sim: Types.Sim, id: number)
 	if state == ROAM then
 		tx, tz = chaseTarget(sim, id, x, z, d.maxRange + Orders.ROAM_CHASE)
 	else
-		tx, tz = chaseTarget(sim, id, ax, az, d.maxRange + Orders.MANEUVER_LEASH)
+		tx, tz = chaseTarget(sim, id, ax, az, d.maxRange + leash)
 	end
 	if tx and tz then
 		if not (head and head.kind == "fight" and head.x == tx and head.z == tz) then

@@ -58,6 +58,14 @@ Passability.CLASS_ORDER = table.freeze(CLASS_ORDER)
 
 -- Smallest clearance a footprint-F unit needs.
 function Passability.requiredClearance(footprint: number): number
+	-- footprint 2 (Commanders, heavy tanks, heavy bots; ~14 studs wide) needs
+	-- 1 like footprint 1 (S-185, the playtest's F24: with 2 they couldn't use
+	-- a 16-stud, two-cell gap between structures and got stuck; a cell-based
+	-- clearance can't tell a two-cell gap from a one-cell one, and a slight
+	-- brush past a corner beats a unit that never gets out)
+	if footprint == 2 then
+		return 1
+	end
 	return footprint // 2 + 1
 end
 

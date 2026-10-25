@@ -12,8 +12,8 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 600, power = 6000, buildTime = 12000 },
 	health = 4800, -- faction pass (S-62)
 	footprint = 3,
-	height = 25, -- a tall tower (S-184; models-C's F18 blockouts)
-	muzzleHeight = 19,
+	height = 23.3, -- a tall tower (S-184; models-C's F18 blockouts, measured)
+	muzzleHeight = 22.7,
 	sensors = { sight = 160 },
 	weapons = { { def = "ord_fortress_howitzer", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "muzzle" },

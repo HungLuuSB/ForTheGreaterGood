@@ -17,8 +17,8 @@ return Templates.extend(Templates.Unit, {
 	health = 380,
 	movement = { maxSpeed = 66, accel = 60, brake = 70, turnRate = 500 },
 	sensors = { sight = 280 },
-	weapons = { { def = "ord_glint_laser", turretPiece = "torso", muzzle = "arm_l", muzzles = { "arm_l", "arm_r" } } },
-	pieces = { "base", "torso", "arm_l", "arm_r" },
+	weapons = { { def = "ord_glint_laser", turretPiece = "torso", muzzle = "arm_l_muzzle", muzzles = { "arm_l_muzzle", "arm_r_muzzle" } } },
+	pieces = { "base", "torso", "arm_l", "arm_r", "arm_l_muzzle", "arm_r_muzzle" },
 	icon = "scout",
 	model = "ord_glint",
 })
