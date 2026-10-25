@@ -10,7 +10,8 @@ From the user's playtest feedback (`FTGG-FEEDBACK.txt`; sim-A's plan in `docs/pr
 - **F32:** the config carries `host` (the room host's UserId), seated or not. Contract row added.
 - **F35:** your seat editor says the faction is a first choice that can change in the match (`lobby_room_faction_note_f35`).
 - **Tests:** lobby specs 50 / 50; the build check passes.
-- **Next: F26** (spawn boxes edited by the host), planned below once approved.
+- Ready to merge: `7e667f4` (F25 AI team in one request, F31 spec, F32 `host` in the config, F35 faction note; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
+- **Next: F26** (spawn boxes edited by the host).
 
 ## Summary (2026-10-26: automatic colours, S-172)
 
