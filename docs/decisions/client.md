@@ -1955,3 +1955,10 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **Looks:** split weapon ids copy their originals' `fx`, and the client keys looks on `fx`, so they look as before. New: `fx.trail = "plasma"` shells are glowing balls in the weapon's colour (1.4..4.5 studs with the blast); `fx.trail = "flame"` hitscan shots are a thick flickering stream that widens and fades over 0.35 s with sparks where it lands (the Dragon); `fullLength` beams (the Centurion) are drawn on to the weapon's range past the target. Checked in Studio: Thug / Tzar plasma balls, the Dragon's flame drawn.
 
 **Why:** sim-A's phase 2 and new units (the user's playtest).
+
+### C-224 — Wind and tidal in the top bar (2026-10-26, S-177)
+
+- Right of power, as in BAR: WIND, what one of the player's faction's turbines makes now (the Eco record's wind × its `wind.max`), large, with the map's range under it (`layers.wind`, else the sim's default 0.1..0.9, both × the turbine's max; no randomness since S-177), and TIDAL, a tidal generator's output. `UnitFlow.generatorOutputs(defs, faction)`, `UnitFlow.WIND_DEFAULT` (a spec checks it is the sim's). The idle counts sit right of the wider bar (`ResourceBar.WIDTH`).
+- Checked in Studio (Coastline, Order): WIND 21 (3 – 27), TIDAL 25.
+
+**Why:** the user: "Wind should not be RNG … we have wind min/max current and tidal".

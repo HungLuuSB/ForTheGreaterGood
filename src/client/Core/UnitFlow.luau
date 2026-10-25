@@ -121,6 +121,28 @@ function UnitFlow.of(world: World.World, u: World.Unit, def: any, ctx: Context):
 	return f.supplyIn - f.supplyOut, f.powerIn - f.powerOut
 end
 
+-- a map's wind range when it sets none, fractions of a turbine's max: the
+-- sim's Economy.WIND_DEFAULT (S-177; a spec checks they agree)
+UnitFlow.WIND_DEFAULT = table.freeze({ 0.1, 0.9 })
+
+-- A wind turbine's max and a tidal generator's output per second for
+-- `faction` ("order" / "chaos": their generators differ), from the defs:
+-- the top bar's wind and tidal.
+function UnitFlow.generatorOutputs(defs: any, faction: string): (number, number)
+	local windMax, tidal = 0, 0
+	for _, d in defs.units do
+		if d.faction == faction then
+			if d.wind and d.wind.max then
+				windMax = math.max(windMax, d.wind.max)
+			end
+			if d.icon == "tidal" and d.production then
+				tidal = math.max(tidal, d.production.power or 0)
+			end
+		end
+	end
+	return windMax, tidal
+end
+
 -- "+5", "−10", "0": a flow for the panel (whole numbers from 10 up).
 function UnitFlow.text(v: number): string
 	if math.abs(v) < 0.05 then
