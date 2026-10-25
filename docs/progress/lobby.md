@@ -2,6 +2,21 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: tracks on the ground; the Underwater place)
+
+- **Tracks clipping into the ground (the user):** units stood at the place's level, under thin floor dressing on top of it:
+  - **The menu's battle:** the sand band, 0.15 studs. Units now stand on its top (`FIELD_TOP`).
+  - **The Units showroom:** the pad's disc and marks (0.11) and the field's dirt patch (0.12). Models now stand on each place's `FLOOR`.
+  - **Measured in Studio:** every unit's lowest point is exactly on the surface, sinking into nothing (`lobby_units_field_tank`).
+- **Submarines and amphibious units underwater (the user):** a new **Underwater** place in the showroom.
+  - Deep water over a sandy seabed with rocks and weed.
+  - Submarines float mid-water, amphibious units drive on the seabed, and ships show their hulls from below.
+  - The camera stays under the surface and may look up at it. "Auto" picks it for submarines and amphibious units; Shore is still available.
+  - A cool sea tint while underwater; leaving restores the menu's light.
+  - Water transparency 0.05 (the user's value), set by the showroom's water.
+  - Studio: `lobby_units_underwater_sub` (Silence), `lobby_units_underwater_amphib` (Tideguard).
+- Lobby specs 60 / 60; the build check passes.
+
 ## Summary (2026-10-26: Codex roles for the bots, S-181)
 
 - Merged sim-A's `2b3ca0e` (the bot roster). Codex roles for the 19 new units:

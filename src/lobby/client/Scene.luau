@@ -119,10 +119,13 @@ local function part(props: { [string]: any }): Part
 	return p
 end
 
+-- the sandy band's top, where the armies stand (its part sits on the ground)
+local FIELD_TOP = 0.15
+
 local function ground()
 	part({ Name = "Ground", Size = Vector3.new(1200, 4, 1200), CFrame = CFrame.new(ORIGIN - Vector3.new(0, 2, 0)), Material = Enum.Material.Ground, Color = Color3.fromRGB(92, 78, 60), Parent = folder })
 	-- a lighter sandy band where the armies fight, and scattered rock
-	part({ Name = "Field", Size = Vector3.new(220, 0.2, 120), CFrame = CFrame.new(ORIGIN + Vector3.new(0, 0.05, 0)), Material = Enum.Material.Sand, Color = Color3.fromRGB(128, 106, 78), Parent = folder })
+	part({ Name = "Field", Size = Vector3.new(220, 0.2, 120), CFrame = CFrame.new(ORIGIN + Vector3.new(0, FIELD_TOP - 0.1, 0)), Material = Enum.Material.Sand, Color = Color3.fromRGB(128, 106, 78), Parent = folder })
 	for _ = 1, 70 do
 		local x, z = rng(-220, 220), rng(-160, 70)
 		if math.abs(z) < 50 and math.abs(x) < 80 then
@@ -602,7 +605,7 @@ local function spawnUnits()
 			id = c[1],
 			side = side,
 			role = c[4],
-			home = ORIGIN + c[3],
+			home = ORIGIN + c[3] + Vector3.new(0, FIELD_TOP, 0), -- on the band, not sunk into it
 			facing = if side == "order" then Vector3.new(1, 0, 0) else Vector3.new(-1, 0, 0),
 			model = nil,
 			rootOffset = CFrame.new(),
@@ -612,7 +615,7 @@ local function spawnUnits()
 			target = nil,
 			nextFire = os.clock() + rng(1, 5),
 			phase = i * 1.7,
-			pos = ORIGIN + c[3],
+			pos = ORIGIN + c[3] + Vector3.new(0, FIELD_TOP, 0),
 			cf = CFrame.new(),
 		}
 		table.insert(units, u)
