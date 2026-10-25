@@ -8,6 +8,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - `MatchErrors` now reads the shared list and cleaning, and keeps only the lobby's teleport mapping and one-line form. The contract's note says where the table lives; `MatchErrors.spec` compares the contract with the shared table.
 - B's match side (`2b1fde9`) sends the 2xx codes in the return teleport data and the result's `error`. 206 has no path yet, and a player with no readable config is still kicked, with the code in the kick message.
 - Lobby specs 60 / 60; the build check passes; Studio: a staged reserve failure shows Error 103 from the shared table.
+- Ready to merge: `10f7b77` (the lobby reads `MatchConfig.ERRORS`; includes the merge of sim-A's `ed06b01`; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
 - **Next (F41):** four AI levels in the pickers once sim-A sends the level IDs.
 
 ## Summary (2026-10-26: match errors with codes, F38)
