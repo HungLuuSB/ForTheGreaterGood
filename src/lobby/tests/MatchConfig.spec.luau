@@ -43,7 +43,7 @@ return function(t: RunAll.Context)
 		t.equal(c.players[2].ai, "easy")
 		t.equal(c.host, 10, "the room host (F32)")
 		t.equal(c.lobby.roomId, "r1")
-		t.equal(c.version, 1)
+		t.equal(c.version, MatchConfig.CONFIG_VERSION)
 	end)
 
 	t.test("FFA: slot order, each player their own ally team; spectators listed", function()
@@ -113,7 +113,13 @@ return function(t: RunAll.Context)
 			t.expect(err and string.find(err, pattern, 1, true), `expected "{pattern}", got {err}`)
 		end
 		broken(function(c)
-			c.version = 2
+			c.host = 999 -- nobody in the match (v2: a player or a spectator)
+		end, "host")
+		broken(function(c)
+			c.startBoxes = { [9] = { 0, 0, 0.5, 0.5 } }
+		end, "startBoxes")
+		broken(function(c)
+			c.version = MatchConfig.CONFIG_VERSION + 1
 		end, "version")
 		broken(function(c)
 			c.players[1].id = 7
@@ -148,7 +154,7 @@ return function(t: RunAll.Context)
 	t.test("results records are checked against their config", function()
 		local c = MatchConfig.build(teamRoom(), "m1", 42, 1000, LOBBY)
 		local r: any = {
-			version = 1,
+			version = MatchConfig.CONFIG_VERSION,
 			matchId = "m1",
 			outcome = "finished",
 			winner = 2,

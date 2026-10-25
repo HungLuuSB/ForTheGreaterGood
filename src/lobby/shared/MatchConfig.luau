@@ -21,6 +21,7 @@ MatchConfig.validate = Shared.validate
 MatchConfig.validateResult = Shared.validateResult
 MatchConfig.users = Shared.users
 MatchConfig.OUTCOMES = Shared.OUTCOMES
+MatchConfig.CONFIG_VERSION = Shared.CONFIG_VERSION
 
 export type Lobby = { placeId: number, jobId: string }
 

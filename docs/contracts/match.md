@@ -165,5 +165,6 @@ The ordered plan for a 4-tester session is in [`../progress/lobby.md`](../progre
 - 2026-10-23: version 1 (L-4).
 - 2026-10-23: the checks moved to `@shared/Match/MatchConfig` (sim-A, S-145, the user's choice); the lobby and client-B dropped their copies.
 - 2026-10-24 (later): `start` is `0` for every player (S-171: the match opens with a pre-game where players pick their start; `== id` still accepted from older lobbies); the new limits (16 players; FFA up to the map's starts; TEAM 2-8 sides of any size, up to the map's starts). The colour index is still sent and validated; the match colours players itself (S-172). Still version 1.
+- 2026-10-26: **version 2** (sim-A's S-174): `host` (required: the room host's UserId, a player or a spectator) and `startBoxes` (optional, F26). The lobby sends `host` always and `startBoxes` once the host edited a box.
 - 2026-10-24: the match place comes from `Config.MATCH_PLACE_ID` (0: found at server start) instead of the hard-coded main game ID, for the "FTGG Playtest" experience (L-14); lobby-only records `hop/<userId>` and the `FtggRooms` sorted map (L-15). The match server's side is unchanged; still version 1.
 - 2026-10-23: `winner` may be absent on `"finished"` (every human out, AI still fighting), at client-B's question; still version 1 (nothing published yet).
