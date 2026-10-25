@@ -129,9 +129,10 @@ function World.applyStatus(u: Unit, status: OwnStatus)
 	end
 end
 
--- The pre-game (net.md 9b, protocol 36, S-169; C-218): every player's pick
--- and ready flag (PREGAME), the countdown (COUNTDOWN) and the Commanders'
--- queued builds (PREBUILD). `active` from the first PREGAME until the
+-- The pre-game (net.md 9b, protocols 36-37, S-169, S-174; C-218): every
+-- player's pick, ready, faction and host flags (PREGAME), the pick clock
+-- (PICK_CLOCK), the spawn boxes (START_BOXES), the countdown (COUNTDOWN)
+-- and the Commanders' queued builds (PREBUILD). `active` from the first PREGAME until the
 -- COUNTDOWN 0 that starts the match; a match with fixed starts never has one.
 export type PregamePick = { flags: number, x: number?, z: number? } -- flags: Schema.PregameFlag
 export type PregameBuild = { defIndex: number, x: number, z: number, facing: number }
@@ -139,13 +140,16 @@ export type Pregame = {
 	active: boolean,
 	started: boolean, -- COUNTDOWN 0 arrived: the Commanders are on the picks
 	picks: { [number]: PregamePick }, -- by sim player
-	countdown: number?, -- 5..1 while counting down, nil otherwise
+	countdown: number?, -- 3..1 while counting down (5..1 before protocol 37), nil otherwise
 	builds: { [number]: { PregameBuild } }, -- by sim player: the player's and its allies' (spectators: all)
+	clock: { seconds: number, flags: number }?, -- the last PICK_CLOCK (protocol 37): Schema.PickClockFlag bits
+	boxes: { [number]: { number } }?, -- ally team → its spawn box { x0, z0, x1, z1 } (START_BOXES, protocol 37)
+	startedTick: number?, -- the tick of COUNTDOWN 0: the Commanders land for Schema.LANDING_TICKS from it
 	version: number, -- bumps on every change (the views redraw)
 }
 
 function World.newPregame(): Pregame
-	return { active = false, started = false, picks = {}, countdown = nil, builds = {}, version = 0 }
+	return { active = false, started = false, picks = {}, countdown = nil, builds = {}, clock = nil, boxes = nil, startedTick = nil, version = 0 }
 end
 
 export type World = {

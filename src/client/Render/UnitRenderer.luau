@@ -179,6 +179,10 @@ end
 -- `t`. With `hidden` (strategic zoom: models unparented) it only works out
 -- the drawn positions (rx, ry, rz) for icons and selection. `camera` sets
 -- each unit's animation LOD.
+-- Extra drawn height for a unit at render tick `t` (the pre-game's
+-- landing, Render/Landing), or nil for none.
+UnitRenderer.lift = nil :: ((u: World.Unit, def: any, t: number) -> number)?
+
 function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: number, hidden: boolean?, camera: Vector3?, speed: number?)
 	for _, id in world.entered do
 		local d, u = r.drawn[id], world.units[id]
@@ -261,6 +265,10 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 			x, z, alt, heading = u.sx or u.x, u.sz or u.z, if air then (if (u.alt or 0) > 0 then u.alt :: number else UnitRenderer.AIR_ALT) else 0, u.heading
 		end
 		local y = World.groundY(world, x, z, d.floats) + alt
+		local lift = UnitRenderer.lift
+		if lift then
+			y += lift(u, d.def, t) -- a Commander landing from the sky (C-218)
+		end
 		if d.floats then
 			y += Attitude.waterOffset(d.def, u.state or 0, d.hullHeight)
 		end

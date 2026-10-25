@@ -490,6 +490,9 @@ local function startMatch()
 			config.match.cheats = config.match.cheats or RunService:IsStudio()
 			-- a profile's `startMode = "choose"` gives the in-match lobby the pre-game (C-218)
 			config.match.startMode = Config.startMode
+			if Config.startMode == "choose" and lobby.slots[1] and lobby.slots[1].kind == "human" then
+				config.match.host = 1 -- slot 1's human hosts: they start the match (S-174)
+			end
 			sim = Sim.new(config)
 			brains = Skirmish.forMatch(sim)
 			recorders, recordedBytes = {}, 0

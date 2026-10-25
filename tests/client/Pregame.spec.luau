@@ -10,18 +10,17 @@ local NetIn = require("../../src/client/Core/NetIn")
 local Pregame = require("../../src/client/Core/Pregame")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
-local ServerPregame = require("../../src/server/Sim/Pregame")
 local Sim = require("../../src/server/Sim/Sim")
 
 local DT = 1 / 15
 
-local function newMatch()
+local function newMatch(host: number?)
 	local sim = Sim.new({
 		seed = 3,
 		players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 } },
 		mapId = "map:ridgeline",
 		scenario = "standard_start",
-		match = { mode = "TEAM", win = "COMMAND_ENDS", startMode = "choose" },
+		match = { mode = "TEAM", win = "COMMAND_ENDS", startMode = "choose", host = host },
 	})
 	local world = World.new(sim.defs)
 	NetOut.join(sim, 1)
@@ -38,10 +37,6 @@ local function step(sim: any, world: any, n: number?)
 end
 
 return function(t: any)
-	t.test("the client's timeout is the server's", function()
-		t.equal(Pregame.TIMEOUT, ServerPregame.TIMEOUT)
-	end)
-
 	t.test("spawn boxes and hints match the server's; picks, ready and the countdown arrive; the match starts on 0", function()
 		local sim, world = newMatch()
 		step(sim, world)
@@ -50,7 +45,12 @@ return function(t: any)
 		t.equal(next(world.units), nil, "no units yet")
 		local areas = Pregame.areas(world)
 		assert(areas, "areas")
-		t.deepEqual(areas.boxes, sim.pregame.boxes, "the same boxes the server checks with")
+		t.expect(pg.boxes ~= nil, "START_BOXES arrived")
+		for ally, b in sim.pregame.boxes do
+			local c = areas.boxes[ally]
+			t.expect(c[1] <= b[1] and c[2] <= b[2] and c[3] >= b[3] and c[4] >= b[4] and c[3] - c[1] - (b[3] - b[1]) < 2, `side {ally}: the server's box, rounded outward`)
+		end
+		t.expect(Pregame.clockText(world) ~= nil, "the pick clock")
 		t.equal(#areas.hints, #sim.map.layers.starts)
 		t.expect(Pregame.areas(world) == areas, "cached")
 
@@ -78,13 +78,13 @@ return function(t: any)
 		fx, fz = Pregame.focus(world, areas)
 		t.expect(math.abs(fx - h1.x) < 1 and math.abs(fz - h1.z) < 1, "the camera opens on the own pick")
 
-		-- ready both: 5..1, then 0 and the Commanders
+		-- ready both (no host: it starts by itself): 3..1, then 0 and the Commanders
 		assert(Sim.submit(sim, 1, Pregame.ready(true)))
 		assert(Sim.submit(sim, 2, Pregame.ready(true)))
 		step(sim, world, 2)
 		t.expect(Pregame.isReady(world, 1) and Pregame.isReady(world, 2), "both ready")
-		t.equal(pg.countdown, 5)
-		local seen = { [5] = true }
+		t.equal(pg.countdown, 3)
+		local seen = { [3] = true }
 		for _ = 1, 6 * 15 do
 			step(sim, world)
 			if pg.countdown then
@@ -94,7 +94,7 @@ return function(t: any)
 				break
 			end
 		end
-		t.expect(seen[1] and seen[3], "counted down")
+		t.expect(seen[1] and seen[2], "counted down")
 		t.expect(pg.started and not pg.active, "started")
 		t.equal(pg.countdown, nil)
 		local commander = false
@@ -104,6 +104,26 @@ return function(t: any)
 			end
 		end
 		t.expect(commander, "the Commander entered on the pick")
+		t.equal(Pregame.landing(world, pg.startedTick :: number), 0, "landing starts with the match")
+		t.equal(Pregame.landing(world, (pg.startedTick :: number) + 100), nil, "and ends")
+	end)
+
+	t.test("faction switch, the host's Start", function()
+		local sim, world = newMatch(1)
+		step(sim, world)
+		t.expect(Pregame.isHost(world, 1) and not Pregame.isHost(world, 2), "player 1 hosts")
+		t.equal(Pregame.factionOf(world, 2), "chaos", "team 2 defaults to Chaos")
+		assert(Sim.submit(sim, 1, Pregame.faction("chaos")))
+		step(sim, world, 2)
+		t.equal(Pregame.factionOf(world, 1), "chaos", "switched")
+		assert(Sim.submit(sim, 1, Pregame.ready(true)))
+		assert(Sim.submit(sim, 2, Pregame.ready(true)))
+		step(sim, world, 20)
+		t.expect(Pregame.allReady(world), "everyone ready")
+		t.equal(world.pregame.countdown, nil, "with a host, no countdown until Start")
+		assert(Sim.submit(sim, 1, Pregame.start(false)))
+		step(sim, world, 2)
+		t.equal(world.pregame.countdown, 3, "Start counts down")
 	end)
 
 	t.test("un-readying cancels the countdown; a spectator can't pick", function()
@@ -111,7 +131,7 @@ return function(t: any)
 		step(sim, world)
 		assert(Sim.submit(sim, 1, Pregame.ready(true)))
 		assert(Sim.submit(sim, 2, Pregame.ready(true)))
-		step(sim, world, 20)
+		step(sim, world, 3)
 		t.expect(world.pregame.countdown ~= nil, "counting")
 		assert(Sim.submit(sim, 2, Pregame.ready(false)))
 		step(sim, world, 2)

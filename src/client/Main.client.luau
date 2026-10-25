@@ -89,6 +89,8 @@ local UnitRenderer = require("./Render/UnitRenderer")
 local Pregame = require("./Core/Pregame")
 local PregameMarks = require("./Render/PregameMarks")
 local PregamePanel = require("./UI/PregamePanel")
+local Landing = require("./Render/Landing")
+local CommanderNames = require("./Render/CommanderNames")
 local TeamColors = require("./Render/TeamColors")
 
 local defs = Defs.load()
@@ -371,10 +373,25 @@ end
 -- the pre-game (C-218, net.md 9b): spawn boxes and picks on the map; the
 -- panel with the countdown and Ready; a left click places the Commander
 local pregameMarks = PregameMarks.new()
-local pregamePanel = PregamePanel.new(function(on: boolean)
-	api.send(Pregame.ready(on))
-end)
+local pregamePanel = PregamePanel.new({
+	ready = function(on: boolean)
+		api.send(Pregame.ready(on))
+	end,
+	faction = function(faction: string)
+		if not Pregame.isReady(world, world.me.player) then
+			api.send(Pregame.faction(faction))
+		end
+	end,
+	start = function()
+		if Pregame.allReady(world) then
+			api.send(Pregame.start(false))
+		end
+	end,
+})
 local pregameSeen = { active = false, started = false } -- for the camera's jumps
+local commanderNames = CommanderNames.new() -- each Commander's player name over it
+local landing = Landing.new() -- the Commanders drop in with a star flare as the match starts (S-174)
+UnitRenderer.lift = Landing.lift(world)
 Controls.pregameClick = function(ground: Vector3?): boolean
 	local pg = world.pregame
 	if not pg.active or world.me.player == 0 then
@@ -450,6 +467,16 @@ local function submitCheat(text: string)
 			CheatConsole.print(cheatConsole, `lobby: Cheats {if lower == "cheat on" then "on" else "off"} (host only; takes effect at the next match)`)
 		else
 			CheatConsole.print(cheatConsole, "cheat on|off: no lobby here (Studio profiles always allow cheats)")
+		end
+		return
+	end
+	if lower == "forcestart" then
+		-- the host starts the match now, ready or not (S-174)
+		if world.pregame.active and Pregame.isHost(world, world.me.player) then
+			api.send(Pregame.start(true))
+			CheatConsole.print(cheatConsole, "forcing the start")
+		else
+			CheatConsole.print(cheatConsole, "forcestart: only the host, during the pre-game", Kit.COLOR.defeat)
 		end
 		return
 	end
@@ -988,6 +1015,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	World.smoothStrategic(world, dt, now) -- radar blips glide, not jump, and circle their spot (C-151, C-154)
 	local t0 = os.clock()
 	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
+	Landing.step(landing, world, t, now)
 	if strategic then
 		FactoryFrames.clear(factoryFrames)
 	else
@@ -1165,6 +1193,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	IdleStrip.step(idleStrip, #idle.builders, #idle.factories, SettingsMenu.binds.idle or "")
 	IdleMarks.step(idleMarks, world, idle.builders, strategic, workspace.CurrentCamera)
+	CommanderNames.step(commanderNames, world, strategic, workspace.CurrentCamera)
 	PregameMarks.step(pregameMarks, world, Pregame.areas(world), if pg.active then Controls.hover() else nil, workspace.CurrentCamera)
 	PregamePanel.step(pregamePanel, world, now)
 	BuildMenuUI.step(buildMenu, api)

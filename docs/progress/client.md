@@ -6,9 +6,10 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
-- **Pick your start (C-218):** every lobby match now opens with the pre-game. Each side's spawn area is outlined on the ground ("YOUR START AREA"), the map's suggested spots shown as discs; click inside your area to place your Commander (a green or red spot under the cursor says whether you can), click again to move it. Every player's pick shows as a beam with their name. A panel under the resource bar lists every player (placed, ready, AI), has the Ready button, counts down "STARTING IN 5..1" and shows the time until the match starts on its own. The camera opens over your area and jumps to your Commander at the start.
+- **Pick your start (C-218), after your BAR screenshot:** every lobby match opens with the pre-game. Your area is filled green on the ground, the enemies' red; click inside yours to place your Commander (its model stands there with your name). A big Ready button on the right, the host's Start under it (lit when everyone is ready), the pick clock (150 s); the victory condition and "Pick a start spot within the green area, and click the Ready button." low on the screen; "Pick your faction" at the bottom with both Commanders. Start counts down 3 s, then the Commanders drop from the sky in a star flare and land 1.5 s later. `/forcestart` lets the host start at any time. Built on sim-A's protocol 37 (merged 72fb087), which also fixes the "team ... got 18" seat crash.
 - **Automatic colours (C-217):** you are Blue, your allies cold colours, enemies warm ones, the same as the lobby.
-- Not checked in Studio yet: no Studio with this place (89435699207932) is connected.
+- **Build menu on the unit panel (C-219)** instead of hanging under the minimap on tall screens; **Commander name labels (C-220)** over every Commander in game.
+- Checked in Studio on FTGG Match (Coastline vs a Normal AI): picking, faction switch, Ready, Start, countdown, the landing flare, /forcestart, the build menu, the name labels.
 
 ## Summary (2026-10-24, playtest logging, BAR settings, HUD, watchdog run, facing arrow, bars under units)
 

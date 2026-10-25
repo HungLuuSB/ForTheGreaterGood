@@ -1904,14 +1904,26 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 
 **Why:** the user, S-172: colours are assigned automatically.
 
-### C-218 — The pre-game screen (2026-10-26, S-169, S-171, protocol 36)
+### C-218 — The pre-game screen (2026-10-26, S-169, S-171, S-174, protocols 36-37)
 
-- Every lobby match opens with the pre-game (`MatchContract.toSim` sends `startMode = "choose"`). Studio profiles keep fixed starts unless the profile sets `startMode = "choose"` (the in-match lobby passes it on).
-- `World.pregame` (NetIn): every player's pick and flags (PREGAME), the countdown (COUNTDOWN 5..1; 255 clears it; 0 ends the pre-game) and the queued builds (PREBUILD, kept for later). `Core/Pregame`: the spawn boxes and hints from `StartAreas` (the server's own check), whether the viewer may pick a spot (own box, spacing; the server also checks the ground), where the camera opens, START_POS and READY.
-- On the map (`Render/PregameMarks`): each side's box as a ground outline in its side's colour ("YOUR START AREA" / "TEAM n"), hints as discs, picks as a beam with the spacing disc and the player's name (and READY), the cursor's spot green or red.
-- The panel (`UI/PregamePanel`): what to do, "STARTING IN n", the time until everyone counts as ready, every player with colour and state, Ready / Not ready; a pick not shown within a second is reported as refused.
-- The camera opens over the own area and jumps to the own Commander when the match starts. Results time the match from `sim.match.startTick`.
-- `Pregame.spec` (the real Sim with startMode "choose": boxes equal the server's, picks, ready, countdown, the Commander on the pick; cancel; spectators), MatchContract.spec through the pre-game.
-- Not in yet: queued Commander builds before the match (PREBUILD ghosts, the build menu without a Commander). Coming with protocol 37 (sim-A, the beta feedback): host Start / force start, 3 s countdown, 150 s pick time, faction switch, landing flare, room-made boxes.
+- Every lobby match opens with the pre-game (`MatchContract.toSim`: `startMode = "choose"`, `host` = the host's seat (nil when the host spectates), the room's `startBoxes`; player i is seat i with team i and its own faction, S-174, which fixes the "team ... got 18" crash). The in-match lobby and profiles keep fixed starts unless the profile sets `startMode = "choose"` (then slot 1's human hosts). Results time the match from `sim.match.startTick`. MatchConfig v2 in the specs.
+- `World.pregame` (NetIn): picks and flags (PREGAME, with CHAOS and HOST), PICK_CLOCK, START_BOXES, COUNTDOWN (3..1, 255 clears, 0 starts and stamps `startedTick`), PREBUILD (kept for later). `Core/Pregame`: boxes from START_BOXES (the map's StartAreas defaults until they arrive), hints, `canPick` (own box, spacing; the server also checks the ground), faction / host / all-ready, the pick clock's text, the camera's focus and fit, the landing fraction, START_POS / READY / FACTION / START.
+- Laid out after BAR's start screen (the user's reference): the spawn areas filled on the ground (yours green, the others red; tiles laid on the ground under their corners), faint discs on the map's start hints, each pick showing that player's Commander (its faction's model, its colour) with the spacing disc and the name (✓ when ready), the cursor's spot green or red. No panel over the map (the user): a big Ready / Not ready right of centre, the host's Start under it (lit once everyone is ready), the pick clock; low in the middle the victory condition and what to do; "Starting in n" mid-screen; "Pick your faction" at the bottom with both Commanders' portraits (only while not ready). `/forcestart` (the host) forces the start.
+- The landing (`Render/Landing`, `UnitRenderer.lift`): for Schema.LANDING_TICKS after the start each Commander falls from 260 studs, slowing to the ground, in a white-gold star flare with a light and a trail, flashing out on touchdown. The camera opens fitted to the own area and jumps to the own Commander at the start.
+- Checked in Studio (FTGG Match, Coastline, you vs a Normal AI): click-pick, faction switch to Chaos, Ready, the host's Start, the 3 s countdown, the flare falling 240 → 25 studs over 1.4 s, /forcestart with an unplaced Commander (the game picked a spot). Simulated GUI clicks don't reach buttons in the Studio test harness, so Ready / Start / faction went through the same commands.
+- `Pregame.spec` (the real Sim: boxes, picks, ready, countdown, the Commander on its pick, the landing window; faction and the host's Start; cancel; spectators), MatchContract.spec and Lobby.spec through the pre-game and factions per player.
+- Not in yet: queued Commander builds before the match (PREBUILD ghosts, the build menu without a Commander).
 
-**Why:** the published beta had neither start picking nor automatic colours (sim-A's request).
+**Why:** the published beta had neither start picking nor automatic colours (sim-A); the user's playtest feedback and BAR reference.
+
+### C-219 — The build menu sits on the unit panel (2026-10-26)
+
+- `UI/BuildMenu` is anchored to the bottom, 4 px over the unit panel (120 high), and grows up towards the minimap; on short screens it still scrolls in the room between them.
+
+**Why:** the user: on a live server's tall screen it hung under the minimap with a gap down to the stats panel.
+
+### C-220 — Commander name labels (2026-10-26)
+
+- `Render/CommanderNames`: every drawn Commander shows its player's name (the `Players` attribute) in the player's colour, stacked over the idle tag; hidden at strategic zoom.
+
+**Why:** the user's playtest feedback.

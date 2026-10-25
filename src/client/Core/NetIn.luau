@@ -222,17 +222,30 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			pg.active = not pg.started
 			pg.version += 1
 		elseif EK.COUNTDOWN ~= nil and kind == EK.COUNTDOWN then
-			-- 5..1, then 0 as the match starts (the Commanders' ENTERs follow); 255 cancelled
+			-- 3..1, then 0 as the match starts (the Commanders' ENTERs follow); 255 cancelled
 			local pg = world.pregame
 			local seconds = e.seconds :: number
 			if seconds == Schema.COUNTDOWN_STARTED then
 				pg.active, pg.started, pg.countdown = false, true, nil
+				pg.startedTick = tick
 			elseif seconds == Schema.COUNTDOWN_CANCELLED then
 				pg.countdown = nil
 			else
 				pg.countdown = seconds
 			end
 			pg.version += 1
+		elseif EK.PICK_CLOCK ~= nil and kind == EK.PICK_CLOCK then
+			-- the pick time left, or the forced start's (protocol 37, S-174)
+			world.pregame.clock = { seconds = e.seconds :: number, flags = e.clockFlags or 0 }
+			world.pregame.version += 1
+		elseif EK.START_BOXES ~= nil and kind == EK.START_BOXES then
+			-- every side's spawn box, as the host drew it or the map's (protocol 37)
+			local boxes = {}
+			for _, b in e.boxes or {} do
+				boxes[b.allyTeam] = { b.x0, b.z0, b.x1, b.z1 }
+			end
+			world.pregame.boxes = boxes
+			world.pregame.version += 1
 		elseif EK.PREBUILD ~= nil and kind == EK.PREBUILD then
 			-- a player's queued builds for its Commander, the whole list
 			local list = {}

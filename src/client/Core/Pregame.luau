@@ -1,10 +1,11 @@
 --!strict
--- The pre-game's logic (net.md section 9b, S-169, S-171; C-218): each
--- side's spawn box and the map's start hints, from the same module the
--- server checks picks with (Shared/Match/StartAreas); whether the viewer
--- may pick a spot; where the camera opens; the START_POS and READY
--- commands. The picks and the countdown live in World.pregame (NetIn).
--- Pure Luau (C-7).
+-- The pre-game's logic (net.md section 9b, S-169, S-171, S-174; C-218):
+-- each side's spawn box (the server's START_BOXES; before they arrive, the
+-- map's defaults from Shared/Match/StartAreas) and the map's start hints;
+-- whether the viewer may pick a spot; each player's faction and the host;
+-- the pick clock's text; where the camera opens; the START_POS, READY,
+-- FACTION and START commands; the Commanders' landing. The state lives in
+-- World.pregame (NetIn). Pure Luau (C-7).
 
 local Grid = require("@shared/Grid/Grid")
 local Schema = require("@shared/Net/Schema")
@@ -14,9 +15,8 @@ local World = require("./World")
 
 local Pregame = {}
 
--- ticks from the match's boot (tick 0) until everyone counts as ready: the
--- server's Pregame.TIMEOUT (a spec checks they agree)
-Pregame.TIMEOUT = 90 * 15
+-- each faction's Commander (the server's Pregame.commanderDef)
+Pregame.COMMANDER = table.freeze({ order = "ord_sovereign", chaos = "chs_warlord" })
 
 export type Hint = { x: number, z: number, ally: number }
 export type Areas = {
@@ -42,7 +42,8 @@ function Pregame.areas(world: World.World): Areas?
 		end
 	end
 	table.sort(allies)
-	local key = `{world.mapVersion}:{table.concat(allies, ",")}`
+	local sent = world.pregame.boxes
+	local key = `{world.mapVersion}:{table.concat(allies, ",")}:{if sent then tostring(sent) else "map"}`
 	if cache.world == world and cache.key == key then
 		return cache.areas
 	end
@@ -57,7 +58,7 @@ function Pregame.areas(world: World.World): Areas?
 	end
 	local areas: Areas = {
 		sides = sides,
-		boxes = StartAreas.boxes(sides, layers.starts, StartAreas.bounds(layers.grid), layers.startBoxes),
+		boxes = sent or StartAreas.boxes(sides, layers.starts, StartAreas.bounds(layers.grid), layers.startBoxes),
 		hints = hints,
 		key = key,
 	}
@@ -127,9 +128,48 @@ function Pregame.fitDistance(world: World.World, areas: Areas?): number?
 	return math.max(box[3] - box[1], box[4] - box[2]) * 1.1
 end
 
--- Seconds until everyone counts as ready (the countdown then runs).
-function Pregame.timeLeft(world: World.World): number
-	return math.max(0, (Pregame.TIMEOUT - math.max(world.latestTick, 0)) / 15)
+function Pregame.isHost(world: World.World, player: number): boolean
+	return flag(world, player, Schema.PregameFlag.HOST)
+end
+
+-- A player's faction: "order" or "chaos".
+function Pregame.factionOf(world: World.World, player: number): string
+	return if flag(world, player, Schema.PregameFlag.CHAOS) then "chaos" else "order"
+end
+
+-- Is every player ready (the host may start)?
+function Pregame.allReady(world: World.World): boolean
+	local clock = world.pregame.clock
+	return clock ~= nil and bit32.band(clock.flags, Schema.PickClockFlag.ALL_READY) ~= 0
+end
+
+local function mmss(seconds: number): string
+	return `{seconds // 60}:{string.format("%02d", seconds % 60)}`
+end
+
+-- The pick clock as a line: the pick time left, then (MAX_WAIT) the
+-- forced start's; nil before the first PICK_CLOCK.
+function Pregame.clockText(world: World.World): string?
+	local clock = world.pregame.clock
+	if clock == nil then
+		return nil
+	end
+	if bit32.band(clock.flags, Schema.PickClockFlag.MAX_WAIT) ~= 0 then
+		return `The match starts anyway in {mmss(clock.seconds)}`
+	elseif clock.seconds > 0 then
+		return `Pick time {mmss(clock.seconds)}`
+	end
+	return "Pick time is over: unplaced Commanders got a spot"
+end
+
+-- 0..1 through the Commanders' landing at `tick` (Schema.LANDING_TICKS
+-- after COUNTDOWN 0), nil outside it.
+function Pregame.landing(world: World.World, tick: number): number?
+	local from = world.pregame.startedTick
+	if from == nil or tick < from or tick >= from + Schema.LANDING_TICKS then
+		return nil
+	end
+	return (tick - from) / Schema.LANDING_TICKS
 end
 
 -- START_POS: the viewer's Commander starts at (x, z).
@@ -141,6 +181,16 @@ end
 -- READY (on) or not.
 function Pregame.ready(on: boolean): buffer
 	return Commands.encode({ cmdType = Schema.CmdType.READY, flags = 0, unitIds = {}, value = if on then 1 else 0 })
+end
+
+-- FACTION: "order" or "chaos" (while not ready; it clears the queued builds).
+function Pregame.faction(faction: string): buffer
+	return Commands.encode({ cmdType = Schema.CmdType.FACTION, flags = 0, unitIds = {}, value = if faction == "chaos" then 1 else 0 })
+end
+
+-- START (the host): when everyone is ready, or `force` at any time (/forcestart).
+function Pregame.start(force: boolean): buffer
+	return Commands.encode({ cmdType = Schema.CmdType.START, flags = 0, unitIds = {}, value = if force then 1 else 0 })
 end
 
 return table.freeze(Pregame)

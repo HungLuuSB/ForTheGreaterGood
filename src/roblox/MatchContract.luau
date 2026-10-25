@@ -28,27 +28,30 @@ function MatchContract.validate(c: any): string?
 	return MatchConfig.validate(c)
 end
 
--- The sim team of each player: faction parity, Order odd and Chaos even
--- (Scenarios.standard_start), numbered in player order (as Lobby.config).
-function MatchContract.teams(c: any): { number }
-	local out = {}
-	local nextTeam = { order = 1, chaos = 2 }
-	for i, p in c.players do
-		out[i] = nextTeam[p.faction]
-		nextTeam[p.faction] += 2
-	end
-	return out
-end
-
--- The Sim config (contract section 3, "To the sim config").
+-- The Sim config (contract section 3, "To the sim config"). Player i is
+-- seat i with its own team i and its faction (S-174: teams no longer encode
+-- the faction); the host's seat starts the match from the pre-game (nil
+-- when the host spectates); the host's spawn boxes, if drawn.
 function MatchContract.toSim(c: any): any
-	local teams = MatchContract.teams(c)
 	local players, ai = {}, {}
+	local host: number? = nil
 	for i, p in c.players do
-		table.insert(players, { id = i, team = teams[i], allyTeam = p.allyTeam })
+		table.insert(players, { id = i, team = i, allyTeam = p.allyTeam, faction = p.faction })
 		if p.ai then
 			ai[i] = p.ai
 		end
+		if p.user ~= nil and p.user == c.host then
+			host = i
+		end
+	end
+	-- JSON keeps the ally teams as string keys
+	local boxes: { [number]: { number } }? = nil
+	if type(c.startBoxes) == "table" then
+		local out = {}
+		for ally, b in c.startBoxes do
+			out[tonumber(ally) :: number] = b
+		end
+		boxes = out
 	end
 	return {
 		seed = c.seed,
@@ -56,7 +59,7 @@ function MatchContract.toSim(c: any): any
 		mapId = c.mapId,
 		scenario = "standard_start",
 		-- every match opens with the pre-game: starts picked in game (S-171, C-218)
-		match = { mode = c.mode, win = c.win, ai = ai, friendlyFire = c.friendlyFire, cheats = c.cheats, startMode = "choose" },
+		match = { mode = c.mode, win = c.win, ai = ai, friendlyFire = c.friendlyFire, cheats = c.cheats, startMode = "choose", host = host, startBoxes = boxes },
 	}
 end
 

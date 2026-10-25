@@ -12,13 +12,18 @@ local Sim = require("../../src/server/Sim/Sim")
 local Skirmish = require("../../src/server/Sim/AI/Skirmish")
 local Stats = require("../../src/server/Sim/Stats")
 local Pregame = require("../../src/client/Core/Pregame")
+local Schema = require("@shared/Net/Schema")
 
 -- Through the pre-game (every lobby match has one): the humans say READY,
--- the AI picks and readies on its own; steps until the match starts.
+-- the host forces the start, the AI picks and readies on its own; steps
+-- until the match starts and the Commanders have landed.
 local function start(sim: any, brains: { any }, humans: { number })
 	assert(sim.pregame ~= nil, "a lobby match opens with the pre-game")
 	for _, id in humans do
 		assert(Sim.submit(sim, id, Pregame.ready(true)))
+	end
+	if sim.pregame.host then
+		assert(Sim.submit(sim, sim.pregame.host, Pregame.start(true))) -- the host forces the start (S-174)
 	end
 	for _ = 1, 10 * 15 do
 		for _, b in brains do
@@ -26,6 +31,9 @@ local function start(sim: any, brains: { any }, humans: { number })
 		end
 		Sim.step(sim)
 		if sim.pregame == nil then
+			for _ = 1, Schema.LANDING_TICKS do
+				Sim.step(sim)
+			end
 			return
 		end
 	end
@@ -46,7 +54,7 @@ local function config(mode: string): any
 			{ id = 2, start = 2, faction = "chaos", allyTeam = 2, color = 2, name = "AI 1 (normal)", ai = "normal" },
 		}
 	return {
-		version = 1,
+		version = 2,
 		matchId = "0f2c-match",
 		createdAt = 1700000000,
 		seed = 42,
@@ -58,6 +66,7 @@ local function config(mode: string): any
 		players = players,
 		spectators = { { user = 33, name = "Cy" } },
 		lobby = { placeId = 123, jobId = "job-1", roomId = "room-1", roomName = "Ann's room" },
+		host = 11,
 	}
 end
 
@@ -70,7 +79,7 @@ return function(t: any)
 			edit(c)
 			return MatchContract.validate(c)
 		end
-		t.expect(broken(function(c) c.version = 2 end) ~= nil, "another version")
+		t.expect(broken(function(c) c.version = 1 end) ~= nil, "another version")
 		t.expect(broken(function(c) c.players[2].color = 1 end) ~= nil, "a shared colour")
 		t.expect(broken(function(c) c.players[1].start = 2 end) ~= nil, "start must equal id in v1")
 		t.expect(broken(function(c) c.players[1].user = nil; c.players[1].ai = nil end) ~= nil, "a human without a user")
@@ -85,8 +94,9 @@ return function(t: any)
 		t.equal(MatchContract.seatOf(c, 22), 3)
 		t.equal(MatchContract.seatOf(c, 33), "spectator")
 		t.equal(MatchContract.seatOf(c, 99), nil, "not listed: kicked")
-		local teams = MatchContract.teams(c)
-		t.deepEqual(teams, { 1, 2, 4, 3 }, "Order odd, Chaos even, in player order")
+		local sc = MatchContract.toSim(c)
+		t.deepEqual({ sc.players[3].team, sc.players[3].faction }, { 3, "chaos" }, "team = seat, the faction in the entry (S-174)")
+		t.equal(sc.match.host, 1, "Ann hosts")
 	end)
 
 	t.test("a Teams config runs as a match and its results record passes the lobby's check", function()
@@ -155,9 +165,9 @@ return function(t: any)
 
 	t.test("refused or deserted: an abandoned record still passes the check", function()
 		local c = config("FFA")
-		local r = MatchContract.result(c, "abandoned", nil, nil, 0, 1700000100, "config refused: version 2")
+		local r = MatchContract.result(c, "abandoned", nil, nil, 0, 1700000100, "config refused: version 1")
 		t.equal(MatchContract.validateResult(r, c), nil)
-		t.equal(r.reason, "config refused: version 2")
+		t.equal(r.reason, "config refused: version 1")
 		t.equal(r.seconds, 0)
 	end)
 end
