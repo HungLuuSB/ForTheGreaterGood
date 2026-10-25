@@ -1944,4 +1944,6 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **F13:** off camera a structure's record carries only its cell, so its spot sits up to half a cell from the order point. `Waypoints.buildDone` matched an own frame only within 1 stud, fell through to the placement check ("occupied: another structure took the spot") and dropped the queued build; the builder then sprayed nothing, or its stale first entry. Records outside the tactical tier now match within `World.CELL_SLACK` (4.5 studs), in `BuildTargets.frameAt` too. Checked in Studio: two vehicle plants queued, the camera away while the first finished; back, the list still held the second and the spray ran to it.
 - **F3:** in Studio (the air profile, Archons sent past the corner) no aircraft was drawn outside the map: 21 of 371 flying samples sat on the edge, 0.2 studs past it at most, the wire's clamp. Jets the sim lets overshoot while turning are sent at the edge cell and look pinned there. Handed to sim-A (keep flight inside by the turn radius); nothing to change in the client.
 
-**Why:** the user's beta playtest (FTGG-FEEDBACK.txt items 3, 9, 13).
+- **The camera opens on the own Commander** in every match (the user): the first frame after a join with an own Commander, outside the pre-game (which jumps on its own), centres on it. Checked in Studio: a fixed-start skirmish opened at the Commander (−348, −124) instead of the map's centre.
+
+**Why:** the user's beta playtest (FTGG-FEEDBACK.txt items 3, 9, 13) and their camera request.

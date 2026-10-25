@@ -388,7 +388,7 @@ local pregamePanel = PregamePanel.new({
 		end
 	end,
 })
-local pregameSeen = { active = false, started = false } -- for the camera's jumps
+local pregameSeen = { active = false, started = false, homed = false } -- for the camera's jumps
 local commanderNames = CommanderNames.new() -- each Commander's player name over it
 local landing = Landing.new() -- the Commanders drop in with a star flare as the match starts (S-174)
 UnitRenderer.lift = Landing.lift(world)
@@ -982,7 +982,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		-- a (re)join: start over from the server's full picture
 		seenJoins = world.joins
 		TeamColors.setViewer(world.me.player, world.me.team, world.teamAllies) -- you Blue, allies cold, enemies warm (C-217)
-		pregameSeen.active, pregameSeen.started = false, false
+		pregameSeen.active, pregameSeen.started, pregameSeen.homed = false, false, false
 		FactoryFrames.clear(factoryFrames)
 		UnitRenderer.clear(renderer)
 		Effects.clear(fx)
@@ -1060,6 +1060,19 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		end
 	end
 	pregameSeen.active, pregameSeen.started = pg.active, pg.started
+	-- every match opens over the own Commander, the first time it's there
+	-- after a join (the user; fixed starts too, not only the pre-game's)
+	if not pregameSeen.homed and not pg.active and world.me.player ~= 0 then
+		for _, u in world.units do
+			local def = u.team == world.me.team and World.def(world, u)
+			if def and table.find(def.categories or {}, "COMMANDER") then
+				camState.x, camState.z = u.x, u.z
+				camState.follow = nil
+				pregameSeen.homed = true
+				break
+			end
+		end
+	end
 	local payload = Camera.apply(camState, world, workspace.CurrentCamera, now)
 	if payload then
 		cmd:FireServer(payload)
