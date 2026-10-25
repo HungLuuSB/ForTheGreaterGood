@@ -210,6 +210,38 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 				w.supply = e.supply or w.supply
 				w.rez = (e.rez or 0) / 255
 			end
+		elseif EK.PREGAME ~= nil and kind == EK.PREGAME then
+			-- one player's pick, ready and AI flags (protocol 36, S-169; C-218)
+			local pg = world.pregame
+			local flags = e.pregameFlags :: number
+			local x, z = nil, nil
+			if bit32.band(flags, Schema.PregameFlag.PICKED) ~= 0 then
+				x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+			end
+			pg.picks[e.player :: number] = { flags = flags, x = x, z = z }
+			pg.active = not pg.started
+			pg.version += 1
+		elseif EK.COUNTDOWN ~= nil and kind == EK.COUNTDOWN then
+			-- 5..1, then 0 as the match starts (the Commanders' ENTERs follow); 255 cancelled
+			local pg = world.pregame
+			local seconds = e.seconds :: number
+			if seconds == Schema.COUNTDOWN_STARTED then
+				pg.active, pg.started, pg.countdown = false, true, nil
+			elseif seconds == Schema.COUNTDOWN_CANCELLED then
+				pg.countdown = nil
+			else
+				pg.countdown = seconds
+			end
+			pg.version += 1
+		elseif EK.PREBUILD ~= nil and kind == EK.PREBUILD then
+			-- a player's queued builds for its Commander, the whole list
+			local list = {}
+			for _, b in e.builds or {} do
+				local x, z = g:decode(b.cell, b.offX, b.offZ)
+				table.insert(list, { defIndex = b.defIndex, x = x, z = z, facing = b.facing })
+			end
+			world.pregame.builds[e.player :: number] = list
+			world.pregame.version += 1
 		elseif kind == EK.WRECK_GONE then
 			local id = e.wreckId :: number
 			world.wrecks[id] = nil

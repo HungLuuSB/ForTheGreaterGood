@@ -276,7 +276,7 @@ function MinimapUI.step(ui: UI, api: Api.Api, now: number)
 		local h = holders[k]
 		f.BackgroundTransparency = if h then 0 else 1
 		if h then
-			f.BackgroundColor3 = TeamColors(h.team)
+			f.BackgroundColor3 = TeamColors.of(h.team)
 		end
 	end
 	local dots = Minimap.dots(world, api.selection.set)
@@ -292,7 +292,7 @@ function MinimapUI.step(ui: UI, api: Api.Api, now: number)
 			end
 			local style = Icons.style(ui.icons, world, world.units[d.id], d.selected)
 			style.size = math.max(6, math.floor(style.size * Minimap.ICON_SCALE + 0.5))
-			Glyph.apply(g, style, TeamColors(d.team))
+			Glyph.apply(g, style, TeamColors.of(d.team))
 			g.root.Position = UDim2.fromScale(d.u, d.v)
 			g.root.ZIndex = nIcons
 			g.root.Visible = true
@@ -313,12 +313,12 @@ function MinimapUI.step(ui: UI, api: Api.Api, now: number)
 		local px = if d.kind == "structure" then 5 elseif d.kind == "blip" then 3 else 4
 		f.Size = UDim2.fromOffset(px, px)
 		f.Position = UDim2.fromScale(d.u, d.v)
-		f.BackgroundColor3 = TeamColors(d.team)
+		f.BackgroundColor3 = TeamColors.of(d.team)
 		f.BackgroundTransparency = if d.kind == "ghost" then 1 elseif d.kind == "blip" then 0.4 else 0
 		local s = f:FindFirstChildOfClass("UIStroke") :: UIStroke
 		-- under attack (S-68): a red outline that blinks with the refresh
 		local blink = d.attacked and math.floor(now * 4) % 2 == 0
-		s.Color = if blink then Color3.fromRGB(255, 60, 50) elseif d.selected then Color3.new(1, 1, 1) else TeamColors(d.team)
+		s.Color = if blink then Color3.fromRGB(255, 60, 50) elseif d.selected then Color3.new(1, 1, 1) else TeamColors.of(d.team)
 		s.Thickness = if blink then 2 else 1
 		s.Enabled = blink or d.selected or d.kind == "ghost"
 		f.Visible = true

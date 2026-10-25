@@ -97,7 +97,7 @@ function Contacts.step(c: Contacts, world: World.World, now: number, hidden: boo
 			local y = Terrain.surfaceY(layers, k.x, k.z) + 0.4
 			p.Size = Vector3.new(0.3, size, size)
 			p.CFrame = CFrame.new(k.x, y, k.z) * CFrame.Angles(0, 0, math.pi / 2)
-			local color = TeamColors(k.team)
+			local color = TeamColors.of(k.team)
 			p.Color = if k.sonar then color:Lerp(Color3.fromRGB(140, 230, 255), 0.5) else color
 			p.Transparency = (if k.sonar then 0.45 else 0.25) + 0.3 * (0.5 + 0.5 * math.sin(now * 4 + k.id))
 		end

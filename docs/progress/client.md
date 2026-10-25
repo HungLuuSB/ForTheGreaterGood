@@ -4,6 +4,12 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-26, pre-game and automatic colours)
+
+- **Pick your start (C-218):** every lobby match now opens with the pre-game. Each side's spawn area is outlined on the ground ("YOUR START AREA"), the map's suggested spots shown as discs; click inside your area to place your Commander (a green or red spot under the cursor says whether you can), click again to move it. Every player's pick shows as a beam with their name. A panel under the resource bar lists every player (placed, ready, AI), has the Ready button, counts down "STARTING IN 5..1" and shows the time until the match starts on its own. The camera opens over your area and jumps to your Commander at the start.
+- **Automatic colours (C-217):** you are Blue, your allies cold colours, enemies warm ones, the same as the lobby.
+- Not checked in Studio yet: no Studio with this place (89435699207932) is connected.
+
 ## Summary (2026-10-24, playtest logging, BAR settings, HUD, watchdog run, facing arrow, bars under units)
 
 - **Live playtest logging (C-201):** the match place prints a `[Match]` line at each step of lobby → match → lobby: the config read (match id, map, mode, room, one line per seat), each player admitted or refused (with user id) and leaving, the start (who hadn't loaded), a heartbeat every 30 s, the result and when the store accepted it, and each teleport back (target, started or failed, fallback, retries). Failed store reads and writes warn per attempt and once more when they give up. The watchdog's WARN / INFO lines stay on.

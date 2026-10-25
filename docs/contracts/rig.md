@@ -88,7 +88,7 @@ The generator checks: every def piece except `muzzle` is a part, `muzzle` is an 
 
 Team color is applied at runtime, never baked: one model per unit serves every team. The method, which `ModelPool.acquire` already uses:
 
-- **What to set:** `BasePart.Color = TeamColors(team)` on every `BasePart` in the model that has the CollectionService tag `TeamColor`. Nothing else changes per team: not `SurfaceAppearance.Color`, not the maps, not the emissive properties.
+- **What to set:** `BasePart.Color = TeamColors.of(team)` on every `BasePart` in the model that has the CollectionService tag `TeamColor`. Nothing else changes per team: not `SurfaceAppearance.Color`, not the maps, not the emissive properties.
 - **Blockouts:** the tagged parts are the `team`-colored parts; their `Color` is the panel color.
 - **Meshed models** (pipeline.md): the tagged pieces are MeshParts with a `SurfaceAppearance` in `AlphaMode.Overlay`. Their color map's alpha is the team mask: 1 on painted metal, 0 on the team panels, in between on panel edges and crevices. The rendered albedo is
 

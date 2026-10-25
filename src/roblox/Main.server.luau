@@ -152,7 +152,6 @@ local sim: any
 local dog: any -- the per-tick budget watchdog of the current sim (S-140, C-171)
 local brains: { any } = {} -- the skirmish AI's players in a lobby match (C-70)
 local PREVIEW_PLAYERS = 8 -- the lobby preview has a sim player for every seat a human may take
-local matchStartTick = 0
 local matchId = 0
 local seed = Config.seed
 local endedAt: number? = nil
@@ -248,7 +247,7 @@ local publishLobby: () -> ()
 -- results, with the statistics over time (C-105).
 local function finishMatch()
 	lobby.phase = "results"
-	lobby.results = Lobby.results(lobby, sim, matchStartTick, Stats.report(sim))
+	lobby.results = Lobby.results(lobby, sim, sim.match.startTick, Stats.report(sim))
 	lobby.results.series = Stats.series(sim) -- samples over time, kept by the sim (S-88, request 41)
 	lobby.results.replays = next(recorders) ~= nil
 	brains = {}
@@ -262,7 +261,7 @@ local function finishMatch()
 			end
 		end
 		local outcome, winner, reason = MatchContract.outcomeOf(sim, present)
-		local record = MatchContract.result(contract, outcome, sim, Stats.report(sim), matchStartTick, os.time(), reason, winner)
+		local record = MatchContract.result(contract, outcome, sim, Stats.report(sim), sim.match.startTick, os.time(), reason, winner)
 		storeSet("result/" .. contract.matchId, record, MatchContract.RESULT_TTL)
 		resultWritten = true
 		lobby.returnAt = workspace:GetServerTimeNow() + MatchContract.RETURN_SECONDS
@@ -386,7 +385,6 @@ if matchServer then
 		contract = contractRaw
 		lobby = MatchContract.toLobby(contract)
 		lobby.phase = "waiting" -- everyone loads first; the sim holds at its first tick
-		remotes:SetAttribute("TeamColors", HttpService:JSONEncode(MatchContract.teamColors(contract)))
 		print(`[Match] config read: {contract.matchId}: {contract.mapId} {contract.mode}, {#contract.players} players, {#contract.spectators} spectators, from room "{contract.lobby.roomName}" (lobby place {contract.lobby.placeId}, server {contract.lobby.jobId})`)
 		for i, p in contract.players do
 			print(`[Match]   seat {i}: {p.name} ({if p.user then `user {p.user}` else `AI {p.ai}`}), {p.faction}, ally team {p.allyTeam}`)
@@ -476,7 +474,6 @@ local function startMatch()
 		-- the lobby's match (C-173): built once at boot, held while everyone loads
 		sim = Sim.new(MatchContract.toSim(contract))
 		brains = Skirmish.forMatch(sim)
-		matchStartTick = sim.tick
 		recorders, recordedBytes = {}, 0
 		for _, id in Lobby.humans(lobby) do
 			local header = { protocol = Schema.PROTOCOL_VERSION, defsHash = sim.defs.hash, mapId = sim.mapId, viewer = id, players = {} }
@@ -491,9 +488,10 @@ local function startMatch()
 			local config = Lobby.config(lobby, seed)
 			-- cheats: the host's lobby toggle, or always in Studio (C-119)
 			config.match.cheats = config.match.cheats or RunService:IsStudio()
+			-- a profile's `startMode = "choose"` gives the in-match lobby the pre-game (C-218)
+			config.match.startMode = Config.startMode
 			sim = Sim.new(config)
 			brains = Skirmish.forMatch(sim)
-			matchStartTick = sim.tick
 			recorders, recordedBytes = {}, 0
 			for _, id in Lobby.humans(lobby) do
 				local header = { protocol = Schema.PROTOCOL_VERSION, defsHash = sim.defs.hash, mapId = sim.mapId, viewer = id, players = {} }
@@ -529,6 +527,15 @@ local function startMatch()
 			end
 		end
 	end
+	-- every sim player's team, ally team and name, for the client's colours
+	-- (Shared/Match/TeamColors.forViewer, S-172) and the pre-game's list (C-217)
+	local players = {}
+	for _, pid in sim.playerOrder do
+		local p = sim.players[pid]
+		local seat = contract and contract.players[pid]
+		table.insert(players, { id = pid, team = p.team, allyTeam = p.allyTeam, name = seat and seat.name })
+	end
+	remotes:SetAttribute("Players", HttpService:JSONEncode(players))
 	-- the profile's speed until a /speed: the sim's own default (1) isn't a request (C-204)
 	speed = Config.speed or 1
 	cheatSpeed = sim.cheats and sim.cheats.speed
@@ -742,7 +749,7 @@ Players.PlayerRemoving:Connect(function(player)
 				end
 			end
 			if left == 0 then
-				storeSet("result/" .. contract.matchId, MatchContract.result(contract, "abandoned", sim, Stats.report(sim), matchStartTick, os.time(), "every player left"), MatchContract.RESULT_TTL)
+				storeSet("result/" .. contract.matchId, MatchContract.result(contract, "abandoned", sim, Stats.report(sim), sim.match.startTick, os.time(), "every player left"), MatchContract.RESULT_TTL)
 				resultWritten = true
 				print("[Match] every player left: abandoned")
 			end
@@ -1057,7 +1064,6 @@ RunService.Heartbeat:Connect(function(dt: number)
 		end
 		if all or (firstArrival and workspace:GetServerTimeNow() - firstArrival >= MatchContract.WAIT_SECONDS) then
 			lobby.phase = "playing"
-			matchStartTick = sim.tick
 			waiting = false
 			local missing = {}
 			for _, id in Lobby.humans(lobby) do

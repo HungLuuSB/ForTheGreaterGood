@@ -170,10 +170,10 @@ local function one(ui: UI, api: Api.Api, id: number)
 		-- the model at an angle, the type icon bottom right (the build menu's tile)
 		Portrait.set(ui.portraitView, def, u.team)
 		style.size = math.floor(style.size * 18 / Icons.BASE + 0.5)
-		Glyph.apply(ui.cornerGlyph, style, TeamColors(u.team))
+		Glyph.apply(ui.cornerGlyph, style, TeamColors.of(u.team))
 	else
 		style.size = math.floor(style.size * 38 / Icons.BASE + 0.5)
-		Glyph.apply(ui.portraitGlyph, style, TeamColors(u.team))
+		Glyph.apply(ui.portraitGlyph, style, TeamColors.of(u.team))
 	end
 	ui.portraitView.frame.Visible = def ~= nil
 	ui.cornerGlyph.root.Visible = def ~= nil
@@ -357,7 +357,7 @@ function UnitPanel.step(ui: UI, api: Api.Api)
 		b.Visible = true
 		local def = world.defs.unitByIndex[d]
 		Portrait.set(ui.typePortraits[i], def, teams[d])
-		Glyph.apply(ui.typeGlyphs[i], styleOf(ui, def, teams[d], 15), TeamColors(teams[d]))
+		Glyph.apply(ui.typeGlyphs[i], styleOf(ui, def, teams[d], 15), TeamColors.of(teams[d]))
 		;(b :: any).Count.Text = tostring(counts[d])
 	end
 	for i = #order + 1, #ui.typeButtons do

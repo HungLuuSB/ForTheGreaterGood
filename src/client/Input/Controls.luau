@@ -59,6 +59,9 @@ Controls.CANCEL_KEY = Enum.KeyCode.X
 Controls.ALERT_KEY = Enum.KeyCode.J
 -- a UI that takes keys first (the build menu while open): true = consumed
 Controls.capture = nil :: ((InputObject) -> boolean)?
+-- the pre-game's left click (C-218): the ground point under the cursor;
+-- true = consumed (always, while the pre-game is on)
+Controls.pregameClick = nil :: ((Vector3?) -> boolean)?
 Controls.HINT = {
 	attack = "ATTACK: left-click an enemy or the ground",
 	fight = "FIGHT: left-click where to fight to",
@@ -293,6 +296,10 @@ function Controls.bind(api: Api.Api): Controls
 			return
 		end
 		local mouse = UserInputService:GetMouseLocation()
+		local pregameClick = Controls.pregameClick
+		if pregameClick and input.UserInputType == Enum.UserInputType.MouseButton1 and pregameClick(Controls.groundAt(cam(), mouse.X, mouse.Y)) then
+			return
+		end
 		local placing = api.state.placement ~= nil
 		if placing and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			self.placeFrom = Controls.groundAt(cam(), mouse.X, mouse.Y)

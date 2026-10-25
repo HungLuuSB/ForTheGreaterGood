@@ -55,7 +55,8 @@ function MatchContract.toSim(c: any): any
 		players = players,
 		mapId = c.mapId,
 		scenario = "standard_start",
-		match = { mode = c.mode, win = c.win, ai = ai, friendlyFire = c.friendlyFire, cheats = c.cheats },
+		-- every match opens with the pre-game: starts picked in game (S-171, C-218)
+		match = { mode = c.mode, win = c.win, ai = ai, friendlyFire = c.friendlyFire, cheats = c.cheats, startMode = "choose" },
 	}
 end
 
@@ -101,17 +102,6 @@ function MatchContract.seatOf(c: any, user: number): (number | string)?
 		end
 	end
 	return nil
-end
-
--- The colour index of each sim team (the client draws team colours from
--- the palette).
-function MatchContract.teamColors(c: any): { [string]: number }
-	local out = {}
-	local teams = MatchContract.teams(c)
-	for i, p in c.players do
-		out[tostring(teams[i])] = p.color
-	end
-	return out
 end
 
 -- The results record (contract section 5). `outcome`: "finished", "draw"

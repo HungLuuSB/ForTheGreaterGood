@@ -61,7 +61,7 @@ function FactoryFrames.new(): FactoryFrames
 end
 
 local function frameColor(team: number): Color3
-	return TeamColors(team):Lerp(Color3.new(1, 1, 1), 0.35)
+	return TeamColors.of(team):Lerp(Color3.new(1, 1, 1), 0.35)
 end
 
 -- Unit-space bounds of every part (the model's root at its rest offset).

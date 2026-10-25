@@ -86,6 +86,10 @@ local AttackPreviewRender = require("./Render/AttackPreview")
 local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
+local Pregame = require("./Core/Pregame")
+local PregameMarks = require("./Render/PregameMarks")
+local PregamePanel = require("./UI/PregamePanel")
+local TeamColors = require("./Render/TeamColors")
 
 local defs = Defs.load()
 -- no Roblox HUD (C-109, the user): chat, player list, backpack, health and
@@ -363,6 +367,27 @@ local function muzzleOf(id: number, slot: number): (number?, number?, number?)
 		return p.X, p.Y, p.Z
 	end
 	return nil, nil, nil
+end
+-- the pre-game (C-218, net.md 9b): spawn boxes and picks on the map; the
+-- panel with the countdown and Ready; a left click places the Commander
+local pregameMarks = PregameMarks.new()
+local pregamePanel = PregamePanel.new(function(on: boolean)
+	api.send(Pregame.ready(on))
+end)
+local pregameSeen = { active = false, started = false } -- for the camera's jumps
+Controls.pregameClick = function(ground: Vector3?): boolean
+	local pg = world.pregame
+	if not pg.active or world.me.player == 0 then
+		return pg.active
+	end
+	local areas = Pregame.areas(world)
+	if ground and areas and Pregame.canPick(world, areas, ground.X, ground.Z) then
+		api.send(Pregame.startPos(world.grid, ground.X, ground.Z))
+		PregamePanel.sent(pregamePanel, ground.X, ground.Z, os.clock())
+	else
+		PregamePanel.refuse(pregamePanel, "Pick a spot inside your area, away from the other starts.", os.clock())
+	end
+	return true
 end
 Overlay.bind(overlay, api, os.clock)
 local hud = Hud.new()
@@ -929,6 +954,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	if world.joins ~= seenJoins then
 		-- a (re)join: start over from the server's full picture
 		seenJoins = world.joins
+		TeamColors.setViewer(world.me.player, world.me.team, world.teamAllies) -- you Blue, allies cold, enemies warm (C-217)
+		pregameSeen.active, pregameSeen.started = false, false
 		FactoryFrames.clear(factoryFrames)
 		UnitRenderer.clear(renderer)
 		Effects.clear(fx)
@@ -994,6 +1021,13 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		camState.distance = math.min(math.max(camState.distance, camState.minDistance), Camera.MAX_DISTANCE)
 		camState.minDistance = nil
 	end
+	-- the pre-game opens over the own area; the match starts over the own Commander
+	local pg = world.pregame
+	if (pg.active and not pregameSeen.active) or (pg.started and not pregameSeen.started and world.me.player ~= 0) then
+		camState.x, camState.z = Pregame.focus(world, Pregame.areas(world))
+		camState.follow = nil
+	end
+	pregameSeen.active, pregameSeen.started = pg.active, pg.started
 	local payload = Camera.apply(camState, world, workspace.CurrentCamera, now)
 	if payload then
 		cmd:FireServer(payload)
@@ -1127,6 +1161,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	IdleStrip.step(idleStrip, #idle.builders, #idle.factories, SettingsMenu.binds.idle or "")
 	IdleMarks.step(idleMarks, world, idle.builders, strategic, workspace.CurrentCamera)
+	PregameMarks.step(pregameMarks, world, Pregame.areas(world), if pg.active then Controls.hover() else nil, workspace.CurrentCamera)
+	PregamePanel.step(pregamePanel, world, now)
 	BuildMenuUI.step(buildMenu, api)
 	CommandCard.step(commandCard, api)
 	UnitPanel.step(unitPanel, api)

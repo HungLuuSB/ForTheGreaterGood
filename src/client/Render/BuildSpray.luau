@@ -101,7 +101,7 @@ function BuildSpray.step(b: BuildSpray, world: World.World, renderer: UnitRender
 			-- a reclaim stream flows from the target back to the builder
 			st.from.WorldPosition = if reclaim then to else from
 			st.to.WorldPosition = if reclaim then from else to
-			st.beam.Color = ColorSequence.new(if reclaim then BuildSpray.RECLAIM else TeamColors(u.team))
+			st.beam.Color = ColorSequence.new(if reclaim then BuildSpray.RECLAIM else TeamColors.of(u.team))
 			st.beam.Width1 = 0.8 + 0.35 * math.sin(now * 17 + s.builder * 2.1)
 			st.beam.Enabled = true
 		end

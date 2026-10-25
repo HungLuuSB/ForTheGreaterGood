@@ -499,7 +499,7 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 		b.LayoutOrder = i
 		b.Visible = true
 		local style = Icons.ofDef(def, world.me.team, 18)
-		Glyph.apply(ui.itemGlyphs[i], style, TeamColors(world.me.team))
+		Glyph.apply(ui.itemGlyphs[i], style, TeamColors.of(world.me.team))
 		Portrait.set(ui.portraits[i], def, world.me.team)
 		;(b :: any).Supply.Text = tostring(cost.supply or 0)
 		;(b :: any).Power.Text = tostring(cost.power or 0)

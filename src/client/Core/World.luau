@@ -129,6 +129,25 @@ function World.applyStatus(u: Unit, status: OwnStatus)
 	end
 end
 
+-- The pre-game (net.md 9b, protocol 36, S-169; C-218): every player's pick
+-- and ready flag (PREGAME), the countdown (COUNTDOWN) and the Commanders'
+-- queued builds (PREBUILD). `active` from the first PREGAME until the
+-- COUNTDOWN 0 that starts the match; a match with fixed starts never has one.
+export type PregamePick = { flags: number, x: number?, z: number? } -- flags: Schema.PregameFlag
+export type PregameBuild = { defIndex: number, x: number, z: number, facing: number }
+export type Pregame = {
+	active: boolean,
+	started: boolean, -- COUNTDOWN 0 arrived: the Commanders are on the picks
+	picks: { [number]: PregamePick }, -- by sim player
+	countdown: number?, -- 5..1 while counting down, nil otherwise
+	builds: { [number]: { PregameBuild } }, -- by sim player: the player's and its allies' (spectators: all)
+	version: number, -- bumps on every change (the views redraw)
+}
+
+function World.newPregame(): Pregame
+	return { active = false, started = false, picks = {}, countdown = nil, builds = {}, version = 0 }
+end
+
 export type World = {
 	shownTick: number?, -- the render tick World.settle last ran for (C-49)
 	grid: Grid.Grid,
@@ -166,6 +185,7 @@ export type World = {
 	remoteDomes: { [number]: { x: number, y: number, z: number, radius: number, charge: number, flags: number } }, -- domes of generators not in the tactical tier (DOME, protocol 29, S-122): drawn without vision, as in BAR (C-145)
 	shields: { [number]: { charge: number, flags: number } }, -- shield generators' domes by unit id (SHIELD, protocol 24, S-79): charge 0..1 of capacity, Schema.ShieldFlag bits
 	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
+	pregame: Pregame, -- the pre-game's picks and countdown (C-218)
 }
 
 -- An empty world waiting for the server's WELCOME (net.md section 10).
@@ -205,6 +225,7 @@ function World.new(defs: Defs.DefSet): World
 		ownStatus = {},
 		lastShot = {},
 		deathWrecks = {},
+		pregame = World.newPregame(),
 	}
 end
 
@@ -238,6 +259,7 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.idle) -- the join sends every idle one again
 	table.clear(world.lastShot)
 	table.clear(world.deathWrecks)
+	world.pregame = World.newPregame() -- a join during the pre-game sends it all again
 	world.strategicTick = -1
 	world.economy = nil
 	world.latestTick = rec.tick :: number -- unwraps wire ticks from here on

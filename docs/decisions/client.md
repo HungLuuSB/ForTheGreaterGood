@@ -1895,3 +1895,23 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Checked in Studio (Coastline skirmish): Lancers and Ravagers fought by the Commander; one Mason reclaimed (green bar under the wreck, the zone total falling), another resurrected (purple bar, power draining, then the Lancer back where its wreck lay with "Construction complete: Lancer"); the hover read "Ravager wreck · 65 supply · resurrect 77%"; the card shows Resurrect for Masons. Screenshots: `debug_out/screens/c216_*.jpg`.
 
 **Why:** the user's resurrect / reclaim feature (S-168, via sim-A).
+
+### C-217 — Colours by side, as the viewer sees them (2026-10-26, S-172)
+
+- `Render/TeamColors` now draws from `Shared/Match/TeamColors.forViewer` (the lobby uses the same function): you are Blue, your allies cold colours, enemies warm ones; spectators see ally team 1 as the cold side. The lobby's colour picks no longer reach the match (the `TeamColors` attribute and `MatchContract.teamColors` are gone).
+- The match server publishes every sim player as the Remotes folder's `Players` attribute, JSON `[{ id, team, allyTeam, name? }]`, on every path (lobby contract, the in-match lobby, Studio profiles); IDs are the contract's seat index, as in PREGAME events and the lobby's rooms (sim-A). Without it each team counts as one player (WELCOME's ally teams).
+- The module is a table now: `TeamColors.of(team)`, `TeamColors.ofPlayer(player)`, `TeamColors.players()`, `TeamColors.setViewer(player, team, teamAllies)` (Main, on every WELCOME), `TeamColors.version`.
+
+**Why:** the user, S-172: colours are assigned automatically.
+
+### C-218 — The pre-game screen (2026-10-26, S-169, S-171, protocol 36)
+
+- Every lobby match opens with the pre-game (`MatchContract.toSim` sends `startMode = "choose"`). Studio profiles keep fixed starts unless the profile sets `startMode = "choose"` (the in-match lobby passes it on).
+- `World.pregame` (NetIn): every player's pick and flags (PREGAME), the countdown (COUNTDOWN 5..1; 255 clears it; 0 ends the pre-game) and the queued builds (PREBUILD, kept for later). `Core/Pregame`: the spawn boxes and hints from `StartAreas` (the server's own check), whether the viewer may pick a spot (own box, spacing; the server also checks the ground), where the camera opens, START_POS and READY.
+- On the map (`Render/PregameMarks`): each side's box as a ground outline in its side's colour ("YOUR START AREA" / "TEAM n"), hints as discs, picks as a beam with the spacing disc and the player's name (and READY), the cursor's spot green or red.
+- The panel (`UI/PregamePanel`): what to do, "STARTING IN n", the time until everyone counts as ready, every player with colour and state, Ready / Not ready; a pick not shown within a second is reported as refused.
+- The camera opens over the own area and jumps to the own Commander when the match starts. Results time the match from `sim.match.startTick`.
+- `Pregame.spec` (the real Sim with startMode "choose": boxes equal the server's, picks, ready, countdown, the Commander on the pick; cancel; spectators), MatchContract.spec through the pre-game.
+- Not in yet: queued Commander builds before the match (PREBUILD ghosts, the build menu without a Commander). Coming with protocol 37 (sim-A, the beta feedback): host Start / force start, 3 s countdown, 150 s pick time, faction switch, landing flare, room-made boxes.
+
+**Why:** the published beta had neither start picking nor automatic colours (sim-A's request).

@@ -1,9 +1,9 @@
 --!strict
 -- The match server's side of the lobby contract (C-173, docs/contracts/
 -- match.md v1): a config the lobby writes passes the check and runs as a
--- real match; bad configs are refused; seats, spectators and team colours
--- come from it; the results record the match writes passes the lobby's
--- check.
+-- real match (opening with the pre-game, C-218); bad configs are refused;
+-- seats and spectators come from it; the results record the match writes
+-- passes the lobby's check.
 
 local MatchContract = require("../../src/roblox/MatchContract")
 local Lobby = require("../../src/roblox/Lobby")
@@ -11,6 +11,26 @@ local Combat = require("../../src/server/Sim/Combat/Combat")
 local Sim = require("../../src/server/Sim/Sim")
 local Skirmish = require("../../src/server/Sim/AI/Skirmish")
 local Stats = require("../../src/server/Sim/Stats")
+local Pregame = require("../../src/client/Core/Pregame")
+
+-- Through the pre-game (every lobby match has one): the humans say READY,
+-- the AI picks and readies on its own; steps until the match starts.
+local function start(sim: any, brains: { any }, humans: { number })
+	assert(sim.pregame ~= nil, "a lobby match opens with the pre-game")
+	for _, id in humans do
+		assert(Sim.submit(sim, id, Pregame.ready(true)))
+	end
+	for _ = 1, 10 * 15 do
+		for _, b in brains do
+			Skirmish.tick(b)
+		end
+		Sim.step(sim)
+		if sim.pregame == nil then
+			return
+		end
+	end
+	error("the pre-game didn't end")
+end
 
 -- What the lobby's MatchConfig.build writes for a room.
 local function config(mode: string): any
@@ -59,7 +79,7 @@ return function(t: any)
 		t.expect(broken(function(c) c.lobby = nil end) ~= nil, "no lobby to return to")
 	end)
 
-	t.test("seats, spectators and team colours from the config", function()
+	t.test("seats and spectators from the config", function()
 		local c = config("TEAM")
 		t.equal(MatchContract.seatOf(c, 11), 1)
 		t.equal(MatchContract.seatOf(c, 22), 3)
@@ -67,9 +87,6 @@ return function(t: any)
 		t.equal(MatchContract.seatOf(c, 99), nil, "not listed: kicked")
 		local teams = MatchContract.teams(c)
 		t.deepEqual(teams, { 1, 2, 4, 3 }, "Order odd, Chaos even, in player order")
-		local colors = MatchContract.teamColors(c)
-		t.equal(colors["1"], 1)
-		t.equal(colors["4"], 2, "Bo's team takes his colour")
 	end)
 
 	t.test("a Teams config runs as a match and its results record passes the lobby's check", function()
@@ -81,6 +98,7 @@ return function(t: any)
 		t.equal(#brains, 2, "two AI")
 		local lobby = MatchContract.toLobby(c)
 		t.deepEqual(Lobby.humans(lobby), { 1, 3 })
+		start(sim, brains, Lobby.humans(lobby))
 		for _ = 1, 300 do
 			for _, b in brains do
 				Skirmish.tick(b)
@@ -113,6 +131,7 @@ return function(t: any)
 	t.test("ended before the sim's own end: winner from who stands, else a draw", function()
 		local c = config("FFA")
 		local sim = Sim.new(MatchContract.toSim(c))
+		start(sim, Skirmish.forMatch(sim), Lobby.humans(MatchContract.toLobby(c)))
 		for _ = 1, 30 do
 			Sim.step(sim)
 		end

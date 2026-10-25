@@ -67,7 +67,7 @@ function ModelPool.acquire(def: any, team: number): Model
 			end
 		end
 	end
-	local color = TeamColors(team)
+	local color = TeamColors.of(team)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") and CollectionService:HasTag(d, TEAM_TAG) then
 			d.Color = color
