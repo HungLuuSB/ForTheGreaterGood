@@ -25,5 +25,28 @@
       "EMI": "rbxassetid://107246328171411"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_veilspire_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://130683790400677",
+    "meshes": {
+      "band": "rbxassetid://88806666775454",
+      "base": "rbxassetid://136714251101159"
+    },
+    "decals": {
+      "ALB": "rbxassetid://89570896482142",
+      "RGH": "rbxassetid://125392376550266",
+      "NOR": "rbxassetid://123450708636615",
+      "MTL": "rbxassetid://76526066032524",
+      "EMI": "rbxassetid://104451232904069"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://80525051302833",
+      "NOR": "rbxassetid://74070855740151",
+      "RGH": "rbxassetid://102364717417745",
+      "MTL": "rbxassetid://123451778329265",
+      "EMI": "rbxassetid://70782953039594"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_veilspire_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 2566 triangles"
   }
 }

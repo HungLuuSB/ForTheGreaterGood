@@ -25,5 +25,28 @@
       "EMI": "rbxassetid://104483986531978"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_seekerspire_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://117295833932699",
+    "meshes": {
+      "base": "rbxassetid://123814640306533",
+      "radar": "rbxassetid://117043640045691"
+    },
+    "decals": {
+      "ALB": "rbxassetid://99742206007143",
+      "RGH": "rbxassetid://80327570821963",
+      "NOR": "rbxassetid://116673626877884",
+      "MTL": "rbxassetid://111285016317274",
+      "EMI": "rbxassetid://91592772689626"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://80769820739407",
+      "NOR": "rbxassetid://120514186713972",
+      "RGH": "rbxassetid://94027100318457",
+      "MTL": "rbxassetid://122991748534049",
+      "EMI": "rbxassetid://126394030614311"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_seekerspire_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 2200 triangles"
   }
 }

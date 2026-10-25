@@ -1,0 +1,168 @@
+{
+  "id": "chs_leech_wreck",
+  "wreckOf": "chs_leech",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.013,
+        1.9127,
+        1.8454
+      ],
+      "size": [
+        2.6755,
+        3.9658,
+        10.7466
+      ]
+    },
+    "sonar": {
+      "parent": "base",
+      "center": [
+        -0.0003,
+        0.4627,
+        1.0067
+      ],
+      "size": [
+        0.6947,
+        0.5323,
+        0.6579
+      ],
+      "pivot": [
+        0,
+        0.45,
+        1.0
+      ]
+    },
+    "tailRotor": {
+      "parent": "base",
+      "center": [
+        0.1815,
+        2.614,
+        6.6141
+      ],
+      "size": [
+        0.2269,
+        1.9052,
+        1.9092
+      ],
+      "pivot": [
+        0.22,
+        2.6,
+        6.6
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        0.0563,
+        3.9071,
+        0.1498
+      ],
+      "size": [
+        9.9664,
+        0.1998,
+        9.8729
+      ],
+      "pivot": [
+        0.0,
+        3.9,
+        0.2
+      ]
+    },
+    "rack": {
+      "parent": "base",
+      "center": [
+        0.0019,
+        0.744,
+        0.1612
+      ],
+      "size": [
+        3.8327,
+        1.3045,
+        2.7211
+      ],
+      "pivot": [
+        0.0,
+        0.9,
+        0.2
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "rack",
+      "at": [
+        0.0,
+        0.6,
+        -1.6
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "sonar",
+    "tailRotor"
+  ],
+  "anim": {
+    "sonar": {
+      "motion": "lower",
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "range": 8
+    },
+    "tailRotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 684,
+    "sonar": 36,
+    "tailRotor": 48,
+    "rotor": 72,
+    "rack": 192,
+    "total": 1032
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

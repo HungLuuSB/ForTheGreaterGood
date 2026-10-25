@@ -27,5 +27,30 @@
       "EMI": "rbxassetid://134123857703938"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_condor_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://123476319338351",
+    "meshes": {
+      "base": "rbxassetid://82942341510139",
+      "nano": "rbxassetid://112709518141360",
+      "rotor": "rbxassetid://84734354306866",
+      "tailRotor": "rbxassetid://91253760820020"
+    },
+    "decals": {
+      "ALB": "rbxassetid://88311580666395",
+      "RGH": "rbxassetid://89049927120334",
+      "NOR": "rbxassetid://88802224563563",
+      "MTL": "rbxassetid://87674394411521",
+      "EMI": "rbxassetid://106901458887577"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://90196595661259",
+      "NOR": "rbxassetid://82475660398647",
+      "RGH": "rbxassetid://86639374541250",
+      "MTL": "rbxassetid://99159752193819",
+      "EMI": "rbxassetid://78014230083916"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_condor_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1144 triangles"
   }
 }

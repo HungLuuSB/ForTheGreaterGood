@@ -57,5 +57,31 @@
     },
     "reuploadNote": "ALB, NOR, RGH, MTL re-uploaded: the first color map failed with HTTP 502 in Studio",
     "note": "2026-10-22, first BAR upload (M-15): 1788 triangles, glow share 5.1%"
+  },
+  "wreck": {
+    "model": "rbxassetid://98893993165134",
+    "meshes": {
+      "barrel": "rbxassetid://125191914686387",
+      "base": "rbxassetid://105483873824338",
+      "trackL": "rbxassetid://102758770967726",
+      "trackR": "rbxassetid://120760995326660",
+      "turret": "rbxassetid://83724475384132"
+    },
+    "decals": {
+      "ALB": "rbxassetid://100919547495407",
+      "RGH": "rbxassetid://127445534759875",
+      "NOR": "rbxassetid://90201858667523",
+      "MTL": "rbxassetid://95530921016533",
+      "EMI": "rbxassetid://122805564189703"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://133461902616271",
+      "NOR": "rbxassetid://122899976201669",
+      "RGH": "rbxassetid://88061453488501",
+      "MTL": "rbxassetid://94179967820292",
+      "EMI": "rbxassetid://89088483426951"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_cyclops_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1572 triangles"
   }
 }

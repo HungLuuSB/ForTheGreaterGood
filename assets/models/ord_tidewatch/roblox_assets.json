@@ -29,5 +29,31 @@
       "EMI": "rbxassetid://109555797697496"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_tidewatch_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://88242443891526",
+    "meshes": {
+      "base": "rbxassetid://133870607465866",
+      "rack": "rbxassetid://88291685845882",
+      "rotor": "rbxassetid://98243643398084",
+      "sonar": "rbxassetid://132380383215248",
+      "tailRotor": "rbxassetid://93975186587900"
+    },
+    "decals": {
+      "ALB": "rbxassetid://78703538056270",
+      "RGH": "rbxassetid://99470650924748",
+      "NOR": "rbxassetid://103749053462609",
+      "MTL": "rbxassetid://121853202874554",
+      "EMI": "rbxassetid://98139302179589"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://129145255435335",
+      "NOR": "rbxassetid://123299478189800",
+      "RGH": "rbxassetid://95827781137986",
+      "MTL": "rbxassetid://83204237469937",
+      "EMI": "rbxassetid://116791070070583"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_tidewatch_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1264 triangles"
   }
 }

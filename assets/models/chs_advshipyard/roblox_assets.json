@@ -32,5 +32,30 @@
       "EMI": "rbxassetid://85619835119523"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_advshipyard_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://130389832642638",
+    "meshes": {
+      "base": "rbxassetid://97665389635216",
+      "jib": "rbxassetid://102375625587763",
+      "jib1": "rbxassetid://86087036039771",
+      "jib2": "rbxassetid://119420341402628"
+    },
+    "decals": {
+      "ALB": "rbxassetid://87196410749163",
+      "RGH": "rbxassetid://93903332482587",
+      "NOR": "rbxassetid://107025706500937",
+      "MTL": "rbxassetid://103694904921700",
+      "EMI": "rbxassetid://102987664215076"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://138218364535162",
+      "NOR": "rbxassetid://140062047687361",
+      "RGH": "rbxassetid://88572514335560",
+      "MTL": "rbxassetid://71598806228892",
+      "EMI": "rbxassetid://131764352236025"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advshipyard_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 5708 triangles"
   }
 }

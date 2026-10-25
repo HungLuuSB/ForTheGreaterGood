@@ -1,0 +1,98 @@
+{
+  "id": "chs_hailstorm_wreck",
+  "wreckOf": "chs_hailstorm",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0221,
+        1.3314,
+        -0.002
+      ],
+      "size": [
+        6.6535,
+        2.8239,
+        6.6296
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.2711,
+        4.1541,
+        -0.7321
+      ],
+      "size": [
+        3.9022,
+        3.1949,
+        5.16
+      ],
+      "pivot": [
+        0.0,
+        2.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        -0.9,
+        5.57,
+        -3.19
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        5.57,
+        -3.19
+      ]
+    },
+    "muzzle3": {
+      "parent": "turret",
+      "at": [
+        0.9,
+        5.57,
+        -3.19
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 632,
+    "turret": 688,
+    "total": 1320
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

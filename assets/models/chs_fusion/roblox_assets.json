@@ -50,5 +50,28 @@
       "EMI": "rbxassetid://106785148715963"
     },
     "note": "T2 structure at the S-104 size (queue item 5): 4736 triangles, glow share 4.1%"
+  },
+  "wreck": {
+    "model": "rbxassetid://92339020231043",
+    "meshes": {
+      "base": "rbxassetid://82955340539864",
+      "core": "rbxassetid://116555439371127"
+    },
+    "decals": {
+      "ALB": "rbxassetid://115653124847452",
+      "RGH": "rbxassetid://113470545240607",
+      "NOR": "rbxassetid://98873120073035",
+      "MTL": "rbxassetid://106969097430210",
+      "EMI": "rbxassetid://108667376406220"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://92053258889127",
+      "NOR": "rbxassetid://140305865024219",
+      "RGH": "rbxassetid://104309101185577",
+      "MTL": "rbxassetid://87044448553751",
+      "EMI": "rbxassetid://123476935592331"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_fusion_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 3896 triangles"
   }
 }

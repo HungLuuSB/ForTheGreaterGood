@@ -27,5 +27,28 @@
       "EMI": "rbxassetid://116211858885585"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_maw_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://94041198845902",
+    "meshes": {
+      "base": "rbxassetid://88610186528005",
+      "turret": "rbxassetid://103729743879600"
+    },
+    "decals": {
+      "ALB": "rbxassetid://71495179241204",
+      "RGH": "rbxassetid://120435275558038",
+      "NOR": "rbxassetid://90913154574851",
+      "MTL": "rbxassetid://119627671904537",
+      "EMI": "rbxassetid://125300931091502"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://126702736261657",
+      "NOR": "rbxassetid://137413307514492",
+      "RGH": "rbxassetid://88337252095465",
+      "MTL": "rbxassetid://77685120695377",
+      "EMI": "rbxassetid://100338926529875"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_maw_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 3928 triangles"
   }
 }

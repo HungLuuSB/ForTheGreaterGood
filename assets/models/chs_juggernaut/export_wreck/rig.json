@@ -1,0 +1,178 @@
+{
+  "id": "chs_juggernaut_wreck",
+  "wreckOf": "chs_juggernaut",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.012,
+        1.5907,
+        -0.0664
+      ],
+      "size": [
+        6.4851,
+        2.2968,
+        8.8038
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -2.7001,
+        0.4933,
+        -0.0446
+      ],
+      "size": [
+        0.8419,
+        1.0468,
+        8.4263
+      ],
+      "pivot": [
+        -2.7,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        2.6949,
+        0.5253,
+        -0.0238
+      ],
+      "size": [
+        0.8856,
+        1.0573,
+        8.4393
+      ],
+      "pivot": [
+        2.7,
+        0.46,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0493,
+        4.8357,
+        0.5252
+      ],
+      "size": [
+        4.27,
+        3.9396,
+        3.4271
+      ],
+      "pivot": [
+        0.0,
+        3.0,
+        0.3
+      ]
+    },
+    "armL": {
+      "parent": "turret",
+      "center": [
+        -2.3222,
+        4.64,
+        -2.0591
+      ],
+      "size": [
+        1.0995,
+        1.1972,
+        5.6339
+      ],
+      "pivot": [
+        -2.3,
+        4.6,
+        0.4
+      ]
+    },
+    "armR": {
+      "parent": "turret",
+      "center": [
+        2.3636,
+        4.6011,
+        -2.084
+      ],
+      "size": [
+        1.0989,
+        1.2446,
+        5.6774
+      ],
+      "pivot": [
+        2.3,
+        4.6,
+        0.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "armR",
+      "at": [
+        2.3,
+        4.6,
+        -5.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 488,
+    "trackL": 344,
+    "trackR": 344,
+    "turret": 256,
+    "armL": 200,
+    "armR": 200,
+    "total": 1832
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

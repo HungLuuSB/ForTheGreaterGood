@@ -26,5 +26,28 @@
       "EMI": "rbxassetid://91382441822086"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_hailstorm_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://87883717451600",
+    "meshes": {
+      "base": "rbxassetid://135299254417403",
+      "turret": "rbxassetid://102344171676908"
+    },
+    "decals": {
+      "ALB": "rbxassetid://116704149307900",
+      "RGH": "rbxassetid://121390919858294",
+      "NOR": "rbxassetid://70753903755414",
+      "MTL": "rbxassetid://95185398536119",
+      "EMI": "rbxassetid://95606996752499"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://124230498917081",
+      "NOR": "rbxassetid://80735592304029",
+      "RGH": "rbxassetid://105801019276697",
+      "MTL": "rbxassetid://95071282671554",
+      "EMI": "rbxassetid://113960625307643"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hailstorm_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1320 triangles"
   }
 }

@@ -1,0 +1,177 @@
+{
+  "id": "ord_radiance_wreck",
+  "wreckOf": "ord_radiance",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0124,
+        2.0482,
+        0.0276
+      ],
+      "size": [
+        14.7884,
+        4.3945,
+        14.8498
+      ]
+    },
+    "shell": {
+      "parent": "base",
+      "center": [
+        0.0226,
+        4.516,
+        -0.0421
+      ],
+      "size": [
+        8.5676,
+        1.2077,
+        8.4949
+      ],
+      "pivot": [
+        0.0,
+        4.0,
+        0.0
+      ]
+    },
+    "shellL": {
+      "parent": "shell",
+      "center": [
+        -3.4036,
+        6.3757,
+        0.0051
+      ],
+      "size": [
+        0.776,
+        3.2981,
+        6.3662
+      ],
+      "pivot": [
+        -3.4,
+        4.8,
+        0.0
+      ]
+    },
+    "shellR": {
+      "parent": "shell",
+      "center": [
+        3.4179,
+        6.3473,
+        -0.0776
+      ],
+      "size": [
+        0.6441,
+        3.2894,
+        6.6011
+      ],
+      "pivot": [
+        3.4,
+        4.8,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.1177,
+        7.1831,
+        0.0213
+      ],
+      "size": [
+        3.7718,
+        9.1691,
+        3.9372
+      ],
+      "pivot": [
+        0.0,
+        4.0,
+        0.0
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        -0.0549,
+        10.7613,
+        -4.1505
+      ],
+      "size": [
+        1.2606,
+        1.3336,
+        5.8537
+      ],
+      "pivot": [
+        0.0,
+        10.8,
+        -1.2
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        10.8,
+        -7.1
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "shellL": {
+      "motion": "open",
+      "axis": [
+        0,
+        0,
+        -1
+      ],
+      "range": 90
+    },
+    "shellR": {
+      "motion": "open",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 90
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 676,
+    "shell": 344,
+    "shellL": 288,
+    "shellR": 288,
+    "turret": 400,
+    "barrel": 360,
+    "total": 2356
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -24,5 +24,28 @@
       "EMI": "rbxassetid://100756322747083"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_ragnarok_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://102129253096260",
+    "meshes": {
+      "base": "rbxassetid://137887668108444",
+      "hatch": "rbxassetid://72057437199113"
+    },
+    "decals": {
+      "ALB": "rbxassetid://129357180117098",
+      "RGH": "rbxassetid://88874217466808",
+      "NOR": "rbxassetid://88609361075806",
+      "MTL": "rbxassetid://130400618121711",
+      "EMI": "rbxassetid://84999345151752"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://106587855243535",
+      "NOR": "rbxassetid://102451858880398",
+      "RGH": "rbxassetid://85408750369198",
+      "MTL": "rbxassetid://93467865975994",
+      "EMI": "rbxassetid://95680288243787"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_ragnarok_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1300 triangles"
   }
 }

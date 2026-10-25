@@ -34,5 +34,33 @@
       "EMI": "rbxassetid://86201775339019"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_warden_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://109214427731407",
+    "meshes": {
+      "barrel": "rbxassetid://84836890015345",
+      "base": "rbxassetid://129513203606468",
+      "jacks": "rbxassetid://75973515081721",
+      "shieldL": "rbxassetid://118399482872269",
+      "shieldR": "rbxassetid://131577213433476",
+      "spades": "rbxassetid://90733973462250",
+      "turret": "rbxassetid://135325972398664"
+    },
+    "decals": {
+      "ALB": "rbxassetid://74328063307786",
+      "RGH": "rbxassetid://86852160080931",
+      "NOR": "rbxassetid://75353334307508",
+      "MTL": "rbxassetid://138466924595940",
+      "EMI": "rbxassetid://133398096522150"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://96608002650971",
+      "NOR": "rbxassetid://84804370782444",
+      "RGH": "rbxassetid://94843060728799",
+      "MTL": "rbxassetid://81150221547388",
+      "EMI": "rbxassetid://114987425716255"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_warden_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 2764 triangles"
   }
 }

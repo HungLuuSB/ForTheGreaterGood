@@ -90,5 +90,35 @@
       "EMI": "rbxassetid://110793014617334"
     },
     "note": "2026-10-22, first BAR upload (M-15): 1108 triangles, glow share 6.3%"
+  },
+  "wreck": {
+    "model": "rbxassetid://72360036677903",
+    "meshes": {
+      "base": "rbxassetid://122207335147820",
+      "launcher": "rbxassetid://117110458092701",
+      "turret": "rbxassetid://107902902873716",
+      "wheelL1": "rbxassetid://102801807182061",
+      "wheelL2": "rbxassetid://124310602004396",
+      "wheelL3": "rbxassetid://118368558377990",
+      "wheelR1": "rbxassetid://96642305285460",
+      "wheelR2": "rbxassetid://118033373196442",
+      "wheelR3": "rbxassetid://136564395497299"
+    },
+    "decals": {
+      "ALB": "rbxassetid://130846658675596",
+      "RGH": "rbxassetid://108247727097303",
+      "NOR": "rbxassetid://123201782380007",
+      "MTL": "rbxassetid://97631844885926",
+      "EMI": "rbxassetid://72248849247891"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://125885295092098",
+      "NOR": "rbxassetid://74316612830309",
+      "RGH": "rbxassetid://109222668268775",
+      "MTL": "rbxassetid://75242742837739",
+      "EMI": "rbxassetid://101884343714953"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_gorgon_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 992 triangles"
   }
 }
