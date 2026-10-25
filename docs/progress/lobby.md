@@ -2,6 +2,14 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: the shared error list)
+
+- Merged sim-A's `ed06b01`: `MatchConfig.ERRORS`, `ERROR_DETAIL_MAX` and `cleanError`, and `validateResult` accepting `error`. It also brings the new unit defs; the Codex spec still passes.
+- `MatchErrors` now reads the shared list and cleaning, and keeps only the lobby's teleport mapping and one-line form. The contract's note says where the table lives; `MatchErrors.spec` compares the contract with the shared table.
+- B's match side (`2b1fde9`) sends the 2xx codes in the return teleport data and the result's `error`. 206 has no path yet, and a player with no readable config is still kicked, with the code in the kick message.
+- Lobby specs 60 / 60; the build check passes; Studio: a staged reserve failure shows Error 103 from the shared table.
+- **Next (F41):** four AI levels in the pickers once sim-A sends the level IDs.
+
 ## Summary (2026-10-26: match errors with codes, F38)
 
 - **The user's rule:** "any failed attempt to connect to the game match must be displayed on the lobby when return with error code + description". One numbered list (`MatchErrors`, contract section 11, L-21):

@@ -202,7 +202,7 @@ The user's rule: "any failed attempt to connect to the game match must be displa
 | 210 | Match server error | The match server hit an error and ended the match. (detail: the error) |
 | 299 | Match server problem | The match server sent you back for a reason it didn't name. |
 
-The table lives in code as `src/lobby/shared/MatchErrors.luau`, until sim-A moves it to `@shared/Match/MatchConfig` (`ERRORS`) for both places.
+The table lives in code as `@shared/Match/MatchConfig.ERRORS` (with `cleanError`), shared by both places; the lobby reads it through `src/lobby/shared/MatchErrors.luau`.
 
 ## Changes
 
