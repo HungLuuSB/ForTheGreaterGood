@@ -10,6 +10,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
   - **Air:** Heavy bomber (Order: Liche); Flying fortress (Chaos: Dragon).
   - **Factories:** Bot lab (Bot Lab / Bot Pit); Advanced bot lab.
 - Lobby specs 60 / 60 (the Codex spec lists every buildable unit's role); the build check passes. Studio: Fatboy's article with Tzar as its counterpart and the comparison (`lobby_units_fatboy`).
+- Ready to merge: `f8e3cbb` (Codex roles for the bots; includes the merge of sim-A's `2b3ca0e`; touches only `src/lobby` and the lobby progress)
 - **Not the lobby's:** the bots have no list icons (B) and no models yet (C), so the showroom shows the placeholder box.
 
 ## Summary (2026-10-26: the shared error list)
