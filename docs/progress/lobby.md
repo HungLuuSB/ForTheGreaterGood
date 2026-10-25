@@ -16,6 +16,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
   - Errors wait in the player's view until dismissed, so one raised during arrival isn't lost.
 - **Studio:** the stand-in match refuses with codes (201, 202, 203, 205), and `StandInFail = "match:<code>"` stages any 2xx. Checked (`debug_out/screens/`): `lobby_error_103_start` (reserve failed), `lobby_error_206_sent_back`, `lobby_error_120_results` (the lobby's heartbeat timeout), `lobby_error_209_results` (shown once, with the results), `lobby_error_114_teleport` (a player's teleport, after the retries).
 - **Specs** (`MatchErrors.spec`, 5 tests): the list, the contract's table equal to the code's, cleaning, the teleport mapping, results carrying the error. Lobby specs 60 / 60; the build check passes.
+- Ready to merge: `a8eb423` (match errors with codes, F38; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
 - **For B and sim-A:** the match place reports 2xx in the return teleport data and the result's `error`; sim-A moves the list to `MatchConfig.ERRORS`, then the lobby reads it from there.
 
 ## Summary (2026-10-26: the host back from a match)
