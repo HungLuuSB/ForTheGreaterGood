@@ -533,7 +533,19 @@ local function startMatch()
 	for _, pid in sim.playerOrder do
 		local p = sim.players[pid]
 		local seat = contract and contract.players[pid]
-		table.insert(players, { id = pid, team = p.team, allyTeam = p.allyTeam, name = seat and seat.name })
+		local name = seat and seat.name
+		if name == nil then
+			-- the in-match lobby and profiles: the seated player's name, else the AI's level
+			for _, player in Players:GetPlayers() do
+				local slot = if lobby then Lobby.slotOf(lobby, player.UserId) else slotOf[player]
+				if slot == pid then
+					name = player.DisplayName
+				end
+			end
+			local level = sim.match.ai and sim.match.ai[pid]
+			name = name or (if level then `AI ({level})` else nil)
+		end
+		table.insert(players, { id = pid, team = p.team, allyTeam = p.allyTeam, name = name })
 	end
 	remotes:SetAttribute("Players", HttpService:JSONEncode(players))
 	-- the profile's speed until a /speed: the sim's own default (1) isn't a request (C-204)

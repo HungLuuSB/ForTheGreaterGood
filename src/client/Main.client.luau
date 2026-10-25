@@ -1026,6 +1026,10 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	if (pg.active and not pregameSeen.active) or (pg.started and not pregameSeen.started and world.me.player ~= 0) then
 		camState.x, camState.z = Pregame.focus(world, Pregame.areas(world))
 		camState.follow = nil
+		local fit = pg.active and Pregame.fitDistance(world, Pregame.areas(world))
+		if fit then
+			camState.distance = math.clamp(fit, camState.distance, Camera.MAX_DISTANCE) -- the whole area in view
+		end
 	end
 	pregameSeen.active, pregameSeen.started = pg.active, pg.started
 	local payload = Camera.apply(camState, world, workspace.CurrentCamera, now)

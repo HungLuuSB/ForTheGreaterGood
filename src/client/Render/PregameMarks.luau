@@ -184,7 +184,8 @@ local function drawPicks(m: Marks, world: World.World)
 		local beam = part(m.picks, color, 0.3)
 		beam.Size = Vector3.new(1.5, PregameMarks.BEAM, 1.5)
 		beam.CFrame = CFrame.new(x, y + PregameMarks.BEAM / 2, z)
-		disc(m.picks, world, x, z, StartAreas.SPACING * 2, color, 0.85)
+		local keepOut = disc(m.picks, world, x, z, StartAreas.SPACING * 2, color, 0.8)
+		keepOut.Material = Enum.Material.SmoothPlastic -- a faint wash, not a glow
 		disc(m.picks, world, x, z, 16, color, 0.2)
 		if t == nil then
 			t = label(m.gui, 14)

@@ -117,6 +117,16 @@ function Pregame.focus(world: World.World, areas: Areas?): (number, number)
 	return g.originX + g.cellsX * 4, g.originZ + g.cellsZ * 4
 end
 
+-- The camera distance that shows the viewer's whole area (nil for a
+-- spectator: the camera keeps its distance).
+function Pregame.fitDistance(world: World.World, areas: Areas?): number?
+	local box = areas and areas.boxes[world.me.allyTeam]
+	if box == nil or world.me.player == 0 then
+		return nil
+	end
+	return math.max(box[3] - box[1], box[4] - box[2]) * 1.1
+end
+
 -- Seconds until everyone counts as ready (the countdown then runs).
 function Pregame.timeLeft(world: World.World): number
 	return math.max(0, (Pregame.TIMEOUT - math.max(world.latestTick, 0)) / 15)
