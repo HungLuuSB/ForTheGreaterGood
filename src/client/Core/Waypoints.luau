@@ -127,7 +127,10 @@ local function buildDone(world: World.World, p: Point): boolean
 	local def = world.defs.unitByIndex[p.defIndex :: number]
 	for _, s in world.units do
 		local sdef = World.def(world, s)
-		if sdef and sdef.domain == "structure" and math.abs(s.x - p.x) < 1 and math.abs(s.z - p.z) < 1 then
+		-- off camera a record has only its cell's centre (F13: the frame read
+		-- as "something else took the spot", and the order was dropped)
+		local tol = if s.tier == "tactical" then 1 else World.CELL_SLACK
+		if sdef and sdef.domain == "structure" and math.abs(s.x - p.x) < tol and math.abs(s.z - p.z) < tol then
 			-- ours of that def, finished (C-193: the line stays while it goes
 			-- up), or something else (blocked); not the extractor this build
 			-- upgrades in place (C-121)

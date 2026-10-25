@@ -1,6 +1,7 @@
 --!strict
 -- What one unit adds to or takes from its team's economy right now, per
--- second (the unit panel's "+5" / "−10", the user's request, C-125). The
+-- second (the unit panel's "+5" / "−10", the user's request, C-125; made
+-- and used apart, green and red, F9). The
 -- wire has no per-unit flow, so this follows the sim's rules from the defs
 -- and what the client knows:
 --   production       generators, solar (def.production)
@@ -62,33 +63,36 @@ local function depositsUnder(world: World.World, def: any, x: number, z: number)
 	return sum
 end
 
--- Supply and power per second for unit `u` of `def` (positive: income).
-function UnitFlow.of(world: World.World, u: World.Unit, def: any, ctx: Context): (number, number)
-	local supply, power = 0, 0
+export type Parts = { supplyIn: number, supplyOut: number, powerIn: number, powerOut: number }
+
+-- What unit `u` of `def` makes and uses per second, each resource apart
+-- (all ≥ 0): the panel shows "+make" green and "−use" red (F9, the user).
+function UnitFlow.parts(world: World.World, u: World.Unit, def: any, ctx: Context): Parts
+	local out: Parts = { supplyIn = 0, supplyOut = 0, powerIn = 0, powerOut = 0 }
 	if (u.build or 1) < 1 then
-		return 0, 0 -- a frame: nothing until finished
+		return out -- a frame: nothing until finished
 	end
 	local on = bit32.band(u.state or 0, 2) ~= 0 -- TOGGLED_ON
 	local p = def.production
 	if p then
-		supply += p.supply or 0
-		power += p.power or 0
+		out.supplyIn += p.supply or 0
+		out.powerIn += p.power or 0
 	end
 	if def.wind and def.wind.max then
-		power += def.wind.max * (ctx.wind or 0)
+		out.powerIn += def.wind.max * (ctx.wind or 0)
 	end
 	if def.extractor then
-		supply += def.extractor.rate * depositsUnder(world, def, u.x, u.z)
+		out.supplyIn += def.extractor.rate * depositsUnder(world, def, u.x, u.z)
 	end
 	if def.converter and on then
-		power -= def.converter.power or 0
-		supply += def.converter.supply or 0
+		out.powerOut += def.converter.power or 0
+		out.supplyIn += def.converter.supply or 0
 	end
 	local s = def.sensors or {}
 	local upkeep = (s.trackDrain or 0) + (s.jamDrain or 0) + (s.radarDrain or 0)
 	local switchable = def.toggle ~= nil or def.retract ~= nil
 	if upkeep > 0 and (on or not switchable) then
-		power -= upkeep
+		out.powerOut += upkeep
 	end
 	-- building: the item's cost at this unit's buildpower
 	local bp = def.buildPower or 0
@@ -104,11 +108,17 @@ function UnitFlow.of(world: World.World, u: World.Unit, def: any, ctx: Context):
 		local cost = item and item.cost
 		if cost and (cost.buildTime or 0) > 0 then
 			local rate = bp / cost.buildTime * (ctx.ratio or 1)
-			supply -= (cost.supply or 0) * rate
-			power -= (cost.power or 0) * rate
+			out.supplyOut += (cost.supply or 0) * rate
+			out.powerOut += (cost.power or 0) * rate
 		end
 	end
-	return supply, power
+	return out
+end
+
+-- Supply and power per second for unit `u` of `def`, net (positive: income).
+function UnitFlow.of(world: World.World, u: World.Unit, def: any, ctx: Context): (number, number)
+	local f = UnitFlow.parts(world, u, def, ctx)
+	return f.supplyIn - f.supplyOut, f.powerIn - f.powerOut
 end
 
 -- "+5", "−10", "0": a flow for the panel (whole numbers from 10 up).
@@ -119,6 +129,26 @@ function UnitFlow.text(v: number): string
 	local a = math.abs(v)
 	local body = if a >= 10 then string.format("%d", math.floor(a + 0.5)) else string.format("%.1f", a)
 	return (if v > 0 then "+" else "−") .. body
+end
+
+UnitFlow.GAIN = "#5AD25A" -- green: made (the user: green positive, red negative)
+UnitFlow.COST = "#E0574E" -- red: used
+UnitFlow.NONE = "#8C929C" -- neither
+
+-- One resource's line as RichText: `mark` (its coloured sign), then "+made"
+-- green and "−used" red, each only when there is some; a dim "0" for none.
+function UnitFlow.rich(mark: string, made: number, used: number): string
+	local parts = { mark }
+	if math.abs(made) >= 0.05 then
+		table.insert(parts, `<font color="{UnitFlow.GAIN}">{UnitFlow.text(made)}</font>`)
+	end
+	if math.abs(used) >= 0.05 then
+		table.insert(parts, `<font color="{UnitFlow.COST}">{UnitFlow.text(-used)}</font>`)
+	end
+	if #parts == 1 then
+		table.insert(parts, `<font color="{UnitFlow.NONE}">0</font>`)
+	end
+	return table.concat(parts, " ")
 end
 
 return UnitFlow

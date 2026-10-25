@@ -20,7 +20,8 @@ BuildTargets.SLACK = 8 -- studs past the build range still counted as in reach
 -- The own unfinished structure of `defIndex` standing on (x, z), or nil.
 local function frameAt(world: World.World, defIndex: number, x: number, z: number): number?
 	for id, s in world.units do
-		if s.defIndex == defIndex and s.team == world.me.team and math.abs(s.x - x) < 1 and math.abs(s.z - z) < 1 then
+		local tol = if s.tier == "tactical" then 1 else World.CELL_SLACK -- off camera: the cell's centre (F13)
+		if s.defIndex == defIndex and s.team == world.me.team and math.abs(s.x - x) < tol and math.abs(s.z - z) < tol then
 			return id
 		end
 	end

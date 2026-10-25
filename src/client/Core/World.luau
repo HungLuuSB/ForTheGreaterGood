@@ -282,6 +282,7 @@ function World.angle(v: number): number
 	return v / 255 * 2 * math.pi - math.pi
 end
 
+World.CELL_SLACK = 4.5 -- studs: a strategic record sits at its cell's centre, at most half a cell (4) from the unit
 World.BLIP_SMOOTH = 0.45 -- seconds: a strategic record's drawn spot closes most of the way to a new reading in this time
 World.BLIP_SNAP = 160 -- studs: a jump this big snaps (a contact reappearing elsewhere)
 World.BLIP_ORBIT = 1.5 -- studs: radar / sonar blips circle their reported spot, as in BAR (C-154)

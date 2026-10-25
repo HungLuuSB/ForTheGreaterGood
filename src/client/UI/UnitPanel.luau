@@ -112,13 +112,16 @@ function UnitPanel.new(api: Api.Api): UI
 	fill.BackgroundColor3 = Color3.fromRGB(80, 200, 90)
 	fill.BorderSizePixel = 0
 	fill.Parent = health
-	-- the economy flow: supply white, power yellow (the build menu's cost colors)
-	local flowSupply = textLabel(panel, Enum.Font.GothamBold, 13, Color3.fromRGB(235, 235, 235))
-	flowSupply.Position = UDim2.fromOffset(6, 79)
-	flowSupply.Size = UDim2.fromOffset(64, 15)
-	local flowPower = textLabel(panel, Enum.Font.GothamBold, 13, Color3.fromRGB(255, 214, 60))
-	flowPower.Position = UDim2.fromOffset(6, 95)
-	flowPower.Size = UDim2.fromOffset(64, 15)
+	-- the economy flow, a line per resource (its mark white / yellow, the
+	-- build menu's cost colors): made green, used red (F9)
+	local flowSupply = textLabel(panel, Enum.Font.GothamBold, 12, Color3.fromRGB(235, 235, 235))
+	flowSupply.Position = UDim2.fromOffset(4, 79)
+	flowSupply.Size = UDim2.fromOffset(68, 15)
+	flowSupply.RichText = true
+	local flowPower = textLabel(panel, Enum.Font.GothamBold, 12, Color3.fromRGB(255, 214, 60))
+	flowPower.Position = UDim2.fromOffset(4, 95)
+	flowPower.Size = UDim2.fromOffset(68, 15)
+	flowPower.RichText = true
 	local name = textLabel(panel, Enum.Font.GothamBold, 15, Color3.fromRGB(190, 228, 96)) -- yellow-green (reference 3, C-203)
 	name.Position = UDim2.fromOffset(72, 4)
 	name.Size = UDim2.new(1, -78, 0, 18)
@@ -188,9 +191,9 @@ local function one(ui: UI, api: Api.Api, id: number)
 	if own then
 		local eco = api.state.economy
 		local ratio = if eco then math.min(eco.supply.ratio, eco.power.ratio) else 1
-		local s, p = UnitFlow.of(world, u, def, { queue = api.state.factoryQueues[id], wind = eco and eco.wind, ratio = ratio })
-		ui.flowSupply.Text = UnitFlow.text(s)
-		ui.flowPower.Text = UnitFlow.text(p)
+		local f = UnitFlow.parts(world, u, def, { queue = api.state.factoryQueues[id], wind = eco and eco.wind, ratio = ratio })
+		ui.flowSupply.Text = UnitFlow.rich('<font color="#EBEBEB">■</font>', f.supplyIn, f.supplyOut)
+		ui.flowPower.Text = UnitFlow.rich('<font color="#FFD63C">ϟ</font>', f.powerIn, f.powerOut)
 	end
 	ui.name.Text = sheet.name
 	ui.role.Text = if def then string.match(def.description or "", "^[^%.]*") or "" else ""
