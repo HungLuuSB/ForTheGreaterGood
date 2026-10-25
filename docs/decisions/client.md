@@ -1927,3 +1927,12 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - `Render/CommanderNames`: every drawn Commander shows its player's name (the `Players` attribute) in the player's colour, stacked over the idle tag; hidden at strategic zoom.
 
 **Why:** the user's playtest feedback.
+
+### C-221 — Match failures go back to the lobby with an error code (2026-10-26, F38)
+
+- `MatchContract.ERROR`: the match side's codes from lobby-D's table (match.md section 11): 201 no setup, 202 bad setup (detail: the validator's reason), 203 version mismatch, 204 game version mismatch (REJECT), 205 not in this match, 206 full, 207 already over, 208 players didn't arrive, 209 everyone left, 210 match server error (detail: the error), 299 other. `MatchContract.error(code, detail?)` cuts the detail to 200 characters; `MatchContract.refusal(raw, why)` picks 201 / 203 / 202 for a config the server can't run.
+- Every return teleport carries `{ matchId, error = { code, detail? } }` (`sendBack(list, err?)`; the match's own error otherwise; a retry after TeleportInitFailed sends the same). The result record has `error` for 201-203 and 208-210.
+- Paths: a refused config (201 / 202 / 203: record and everyone who arrives); a player not listed is sent back with 205 instead of kicked; arriving after the result, 207 (or the match's error); a stale client gets its REJECT, then goes back with 204 three seconds later; every player leaving, 209 in the record; no listed human 120 s after the config was read (`ARRIVE_SECONDS`), 208 and the record; a lobby match's sim throwing, 210 with the error (the sim stops stepping, everyone goes back). Without a readable config there's no lobby to return to: still a kick, with the code in its message. 206 has no path yet (seats come from the list).
+- MatchContract.spec: refusal codes, the detail cut, a record with `error` passing the lobby's check. Not run live: it needs both places published.
+
+**Why:** the user: "any failed attempt to connect to the game match must be displayed on the lobby when return with error code + description" (via sim-A and lobby-D's table).

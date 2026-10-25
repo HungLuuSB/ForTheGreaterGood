@@ -171,6 +171,9 @@ local lobby: any = nil -- the lobby's state (C-70; seats since C-77)
 local contract: any = nil -- the validated match config
 local contractRaw: any = nil -- what the store held, for a refusal's return trip
 local resultWritten = false
+local matchError: any = nil -- why the whole match failed (MatchContract.ERROR): every returning player carries it (F38)
+local configReadAt = 0 -- os.clock() when the config was read (the arrival timeout)
+local simFailed = false -- the lobby match's sim threw (error 210): it stops stepping
 local storeSet: (string, any, number) -> ()
 local lobbyMaps: { any } = {}
 local joined: { [Player]: boolean } = {} -- HELLO accepted: receives the outbox
@@ -375,10 +378,12 @@ if matchServer then
 		warn(`[Match] server/{serverKey}: no match id after {tries} reads`)
 	end
 	local why = if contractRaw == nil then "no match config for this server" else MatchContract.validate(contractRaw)
+	configReadAt = os.clock()
 	if why then
-		warn(`[Match] config refused: {why}`)
+		matchError = MatchContract.refusal(contractRaw, why)
+		warn(`[Match] config refused: {why} (error {matchError.code})`)
 		if type(contractRaw) == "table" and type(contractRaw.matchId) == "string" and type(contractRaw.players) == "table" then
-			storeSet("result/" .. contractRaw.matchId, MatchContract.result(contractRaw, "abandoned", nil, nil, 0, os.time(), why), MatchContract.RESULT_TTL)
+			storeSet("result/" .. contractRaw.matchId, MatchContract.result(contractRaw, "abandoned", nil, nil, 0, os.time(), why, nil, matchError), MatchContract.RESULT_TTL)
 			resultWritten = true
 		end
 	else
@@ -410,15 +415,19 @@ end
 -- lives on, else any (it rebuilds the room from the store). In Studio it
 -- only says so.
 local TeleportService = game:GetService("TeleportService")
-local function sendBack(list: { Player })
+local returnError: { [Player]: any } = {} -- what each return teleport carried (a retry sends it again)
+-- `err` (optional): why these players go back (MatchContract.ERROR); the
+-- match's own error otherwise. The lobby shows it (match.md section 11).
+local function sendBack(list: { Player }, err: any?)
 	local c = contract or contractRaw
+	local why = err or matchError
 	if #list == 0 then
 		return
 	end
 	if type(c) ~= "table" or type(c.lobby) ~= "table" then
 		for _, p in list do
 			warn(`[Match] {p.Name}: no lobby to return to (no readable config): kicked`)
-			p:Kick("This match couldn't start. Rejoin the game to return to the lobby.")
+			p:Kick(`This match couldn't start{if why then ` (error {why.code})` else ""}. Rejoin the game to return to the lobby.`)
 		end
 		return
 	end
@@ -428,7 +437,7 @@ local function sendBack(list: { Player })
 	end
 	if Config.contract or RunService:IsStudio() then
 		for _, p in list do
-			print(`[Match] (Studio) would teleport {p.Name} back to lobby place {c.lobby.placeId}, server {c.lobby.jobId}`)
+			print(`[Match] (Studio) would teleport {p.Name} back to lobby place {c.lobby.placeId}, server {c.lobby.jobId}{if why then `, error {why.code}{if why.detail then ` ({why.detail})` else ""}` else ""}`)
 		end
 		return
 	end
@@ -437,9 +446,9 @@ local function sendBack(list: { Player })
 		if toServer then
 			options.ServerInstanceId = c.lobby.jobId
 		end
-		options:SetTeleportData({ matchId = c.matchId })
+		options:SetTeleportData({ matchId = c.matchId, error = why })
 		local target = if toServer then `the room's server {c.lobby.jobId}` else "any lobby server"
-		print(`[Match] teleport back: {table.concat(names, ", ")} → place {c.lobby.placeId}, {target}`)
+		print(`[Match] teleport back: {table.concat(names, ", ")} → place {c.lobby.placeId}, {target}{if why then `, error {why.code}` else ""}`)
 		local ok, err = pcall(TeleportService.TeleportAsync, TeleportService, c.lobby.placeId, list, options)
 		if ok then
 			print(`[Match] teleport back started for {table.concat(names, ", ")}`)
@@ -447,6 +456,9 @@ local function sendBack(list: { Player })
 			warn(`[Match] teleport back to {target} failed: {err}`)
 		end
 		return ok
+	end
+	for _, p in list do
+		returnError[p] = why
 	end
 	if not attempt(true) then
 		attempt(false)
@@ -459,7 +471,7 @@ TeleportService.TeleportInitFailed:Connect(function(player: Player, result: Enum
 	end
 	warn(`[Match] {player.Name}'s return failed ({result.Name}: {message}); retrying to any lobby server`)
 	local options = Instance.new("TeleportOptions")
-	options:SetTeleportData({ matchId = c.matchId })
+	options:SetTeleportData({ matchId = c.matchId, error = returnError[player] })
 	local ok, err = pcall(TeleportService.TeleportAsync, TeleportService, c.lobby.placeId, { player }, options)
 	if ok then
 		print(`[Match] retry teleport started for {player.Name}`)
@@ -698,13 +710,13 @@ local function assignSlot(player: Player)
 			specOf[player] = 0
 			print(`[Match] admitted {player.Name} (user {player.UserId}) as a spectator`)
 		else
-			warn(`[Match] refused {player.Name} (user {player.UserId}): not listed, kicked`)
-			player:Kick("You're not part of this match.")
+			warn(`[Match] refused {player.Name} (user {player.UserId}): not listed, sending back (error 205)`)
+			task.defer(sendBack, { player }, MatchContract.error(MatchContract.ERROR.NOT_LISTED))
 			return
 		end
 		if resultWritten then
 			print(`[Match] {player.Name} arrived after the result: sending back`)
-			task.defer(sendBack, { player }) -- the match is closed: straight back
+			task.defer(sendBack, { player }, matchError or MatchContract.error(MatchContract.ERROR.OVER)) -- the match is closed: straight back
 		end
 		publishLobby()
 		return
@@ -764,7 +776,7 @@ Players.PlayerRemoving:Connect(function(player)
 				end
 			end
 			if left == 0 then
-				storeSet("result/" .. contract.matchId, MatchContract.result(contract, "abandoned", sim, Stats.report(sim), sim.match.startTick, os.time(), "every player left"), MatchContract.RESULT_TTL)
+				storeSet("result/" .. contract.matchId, MatchContract.result(contract, "abandoned", sim, Stats.report(sim), sim.match.startTick, os.time(), "every player left", nil, MatchContract.error(MatchContract.ERROR.EVERYONE_LEFT)), MatchContract.RESULT_TTL)
 				resultWritten = true
 				print("[Match] every player left: abandoned")
 			end
@@ -791,6 +803,11 @@ remoteOf.Snapshot.OnServerEvent:Connect(function(player: Player, payload: any)
 	if reject then
 		remoteOf.Snapshot:FireClient(player, reject)
 		print(`[Entry] {player.Name}: stale client, rejected`)
+		if contract then
+			-- back to the lobby with the reason, after the client had a moment to show it
+			local detail = `match server: protocol {Schema.PROTOCOL_VERSION}, defs {sim.defs.hash}`
+			task.delay(3, sendBack, { player }, MatchContract.error(MatchContract.ERROR.GAME_VERSION, detail))
+		end
 		return
 	end
 	joined[player] = true
@@ -1073,6 +1090,18 @@ RunService.Heartbeat:Connect(function(dt: number)
 	-- everyone back after RETURN_SECONDS
 	local waiting = contract ~= nil and lobby.phase == "waiting"
 	if waiting then
+		-- no listed human here long after the config was read: it never starts (error 208)
+		local present = false
+		for _, seat in slotOf do
+			present = present or typeof(seat) == "number"
+		end
+		if not present and not resultWritten and os.clock() - configReadAt >= MatchContract.ARRIVE_SECONDS then
+			matchError = MatchContract.error(MatchContract.ERROR.NO_SHOW)
+			storeSet("result/" .. contract.matchId, MatchContract.result(contract, "abandoned", nil, nil, 0, os.time(), "no player arrived", nil, matchError), MatchContract.RESULT_TTL)
+			resultWritten = true
+			print(`[Match] no player arrived in {MatchContract.ARRIVE_SECONDS} s: abandoned (error 208)`)
+			sendBack(Players:GetPlayers()) -- spectators who did come
+		end
 		local all = true
 		for _, id in Lobby.humans(lobby) do
 			all = all and matchArrived[id] == true
@@ -1097,14 +1126,32 @@ RunService.Heartbeat:Connect(function(dt: number)
 	end
 	acc += dt * speed
 	local n = 0
-	while acc >= DT and n < MAX_STEPS_PER_FRAME do
+	while acc >= DT and n < MAX_STEPS_PER_FRAME and not simFailed do
 		local t0 = os.clock()
 		if not waiting then -- the AI waits for the start too
 			for _, b in brains do
 				Skirmish.tick(b)
 			end
 		end
-		Sim.step(sim)
+		if contract then
+			-- a lobby match that breaks ends with error 210 and sends everyone back
+			local ok, err = pcall(Sim.step, sim)
+			if not ok then
+				warn(`[Match] the sim failed at tick {sim.tick}: {err}`)
+				simFailed = true
+				if not resultWritten then
+					matchError = MatchContract.error(MatchContract.ERROR.SERVER_ERROR, tostring(err))
+					storeSet("result/" .. contract.matchId, MatchContract.result(contract, "abandoned", sim, nil, sim.match.startTick, os.time(), "match server error", nil, matchError), MatchContract.RESULT_TTL)
+					resultWritten = true
+					sendBack(Players:GetPlayers())
+				end
+				lobby.phase = "results"
+				publishLobby()
+				break
+			end
+		else
+			Sim.step(sim)
+		end
 		Watchdog.afterStep(dog)
 		-- a lobby match records from its first tick, the loading wait included (C-173)
 		if lobby and (lobby.phase == "playing" or (contract and lobby.phase == "waiting")) then

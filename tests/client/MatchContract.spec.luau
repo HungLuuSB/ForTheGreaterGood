@@ -163,6 +163,22 @@ return function(t: any)
 		t.expect(r.players[2].won and not r.players[1].won)
 	end)
 
+	t.test("failures carry an error code for the lobby (match.md section 11, F38)", function()
+		local E = MatchContract.ERROR
+		t.equal(MatchContract.refusal(nil, "no match config for this server").code, E.NO_SETUP)
+		local old = config("FFA")
+		old.version = 1
+		t.equal(MatchContract.refusal(old, "version or matchId").code, E.VERSION)
+		local bad = MatchContract.refusal(config("FFA"), "players")
+		t.deepEqual({ bad.code, bad.detail }, { E.BAD_SETUP, "players" }, "the validator's reason as the detail")
+		t.equal(#(MatchContract.error(E.SERVER_ERROR, string.rep("x", 500)).detail :: string), MatchContract.DETAIL_MAX, "details cut to 200")
+		t.equal(MatchContract.error(E.OVER).detail, nil)
+		local c = config("TEAM")
+		local r = MatchContract.result(c, "abandoned", nil, nil, 0, 1700000100, "every player left", nil, MatchContract.error(E.EVERYONE_LEFT))
+		t.equal(r.error.code, 209)
+		t.equal(MatchContract.validateResult(r, c), nil, "the record with an error still passes the lobby's check")
+	end)
+
 	t.test("refused or deserted: an abandoned record still passes the check", function()
 		local c = config("FFA")
 		local r = MatchContract.result(c, "abandoned", nil, nil, 0, 1700000100, "config refused: version 1")
