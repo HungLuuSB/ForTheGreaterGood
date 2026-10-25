@@ -439,7 +439,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 	local base = Skirmish.LEVELS[levelName]
 	assert(base, `Skirmish.new: unknown level {levelName}`)
 	local p = sim.players[player]
-	local cfg = Skirmish.styled(base, if p.team % 2 == 1 then "ord_" else "chs_", levelName) -- S-76
+	local cfg = Skirmish.styled(base, if p.faction == "order" then "ord_" else "chs_", levelName) -- S-76
 	local map = sim.map :: Passability.PassMap
 	local layers = map.layers
 	local w = sim.world
@@ -525,7 +525,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		player = player,
 		team = p.team,
 		ally = p.allyTeam :: number,
-		prefix = if p.team % 2 == 1 then "ord_" else "chs_",
+		prefix = if p.faction == "order" then "ord_" else "chs_",
 		rng = Prng.new((sim.seed * 31 + player * 7919) % 4294967296),
 		homeX = homeX,
 		homeZ = homeZ,
@@ -2021,17 +2021,31 @@ function Skirmish.tick(brain: Brain)
 	local b = brain :: any
 	if b.pending then
 		if sim.pregame then
-			-- the pre-game (S-169, S-171): its best spot (a hint first), then ready; as
-			-- commands, so a replay picks the same
-			if sim.pregame.picks[brain.player] == nil and not b.picked then
-				local x, z = Pregame.bestSpot(sim, brain.player)
-				if x and z then
-					local g = (sim.map :: Passability.PassMap).grid
-					local cell, ox, oz = g:encode(x, z)
-					submit(sim, brain.player, { cmdType = CT.START_POS, flags = 0, unitIds = {}, cell = cell, offX = ox, offZ = oz })
+			-- the pre-game (S-169, S-171, S-174): once a human has picked (or
+			-- there are none, or the pick time is over), its best spot of those
+			-- left (a hint first), then ready; as commands, so a replay picks
+			-- the same
+			local pg = sim.pregame
+			if not b.picked then
+				local humans, humanPicked = false, false
+				for _, pid in sim.playerOrder do
+					if not sim.match.ai[pid] then
+						humans = true
+						humanPicked = humanPicked or pg.picks[pid] ~= nil
+					end
 				end
-				submit(sim, brain.player, { cmdType = CT.READY, flags = 0, unitIds = {}, value = 1 })
-				b.picked = true
+				if not humans or humanPicked or pg.autoPicked or pg.picks[brain.player] ~= nil then
+					if pg.picks[brain.player] == nil then
+						local x, z = Pregame.bestSpot(sim, brain.player)
+						if x and z then
+							local g = (sim.map :: Passability.PassMap).grid
+							local cell, ox, oz = g:encode(x, z)
+							submit(sim, brain.player, { cmdType = CT.START_POS, flags = 0, unitIds = {}, cell = cell, offX = ox, offZ = oz })
+						end
+					end
+					submit(sim, brain.player, { cmdType = CT.READY, flags = 0, unitIds = {}, value = 1 })
+					b.picked = true
+				end
 			end
 			return
 		end

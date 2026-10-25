@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 36 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169)
+Schema.PROTOCOL_VERSION = 37 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -104,6 +104,8 @@ Schema.CmdType = table.freeze({
 	RESURRECT = 19, -- targetId = a wreck: workers that can resurrect refill it with supply, then bring its unit back for power (S-168; protocol 35)
 	START_POS = 20, -- pre-game only (startMode "choose"): pos = where the sender's Commander will start (S-169; protocol 36)
 	READY = 21, -- pre-game only: value 1 ready, 0 not (S-169)
+	FACTION = 22, -- pre-game only, while not ready: value 0 Order, 1 Chaos; clears the sender's pre-game builds (S-174; protocol 37)
+	START = 23, -- pre-game only, from the match's host: value 0 start (everyone ready), 1 force start (S-174)
 })
 
 -- CHEAT commands (S-102, net.md "Cheat commands"): what to do.
@@ -173,11 +175,13 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.RESURRECT] = "target",
 	[CT.START_POS] = "pos",
 	[CT.READY] = "value",
+	[CT.FACTION] = "value",
+	[CT.START] = "value",
 }
 -- commands that may carry no unit IDs besides CAMERA and CHEAT (S-169): the
 -- pre-game's START_POS and READY, and BUILD / STOP for the Commander that
 -- doesn't exist yet (its pre-game build queue)
-local NO_UNITS_OK: { [number]: boolean } = { [CT.START_POS] = true, [CT.READY] = true, [CT.BUILD] = true, [CT.STOP] = true }
+local NO_UNITS_OK: { [number]: boolean } = { [CT.START_POS] = true, [CT.READY] = true, [CT.FACTION] = true, [CT.START] = true, [CT.BUILD] = true, [CT.STOP] = true }
 local VALUE_MAX: { [number]: number } = {
 	[CT.SET_FIRE_STATE] = 2,
 	[CT.SET_MOVE_STATE] = 2,
@@ -185,6 +189,8 @@ local VALUE_MAX: { [number]: number } = {
 	[CT.REPEAT] = 1,
 	[CT.PRIORITY] = 1,
 	[CT.READY] = 1,
+	[CT.FACTION] = 1,
+	[CT.START] = 1,
 	[CT.CANCEL] = 50, -- a factory queue holds at most 50 items (D62)
 }
 
@@ -952,13 +958,24 @@ end
 --   WRECK_STATE wreckId u16 | supply u16 | rez u8 (resurrect progress,
 --               0..255): a wreck the client has, in the team's sight, whose
 --               supply or resurrect progress changed (protocol 35, S-168)   =  6 bytes
---   PREGAME     player u8 | flags u8 (PregameFlag: PICKED 1, READY 2, AI 4)
---               | cell u16 | offX u8 | offZ u8 (the pick; 0 when not
---               picked): one player's pre-game state, to everyone, when it
---               changes and after a join (protocol 36, S-169)             =  7 bytes
---   COUNTDOWN   seconds u8: 5..1 counting down; 0 the match starts this
---               tick (the Commanders' ENTERs come with it); 255 cancelled
+--   PREGAME     player u8 | flags u8 (PregameFlag: PICKED 1, READY 2, AI 4,
+--               CHAOS 8 (its faction; else Order), HOST 16 (starts the
+--               match; protocol 37)) | cell u16 | offX u8 | offZ u8 (the
+--               pick; 0 when not picked): one player's pre-game state, to
+--               everyone, when it changes and after a join (protocol 36,
+--               S-169)                                                    =  7 bytes
+--   COUNTDOWN   seconds u8: 3..1 counting down (protocol 37; 5..1 in 36);
+--               0 the match starts this tick (the Commanders' ENTERs come
+--               with it; they land for Schema.LANDING_TICKS); 255 cancelled
 --               (someone isn't ready any more); to everyone            =  2 bytes
+--   PICK_CLOCK  seconds u8 (pick time left; 0 once over: unpicked players
+--               got a spot; with MAX_WAIT, the seconds to the forced start)
+--               | flags u8 (PickClockFlag: ALL_READY 1 (the host may
+--               start), MAX_WAIT 2): to everyone, when it changes
+--               (protocol 37, S-174)                                    =  3 bytes
+--   START_BOXES count u8 | count × (allyTeam u8 | x0 i16 | z0 i16 | x1 i16 |
+--               z1 i16, world studs): every side's spawn box, to everyone,
+--               once after a join during the pre-game (protocol 37)  = 2 + 9 × count
 --   PREBUILD    player u8 | count u8 (0..PREBUILD_MAX) | count × (defIndex
 --               u16 | cell u16 | offX u8 | offZ u8 | facing u8): the
 --               player's pre-game build queue for its Commander, to the
@@ -1001,6 +1018,8 @@ Schema.EventKind = table.freeze({
 	PREGAME = 28, -- protocol 36 (S-169)
 	COUNTDOWN = 29,
 	PREBUILD = 30, -- variable size (Schema.eventBytes)
+	PICK_CLOCK = 31, -- protocol 37 (S-174)
+	START_BOXES = 32, -- variable size
 })
 -- CHEAT_RESULT result codes (S-102)
 Schema.CheatResult = table.freeze({
@@ -1029,8 +1048,12 @@ local ALERT_MAX = 9
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 14, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7, [23] = 13, [24] = 3, [25] = 4, [26] = 9, [27] = 6, [28] = 7, [29] = 2 })
-Schema.PregameFlag = table.freeze({ PICKED = 1, READY = 2, AI = 4 }) -- PREGAME flags (S-169)
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 14, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7, [23] = 13, [24] = 3, [25] = 4, [26] = 9, [27] = 6, [28] = 7, [29] = 2, [31] = 3 })
+Schema.PregameFlag = table.freeze({ PICKED = 1, READY = 2, AI = 4, CHAOS = 8, HOST = 16 }) -- PREGAME flags (S-169; CHAOS, HOST protocol 37)
+local PREGAME_FLAGS_MAX = 31
+Schema.PickClockFlag = table.freeze({ ALL_READY = 1, MAX_WAIT = 2 }) -- PICK_CLOCK flags (S-174)
+Schema.LANDING_TICKS = 23 -- the Commanders land (1.5 s) after COUNTDOWN 0 and take no orders until then (S-174)
+Schema.START_BOXES_MAX = 16
 Schema.COUNTDOWN_STARTED = 0 -- COUNTDOWN seconds: the match starts
 Schema.COUNTDOWN_CANCELLED = 255
 Schema.PREBUILD_MAX = 30 -- PREBUILD entries (a player's pre-game queue)
@@ -1070,7 +1093,9 @@ export type Event = {
 	rez: number?, -- WRECK_STATE: resurrect progress 0..255
 	player: number?, -- PREGAME, PREBUILD: the player (S-169)
 	pregameFlags: number?, -- PREGAME: Schema.PregameFlag bits
-	seconds: number?, -- COUNTDOWN
+	seconds: number?, -- COUNTDOWN, PICK_CLOCK
+	clockFlags: number?, -- PICK_CLOCK: Schema.PickClockFlag bits
+	boxes: { { allyTeam: number, x0: number, z0: number, x1: number, z1: number } }?, -- START_BOXES (world studs)
 	builds: { { defIndex: number, cell: number, offX: number, offZ: number, facing: number } }?, -- PREBUILD
 	charge: number?, -- SHIELD: 0..255 of capacity
 	shieldFlags: number?, -- SHIELD: Schema.ShieldFlag bits
@@ -1138,6 +1163,8 @@ function Schema.eventBytes(e: Event): number
 		return 2 + 2 * #(e.cells :: { number })
 	elseif e.kind == EK.PREBUILD then
 		return 3 + 7 * #(e.builds :: { any })
+	elseif e.kind == EK.START_BOXES then
+		return 2 + 9 * #(e.boxes :: { any })
 	end
 	return Schema.EVENT_BYTES[e.kind]
 end
@@ -1175,7 +1202,7 @@ end
 
 function Schema.encodeEvent(w: Writer, e: Event)
 	local kind = e.kind
-	if Schema.EVENT_BYTES[kind] == nil and kind ~= EK.SIGHT_ROWS and kind ~= EK.SIGHT_CELLS and kind ~= EK.PREBUILD then
+	if Schema.EVENT_BYTES[kind] == nil and kind ~= EK.SIGHT_ROWS and kind ~= EK.SIGHT_CELLS and kind ~= EK.PREBUILD and kind ~= EK.START_BOXES then
 		error(`Schema: unknown event kind {kind}`, 2)
 	end
 	w:writeU8(kind)
@@ -1257,7 +1284,7 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		return
 	elseif kind == EK.PREGAME then
 		local flags = required(e.pregameFlags, "pregameFlags")
-		if flags > 7 then
+		if flags > PREGAME_FLAGS_MAX then
 			error(`Schema: pregame flags {flags} have reserved bits`, 2)
 		end
 		w:writeU8(required(e.player, "player"))
@@ -1268,6 +1295,28 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		return
 	elseif kind == EK.COUNTDOWN then
 		w:writeU8(required(e.seconds, "seconds"))
+		return
+	elseif kind == EK.PICK_CLOCK then
+		w:writeU8(required(e.seconds, "seconds"))
+		local flags = required(e.clockFlags, "clockFlags")
+		if flags > 3 then
+			error(`Schema: pick clock flags {flags} have reserved bits`, 2)
+		end
+		w:writeU8(flags)
+		return
+	elseif kind == EK.START_BOXES then
+		local boxes = required(e.boxes, "boxes")
+		if #boxes > Schema.START_BOXES_MAX then
+			error(`Schema: START_BOXES of {#boxes} (at most {Schema.START_BOXES_MAX})`, 2)
+		end
+		w:writeU8(#boxes)
+		for _, b in boxes do
+			w:writeU8(b.allyTeam)
+			w:writeI16(b.x0)
+			w:writeI16(b.z0)
+			w:writeI16(b.x1)
+			w:writeI16(b.z1)
+		end
 		return
 	elseif kind == EK.PREBUILD then
 		local builds = required(e.builds, "builds")
@@ -1398,7 +1447,7 @@ end
 function Schema.decodeEvent(r: Reader): Event
 	r.context = "event record"
 	local kind = r:readU8()
-	if Schema.EVENT_BYTES[kind] == nil and kind ~= EK.SIGHT_ROWS and kind ~= EK.SIGHT_CELLS and kind ~= EK.PREBUILD then
+	if Schema.EVENT_BYTES[kind] == nil and kind ~= EK.SIGHT_ROWS and kind ~= EK.SIGHT_CELLS and kind ~= EK.PREBUILD and kind ~= EK.START_BOXES then
 		fail(r, `unknown event kind {kind}`)
 	end
 	local e: Event = { kind = kind }
@@ -1487,7 +1536,7 @@ function Schema.decodeEvent(r: Reader): Event
 	elseif kind == EK.PREGAME then
 		e.player = r:readU8()
 		local flags = r:readU8()
-		if flags > 7 then
+		if flags > PREGAME_FLAGS_MAX then
 			fail(r, `pregame flags {flags}`)
 		end
 		e.pregameFlags = flags
@@ -1497,6 +1546,25 @@ function Schema.decodeEvent(r: Reader): Event
 		return e
 	elseif kind == EK.COUNTDOWN then
 		e.seconds = r:readU8()
+		return e
+	elseif kind == EK.PICK_CLOCK then
+		e.seconds = r:readU8()
+		local flags = r:readU8()
+		if flags > 3 then
+			fail(r, `pick clock flags {flags}`)
+		end
+		e.clockFlags = flags
+		return e
+	elseif kind == EK.START_BOXES then
+		local count = r:readU8()
+		if count > Schema.START_BOXES_MAX then
+			fail(r, `START_BOXES of {count}`)
+		end
+		local boxes = table.create(count)
+		for i = 1, count do
+			boxes[i] = { allyTeam = r:readU8(), x0 = r:readI16(), z0 = r:readI16(), x1 = r:readI16(), z1 = r:readI16() }
+		end
+		e.boxes = boxes
 		return e
 	elseif kind == EK.PREBUILD then
 		e.player = r:readU8()

@@ -640,6 +640,24 @@ local function pregameEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNe
 	local pg = sim.pregame
 	local PF = Schema.PregameFlag
 	if pg then
+		if not pn.sentBoxes then
+			-- every side's spawn box, once (S-174)
+			pn.sentBoxes = true
+			local boxes = {}
+			for _, a in sim.allyTeams do
+				local b = pg.boxes[a]
+				if b then
+					table.insert(boxes, { allyTeam = a, x0 = math.floor(b[1]), z0 = math.floor(b[2]), x1 = math.ceil(b[3]), z1 = math.ceil(b[4]) })
+				end
+			end
+			table.insert(events, { kind = Schema.EventKind.START_BOXES, boxes = boxes })
+		end
+		local seconds, clockFlags = Pregame.clock(sim)
+		local clock = seconds * 4 + clockFlags
+		if pn.sentClock ~= clock then
+			pn.sentClock = clock
+			table.insert(events, { kind = Schema.EventKind.PICK_CLOCK, seconds = math.min(seconds, 255), clockFlags = clockFlags })
+		end
 		for _, pid in sim.playerOrder do
 			local p = pg.picks[pid]
 			local cell, ox, oz = 0, 0, 0
@@ -647,6 +665,7 @@ local function pregameEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNe
 				cell, ox, oz = g:encode(p[1], p[2])
 			end
 			local flags = (if p then PF.PICKED else 0) + (if pg.ready[pid] then PF.READY else 0) + (if sim.match.ai[pid] then PF.AI else 0)
+				+ (if sim.players[pid].faction == "chaos" then PF.CHAOS else 0) + (if pg.host == pid then PF.HOST else 0)
 			local sig = flags * 2 ^ 32 + cell * 65536 + ox * 256 + oz
 			if pn.sentPregame[pid] ~= sig then
 				pn.sentPregame[pid] = sig

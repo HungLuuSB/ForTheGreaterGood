@@ -24,7 +24,12 @@ local World = require("./World")
 -- team: economy and ownership (one account per team); allyTeam: shared
 -- sight, no friendly targeting, overflow sharing (guide 16.1). Default
 -- allyTeam = team.
-export type Player = { id: number, team: number, allyTeam: number? }
+export type Faction = "order" | "chaos"
+export type Player = { id: number, team: number, allyTeam: number?, faction: Faction? } -- faction: default by team parity (Order odd); Sim.new fills it in (S-174)
+
+-- The landing after the pre-game (S-174): the queues the Commanders take
+-- when it ends (Pregame.land).
+export type Landing = { untilTick: number, builds: { [number]: { { defIndex: number, x: number, z: number, facing: number } } } }
 
 export type QueuedCommand = {
 	player: number,
@@ -64,6 +69,7 @@ export type Sim = {
 	cheats: CheatsState.State, -- cheat / test commands (S-102)
 	pregame: any?, -- Pregame.State while the pre-game lasts (startMode "choose", S-169); nil once the match runs
 	startPositions: { [number]: { number } }?, -- player → { x, z } its Commander starts at (the pre-game's picks; S-169)
+	landing: Landing?, -- the Commanders are landing (S-174): Commands holds orders until untilTick
 }
 
 return {}
