@@ -1947,3 +1947,11 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **The camera opens on the own Commander** in every match (the user): the first frame after a join with an own Commander, outside the pre-game (which jumps on its own), centres on it. Checked in Studio: a fixed-start skirmish opened at the Commander (−348, −124) instead of the map's centre.
 
 **Why:** the user's beta playtest (FTGG-FEEDBACK.txt items 3, 9, 13) and their camera request.
+
+### C-223 — sim phase 2 merged: specs, icons and looks for the new units (2026-10-26, S-175..S-182)
+
+- Merged m-sim-2 2b3ca0e (with ed06b01). Specs moved with the sim's balance: the shield's light-shell scene gives the Locust (55 studs since S-179) a target just inside the dome; the shell-timing and missile-view counts accept the smaller samples; the Wraith scene is on flat:128 with the spotter spawned where the drifting Wraith is; VerticalLaunch measures the climb only on missiles still guided (sim-A: a missile that loses its target in the boost corkscrews at once). Waiting: Effects' decoy scenes (sim-A retunes ew_test), Nanoframe's pads for the new labs (models-C).
+- **Icons:** the 19 new units borrow the closest existing icons, listed in the catalogue (`docs/art/icons/ftgg-unit-icons.html`), so the sheet needs no new upload: bot labs the (Adv.) Vehicle Plant, Artisan / Tinker / Lazarus / Graverobber the Ground Worker, Glint / Skitter the Scout, Mace / Thug the Light Tank, Kestrel / Needle the Mobile IR SAM, Fatboy / Tzar / Centurion the Main Battle Tank, Dragon the Attack Helicopter, Liche the Strategic Bomber. Own bot icons can come with the next sheet.
+- **Looks:** split weapon ids copy their originals' `fx`, and the client keys looks on `fx`, so they look as before. New: `fx.trail = "plasma"` shells are glowing balls in the weapon's colour (1.4..4.5 studs with the blast); `fx.trail = "flame"` hitscan shots are a thick flickering stream that widens and fades over 0.35 s with sparks where it lands (the Dragon); `fullLength` beams (the Centurion) are drawn on to the weapon's range past the target. Checked in Studio: Thug / Tzar plasma balls, the Dragon's flame drawn.
+
+**Why:** sim-A's phase 2 and new units (the user's playtest).

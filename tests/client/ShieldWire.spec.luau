@@ -139,7 +139,10 @@ return function(t: any)
 
 	t.test("light shells (S-85): destroyed at the surface, bursting there with their explosion (C-185), the dome lit there", function()
 		local sim, world, fx, _, step = scene()
-		Spawn.unit(sim, "chs_locust", 2, 0, 40, math.pi) -- autocannon, mass ~0.23
+		-- autocannon, mass ~0.23; its 55 studs since S-179: a target just
+		-- inside the dome's edge (z 20), the Locust 42 studs out from it
+		Spawn.unit(sim, "ord_mason", 1, 0, 8, 0)
+		Spawn.unit(sim, "chs_locust", 2, 0, 50, math.pi)
 		local absorbs, inside, bursts, onShell = 0, 0, 0, 0
 		local seen: { [any]: boolean } = {}
 		step(15 * 8, function()
