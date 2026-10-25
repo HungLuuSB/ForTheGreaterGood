@@ -2,6 +2,16 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: Codex roles for the bots, S-181)
+
+- Merged sim-A's `2b3ca0e` (the bot roster). Codex roles for the 19 new units:
+  - **Command and workers:** Bot constructor (Artisan / Tinker); Field engineer for repair, resurrect and reclaim (Lazarus / Graverobber).
+  - **Ground, bots:** Scout bot (Glint / Skitter); Light combat bot (Mace / Thug); AA bot (Kestrel / Needle); Heavy plasma (Fatboy / Tzar, the tank counterpart); Heavy laser bot (Chaos: Centurion).
+  - **Air:** Heavy bomber (Order: Liche); Flying fortress (Chaos: Dragon).
+  - **Factories:** Bot lab (Bot Lab / Bot Pit); Advanced bot lab.
+- Lobby specs 60 / 60 (the Codex spec lists every buildable unit's role); the build check passes. Studio: Fatboy's article with Tzar as its counterpart and the comparison (`lobby_units_fatboy`).
+- **Not the lobby's:** the bots have no list icons (B) and no models yet (C), so the showroom shows the placeholder box.
+
 ## Summary (2026-10-26: the shared error list)
 
 - Merged sim-A's `ed06b01`: `MatchConfig.ERRORS`, `ERROR_DETAIL_MAX` and `cleanError`, and `validateResult` accepting `error`. It also brings the new unit defs; the Codex spec still passes.
