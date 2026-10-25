@@ -6,7 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
-- **Wind and tidal in the top bar (C-224):** WIND shows what a wind turbine makes now with the map's min – max under it, TIDAL what a tidal generator makes.
+- **Wind and tidal in the top bar (C-224):** a wind box after your sketch (a faint fan turning with the wind, the current under it, min top right, max bottom right) and TIDAL.
+- **Bomb carpets (C-225):** in attack mode, selected bombers show a blast ring where each of their three bombs will land.
 - **sim phase 2 merged (C-223):** the new bot and air units have icons (borrowing the closest existing ones for now), plasma shots glow in their colour, the Dragon breathes a fire stream, and the Centurion's beam runs to its full range. Two scenes wait on sim-A (decoys) and the new labs' build pads on models-C.
 - **Playtest phase 1 (C-222):** the unit panel shows what a unit makes in green and what it uses in red, per resource ("■ +1.0 −26", "ϟ +20 −51"), not 0/0 (F9). A builder's queued builds survive the camera being away, so its spray goes to the structure it's really building (F13). Aircraft: they're never drawn outside the map; ones that overshoot while turning stick to the edge because the server clamps their position there, so sim-A is keeping them inside (F3).
 - **The camera opens on your Commander** at the start of every match, fixed starts included.

@@ -1959,6 +1959,14 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 ### C-224 — Wind and tidal in the top bar (2026-10-26, S-177)
 
 - Right of power, as in BAR: WIND, what one of the player's faction's turbines makes now (the Eco record's wind × its `wind.max`), large, with the map's range under it (`layers.wind`, else the sim's default 0.1..0.9, both × the turbine's max; no randomness since S-177), and TIDAL, a tidal generator's output. `UnitFlow.generatorOutputs(defs, faction)`, `UnitFlow.WIND_DEFAULT` (a spec checks it is the sim's). The idle counts sit right of the wider bar (`ResourceBar.WIDTH`).
-- Checked in Studio (Coastline, Order): WIND 21 (3 – 27), TIDAL 25.
+- The wind box follows the user's sketch: a near-square box with a faint three-bladed fan in the middle, turning with the wind (`FAN_RPM` 40 at a turbine's max), the current under it, the map's min top right and max bottom right.
+- Checked in Studio (Coastline, Order): wind 21 (min 3, max 27), the fan turning; TIDAL 25.
 
 **Why:** the user: "Wind should not be RNG … we have wind min/max current and tidal".
+
+### C-225 — Bombers' carpet in the attack preview (2026-10-26, S-178, F33)
+
+- Attack mode with bombers selected (a BOMB weapon with a salvo of 2+): a blast ring on each bomb's spot, joined along the run, the first on the cursor, the rest `salvo.delay` × the bomber's speed further along the line from the bomber through the spot (`AttackPreview.carpets`).
+- AttackPreview.spec against the server's run (an Absolution, 3 bombs): the first bomb 7.5 studs from the spot (blast 14), the next 42.5 on (previewed 40). The server's bomber turns away during its salvo, so bombs 2-3 curve off the straight line; sim-A asked to hold the heading until the salvo is out (the user's "line of bombs"), then the spec checks every spot.
+
+**Why:** the user's playtest F33.
