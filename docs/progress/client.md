@@ -10,6 +10,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Automatic colours (C-217):** you are Blue, your allies cold colours, enemies warm ones, the same as the lobby.
 - **Build menu on the unit panel (C-219)** instead of hanging under the minimap on tall screens; **Commander name labels (C-220)** over every Commander in game.
 - Checked in Studio on FTGG Match (Coastline vs a Normal AI): picking, faction switch, Ready, Start, countdown, the landing flare, /forcestart, the build menu, the name labels.
+- Ready to merge: `a0e3bad` (C-217..C-220 with m-sim-2 72fb087 merged; test_client 306, test 539, build passed)
 
 ## Summary (2026-10-24, playtest logging, BAR settings, HUD, watchdog run, facing arrow, bars under units)
 
