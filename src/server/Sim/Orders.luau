@@ -50,6 +50,7 @@ local Hash = require("@shared/Util/Hash")
 local Lifecycle = require("./Lifecycle")
 local Nav = require("./Nav")
 local OrdersState = require("./OrdersState")
+local Schema = require("@shared/Net/Schema")
 local Sensors = require("./Sensors")
 local Types = require("./Types")
 local World = require("./World")
@@ -79,7 +80,11 @@ export type OrderSpec = {
 	defIndex: number?,
 	facing: number?,
 	group: boolean?, -- move-like: keep together at the slowest unit's speed (S-137)
+	areaOp: number?, -- area (S-183)
+	radius: number?,
 }
+
+local AREA = Schema.AreaOp
 
 local function def(sim: Types.Sim, id: number): Defs.UnitDef
 	return sim.defs.unitByIndex[sim.world.defIndex[id]]
@@ -171,6 +176,8 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 			gen = spec.gen,
 			defIndex = spec.defIndex,
 			facing = spec.facing,
+			areaOp = spec.areaOp,
+			radius = spec.radius,
 			started = false,
 			nav = 0,
 			issued = -math.huge,
@@ -207,7 +214,9 @@ end
 
 -- REPEAT on a factory: repeat on / off. Other units ignore it.
 function Orders.setRepeat(sim: Types.Sim, factory: number, on: boolean)
-	if not isFactory(def(sim, factory)) then
+	local d = def(sim, factory)
+	-- factories, and mobile builders: an area order with REPEAT stays (S-183)
+	if not isFactory(d) and (d.buildPower == nil or d.domain == "structure") then
 		return
 	end
 	sim.orders.repeatOn[factory] = if on then true else nil
@@ -327,6 +336,83 @@ local function start(sim: Types.Sim, id: number, h: Order): boolean
 	return true
 end
 
+-- Smart Reclaim (S-183, the user): an area order works the circle target by
+-- target, nearest to the unit first: wrecks to reclaim, wrecks to bring back
+-- (resurrect; never a Commander's), or the team's damaged or unfinished
+-- units and structures (repair). Done when nothing is left, unless the
+-- unit's REPEAT is on: then it stays (back inside the circle) and takes
+-- each new wreck as it appears.
+function Orders.areaTarget(sim: Types.Sim, id: number, op: number, cx: number, cz: number, radius: number): number?
+	local w = sim.world
+	local c = sim.combat
+	local r2 = radius * radius
+	local ux, uz = w.posX[id], w.posZ[id]
+	local best, bestD = nil, math.huge
+	if op == AREA.REPAIR then
+		-- (the world, not the contact grid: units made this tick count too;
+		-- this runs only while a worker is between targets)
+		for _, t in w.ids do
+			if t ~= id and w.team[t] == w.team[id] and (w.posX[t] - cx) ^ 2 + (w.posZ[t] - cz) ^ 2 <= r2 then
+				local td = def(sim, t)
+				if w.buildProgress[t] < 1 or w.health[t] < td.health then
+					local d = (w.posX[t] - ux) ^ 2 + (w.posZ[t] - uz) ^ 2
+					if d < bestD or (d == bestD and t < (best :: number)) then
+						best, bestD = t, d
+					end
+				end
+			end
+		end
+		return best
+	end
+	for _, wid in c.wreckIds do
+		local wx, wz = c.wreckX[wid], c.wreckZ[wid]
+		if (wx - cx) ^ 2 + (wz - cz) ^ 2 <= r2 then
+			local ok = true
+			if op == AREA.RESURRECT then
+				ok = not table.find(sim.defs.unitByIndex[c.wreckDef[wid]].categories, "COMMANDER")
+			end
+			if ok then
+				local d = (wx - ux) ^ 2 + (wz - uz) ^ 2
+				if d < bestD or (d == bestD and wid < (best :: number)) then
+					best, bestD = wid, d
+				end
+			end
+		end
+	end
+	return best
+end
+
+local function areaStep(sim: Types.Sim, id: number, h: Order): boolean
+	if not builderIdle(sim, id) then
+		return true -- on a target: Build walks it there and works
+	end
+	local op = h.areaOp :: number
+	local cx, cz, radius = h.x :: number, h.z :: number, h.radius :: number
+	local t = Orders.areaTarget(sim, id, op, cx, cz, radius)
+	if t then
+		if op == AREA.RECLAIM then
+			Build.commandReclaim(sim, { id }, t)
+		elseif op == AREA.RESURRECT then
+			Build.commandResurrect(sim, { id }, t)
+		else
+			Build.commandAssist(sim, { id }, t)
+		end
+		if not builderIdle(sim, id) then
+			return true
+		end
+	end
+	if sim.orders.repeatOn[id] then
+		-- REPEAT: stay, inside the circle, for the next wreck
+		local w = sim.world
+		local dx, dz = cx - w.posX[id], cz - w.posZ[id]
+		if dx * dx + dz * dz > radius * radius then
+			chase(sim, id, h, cx, cz)
+		end
+		return true
+	end
+	return false
+end
+
 -- Per-tick work on one unit's head order; returns false when it is done.
 local function run(sim: Types.Sim, id: number, h: Order): boolean
 	local w = sim.world
@@ -406,6 +492,8 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 			halt(sim, id)
 		end
 		return true
+	elseif kind == "area" then
+		return areaStep(sim, id, h)
 	elseif kind == "attackGround" then
 		-- bombers: until replaced; a silo: until it launched (S-48)
 		local d = def(sim, id)

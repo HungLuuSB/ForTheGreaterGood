@@ -290,7 +290,7 @@ local function ecoRecord(sim: Types.Sim, team: number): Schema.Eco?
 		return {
 			stored = u32(r.stored),
 			storage = u32(r.storage),
-			income = u32(r.income * 10 + 0.5),
+			income = u32((r.income + (r.reclaimRate or 0)) * 10 + 0.5), -- reclaim counts as income (S-183, the user)
 			demand = u32(r.demand * 10 + 0.5),
 			ratio = math.clamp(math.floor(r.ratio * 255), 0, 255),
 		}

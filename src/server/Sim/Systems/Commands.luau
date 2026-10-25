@@ -191,6 +191,23 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	elseif cmdType == CT.REQUEST then
 		Share.request(sim, player, cmd.value :: number)
 		return
+	elseif cmdType == CT.AREA then
+		-- Smart Reclaim / repair / resurrect (S-183): builders only
+		local g = if sim.map then (sim.map :: any).grid else nil
+		local cell = cmd.cell :: number
+		if g == nil or cell >= g.cellCount then
+			return
+		end
+		local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
+		local builders = {}
+		for _, id in ownedUnits(w, player, cmd.unitIds) do
+			local d = sim.defs.unitByIndex[w.defIndex[id]]
+			if d.buildPower and d.domain ~= "structure" and (cmd.areaOp ~= Schema.AreaOp.RESURRECT or d.canResurrect) then
+				table.insert(builders, id)
+			end
+		end
+		Orders.give(sim, builders, { kind = "area", x = x, z = z, areaOp = cmd.areaOp, radius = cmd.radius }, band(cmd.flags, QUEUE) ~= 0)
+		return
 	end
 	for _, id in cmd.unitIds do
 		if w.owner[id] ~= player then
