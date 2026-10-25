@@ -2,6 +2,16 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: the host back from a match)
+
+- **The user's bug:** after a match, the host came back to a lobby and couldn't control the room, so they made a new one. Two causes, both fixed:
+  1. **A room rebuilt on another lobby server** (the room's server had closed, for example when everyone left it for the match) went to whoever was back first. `Rooms.fromMatch` (moved out of `Directory.recreate`) now gives it to the config's `host` (v2) when they're a member; without one (v1), still the first back.
+  2. **A host removed after the grace** (not back within `AWAY_GRACE` of the result) was attached to the room on return without being a member, so every request failed with "You're not in this room". `Rooms.welcomeBack` makes them a member again (a spectator; their seat went) and gives the match's host the room back.
+- **Spec:** back from a match as host, on a rebuilt room (the other player back first) and on the same server after the grace. Host rights, setup, a host-only setting, and Start's check pass again; a v1 config without `host` still goes to the first one back.
+- **Studio** (same server): Lobby → stand-in match → back as host; changing the win rule and the real Start button worked, and a second match launched (`lobby_host_back_from_match`).
+- **By design, not changed:** a host back early while others still play sees the room "In match" (Rejoin) until that match ends.
+- Lobby specs 55 / 55; the build check passes.
+
 ## Summary (2026-10-26: beta feedback F25, F31, F32, F35)
 
 From the user's playtest feedback (`FTGG-FEEDBACK.txt`; sim-A's plan in `docs/progress/playtest-2026-10-26.md`):

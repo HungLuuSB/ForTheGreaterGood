@@ -206,7 +206,7 @@ function Returns.arrive(player: Player, hint: any)
 	end
 	local theRoom = room :: Rooms.Room
 	Directory.attach(theRoom, user)
-	Rooms.setAway(theRoom, user, false)
+	Rooms.welcomeBack(theRoom, user, player.DisplayName, c.host)
 	if r and theRoom.phase == "match" then
 		finish(theRoom, c, r)
 	elseif r then

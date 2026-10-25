@@ -122,46 +122,10 @@ function Directory.join(room: Rooms.Room, user: number, name: string, password: 
 end
 
 -- A room rebuilt from a match record, when players come back to a lobby
--- server that isn't the one they left from (contract section 6). Its seats
--- are the match's; `user` is the first one back and hosts. `saved` is the
--- lobby's own record of the room (privacy, password, size), if it survived.
+-- server that isn't the one they left from (contract section 6; the room
+-- itself in Rooms.fromMatch). `user` is the first one back.
 function Directory.recreate(config: any, saved: any, user: number): Rooms.Room
-	local privacy = if type(saved) == "table" and table.find(Config.PRIVACY, saved.privacy) then saved.privacy else "private"
-	local password = if type(saved) == "table" and type(saved.password) == "string" then saved.password else nil
-	local maxPlayers = if type(saved) == "table" and type(saved.maxPlayers) == "number" then saved.maxPlayers else Config.DEFAULT_PLAYERS
-	local room: Rooms.Room = {
-		id = newId(),
-		name = config.lobby.roomName,
-		privacy = privacy,
-		password = password,
-		maxPlayers = math.max(maxPlayers, #config.players + #config.spectators),
-		host = user,
-		members = {},
-		slots = {},
-		settings = { mapId = config.mapId, mode = config.mode, win = config.win, friendlyFire = config.friendlyFire, cheats = config.cheats },
-		phase = "match",
-		matchId = config.matchId,
-		startedAt = config.createdAt,
-		notice = nil,
-		results = nil,
-		version = 1,
-	}
-	for _, p in config.players do
-		table.insert(room.slots, {
-			kind = if p.ai then "ai" else "human",
-			user = p.user,
-			faction = p.faction,
-			team = p.allyTeam,
-			color = p.color,
-			level = p.ai or "normal",
-		})
-		if p.user then
-			table.insert(room.members, { user = p.user, name = p.name, ready = false, away = true })
-		end
-	end
-	for _, s in config.spectators do
-		table.insert(room.members, { user = s.user, name = s.name, ready = false, away = true })
-	end
+	local room = Rooms.fromMatch(newId(), config, saved, user)
 	rooms[room.id] = room
 	return room
 end

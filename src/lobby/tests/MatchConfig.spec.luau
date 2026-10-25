@@ -105,6 +105,37 @@ return function(t: RunAll.Context)
 		end
 	end)
 
+	t.test("back from a match as host: host rights, setup, Start works (rebuilt elsewhere or not)", function()
+		local r = teamRoom()
+		local c = MatchConfig.build(r, "m1", 42, 1000, LOBBY)
+		-- another lobby server: Bee is back first, the room is still the host's
+		local again = Rooms.fromMatch("NEW01", c, nil, 20)
+		t.equal(again.host, 10)
+		t.equal(again.phase, "match")
+		Rooms.welcomeBack(again, 20, "Bee", c.host)
+		t.equal(again.host, 10)
+		Rooms.welcomeBack(again, 10, "Host", c.host)
+		Rooms.setPhase(again, "setup", nil) -- the result was read
+		t.equal(Rooms.apply(again, MAPS, 10, { op = "set", key = "win", value = "ANNIHILATION" }), nil)
+		t.equal(Rooms.apply(again, MAPS, 20, { op = "set", key = "win", value = "COMMAND_ENDS" }), "Only the host can do that")
+		Rooms.apply(again, MAPS, 20, { op = "ready", value = true })
+		t.equal(Rooms.checkStart(again, MAPS, 10, false), nil, "Start works again")
+		-- a config from before v2 has no host: the first one back hosts
+		local old = table.clone(c) :: any
+		old.host = nil
+		t.equal(Rooms.fromMatch("NEW02", old, nil, 20).host, 20)
+		-- the same server: the host, removed after the grace, comes back in and hosts again
+		Rooms.setPhase(r, "setup", nil)
+		Rooms.leave(r, 10)
+		t.equal(r.host, 20)
+		t.equal(Rooms.member(r, 10), nil)
+		Rooms.welcomeBack(r, 10, "Host", c.host)
+		t.equal(r.host, 10)
+		t.expect(Rooms.member(r, 10) ~= nil, "a member again")
+		t.equal(Rooms.apply(r, MAPS, 10, { op = "play", team = 2 }), nil, "and takes a seat")
+		t.equal(Rooms.apply(r, MAPS, 10, { op = "set", key = "win", value = "ANNIHILATION" }), nil)
+	end)
+
 	t.test("validate refuses tampered configs", function()
 		local function broken(edit: (any) -> (), pattern: string)
 			local c: any = MatchConfig.build(teamRoom(), "m1", 42, 1000, LOBBY)

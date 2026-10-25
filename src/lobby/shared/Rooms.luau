@@ -281,6 +281,73 @@ local function nextHost(room: Room, without: number): number?
 	return nil
 end
 
+-- A room rebuilt from a match record (a valid config), when its players
+-- come back to a lobby server that isn't the one they left from (contract
+-- section 6): the match's seats, every member away until they arrive, still
+-- in its match. The host is the room's host (the config's `host`, v2) when
+-- they're a member, so whoever is back first doesn't take the room;
+-- otherwise `user`, the first one back. `saved` is the lobby's own record of
+-- the room (privacy, password, size), if it survived.
+function Rooms.fromMatch(id: string, config: any, saved: any, user: number): Room
+	local privacy = if type(saved) == "table" and table.find(Config.PRIVACY, saved.privacy) then saved.privacy else "private"
+	local password = if type(saved) == "table" and type(saved.password) == "string" then saved.password else nil
+	local maxPlayers = if type(saved) == "table" and type(saved.maxPlayers) == "number" then saved.maxPlayers else Config.DEFAULT_PLAYERS
+	local room: Room = {
+		id = id,
+		name = config.lobby.roomName,
+		privacy = privacy,
+		password = password,
+		maxPlayers = math.max(maxPlayers, #config.players + #config.spectators),
+		host = user,
+		members = {},
+		slots = {},
+		settings = { mapId = config.mapId, mode = config.mode, win = config.win, friendlyFire = config.friendlyFire, cheats = config.cheats },
+		phase = "match",
+		matchId = config.matchId,
+		startedAt = config.createdAt,
+		notice = nil,
+		results = nil,
+		version = 1,
+	}
+	for _, p in config.players do
+		table.insert(room.slots, {
+			kind = if p.ai then "ai" else "human",
+			user = p.user,
+			faction = p.faction,
+			team = p.allyTeam,
+			color = p.color,
+			level = p.ai or "normal",
+		})
+		if p.user then
+			table.insert(room.members, { user = p.user, name = p.name, ready = false, away = true })
+		end
+	end
+	for _, s in config.spectators do
+		table.insert(room.members, { user = s.user, name = s.name, ready = false, away = true })
+	end
+	if type(config.host) == "number" and Rooms.member(room, config.host) then
+		room.host = config.host
+	end
+	return room
+end
+
+-- A player of the room's match is back (contract section 6). A member who
+-- was removed meanwhile (not back within the grace) comes back in, as a
+-- spectator; the match's host gets the room back. `matchHost` is the
+-- config's `host` (nil before v2).
+function Rooms.welcomeBack(room: Room, user: number, name: string, matchHost: number?)
+	local m = Rooms.member(room, user)
+	if m == nil then
+		table.insert(room.members, { user = user, name = name, ready = false, away = false })
+	else
+		m.away = false
+	end
+	if matchHost == user then
+		room.host = user
+	end
+	changed(room)
+end
+
 -- A member leaves (or is kicked): their seat goes; a leaving host passes the
 -- room on. Returns true when the room is empty and should close.
 function Rooms.leave(room: Room, user: number): boolean
