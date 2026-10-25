@@ -16,6 +16,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
   - Water transparency 0.05 (the user's value), set by the showroom's water.
   - Studio: `lobby_units_underwater_sub` (Silence), `lobby_units_underwater_amphib` (Tideguard).
 - Lobby specs 60 / 60; the build check passes.
+- Ready to merge: `782092e` (tracks on the ground, the Underwater showroom place; touches only `src/lobby` and the lobby docs)
 
 ## Summary (2026-10-26: Codex roles for the bots, S-181)
 
