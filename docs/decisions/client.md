@@ -1959,7 +1959,7 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 ### C-224 — Wind and tidal in the top bar (2026-10-26, S-177)
 
 - Right of power, as in BAR: WIND, what one of the player's faction's turbines makes now (the Eco record's wind × its `wind.max`), large, with the map's range under it (`layers.wind`, else the sim's default 0.1..0.9, both × the turbine's max; no randomness since S-177), and TIDAL, a tidal generator's output. `UnitFlow.generatorOutputs(defs, faction)`, `UnitFlow.WIND_DEFAULT` (a spec checks it is the sim's). The idle counts sit right of the wider bar (`ResourceBar.WIDTH`).
-- The wind box follows the user's sketch: a near-square box with a faint three-bladed fan in the middle, turning with the wind (`FAN_RPM` 40 at a turbine's max), the current under it, the map's min top right and max bottom right.
+- The wind box follows the user's sketch and correction: the current in the middle of a near-square box over a see-through three-bladed fan turning with the wind (`FAN_RPM` 40 at a turbine's max), the map's min top right and max bottom right.
 - Checked in Studio (Coastline, Order): wind 21 (min 3, max 27), the fan turning; TIDAL 25.
 
 **Why:** the user: "Wind should not be RNG … we have wind min/max current and tidal".

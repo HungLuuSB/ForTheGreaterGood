@@ -3,8 +3,8 @@
 -- resource: its symbol, demand (red) over income (green), the amount
 -- stored (large), a thin fill bar of stored / storage with a stall tint,
 -- and the storage. Then, as in BAR, the wind (what a wind turbine makes
--- now under a faint turning fan, the map's min top right and max bottom
--- right: the user's sketch; S-177's layers.wind, no randomness) and the tidal (what a tidal generator makes). From
+-- now in the middle over a see-through turning fan, the map's min top
+-- right and max bottom right: the user's sketch; S-177's layers.wind, no randomness) and the tidal (what a tidal generator makes). From
 -- Api.state.economy (the Eco channel) and the map; reads only the client
 -- API (C-5). A placeholder look for the UI session.
 
@@ -24,7 +24,7 @@ local STALL = Color3.fromRGB(230, 70, 60)
 type Block = { demand: TextLabel, income: TextLabel, stored: TextLabel, storage: TextLabel, fill: Frame }
 export type Bar = { gui: ScreenGui, blocks: { [string]: Block }, wind: TextLabel, windMin: TextLabel, windMax: TextLabel, fan: Frame, tidal: TextLabel, nextUpdate: number, spin: number, spinAt: number }
 
-ResourceBar.WIND_W = 56 -- the wind box (the user's sketch: a faint fan, the current under it, min top right, max bottom right)
+ResourceBar.WIND_W = 56 -- the wind box (the user: the current in the middle over a see-through fan, min top right, max bottom right)
 ResourceBar.WIDTH = 2 * 270 + ResourceBar.WIND_W + 64 + 3 * 6 -- supply, power, wind, tidal (UI/IdleStrip sits right of it)
 ResourceBar.FAN_RPM = 40 -- the fan's turns per minute at a turbine's max
 local function short(n: number): string
@@ -120,8 +120,8 @@ function ResourceBar.new(): Bar
 	local fan = Instance.new("Frame")
 	fan.Name = "Fan"
 	fan.AnchorPoint = Vector2.new(0.5, 0.5)
-	fan.Position = UDim2.fromOffset(22, 15)
-	fan.Size = UDim2.fromOffset(24, 24)
+	fan.Position = UDim2.fromScale(0.5, 0.5) -- behind the value, the whole box's middle
+	fan.Size = UDim2.fromOffset(32, 32)
 	fan.BackgroundTransparency = 1
 	fan.Parent = windBlock
 	for k = 0, 2 do
@@ -134,9 +134,9 @@ function ResourceBar.new(): Bar
 		local blade = Instance.new("Frame")
 		blade.AnchorPoint = Vector2.new(0.5, 1)
 		blade.Position = UDim2.fromScale(0.5, 0.5)
-		blade.Size = UDim2.fromOffset(6, 11)
+		blade.Size = UDim2.fromOffset(8, 15)
 		blade.BackgroundColor3 = Color3.fromRGB(220, 225, 235)
-		blade.BackgroundTransparency = 0.6
+		blade.BackgroundTransparency = 0.85 -- a watermark under the number
 		blade.BorderSizePixel = 0
 		blade.Parent = holder
 		local round = Instance.new("UICorner")
@@ -148,10 +148,10 @@ function ResourceBar.new(): Bar
 	hub.Position = UDim2.fromScale(0.5, 0.5)
 	hub.Size = UDim2.fromOffset(4, 4)
 	hub.BackgroundColor3 = Color3.fromRGB(220, 225, 235)
-	hub.BackgroundTransparency = 0.6
+	hub.BackgroundTransparency = 0.85
 	hub.BorderSizePixel = 0
 	hub.Parent = fan
-	local wind = text(windBlock, 14, Color3.fromRGB(240, 210, 60), Enum.TextXAlignment.Center, UDim2.fromOffset(2, 22), UDim2.fromOffset(40, 16))
+	local wind = text(windBlock, 16, Color3.fromRGB(240, 210, 60), Enum.TextXAlignment.Center, UDim2.fromOffset(0, 11), UDim2.new(1, 0, 0, 18))
 	local windMin = text(windBlock, 9, Color3.fromRGB(170, 175, 185), Enum.TextXAlignment.Right, UDim2.fromOffset(30, 2), UDim2.fromOffset(22, 11))
 	local windMax = text(windBlock, 9, Color3.fromRGB(170, 175, 185), Enum.TextXAlignment.Right, UDim2.fromOffset(30, 27), UDim2.fromOffset(22, 11))
 	local tidalBlock = small("Tidal", 4, 64)
