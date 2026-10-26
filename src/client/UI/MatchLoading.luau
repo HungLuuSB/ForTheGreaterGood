@@ -115,6 +115,32 @@ function MatchLoading.new(remotes: Instance): UI
 	percent.Position = UDim2.new(1, 0, 0, -4)
 	percent.Size = UDim2.fromOffset(80, 16)
 	percent.TextXAlignment = Enum.TextXAlignment.Right
+	-- readable over bright art (the user: the text was hard to see; no
+	-- card behind it, the user): a dark outline on every text, the players
+	-- larger and bolder, a strip behind the tip
+	local strip = Instance.new("Frame")
+	strip.Name = "TipStrip"
+	strip.AnchorPoint = Vector2.new(0.5, 1)
+	strip.Position = UDim2.new(0.5, 0, 1, -60)
+	strip.Size = UDim2.new(0.86, 0, 0, 30)
+	strip.BackgroundColor3 = Color3.fromRGB(10, 12, 16)
+	strip.BackgroundTransparency = 0.4
+	strip.BorderSizePixel = 0
+	strip.ZIndex = 9
+	strip.Parent = back
+	local stripRound = Instance.new("UICorner")
+	stripRound.CornerRadius = UDim.new(0, 6)
+	stripRound.Parent = strip
+	players.TextColor3 = Kit.COLOR.text
+	players.TextSize = 17
+	players.FontFace = Kit.font(Enum.FontWeight.SemiBold)
+	for _, t in { title, players, tip, percent } :: { TextLabel } do
+		local outline = Instance.new("UIStroke")
+		outline.Color = Color3.new(0, 0, 0)
+		outline.Transparency = 0.2
+		outline.Thickness = if t == title then 2.5 else 1.5
+		outline.Parent = t
+	end
 	-- the text and the bar sit over the art (its layers and bands use ZIndex 1..9)
 	for _, d in { title, players, tip, track } :: { GuiObject } do
 		d.ZIndex = 10
@@ -152,6 +178,12 @@ function MatchLoading.new(remotes: Instance): UI
 	remotes:GetAttributeChangedSignal("Lobby"):Connect(read)
 	read()
 	return ui
+end
+
+-- Is this a lobby match (the server's Lobby state carries `match`)?
+function MatchLoading.isMatch(ui: UI): boolean
+	local s = ui.state
+	return s ~= nil and s.match ~= nil
 end
 
 -- Once a frame: shown while the lobby's match waits; `progress` (0..1) is

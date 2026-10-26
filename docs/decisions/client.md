@@ -2008,3 +2008,10 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **F34, formation lines:** the right-drag line move (LINE flag; Ctrl adds GROUP) now previews each unit's slot along the line, as the order sends them (`Orders.lineSlots`), each with a tick facing across the line away from the group. Checked in Studio: six Lancers, the preview's six slots, the units spread into them. Units keep their travel heading at the end (asked sim-A about turning them to face).
 
 **Why:** sim-A's S-186 / S-187 and the playtest's F34 / F40.
+
+### C-230 — Everything loaded before the match; a readable loading screen (2026-10-26)
+
+- **Preload** (the user: every player sees their models without waiting in game): a lobby match's first CAMERA waits until this client's preload is complete (ground, every approved unit mesh, their SurfaceAppearances and the icon sheets; `Render/Preload`), at most `LOAD_HOLD` (55 s, under the sim's Pregame.LOAD_WAIT of 60): the pre-game's clocks start on every human's first command (S-182), so nobody's pick time runs while they still load. Behind the loading screen 16 meshes build at once (8 in game). Measured in Studio's `contract` match: 45.9 s with 8 at once, 24.5 s with 16 (a cold Studio cache; the published place will be slower to download). The pre-game's Commanders redraw as their meshes finish (they stayed blockouts).
+- **Loading screen text** (the user: hard to see over the key art): a dark outline on the title, the players and the tip, the players larger and semibold, a strip behind the tip; no card behind the text (the user tried it: worse).
+
+**Why:** the user's preload request (via sim-A) and their look at the loading screen.
