@@ -6,6 +6,16 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Trees and rocks textured (C-247):** the approved tree and rock models draw with their textures on Supreme Strait. Two of models-C's textures don't load yet; C is told.
+- Ready to merge: `efda9c36` (C-247; main 4f875faa merged in; test_client 326 / 326, build passed; Studio: 568 features textured)
+- **Nukes aimed at a unit (C-246):** with a nuke silo selected, Attack and a click on an enemy unit now launches at that spot. Before, nothing launched.
+- Ready to merge: `c8c27416` (C-246; main 2c36d0da merged in; test_client 326 / 326, build passed; Studio: a launch from A + a click on a Ravager)
+- **Protocol 40 (C-245):**
+  - Hold Space to put an order at the front of a unit's queue.
+  - Trees and rocks stand on Supreme Strait (stand-ins until models-C's models are approved), and hovering one shows its power or supply.
+  - The resource bars have share and converter levels you drag.
+  - Extractors show their power upkeep.
+- Ready to merge: `6b74e239` (C-245 with sim 03822e4e, protocol 40, merged in; includes C-244 ab6a5dd3. test_client 325 / 325, test 597 / 597, build passed. Studio, Supreme Strait: features, hover, levels, Space)
 - **Build-menu numbers, extractor hint, idle Commander (C-244):**
   - Number keys keep picking build items after the first pick, and Ctrl+number sets a group even with the build menu open.
   - Hovering a free deposit with builders selected shows the extractor to build there; right-click builds it.

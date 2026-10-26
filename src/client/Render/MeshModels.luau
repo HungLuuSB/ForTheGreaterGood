@@ -427,7 +427,9 @@ function MeshModels.fxVariant(name: string, i: number): Model?
 	local v = if e.variants then e.variants[i] else e
 	fxPending[key] = true
 	task.spawn(function()
-		local ok, result = pcall(build, { id = key, model = key, footprint = 1 }, v)
+		-- (its look in MeshMaterials: fx_<name>_<i>, as the deposits' fx_deposit_<i>)
+		local id = if e.variants then `fx_{key}` else `fx_{name}`
+		local ok, result = pcall(build, { id = id, model = key, footprint = 1 }, v)
 		if ok then
 			fxBuilt[key] = result
 			MeshModels.fxVersion += 1

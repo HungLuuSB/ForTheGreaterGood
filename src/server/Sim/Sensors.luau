@@ -561,6 +561,8 @@ function Sensors.step(sim: Types.Sim)
 		local vis = s.vis[team]
 		local trackedBy = s.tracked[team]
 		table.clear(trackedBy)
+		local onRadar = s.radarGhosts[team]
+		table.clear(onRadar)
 		local ghosts = s.ghosts[team]
 		local ghostIds = s.ghostIds[team]
 		for _, id in w.ids do
@@ -581,6 +583,9 @@ function Sensors.step(sim: Types.Sim)
 						World.pin(w, id) -- never reused while remembered (D109)
 					end
 				elseif ghosts[id] ~= nil then
+					if level == L.RADAR then
+						onRadar[id] = true -- seen before, a blip now: still a target (S-202)
+					end
 					level = L.GHOST
 				end
 			end
@@ -823,6 +828,7 @@ table.insert(Lifecycle.removalHooks, function(sim: Types.Sim, id: number)
 	for _, team in s.teams do
 		s.vis[team][id] = nil -- ghosts (structures) are kept until seen gone
 		s.tracked[team][id] = nil
+		s.radarGhosts[team][id] = nil
 	end
 	s.powerScale[id] = nil
 	s.radarLos[id] = nil

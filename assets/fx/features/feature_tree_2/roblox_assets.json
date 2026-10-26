@@ -1,0 +1,34 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Map features (S-197): first upload, review: 126 triangles, glow share 0.0%",
+  "bar": {
+    "model": "rbxassetid://106445463474503",
+    "meshes": {
+      "base": "rbxassetid://104502615669409"
+    },
+    "decals": {
+      "ALB": "rbxassetid://117974039401934",
+      "RGH": "rbxassetid://97924126394101",
+      "NOR": "rbxassetid://105663705810989",
+      "MTL": "rbxassetid://114161731505235",
+      "EMI": "rbxassetid://131438886715834"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://126716227022565",
+      "NOR": "rbxassetid://101486926188661",
+      "RGH": "rbxassetid://91421911223952",
+      "MTL": "rbxassetid://91236532697756",
+      "EMI": "rbxassetid://114286859739913"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.feature_tree_2_bar in FTGG Art",
+    "reuploads": [
+      {
+        "ALB": {
+          "decal": "rbxassetid://81253923418380",
+          "image": "rbxassetid://71786331211211"
+        },
+        "why": "colour map failed to load in FTGG Match (ContentProvider Failure; C-247 check, 2026-10-27)"
+      }
+    ]
+  }
+}
