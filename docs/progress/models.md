@@ -810,3 +810,4 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `b81fab52` (S-192: the Plains' ground mesh, `ground.plains`, `review`, so the client keeps drawing it its own way until approved; `assets/maps/plains`, ground.py's `ground` merge, manifest, docs).
 - Ready to merge: `0602e909` (G5 / S-194: the Commanders' `torso` is a def piece in both blockouts; both meshes get an `emitter` Attachment at the build lens for the laser (`anchors.py`, no re-upload); `Mesh.validate` accepts an Attachment as a def piece; manifest).
 - Ready to merge: `5dcbaa65` (G6: Supreme Strait's ground mesh, `ground.supreme_strait`, `step = 8`, `review`, so the client keeps drawing it its own way until approved; `assets/maps/supreme_strait`, ground.py's `crag_sub`, manifest, docs).
+- Ready to merge: `413b45e1` (the user approved the Plains ground: `ground.plains` now draws in game; Supreme Strait stays `review`, not approved; manifest, docs).
