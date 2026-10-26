@@ -770,23 +770,37 @@ end
 
 -- The ally team's sight as of this sensor tick (one byte, 0 / 1, per sensor
 -- cell), diffed in place against the last one: one pass per ally team, the
--- changes shared by its players.
+-- changes shared by its players. Only the row spans Sensors marked since the
+-- last diff are read (S-191: a full pass was 65,536 cells per ally team every
+-- sensor tick on an empty 512-cell map); the first diff reads the whole map.
 local function updateSight(sim: Types.Sim, net: NetState.NetState, ally: number)
 	local s = sim.sensors
-	local n = s.width * s.depth
+	local width, depth = s.width, s.depth
 	local st = net.sight[ally]
+	local all = st == nil
 	if st == nil then
-		st = { cells = buffer.create(n), version = 0, changes = {} }
+		st = { cells = buffer.create(width * depth), version = 0, changes = {} }
 		net.sight[ally] = st
 	end
-	local los, cells = s.maps[ally].los, st.cells
+	local los, cells, dirty = s.maps[ally].los, st.cells, s.losDirty[ally]
 	local changes = {}
-	local readu16, readu8, writeu8 = buffer.readu16, buffer.readu8, buffer.writeu8
-	for i = 0, n - 1 do
-		local v = if readu16(los, i * 2) > 0 then 1 else 0
-		if v ~= readu8(cells, i) then
-			writeu8(cells, i, v)
-			table.insert(changes, if v == 1 then i + Schema.SIGHT_SEEN else i)
+	local readu16, writeu16, readu8, writeu8 = buffer.readu16, buffer.writeu16, buffer.readu8, buffer.writeu8
+	for z = 0, depth - 1 do
+		local x0, x1 = 0, width - 1
+		if not all then
+			x0, x1 = readu16(dirty, z * 4), readu16(dirty, z * 4 + 2)
+			if x0 > x1 then
+				continue
+			end
+		end
+		writeu16(dirty, z * 4, 0xFFFF)
+		writeu16(dirty, z * 4 + 2, 0)
+		for i = z * width + x0, z * width + x1 do
+			local v = if readu16(los, i * 2) > 0 then 1 else 0
+			if v ~= readu8(cells, i) then
+				writeu8(cells, i, v)
+				table.insert(changes, if v == 1 then i + Schema.SIGHT_SEEN else i)
+			end
 		end
 	end
 	if #changes > 0 then
