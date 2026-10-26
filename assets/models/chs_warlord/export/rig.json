@@ -287,6 +287,14 @@
         3.25,
         -2.45
       ]
+    },
+    "emitter": {
+      "parent": "nano",
+      "at": [
+        -3.5,
+        3.25,
+        -2.45
+      ]
     }
   },
   "teamColorPieces": [

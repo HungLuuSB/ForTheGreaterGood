@@ -321,7 +321,7 @@ function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { st
 				if (e.attachments or {})[name] == nil then
 					bad(`def piece {name} must be an attachment`)
 				end
-			elseif e.pieces[name] == nil then
+			elseif e.pieces[name] == nil and (e.attachments or {})[name] == nil then -- or an Attachment (the Commanders' `emitter`, S-194)
 				bad(`def piece {name} has no mesh piece`)
 			end
 		end

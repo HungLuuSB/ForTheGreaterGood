@@ -21311,6 +21311,10 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				},
 			},
 			attachments = {
+				emitter = {
+					at = { -3.5, 3.25, -2.45 },
+					parent = "nano",
+				},
 				muzzle = {
 					at = { 3.6, 4.35, -4.72 },
 					parent = "forearmR",
@@ -32236,6 +32240,10 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				},
 			},
 			attachments = {
+				emitter = {
+					at = { -3.35, 3.55, -1.64 },
+					parent = "nano",
+				},
 				muzzle = {
 					at = { 3.45, 4.65, -5 },
 					parent = "forearmR",
