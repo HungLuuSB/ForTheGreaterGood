@@ -72,9 +72,13 @@ function Skirmish.new(frame: Frame, _router: any): any
 	Kit.segmented(Kit.row(detail, "Opponent faction", 7), options(Config.FACTIONS), choice.enemy, function(v)
 		choice.enemy = v
 	end, 90)
-	Kit.segmented(Kit.row(detail, "Difficulty", 8), options(Config.LEVELS), choice.level, function(v)
+	local levels = {}
+	for _, v in Config.LEVELS do
+		table.insert(levels, { v, (Config.LEVEL_SHORT :: any)[v] or Ui.label2(v) })
+	end
+	Kit.segmented(Kit.row(detail, "Difficulty", 8), levels, choice.level, function(v)
 		choice.level = v
-	end, 70)
+	end, 76)
 	local launch = Ui.button(card, "Launch", "go", function()
 		if choice.map then
 			Net.send({ op = "quick", mapId = choice.map.id, faction = choice.faction, level = choice.level, enemy = choice.enemy })
