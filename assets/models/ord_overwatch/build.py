@@ -9,6 +9,11 @@ wide saucer head with a team band, a lit dome and running lights. The
 laser barrels, each its own client piece (`barrel1` left, `barrel2` right;
 recoil along +Z) with `muzzle1` / `muzzle2` at their lenses. Writes export/
 through tools/unit.py.
+
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved mesh scaled x1.281 (the
+`scale` below), so it stands as tall as its approved F18 blockout
+(~18.7 studs) and reads heavier; same shapes, pieces and anchors.
 """
 
 import math
@@ -90,11 +95,14 @@ def details_mount(p):
     seam(p, (-2.8, 12.61, -1.0), (2.8, 12.61, -1.0), UP)
 
 
+F18 = 1.281  # the F18 scale (old top 14.6 -> 18.7 studs)
+
 unit.run(__file__, "ord_overwatch", "order", footprint=2,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("turret", "base", TURRET, build_turret, details_turret),
                  unit.PieceSpec("mount", "turret", MOUNT, build_mount, details_mount)],
          attachments={k: {"parent": "barrel1" if k == "muzzle1" else "barrel2", "at": list(v)} for k, v in MUZZLES.items()},
          budget=4000,
-         previews=[("35", (-20, 17, -24), (0, 7.0, 0), 40),
-                   ("close", (-10, 16, -11), (0, 12.0, -1.0), 38)])
+         scale=(F18, F18, F18),
+         previews=[("35", (-25.6, 21.8, -30.7), (0.0, 9.0, 0.0), 40),
+                   ("close", (-12.8, 20.5, -14.1), (0.0, 15.4, -1.3), 38)])

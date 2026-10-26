@@ -1,7 +1,7 @@
 {
   "id": "ord_advextractor_wreck",
   "wreckOf": "ord_advextractor",
-  "footprintStuds": 24,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,49 +9,31 @@
     "base": {
       "parent": null,
       "center": [
-        -0.0705,
-        3.3617,
-        -0.0331
+        0.0109,
+        3.0848,
+        -0.0147
       ],
       "size": [
-        23.7141,
-        7.2335,
-        23.7507
+        15.501,
+        6.4282,
+        15.4867
       ]
     },
-    "drillL": {
+    "drill": {
       "parent": "base",
       "center": [
-        -4.1444,
-        9.0799,
-        0.0344
+        0.0253,
+        8.4815,
+        -0.0502
       ],
       "size": [
-        3.7651,
-        5.7921,
-        3.8259
+        3.8777,
+        4.8698,
+        3.8732
       ],
       "pivot": [
-        -4.0,
-        6.42,
-        0.0
-      ]
-    },
-    "drillR": {
-      "parent": "base",
-      "center": [
-        3.8847,
-        9.1864,
-        0.006
-      ],
-      "size": [
-        3.9164,
-        5.7538,
-        3.8496
-      ],
-      "pivot": [
-        4.0,
-        6.42,
+        0.0,
+        6.06,
         0.0
       ]
     }
@@ -59,23 +41,14 @@
   "attachments": {},
   "teamColorPieces": [],
   "visualPieces": [
-    "drillL",
-    "drillR"
+    "drill"
   ],
   "anim": {
-    "drillL": {
+    "drill": {
       "motion": "turn",
       "axis": [
         0,
         1,
-        0
-      ]
-    },
-    "drillR": {
-      "motion": "turn",
-      "axis": [
-        0,
-        -1,
         0
       ]
     }
@@ -92,10 +65,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 3594,
-    "drillL": 888,
-    "drillR": 844,
-    "total": 5326
+    "base": 2632,
+    "drill": 660,
+    "total": 3292
   },
   "textures": {
     "size": 1024,
