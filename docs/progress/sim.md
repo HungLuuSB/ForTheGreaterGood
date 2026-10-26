@@ -14,6 +14,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 - **Maps and movement:** 2 × 2 deposits (S-184), side splits (S-186), jets over the map (S-183), Maneuver leash, builders stop at their reach, footprint-2 clearance (S-185).
 - **New units (S-181):** bots and labs, Tzar, Centurion, Dragon, Liche. Transports wait for a load / unload mechanic.
 - **AI (S-187):** Hard - Aggressive, team roles, teamwork, counters, tidy generators, the new units.
+- **Maps the BAR way (S-196):** image layers (height, type, metal, minimap) and a mapinfo in `assets/maps/<name>/source/`, compiled by `lune run map_compile`; Supreme Strait rebuilt from BAR's previews with the user's 8v8 spawn points.
 - **Supreme Strait (S-195, G6):** `map:supreme_strait`, 320 cells, two seas and a land strait, 16 hints.
 - **Protocol 39 (S-194):** self-destruct with a 6 s countdown (G13); aircraft without ammo heal at rearm pads below a retreat setting (G17); the Commanders' laser and D-Gun (G5); turrets hold their aim through hull turns (G9); builders' work target and kind on the wire (G7, G4).
 - **Playtest feedback 2, first batch (S-193):** units 40% slower (G8); Fatboy and Tzar fire tank shells (G10); one factory type early, no doubled bot labs (G1); 16-stud lanes in the AI's generator block (G3); `MapRegistry.details` for the lobby's map panel (G12).
