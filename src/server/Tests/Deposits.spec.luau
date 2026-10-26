@@ -2,7 +2,7 @@
 -- Deposits are 2 × 2 patches (S-184, the playtest's F6): every map's
 -- deposits grow into patches that keep the map's symmetry; a T1 extractor
 -- exactly on a patch earns its full value, half off it half; the advanced
--- extractor (footprint 4) sits centred over the T1 one.
+-- extractor is the T1's size, on the same patch (the user).
 local Layers = require("@shared/Grid/Layers")
 local MapRegistry = require("@shared/Grid/MapRegistry")
 local PlacementRules = require("@shared/Grid/PlacementRules")
@@ -44,7 +44,7 @@ return function(t: RunAll.Context)
 		end
 	end)
 
-	t.test("income: on the patch the full value, half off it half; the advanced extractor centred over the T1", function()
+	t.test("income: on the patch the full value, half off it half; the advanced extractor the T1's size", function()
 		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "start:64" })
 		local layers = (sim.map :: any).layers :: Layers.Layers
 		local d = (layers.deposits :: { { number } })[1]
@@ -55,6 +55,6 @@ return function(t: RunAll.Context)
 		t.deepEqual({ px, pz }, { d[1], d[2] }, "depositNear snaps to the patch centre")
 		local t1 = Spawn.unit(sim, "ord_extractor", 1, d[1], d[2])
 		t.equal(sim.world.posX[t1], d[1], "the T1 sits on the patch centre")
-		t.equal(sim.defs.units.ord_advextractor.footprint, 4)
+		t.equal(sim.defs.units.ord_advextractor.footprint, 2, "the advanced extractor is the T1's size (the user)")
 	end)
 end

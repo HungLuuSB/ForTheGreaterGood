@@ -91,7 +91,7 @@ return function(sim: Types.Sim)
 			end
 		end
 		local attacker = c.dmgAttacker[i]
-		if attacker ~= t then
+		if attacker ~= t and attacker ~= 0 then -- (a death blast has no attacker: it doesn't wipe who shot it, S-185)
 			w.lastAttacker[t] = attacker
 			w.lastAttackerGen[t] = if attacker ~= 0 then w.gen[attacker] or 0 else 0 -- D109
 		end

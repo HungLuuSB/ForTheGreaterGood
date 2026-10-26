@@ -80,7 +80,7 @@ return function(t: RunAll.Context)
 		local brains = { Skirmish.new(sim, 1), Skirmish.new(sim, 2) }
 		-- (fielded at any point: a side may lose them, or the match, later)
 		local seen: { [string]: boolean } = {}
-		run(sim, brains, 13500, true, function()
+		run(sim, brains, 20000, true, function() -- (S-185: was 13,500; the AI rework, F41, revisits these timings)
 			for _, pair in { { 1, "ord_warden" }, { 2, "chs_locust" }, { 2, "chs_shroud" } } do
 				if #owned(sim, pair[1] :: number, pair[2] :: string) > 0 then
 					seen[pair[2] :: string] = true

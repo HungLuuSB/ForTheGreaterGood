@@ -704,20 +704,25 @@ return function(sim: Types.Sim)
 			if ramp then
 				local on = w.wRampTarget[key] or 0
 				if target ~= on then
+					-- the ramp clock starts at minus the pause, so time spent in
+					-- the pause doesn't count toward the new ramp (S-185: a new
+					-- target can be found during the pause now)
+					local start = math.min(w.wRampTime[key] or 0, 0)
 					if on ~= 0 then
-						local f = min((w.wRampTime[key] or 0) / ramp.seconds, 1)
+						local f = min(max(w.wRampTime[key] or 0, 0) / ramp.seconds, 1)
 						local pause = ramp.cooldown[1] + (ramp.cooldown[2] - ramp.cooldown[1]) * f
 						if reload < pause then
 							reload = pause
 							w.wReload[key] = pause
 						end
+						start = -pause
 					end
 					w.wRampTarget[key] = target
-					w.wRampTime[key] = 0
+					w.wRampTime[key] = start
 				elseif canFire and target ~= 0 then
 					w.wRampTime[key] = min((w.wRampTime[key] or 0) + DT, ramp.seconds)
 				end
-				scale = (ramp.from + (ramp.to - ramp.from) * (w.wRampTime[key] or 0) / ramp.seconds) / ramp.to
+				scale = (ramp.from + (ramp.to - ramp.from) * max(w.wRampTime[key] or 0, 0) / ramp.seconds) / ramp.to
 			end
 
 			-- the rest of a salvo (S-69): `salvo.count` shots, `salvo.delay`
