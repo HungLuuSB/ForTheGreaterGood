@@ -2,6 +2,15 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: joining screen, wiki-style stats, all meshes)
+
+- Merged main `08c20e4b` and `679a89a7`: C's approvals. Every unit mesh is approved except Pharos, Scylla, Empyrean and Rookery, and the showroom draws them all.
+- **Firing range, tall muzzles:** the shell's launch speed now includes the height between muzzle and target. The Fatboy's mesh fires from 6 studs above the board's aim point, and its flat arc used to clear the board. It now hits the board on each reload (4 hits in 14 s). `bb17d560`.
+- **Joining screen (L-23, the user):** on joining, the lobby loads its assets the way a match does, in the match start's look: key art, tips and the olive bar. It loads the map list, every approved unit mesh, then the textures (MeshMaterials, Vfx, icon sheets), then fades out. A Continue button shows after 12 s. Measured in Studio: 138 meshes in about 25 s cold, under a second warm. `3b85ce4a`.
+- **Units article (L-24, the user's BAR wiki reference):** Cost and General stats are bars against the game's biggest value. Details keeps the rows that aren't amounts. Weapons are cards: tile, name, the red figure rows with a word each (reload slow, alpha very heavy, aoe large), and a sentence on what the weapon does. Every icon glyph was checked to render in Studio. New Codex spec: maxima and words. `f7ed972f`.
+- Lobby specs 66 / 66; the build check passes.
+- Ready to merge: `f7ed972f` (range muzzle drop, joining screen, wiki-style stats; includes the merges of main `08c20e4b` and `679a89a7`; touches only `src/lobby` and the lobby docs)
+
 ## Summary (2026-10-26: main e43b5726, the Vfx templates)
 
 - Merged main `e43b5726`: C's death explosion Vfx (F27), the F18/F6 and S-181 meshes with wrecks, and The Lakelands' baked ground.
