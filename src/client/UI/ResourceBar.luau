@@ -7,10 +7,17 @@
 -- right and max bottom right: the user's sketch; S-177's layers.wind, no randomness) and the tidal (what a tidal generator makes). From
 -- Api.state.economy (the Eco channel) and the map; reads only the client
 -- API (C-5). A placeholder look for the UI session.
+-- The levels (S-198, the user): on each bar a white marker, the share
+-- level: stored above it is shared fairly with the allies, so dragging it
+-- down gives the rest away; on the power bar an orange one, the converters'
+-- level: power stored above it is what converters may use. Drag a marker
+-- along its bar; letting go sends ECO_LEVEL. Hovering one says what it does.
 
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
+local Schema = require("@shared/Net/Schema")
 local UnitFlow = require("../Core/UnitFlow")
 local Kit = require("./Kit")
 
@@ -21,8 +28,9 @@ local FILL = { Supply = Color3.fromRGB(200, 205, 215), Power = Color3.fromRGB(24
 local SYMBOL = { Supply = "■", Power = "ϟ" }
 local STALL = Color3.fromRGB(230, 70, 60)
 
-type Block = { demand: TextLabel, income: TextLabel, stored: TextLabel, storage: TextLabel, fill: Frame }
-export type Bar = { gui: ScreenGui, blocks: { [string]: Block }, wind: TextLabel, windMin: TextLabel, windMax: TextLabel, fan: Frame, tidal: TextLabel, nextUpdate: number, spin: number, spinAt: number }
+export type Marker = { handle: TextButton, level: number, block: string, help: string, dragging: number?, shown: number }
+type Block = { demand: TextLabel, income: TextLabel, stored: TextLabel, storage: TextLabel, fill: Frame, back: Frame, markers: { [number]: Marker } }
+export type Bar = { gui: ScreenGui, blocks: { [string]: Block }, markers: { Marker }, wind: TextLabel, windMin: TextLabel, windMax: TextLabel, fan: Frame, tidal: TextLabel, nextUpdate: number, spin: number, spinAt: number }
 
 ResourceBar.WIND_W = 56 -- the wind box (the user: the current in the middle over a see-through fan, min top right, max bottom right)
 ResourceBar.WIDTH = 2 * 270 + ResourceBar.WIND_W + 64 + 3 * 6 -- supply, power, wind, tidal (UI/IdleStrip sits right of it)
@@ -99,8 +107,81 @@ function ResourceBar.new(): Bar
 		fill.BackgroundColor3 = FILL[name]
 		fill.BorderSizePixel = 0
 		fill.Parent = back
-		blocks[name] = { demand = demand, income = income, stored = stored, storage = storage, fill = fill }
+		blocks[name] = { demand = demand, income = income, stored = stored, storage = storage, fill = fill, back = back, markers = {} }
 	end
+	-- the level markers: a thin bar across the fill, a wider invisible handle
+	local tip = text(root, 11, Color3.new(1, 1, 1), Enum.TextXAlignment.Center, UDim2.fromOffset(0, 42), UDim2.fromOffset(300, 16))
+	tip.BackgroundColor3 = BG
+	tip.BackgroundTransparency = 0.15
+	tip.Visible = false
+	tip.ZIndex = 5
+	local markers: { Marker } = {}
+	local function marker(block: string, level: number, color: Color3, help: string)
+		local b = blocks[block]
+		local handle = Instance.new("TextButton")
+		handle.Name = `Level{level}`
+		handle.Text = ""
+		handle.AutoButtonColor = false
+		handle.BackgroundTransparency = 1
+		handle.AnchorPoint = Vector2.new(0.5, 0.5)
+		handle.Size = UDim2.fromOffset(10, 16)
+		handle.ZIndex = 4
+		handle.Parent = b.back
+		local line = Instance.new("Frame")
+		line.AnchorPoint = Vector2.new(0.5, 0.5)
+		line.Position = UDim2.fromScale(0.5, 0.5)
+		line.Size = UDim2.fromOffset(3, 12)
+		line.BackgroundColor3 = color
+		line.BorderSizePixel = 0
+		line.ZIndex = 4
+		line.Parent = handle
+		local m: Marker = { handle = handle, level = level, block = block, help = help, dragging = nil, shown = -1 }
+		table.insert(markers, m)
+		b.markers[level] = m
+		handle.MouseButton1Down:Connect(function()
+			m.dragging = m.shown
+		end)
+		handle.MouseEnter:Connect(function()
+			tip.Text = help
+			tip.Visible = true
+		end)
+		handle.MouseLeave:Connect(function()
+			tip.Visible = false
+		end)
+	end
+	marker("Supply", Schema.EcoLevel.SUPPLY_SHARE, Color3.fromRGB(240, 240, 240), "Share level: supply stored above it goes to your allies")
+	marker("Power", Schema.EcoLevel.POWER_SHARE, Color3.fromRGB(240, 240, 240), "Share level: power stored above it goes to your allies")
+	marker("Power", Schema.EcoLevel.CONVERT, Color3.fromRGB(255, 150, 40), "Converter level: power stored above it runs your converters")
+	UserInputService.InputChanged:Connect(function(input)
+		if input.UserInputType ~= Enum.UserInputType.MouseMovement then
+			return
+		end
+		for _, m in markers do
+			if m.dragging then
+				local back = m.handle.Parent :: Frame
+				local x = UserInputService:GetMouseLocation().X - back.AbsolutePosition.X
+				m.dragging = math.clamp(math.floor(x / back.AbsoluteSize.X * 100 + 0.5), 0, 100)
+				tip.Text = `{m.help}: {m.dragging}%`
+				tip.Visible = true
+			end
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+			return
+		end
+		for _, m in markers do
+			if m.dragging then
+				local api = ResourceBar.api
+				if api then
+					api.actions.setEcoLevel(m.level, m.dragging)
+				end
+				m.shown = m.dragging -- (held until the server's level comes back)
+				m.dragging = nil
+				tip.Visible = false
+			end
+		end
+	end)
 	local function small(name: string, order: number, width: number): Frame
 		local b = Instance.new("Frame")
 		b.Name = name
@@ -159,10 +240,29 @@ function ResourceBar.new(): Bar
 	local tidal = text(tidalBlock, 17, Color3.fromRGB(240, 210, 60), Enum.TextXAlignment.Right, UDim2.fromOffset(6, 17), UDim2.fromOffset(52, 20))
 	Kit.skin(gui) -- the UI kit's look (C-105)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	return { gui = gui, blocks = blocks, wind = wind, windMin = windMin, windMax = windMax, fan = fan, tidal = tidal, nextUpdate = 0, spin = 0, spinAt = 0 }
+	return { gui = gui, blocks = blocks, markers = markers, wind = wind, windMin = windMin, windMax = windMax, fan = fan, tidal = tidal, nextUpdate = 0, spin = 0, spinAt = 0 }
+end
+
+ResourceBar.api = nil :: Api.Api? -- (the markers send through it)
+
+-- Each marker at its level: the one being dragged where the mouse is, the
+-- others at the server's.
+local function placeMarkers(bar: Bar, api: Api.Api)
+	local eco = api.state.economy
+	for _, m in bar.markers do
+		local level = m.dragging
+		if level == nil and eco then
+			level = if m.level == Schema.EcoLevel.SUPPLY_SHARE then eco.supplyShare elseif m.level == Schema.EcoLevel.POWER_SHARE then eco.powerShare else eco.convertAt
+			m.shown = level :: number
+		end
+		m.handle.Visible = level ~= nil
+		m.handle.Position = UDim2.fromScale((level or 0) / 100, 0.5)
+	end
 end
 
 function ResourceBar.step(bar: Bar, api: Api.Api, now: number)
+	ResourceBar.api = api
+	placeMarkers(bar, api)
 	-- the fan turns every frame, faster in a stronger wind
 	local eco0 = api.state.economy
 	local dt = if bar.spinAt > 0 then math.clamp(now - bar.spinAt, 0, 0.1) else 0

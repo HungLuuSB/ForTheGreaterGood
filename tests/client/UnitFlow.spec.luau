@@ -32,7 +32,7 @@ local function unit(w: any, defId: string, x: number, z: number, extra: { [strin
 end
 
 return function(t: any)
-	t.test("an extractor yields rate × the deposits under it; a frame yields nothing", function()
+	t.test("an extractor yields rate × the deposits under it at the upkeep paid; a frame yields nothing", function()
 		local w = world()
 		local g = w.grid
 		local cx, cz = g:cellAt(4, 4)
@@ -40,7 +40,11 @@ return function(t: any)
 		local u, def = unit(w, "ord_extractor", 4, 4)
 		local s, p = UnitFlow.of(w, u, def, {})
 		t.equal(s, def.extractor.rate * 4)
-		t.equal(p, 0)
+		t.equal(p, -def.extractor.upkeep, "its power upkeep (S-198)")
+		-- a power stall: the upkeep only partly paid, the extraction with it
+		s, p = UnitFlow.of(w, u, def, { powerRatio = 0.5 })
+		t.equal(s, def.extractor.rate * 4 * 0.5)
+		t.equal(p, -def.extractor.upkeep * 0.5)
 		u.build = 0.5
 		t.equal((UnitFlow.of(w, u, def, {})), 0, "a frame: nothing yet")
 	end)
@@ -91,6 +95,24 @@ return function(t: any)
 		local windmill, wdef = unit(w, "ord_windmill", 60, 60)
 		local _, p = UnitFlow.of(w, windmill, wdef, { wind = 0.5 })
 		t.equal(p, wdef.wind.max * 0.5, "half the wind, half the power")
+	end)
+
+	t.test("with the server's WORK: an idle Commander next to an unfinished frame drains nothing (the user's report)", function()
+		local Schema = require("@shared/Net/Schema")
+		local w = world()
+		local cmd, cdef = unit(w, "ord_sovereign", 0, 0)
+		local frame, fdef = unit(w, "ord_generator", 10, 0, { build = 0.3 })
+		local other, _ = unit(w, "ord_vehplant", -40, 0, { build = 0.1 })
+		cmd.workKind = Schema.WorkKind.NONE
+		local s, p = UnitFlow.of(w, cmd, cdef, {})
+		t.equal(s, 1, "idle: only its own +1 supply, though a frame stands in reach")
+		t.equal(p, 20, "and its +20 power")
+		cmd.workKind, cmd.workTarget = Schema.WorkKind.BUILD, table.find(w.units, frame)
+		s = UnitFlow.of(w, cmd, cdef, {})
+		t.expect(math.abs(s - (1 - fdef.cost.supply * cdef.buildPower / fdef.cost.buildTime)) < 1e-9, "building: the frame the server names")
+		cmd.workTarget = table.find(w.units, other)
+		local s2 = UnitFlow.of(w, cmd, cdef, {})
+		t.expect(s2 ~= s, "another frame: its cost, not the nearest's")
 	end)
 
 	t.test("the text: +5, −10, 0", function()

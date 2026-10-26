@@ -314,6 +314,10 @@ local function ecoRecord(sim: Types.Sim, team: number): Schema.Eco?
 		radarError = tenths(s.radarError[ally]),
 		trackError = tenths(s.trackError[ally]),
 		precision = math.clamp(math.floor(p * 255 + 0.5), 0, 255),
+		-- the team's resource-bar sliders, percent (S-198)
+		supplyShare = math.floor((acc.supply.shareLevel or 1) * 100 + 0.5),
+		powerShare = math.floor((acc.power.shareLevel or 1) * 100 + 0.5),
+		convertAt = math.floor((acc.convertAt or Economy.CONVERTER_RESERVE) * 100 + 0.5),
 	}
 end
 
@@ -618,9 +622,21 @@ local function updateWrecks(sim: Types.Sim, net: NetState.NetState, ally: number
 	local function learn(wid: number)
 		local x, z = c.wreckX[wid], c.wreckZ[wid]
 		if known[wid] == nil and x ~= nil and inSightFor(sim, ally, x, z) then
-			known[wid] = { x, z, c.wreckDef[wid], c.wreckHeading[wid], c.wreckSupply[wid] }
+			known[wid] = { x, z, c.wreckDef[wid], c.wreckHeading[wid], c.wreckSupply[wid], c.wreckKind[wid] }
 			table.insert(list, wid)
 			changed = true
+		end
+	end
+	if k.version == 0 and #list == 0 and not k.featuresKnown then
+		-- the map's trees and rocks are part of the map: every team knows them
+		-- from the start (S-197); only their removal needs sight
+		k.featuresKnown = true
+		for _, wid in c.wreckIds do
+			if c.wreckKind[wid] then
+				known[wid] = { c.wreckX[wid], c.wreckZ[wid], 0, c.wreckHeading[wid], c.wreckSupply[wid], c.wreckKind[wid] }
+				table.insert(list, wid)
+				changed = true
+			end
 		end
 	end
 	local function forgetIfSeen(i: number): boolean
@@ -779,8 +795,9 @@ local function wreckEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet,
 				supply, rez = math.clamp(math.floor((p[5] or 0) + 0.5), 0, 65535), 0
 			end
 			pn.sentWreckState[wid] = supply * 256 + rez
-			local full = math.floor(Combat.fullWreckSupply(sim.defs.unitByIndex[p[3]]) + 0.5)
-			table.insert(events, { kind = Schema.EventKind.WRECK, wreckId = wid, defIndex = p[3], cell = cell, offX = ox, offZ = oz, heading = NetOut.headingU8(p[4]), supply = supply, fullSupply = math.clamp(full, 0, 65535) })
+			local feature = p[6]
+			local full = if feature then math.floor((c.wreckFull[wid] or p[5] or 0) + 0.5) else math.floor(Combat.fullWreckSupply(sim.defs.unitByIndex[p[3]]) + 0.5)
+			table.insert(events, { kind = Schema.EventKind.WRECK, wreckId = wid, defIndex = p[3], cell = cell, offX = ox, offZ = oz, heading = NetOut.headingU8(p[4]), supply = supply, fullSupply = math.clamp(full, 0, 65535), featureKind = feature or 0 })
 			if rez > 0 then
 				table.insert(events, { kind = Schema.EventKind.WRECK_STATE, wreckId = wid, supply = supply, rez = rez })
 			end

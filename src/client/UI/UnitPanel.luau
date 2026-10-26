@@ -26,6 +26,7 @@ local Icons = require("../Core/Icons")
 local Precision = require("../Core/Precision")
 local Selection = require("../Core/Selection")
 local UnitStats = require("../Core/UnitStats")
+local Features = require("@shared/Defs/Features")
 local World = require("../Core/World")
 local Glyph = require("./Glyph")
 local Portrait = require("./Portrait")
@@ -37,6 +38,7 @@ local UnitPanel = {}
 local BG = Kit.COLOR.panel
 local HEALTH = Color3.fromRGB(80, 200, 90)
 local SUPPLY = Color3.fromRGB(235, 235, 235) -- the supply bar's white (Kit's ■)
+local POWER = Color3.fromRGB(255, 214, 60) -- the power bar's yellow (Kit's ϟ)
 local TILE = Color3.fromRGB(58, 62, 70)
 local WIDTH = 460 -- wide enough for a stat line at a glance (C-76)
 
@@ -196,7 +198,7 @@ local function one(ui: UI, api: Api.Api, id: number)
 	if own then
 		local eco = api.state.economy
 		local ratio = if eco then math.min(eco.supply.ratio, eco.power.ratio) else 1
-		local f = UnitFlow.parts(world, u, def, { queue = api.state.factoryQueues[id], wind = eco and eco.wind, ratio = ratio })
+		local f = UnitFlow.parts(world, u, def, { queue = api.state.factoryQueues[id], wind = eco and eco.wind, ratio = ratio, powerRatio = eco and eco.power.ratio })
 		ui.flowSupply.Text = UnitFlow.rich('<font color="#EBEBEB">■</font>', f.supplyIn, f.supplyOut)
 		ui.flowPower.Text = UnitFlow.rich('<font color="#FFD63C">ϟ</font>', f.powerIn, f.powerOut)
 	end
@@ -260,7 +262,8 @@ end
 -- supply the wreck started with.
 local function wreck(ui: UI, api: Api.Api, w: World.Wreck)
 	local world = api.world
-	local def = world.defs.unitByIndex[w.defIndex]
+	local feature = if w.feature then Features.BY_ID[w.feature] else nil
+	local def = if feature then nil else world.defs.unitByIndex[w.defIndex]
 	if def then
 		Portrait.set(ui.portraitView, def, 0)
 	end
@@ -271,9 +274,12 @@ local function wreck(ui: UI, api: Api.Api, w: World.Wreck)
 	ui.health.Visible = w.fullSupply > 0
 	ui.healthFill.BackgroundColor3 = SUPPLY
 	ui.healthFill.Size = UDim2.fromScale(if w.fullSupply > 0 then math.clamp(w.supply / w.fullSupply, 0, 1) else 0, 1)
-	ui.name.Text = `{if def then def.name else "Unknown"} wreck`
-	ui.role.Text = "Reclaim with a builder for its supply"
-	local lines = { string.format("Supply left %d / %d", w.supply, w.fullSupply) }
+	-- a map feature (S-197): a tree holds power, a rock supply
+	local resource = if feature then feature.resource else "supply"
+	ui.name.Text = if feature then (if feature.id == Features.TREE then "Tree" else "Rock") else `{if def then def.name else "Unknown"} wreck`
+	ui.role.Text = `Reclaim with a builder for its {resource}`
+	ui.healthFill.BackgroundColor3 = if resource == "power" then POWER else SUPPLY
+	local lines = { string.format("%s left %d / %d", if resource == "power" then "Power" else "Supply", w.supply, w.fullSupply) }
 	if w.rez > 0 then
 		table.insert(lines, string.format("Resurrecting %d%%", math.floor(w.rez * 100)))
 	end

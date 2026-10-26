@@ -199,7 +199,9 @@ export type Combat = {
 	wreckDef: { [number]: number },
 	wreckHeading: { [number]: number }, -- the unit's heading when it died (radians; S-26)
 	wreckRez: { [number]: number }, -- resurrect progress 0..1 (S-168; nil = none)
-	wreckSupply: { [number]: number },
+	wreckSupply: { [number]: number }, -- what it holds: supply (a tree's: power, wreckKind)
+	wreckKind: { [number]: number }, -- map features (S-197): Features.TREE / ROCK; nil = a unit's wreck
+	wreckFull: { [number]: number }, -- a feature's amount at the start (what clients show as its full)
 	nextWreckId: number,
 
 	stats: { shots: number, hits: number, kills: number },
@@ -305,6 +307,8 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		wreckHeading = {},
 		wreckRez = {},
 		wreckSupply = {},
+		wreckKind = {},
+		wreckFull = {},
 		nextWreckId = 1,
 		stats = { shots = 0, hits = 0, kills = 0 },
 	}
@@ -770,6 +774,24 @@ function Combat.removeWreck(c: Combat, id: number)
 	end
 	c.wreckX[id], c.wreckZ[id], c.wreckDef[id], c.wreckSupply[id], c.wreckHeading[id] = nil, nil, nil, nil, nil
 	c.wreckRez[id] = nil
+	c.wreckKind[id] = nil
+	c.wreckFull[id] = nil
+end
+
+-- A map feature (S-197): a tree or rock, reclaimable like a wreck (it holds
+-- `amount` of its kind's resource), never resurrected. wreckDef is 0.
+function Combat.addFeature(c: Combat, x: number, z: number, kind: number, amount: number, heading: number?): number
+	local id = c.nextWreckId
+	c.nextWreckId += 1
+	table.insert(c.wreckIds, id)
+	c.wreckX[id] = x
+	c.wreckZ[id] = z
+	c.wreckDef[id] = 0
+	c.wreckHeading[id] = heading or 0
+	c.wreckSupply[id] = amount
+	c.wreckKind[id] = kind
+	c.wreckFull[id] = amount
+	return id
 end
 
 -- The supply a wreck of `def` holds when its unit dies (and must hold again
@@ -853,6 +875,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.number(h, c.wreckHeading[id])
 		h = Hash.number(h, c.wreckSupply[id])
 		h = Hash.number(h, c.wreckRez[id] or 0)
+		h = Hash.u32(h, c.wreckKind[id] or 0)
 	end
 	return h
 end

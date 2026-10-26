@@ -50,9 +50,16 @@ export type Resource = {
 	drawn: number, -- total spent, less any shortfall a window forgave (Stats, S-63)
 	bonusIncome: number?, -- per second, from the INCOME cheat (S-102)
 	bonusStorage: number?, -- storage the RES cheat added (S-102)
+	-- the share level (S-198, the user's slider on the resource bar): stored
+	-- above this share of storage goes to the allies, fairly; nil = 1 (keep
+	-- all; only overflow above storage is shared, as before)
+	shareLevel: number?,
 }
 
-export type Account = { supply: Resource, power: Resource }
+-- convertAt (S-198, the user's slider): converters burn only power stored
+-- above this share of storage; nil = CONVERTER_RESERVE. extractRatio: the
+-- share of its extractors' power upkeep the team paid last window (S-198).
+export type Account = { supply: Resource, power: Resource, convertAt: number?, extractRatio: number? }
 
 export type Economy = {
 	accounts: { [number]: Account },
@@ -212,16 +219,25 @@ end
 -- Gives `team`'s overflow to its allies with room (guide 8.4 "overflow
 -- sharing", 16.1): split evenly among the allies that still have room,
 -- repeated until it is placed or nobody has room; the rest is wasted.
+-- An ally takes up to its own share level (S-198), so a gift never bounces
+-- back; at the default level that is its storage. Returns what nobody took.
 local RESOURCES: { "supply" | "power" } = { "supply", "power" }
 local overflowScratch: { [number]: number } = {}
-local function shareOverflow(eco: Economy, kind: "supply" | "power", team: number, amount: number)
+local levelScratch: { [number]: number } = {}
+local extractScratch: { [number]: number } = {}
+local upkeepScratch: { [number]: number } = {}
+local spareScratch: { [number]: number } = {}
+local function capOf(r: Resource): number
+	return r.storage * (r.shareLevel or 1)
+end
+local function shareOverflow(eco: Economy, kind: "supply" | "power", team: number, amount: number): number
 	local ally = eco.allyOf[team]
 	local left = amount
 	while left > 1e-9 do
 		local open = 0
 		for _, t in eco.teams do
 			local r = eco.accounts[t][kind]
-			if t ~= team and eco.allyOf[t] == ally and r.stored < r.storage then
+			if t ~= team and eco.allyOf[t] == ally and r.stored < capOf(r) - 1e-9 then
 				open += 1
 			end
 		end
@@ -231,14 +247,14 @@ local function shareOverflow(eco: Economy, kind: "supply" | "power", team: numbe
 		local share = left / open
 		for _, t in eco.teams do
 			local r = eco.accounts[t][kind]
-			if t ~= team and eco.allyOf[t] == ally and r.stored < r.storage then
-				local give = math.min(share, r.storage - r.stored)
+			if t ~= team and eco.allyOf[t] == ally and r.stored < capOf(r) - 1e-9 then
+				local give = math.min(share, capOf(r) - r.stored)
 				r.stored += give
 				left -= give
 			end
 		end
 	end
-	eco.accounts[team][kind].wasted += math.max(left, 0)
+	return math.max(left, 0)
 end
 
 -- Effective progress ratio for a consumer of cost (supply, power): the
@@ -287,8 +303,11 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 		acc.supply.storage = Economy.BASE_STORAGE + (acc.supply.bonusStorage or 0)
 		acc.power.storage = Economy.BASE_STORAGE + (acc.power.bonusStorage or 0)
 	end
+	table.clear(extractScratch)
+	table.clear(upkeepScratch)
 	for _, id in eco.producers do
-		local acc = eco.accounts[w.team[id]]
+		local team = w.team[id]
+		local acc = eco.accounts[team]
 		if acc == nil then
 			continue
 		end
@@ -300,8 +319,13 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 		end
 		local ex = def.extractor
 		if ex and layers then
-			-- every deposit cell under the footprint (S-104)
-			acc.supply.income += ex.rate * PlacementRules.supplyUnder(layers, def.footprint, w.posX[id], w.posZ[id])
+			-- every deposit cell under the footprint (S-104); paid for in power
+			-- below (S-198)
+			local under = PlacementRules.supplyUnder(layers, def.footprint, w.posX[id], w.posZ[id])
+			if under > 0 then -- (one on bare ground extracts nothing and costs nothing)
+				extractScratch[team] = (extractScratch[team] or 0) + ex.rate * under
+				upkeepScratch[team] = (upkeepScratch[team] or 0) + (ex.upkeep or 0)
+			end
 		end
 		local s = def.storage
 		if s then
@@ -312,34 +336,71 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 			acc.power.income += def.wind.max * eco.wind
 		end
 	end
-	-- converters (switched on): burn power above the reserve, add supply
-	-- (guide 8.4 order: production, converters, consumers, overflow)
+	-- extractors run on power (S-198, the user: "orb deposit costs energy to
+	-- run"): their upkeep is paid first after production; short of power,
+	-- they extract the share of supply the team could pay for
+	for _, team in eco.teams do
+		local acc = eco.accounts[team]
+		local need = (upkeepScratch[team] or 0) * Economy.WINDOW
+		local ratio = 1
+		if need > 0 then
+			local p = acc.power
+			ratio = math.clamp((p.stored + p.income * Economy.WINDOW - p.spent) / need, 0, 1)
+			p.spent += need * ratio
+		end
+		acc.extractRatio = ratio
+		acc.supply.income += (extractScratch[team] or 0) * ratio
+	end
+	-- converters (switched on): burn power stored above the team's convert
+	-- level (S-198, the user's slider; CONVERTER_RESERVE by default), add
+	-- supply. Each needs its whole rate spare above the level: 80 spare runs
+	-- one 70-a-second converter, not two (the user's example; guide 8.4 order:
+	-- production, converters, consumers, sharing)
+	table.clear(spareScratch)
 	for _, id in eco.producers do
 		local conv = defs.unitByIndex[w.defIndex[id]].converter
 		if conv == nil or bit32.band(w.state[id], TOGGLED_ON) == 0 then
 			continue
 		end
-		local acc = eco.accounts[w.team[id]]
+		local team = w.team[id]
+		local acc = eco.accounts[team]
 		if acc == nil then
 			continue
 		end
 		local p = acc.power
-		local spare = p.stored + p.income * Economy.WINDOW - p.spent - p.storage * Economy.CONVERTER_RESERVE
-		local burn = math.clamp(spare, 0, conv.power * Economy.WINDOW)
-		if burn > 0 then
+		local spare = spareScratch[team]
+		if spare == nil then
+			spare = p.stored + p.income * Economy.WINDOW - p.spent - p.storage * (acc.convertAt or Economy.CONVERTER_RESERVE)
+		end
+		if spare >= conv.power then
+			local burn = conv.power * Economy.WINDOW
 			p.spent += burn
 			acc.supply.reclaimed += burn * conv.supply / conv.power
+			spare -= conv.power
 		end
+		spareScratch[team] = spare
 	end
-	-- production and spending, then overflow sharing, then ratios (guide 8.4)
+	-- production and spending, then sharing, then ratios (guide 8.4): the
+	-- overflow above storage and (S-198) what is stored above the team's
+	-- share level go to the allies; what nobody takes of the latter stays,
+	-- of the overflow it is wasted
 	for _, kind in RESOURCES do
 		for _, team in eco.teams do
-			overflowScratch[team] = settleStored(eco.accounts[team][kind], Economy.WINDOW)
+			local r = eco.accounts[team][kind]
+			overflowScratch[team] = settleStored(r, Economy.WINDOW)
+			local level = r.shareLevel or 1
+			local extra = if level < 1 then math.max(0, r.stored - level * r.storage) else 0
+			r.stored -= extra
+			levelScratch[team] = extra
 		end
 		for _, team in eco.teams do
-			local over = overflowScratch[team]
-			if over > 0 then
-				shareOverflow(eco, kind, team, over)
+			local over, extra = overflowScratch[team], levelScratch[team]
+			if over + extra > 0 then
+				local left = shareOverflow(eco, kind, team, over + extra)
+				local r = eco.accounts[team][kind]
+				local back = math.min(left, extra)
+				r.stored += back
+				r.wasted += math.max(left - back, 0)
 			end
 		end
 		for _, team in eco.teams do
@@ -362,9 +423,15 @@ function Economy.hash(eco: Economy, h: number): number
 			if (r.lowDemand or 0) > 0 then
 				h = Hash.number(Hash.number(h, r.lowDemand :: number), r.lowRatio or 1) -- (S-156)
 			end
+			if r.shareLevel then
+				h = Hash.number(h, r.shareLevel) -- (S-198)
+			end
 			if r.bonusIncome or r.bonusStorage then
 				h = Hash.number(Hash.number(h, r.bonusIncome or 0), r.bonusStorage or 0) -- (S-102)
 			end
+		end
+		if acc.convertAt then
+			h = Hash.number(h, acc.convertAt) -- (S-198)
 		end
 	end
 	h = Hash.number(h, eco.wind)

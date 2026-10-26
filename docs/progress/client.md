@@ -6,6 +6,13 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Build-menu numbers, extractor hint, idle Commander (C-244):**
+  - Number keys keep picking build items after the first pick, and Ctrl+number sets a group even with the build menu open.
+  - Hovering a free deposit with builders selected shows the extractor to build there; right-click builds it.
+  - An idle Commander no longer shows the cost of frames standing near it.
+- Ready to merge: `ab6a5dd3` (C-244; test_client 324 / 324, test 587 / 587, build passed; Studio checked on Ridgeline)
+- **Supreme Strait by day; no atmosphere setting (C-243):** Supreme Strait plays in daylight. The Atmosphere option is gone from Settings; every map uses its own lighting.
+- Ready to merge: `549938f5` (C-243; test_client 322 / 322, build passed; Studio: Supreme Strait at 13:00)
 - Ready to merge: `45299c5c` (main aafcba73 merged in: Supreme Strait rebuilt the BAR way, S-196, with its ground approved; plain looks for its three ground materials. test_client 322 / 322, test 587 / 587, build passed. Studio: Supreme Strait's ground, 346 pieces in about 50 s, mesh water and its new spawns)
 - Ready to merge: `0a4efb1b` (main 3f393dec and sim 1e96cf5e merged in; the D-Gun bolt ends at its own IMPACT. test_client 322 / 322, test 585 / 585, build passed. Studio, Supreme Strait: the D-Gun fires up the mesa slope and burns a Ravager; Commanders drawn with C's meshes; no errors)
 - **Protocol 39 (C-242):**

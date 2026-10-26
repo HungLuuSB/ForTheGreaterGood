@@ -13,7 +13,7 @@ return Templates.extend(Templates.Structure, {
 	health = 1200,
 	footprint = 2, -- the T1's size: an upgraded T1 on the same 2 × 2 patch (the user, S-184; not S-104's size-by-tier rule)
 	icon = "extractor",
-	extractor = { rate = 1.75 },
+	extractor = { rate = 1.75, upkeep = 15 }, -- upkeep: power it costs to run (S-198)
 	upgradesFrom = { "ord_extractor" }, -- built over its own T1 extractor, which works on until this finishes (S-108)
 	model = "ord_advextractor",
 })

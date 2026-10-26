@@ -397,6 +397,47 @@ function MeshModels.deposit(i: number): Model?
 	return nil
 end
 
+-- Map feature looks (S-197: Meshes.fx.feature_tree / feature_rock, each
+-- with `variants`, models-C's): the template for variant `i` of `name`
+-- (clone it), or nil (no entry, not approved yet unless FEATURES_ANYWAY, or
+-- still building: the build starts on the first ask). One `base` piece,
+-- its origin on the ground at the feature's centre.
+MeshModels.FEATURES_ANYWAY = false
+local fxBuilt: { [string]: Model } = {}
+local fxPending: { [string]: boolean } = {}
+MeshModels.fxVersion = 0 -- bumps when a variant finishes (Render/Deaths swaps its placeholders)
+
+function MeshModels.fxVariants(name: string): number
+	local e = ((Meshes :: any).fx or {})[name]
+	if e == nil or (e.status ~= "approved" and not MeshModels.FEATURES_ANYWAY) then
+		return 0
+	end
+	return if e.variants then #e.variants else 1
+end
+
+function MeshModels.fxVariant(name: string, i: number): Model?
+	local key = `{name}_{i}`
+	if fxBuilt[key] then
+		return fxBuilt[key]
+	end
+	local e = ((Meshes :: any).fx or {})[name]
+	if e == nil or fxPending[key] or i > MeshModels.fxVariants(name) then
+		return nil
+	end
+	local v = if e.variants then e.variants[i] else e
+	fxPending[key] = true
+	task.spawn(function()
+		local ok, result = pcall(build, { id = key, model = key, footprint = 1 }, v)
+		if ok then
+			fxBuilt[key] = result
+			MeshModels.fxVersion += 1
+		else
+			warn(`[Client] {key} mesh failed, the placeholder stays: {result}`)
+		end
+	end)
+	return nil
+end
+
 -- The built model for def `id` (a template: clone it), if ready.
 function MeshModels.get(id: string): Model?
 	return ready[id]

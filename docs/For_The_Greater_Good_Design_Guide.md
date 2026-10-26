@@ -686,7 +686,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 cmdType   u8      1 MOVE, 2 FIGHT, 3 ATTACK, 4 ATTACK_GROUND, 5 PATROL, 6 GUARD, 7 STOP,
                   8 BUILD, 9 REPAIR, 10 RECLAIM, 11 SET_FIRE_STATE, 12 SET_MOVE_STATE,
                   13 TOGGLE, 14 CAMERA, 15 REPEAT, 16 CANCEL   (0 is invalid)
-flags     u8      bit0 = queue (shift), bit1 = line formation; other bits reserved
+flags     u8      bit0 = queue (shift), bit1 = line formation, bit2 = group (ctrl, S-137), bit3 = front (space, S-199); other bits reserved
 count     u16     number of unit IDs: 1..200 (CAMERA: 0)
 unitIds   u16 × count
 params    by cmdType:
@@ -827,8 +827,8 @@ Homing corrections (D102) cost about 45 B/s per homing projectile in view (14 B 
 
 | Resource | BAR equivalent | Sources | Main uses |
 |---|---|---|---|
-| **Supply** | Metal | Extractors on deposits, converters, reclaiming wrecks | Building everything, rearming aircraft, reloading missiles |
-| **Power** | Energy | Generators, solar, wind, tidal, fusion | Building, radar/jammer upkeep, DIRCM, energy weapons |
+| **Supply** | Metal | Extractors on deposits, converters, reclaiming wrecks and rocks | Building everything, reloading missiles |
+| **Power** | Energy | Generators, solar, wind, tidal, fusion, reclaiming trees | Building, extractor upkeep, radar/jammer upkeep, DIRCM, energy weapons |
 
 ### 8.2 Streaming model
 
@@ -868,7 +868,14 @@ end
 
 **Two resources at once:** a consumer that needs both progresses at `min(supplyRatio, powerRatio)` and actually uses less of the other resource. Do two passes: compute both ratios, then let each consumer advance at its effective ratio while summing what it actually used. Refund the unused part.
 
-**Fixed order:** production → converters (power → supply) → consumers → overflow sharing.
+**Fixed order:** production → extractor upkeep → converters (power → supply) → consumers → sharing.
+
+**Balance (S-198, the user):**
+- **Extractors run on power:** 3 power a second for a T1 extractor, 15 for a T2, paid right after production. Short of power, they extract only the share they could pay for; one on bare ground costs nothing.
+- **Converters** cost 1 supply and 1,200 power to build and turn 70 power a second into 1 supply. They run only on power stored above the team's **convert level**, and each needs its whole 70 spare above it: 80 spare runs one converter, not two.
+- **The resource bar's three sliders** (the ECO_LEVEL command, sent back in the Eco record):
+  - the **supply share level** and the **power share level**: what's stored above them goes to the allies, fairly, each ally taking up to its own share level. The default is 100%, where only overflow above storage is shared, as before;
+  - the **convert level**: 50% by default.
 
 **Resource priority (S-156, the user):** every consumer is high or low priority (the PRIORITY command; high by default). In a stall the high consumers share what's on offer first: missile refills take their share (S-66), then every other high consumer. Low consumers share what's left, so with nothing left they stop. It applies to:
 - a builder's or factory's build power (an assisted frame splits by builder);
@@ -1557,7 +1564,7 @@ When the camera is zoomed far out, hide models and draw icons (flat billboards o
 
 - Box select (project unit positions to screen), double-click selects all of type on screen, control groups (Ctrl+1–9).
 - Right-click **smart command**: enemy → attack, ally → guard, wreck → reclaim, unfinished structure → repair, ground → move.
-- Shift queues commands; queued paths draw as lines for selected units.
+- Shift queues commands; queued paths draw as lines for selected units. Space puts the order at the front of the queue: the order under way stops (a builder's frame keeps standing) and resumes once the new one is done (BAR's space; S-199).
   - Implementation (S-4, `Sim/Orders.luau`): per-unit order queues. FIGHT (attack-move, BAR behavior, S-14) advances while no enemy is within weapon range, stops and fires while one is, and goes on when none are left; seeing an enemy doesn't stop it. PATROL loops; ATTACK force-fires a known target even on hold fire; GUARD follows an ally; REPAIR also heals damaged units (free, at the build rate); queued BUILD and RECLAIM run in order.
 - Line formation by right-click drag.
 - Attack order (BAR's A key, C-57): A, then left-click an enemy unit (ATTACK) or the ground (ATTACK_GROUND, how a nuke silo fires, 10.9); Shift keeps the mode, right click cancels. With a silo selected the cursor previews the nuke's arc, its blast and flight time (C-58).

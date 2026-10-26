@@ -378,8 +378,13 @@ end
 
 function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vector3?, areaTo: Vector3?, rowFrom: Vector3?, rowTo: Vector3?)
 	marks(g, api, now or os.clock(), areaFrom, areaTo)
-	local p = api.state.placement
-	if p == nil or not PlacementGhost.GRID then
+	local p: any = api.state.placement
+	local hint = api.state.depositHint
+	if p == nil and hint then
+		-- a free deposit under the mouse (C-244): the extractor the builders would put there
+		p = { defId = hint.defId, defIndex = hint.defIndex, x = hint.x, z = hint.z, facing = 0, valid = true }
+	end
+	if api.state.placement == nil or not PlacementGhost.GRID then -- (not round a deposit hint)
 		if g.grid.Parent ~= nil then
 			g.grid.Parent = nil
 		end
@@ -392,7 +397,7 @@ function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vec
 		g.label.Visible = false
 		return
 	end
-	if PlacementGhost.GRID then
+	if PlacementGhost.GRID and api.state.placement then
 		local grid = api.world.grid
 		-- the cell corner nearest the ghost's centre
 		local bx = grid.originX + math.floor((p.x - grid.originX) / CELL + 0.5) * CELL
