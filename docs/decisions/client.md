@@ -2031,3 +2031,27 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Checked in Studio (Coastline): three Lancers' small blasts; a fusion reactor's big fireball and smoke column.
 
 **Why:** the user's playtest F15 ("death explosions for every unit, by tier / energy stored; Commander a huge blast, smaller than a nuke").
+
+### C-233 — Protocol 38 on the client (2026-10-26, S-189)
+
+- Wire positions sit on a fixed 64-stud grid, independent of the map. Strategic records and ALERT decode their offsets: a strategic record gives the centre of the unit's 8-stud square. A known unit keeps its exact spot while it stays in that square, where before it kept it while it stayed in its map cell.
+- SIGHT_CELLS entries are u24: the index is the entry below `Schema.SIGHT_SEEN`. `Commands.cameraRect` clamps only to the map (u16 on the wire, up to 1,024 cells).
+- Aircraft and shots may go up to `Grid.OVERFLY` (512 studs) past the edge. The 3D view draws them there. The minimap pins their dots to its edge instead of clipping them.
+- Specs:
+  - wire precision is now a quarter stud;
+  - missiles burst at the overfly margin;
+  - the bomber carpet test starts the bomber far enough out to release on its first pass. A bomber that misses its window goes round and comes back on another line (D91), which no preview can predict. The old edge rule happened to bring it back straight.
+- Checked in Studio on The Lakelands (512 cells):
+  - camera cells up to 511, nothing dropped;
+  - three off-camera Lancers at x 1901, 1915 and 1929 drawn at 1900, 1916 and 1932;
+  - Falcons drawn out to x 2,344 on a map that ends at 2,048.
+
+**Why:** S-189 (bigger maps, F3/F4).
+
+### C-234 — Plasma without a blast looks like a tank shell (2026-10-26, S-190)
+
+- A plasma shot with no aoe (the Thug's and the Mace's since S-190) is a ball as thick as a tank shell (0.9), in the weapon's colour. Bigger plasma keeps `1.4 + aoe × 0.08`.
+- An `explosion_small` impact with no aoe bursts at `Effects.SMALL_HIT` (3, the Lancer shell's aoe) instead of falling to the smallest burst.
+- Checked in Studio (The Plains): Thug and Mace balls 0.90 in (255, 225, 120), beside the Lancer's 0.9 × 0.9 × 2.6 shell in the same colour.
+
+**Why:** the user, via sim-A: "Thug / Mace's plasma should be the same size as the tank, their shot explode like a small hit vfx of the tank because they should have no aoe damage to their shot at all."

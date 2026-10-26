@@ -154,7 +154,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			local s = sightOf(world)
 			local n = s.width * s.depth
 			for _, c in e.cells :: { number } do
-				local index = bit32.band(c, 0x7FFF)
+				local index = c % Schema.SIGHT_SEEN -- the low 23 bits (protocol 38: u24 entries)
 				if index < n then
 					buffer.writeu8(s.cells, index, if bit32.band(c, Schema.SIGHT_SEEN) ~= 0 then 1 else 0)
 					table.insert(s.changed, index)
@@ -167,8 +167,9 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0), supply = e.supply or 0, fullSupply = e.fullSupply or 0, rez = 0 }
 			table.insert(world.wreckAdded, id)
 		elseif kind == EK.ALERT then
-			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0
-			local x, z = g:decode(e.cell :: number, 128, 128)
+			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0; a full
+			-- wire position since protocol 38 (S-189)
+			local x, z = g:decode(e.cell :: number, e.offX or 128, e.offZ or 128)
 			table.insert(world.alertQueue, { kind = e.alert :: number, x = x, z = z, defIndex = e.defIndex or 0, tick = tick })
 		elseif EK.OWN_STATUS ~= nil and kind == EK.OWN_STATUS then
 			-- an own unit off camera: health, build and factory queue (protocol 34,
@@ -385,16 +386,22 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 		if u and u.tier == "tactical" then
 			continue -- tactical detail wins over a snapshot computed around a LEAVE / ENTER
 		end
-		local x, z = g:decode(r.cell, 128, 128)
+		-- a wire cell and its offsets' top bits: the 8-stud square's centre (S-189)
+		local x, z = g:decode(r.cell, r.offX or 128, r.offZ or 128)
 		local old = before[r.unitId] or u
 		-- own, allied and seen units keep their type and their last tactical
 		-- detail out of the camera area (C-161): still drawn, selectable and
-		-- buildable from; and their exact spot while they stay in its cell
-		-- (a strategic record carries only the cell)
+		-- buildable from; and their exact spot while they stay in its 8-stud
+		-- square (a strategic record carries only that)
 		local typed = r.icon > 0 and bit32.band(r.flags, SF.RADAR_ONLY + SF.SONAR_ONLY + SF.GHOST) == 0
 		local keep = if typed and old and old.defIndex == r.icon then old else nil
-		if keep and g:encode(keep.x, keep.z) == r.cell then
-			x, z = keep.x, keep.z
+		if keep then
+			-- still in the record's 8-stud square (protocol 38: a wire cell and
+			-- its offsets' top 3 bits; a map cell before)
+			local kc, kx, kz = g:encode(keep.x, keep.z)
+			if kc == r.cell and kx // 32 == (r.offX or 128) // 32 and kz // 32 == (r.offZ or 128) // 32 then
+				x, z = keep.x, keep.z
+			end
 		end
 		local movedTick = if old == nil then nil elseif old.x ~= x or old.z ~= z then tick else old.movedTick
 		world.units[r.unitId] = {

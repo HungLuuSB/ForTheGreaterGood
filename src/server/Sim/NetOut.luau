@@ -386,7 +386,12 @@ end
 
 local function inRect(g: Grid.Grid, cam: { number }, x: number, z: number, margin: number): boolean
 	local cx, cz = g:cellAt(x, z)
-	return cx >= cam[1] - margin and cx <= cam[3] + margin and cz >= cam[2] - margin and cz <= cam[4] + margin
+	-- a camera at the map's edge sees past it too: aircraft fly there (S-189)
+	local minX = if cam[1] <= 0 then -math.huge else cam[1] - margin
+	local minZ = if cam[2] <= 0 then -math.huge else cam[2] - margin
+	local maxX = if cam[3] >= g.cellsX - 1 then math.huge else cam[3] + margin
+	local maxZ = if cam[4] >= g.cellsZ - 1 then math.huge else cam[4] + margin
+	return cx >= minX and cx <= maxX and cz >= minZ and cz <= maxZ
 end
 
 local function enterEvent(sim: Types.Sim, g: Grid.Grid, id: number): Schema.Event
@@ -1252,10 +1257,12 @@ function NetOut.step(sim: Types.Sim)
 				if own and Alerts.underAttack(sim, id) then
 					flags += SF.UNDER_ATTACK -- hit by an enemy in the last 3 s (S-68)
 				end
-				local cell = g:encode(kx, kz)
+				local cell, ox, oz = g:encode(kx, kz)
 				table.insert(strategic, {
 					unitId = id,
 					cell = cell,
+					offX = ox,
+					offZ = oz,
 					icon = if own or level == L.VISIBLE or level == L.GHOST or tracked then net.iconIndex[w.defIndex[id]] else (if level == L.RADAR and sim.defs.unitByIndex[w.defIndex[id]].spoof then net.iconIndex[sim.defs.units[sim.defs.unitByIndex[w.defIndex[id]].spoof :: string].index] else 0), -- a decoy shows its spoof's icon (S-109)
 					team = w.team[id],
 					flags = flags,
@@ -1265,9 +1272,12 @@ function NetOut.step(sim: Types.Sim)
 			for _, gid in sim.sensors.ghostIds[ally] or {} do
 				local ghost = sim.sensors.ghosts[ally][gid]
 				if not World.isRef(w, gid, ghost.gen) then
+					local cell, ox, oz = g:encode(ghost.x, ghost.z)
 					table.insert(strategic, {
 						unitId = gid,
-						cell = (g:encode(ghost.x, ghost.z)),
+						cell = cell,
+						offX = ox,
+						offZ = oz,
 						icon = net.iconIndex[ghost.defIndex],
 						team = ghost.team,
 						flags = SF.GHOST,
@@ -1284,8 +1294,8 @@ function NetOut.step(sim: Types.Sim)
 			local alerts = Alerts.drain(sim, pid)
 			if alerts then
 				for _, a in alerts do
-					local cell = g:encode(a.x, a.z)
-					table.insert(events, { kind = Schema.EventKind.ALERT, alert = a.kind, cell = cell, defIndex = a.defIndex })
+					local cell, ox, oz = g:encode(a.x, a.z)
+					table.insert(events, { kind = Schema.EventKind.ALERT, alert = a.kind, cell = cell, offX = ox, offZ = oz, defIndex = a.defIndex })
 				end
 			end
 			local answers = Cheats.drain(sim, pid) -- CHEAT_RESULT (S-102)

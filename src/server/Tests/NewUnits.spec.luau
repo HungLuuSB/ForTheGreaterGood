@@ -56,6 +56,41 @@ return function(t: RunAll.Context)
 		t.expect((defs.units.ord_liche.movement :: any).turnRate < (defs.units.ord_phantom.movement :: any).turnRate, "the Liche turns slowly")
 	end)
 
+	t.test("Thug's and Mace's plasma hits only what it strikes (S-190): the target dies, a friend beside it is untouched", function()
+		local defs = Sim.new({ seed = 1, players = PLAYERS }).defs
+		for id, wd in defs.weapons do
+			if wd.fx and wd.fx.trail == "plasma" then
+				t.deepEqual(wd.fx.color, { r = 255, g = 225, b = 120 }, `{id}: the tank shell's colour`)
+			end
+		end
+		for _, shooter in { "chs_thug", "ord_mace" } do
+			local wd = defs.weapons[defs.units[shooter].weapons[1].def]
+			t.expect((wd.aoe or 0) == 0, `{shooter}: no blast`)
+			t.equal(wd.fx and wd.fx.impact, defs.weapons.ord_lancer_cannon.fx.impact, `{shooter}: the tank's small hit`)
+			local sim = Sim.new({ seed = 4, players = PLAYERS, mapId = "flat:128" })
+			local w = sim.world
+			Spawn.unit(sim, shooter, 2, -40, 0, math.pi / 2)
+			local target = Spawn.unit(sim, "ord_lancer", 1, 20, 0)
+			local friend = Spawn.unit(sim, "chs_ravager", 2, 20, 5)
+			World.setFireState(w, target, World.FireState.HOLD_FIRE)
+			World.setFireState(w, friend, World.FireState.HOLD_FIRE) -- (its own point-blank shells would hurt it)
+			local full, hits = w.health[friend], 0
+			for _ = 1, 15 * 40 do
+				local before = w.health[target]
+				Sim.step(sim)
+				if w.slot[target] == nil then
+					break -- (the tank's death blast then hurts the friend: not the shot's)
+				end
+				if w.health[target] < before then
+					hits += 1
+				end
+				t.equal(w.health[friend], full, `{shooter}: the friend 5 studs from the tank is untouched by the shots`)
+			end
+			t.equal(w.slot[target], nil, `{shooter} kills the tank`)
+			t.expect(hits >= 2, `{shooter}: hit it {hits} times before the kill`)
+		end
+	end)
+
 	t.test("a Glint crosses the map and its arm lasers kill a scout", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
