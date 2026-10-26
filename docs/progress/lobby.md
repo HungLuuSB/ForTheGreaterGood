@@ -23,6 +23,7 @@ The user's three ideas for the Units tab:
   - `lobby_units_full_view`: H brings the panels back.
   - No errors.
 - Lobby specs 64 / 64; the build check passes (564 scripts, 938 requires).
+- Ready to merge: `dbf1c000` (Units showroom animations, firing range, full view; `lobby.project.json` mounts 25 more client modules read-only; touches only `src/lobby`, `lobby.project.json` and the lobby docs)
 
 ## Summary (2026-10-26: four AI levels and team roles, F41)
 
