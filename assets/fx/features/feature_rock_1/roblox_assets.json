@@ -7,19 +7,28 @@
       "base": "rbxassetid://74537432916961"
     },
     "decals": {
-      "ALB": "rbxassetid://126158558964976",
+      "ALB": "rbxassetid://89038072664768",
       "RGH": "rbxassetid://116950363733353",
       "NOR": "rbxassetid://130291571381742",
       "MTL": "rbxassetid://117575518795107",
       "EMI": "rbxassetid://105091968638949"
     },
     "surfaceAppearance": {
-      "ALB": "rbxassetid://111245066781069",
+      "ALB": "rbxassetid://99722448323266",
       "NOR": "rbxassetid://116761933036249",
       "RGH": "rbxassetid://76099319120108",
       "MTL": "rbxassetid://89896451516123",
       "EMI": "rbxassetid://115878236063767"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.feature_rock_1_bar in FTGG Art"
+    "modelPath": "ReplicatedStorage.ModelReview.feature_rock_1_bar in FTGG Art",
+    "reuploads": [
+      {
+        "ALB": {
+          "decal": "rbxassetid://126158558964976",
+          "image": "rbxassetid://111245066781069"
+        },
+        "why": "colour map failed to load in FTGG Match (ContentProvider Failure; C-247 check, 2026-10-27)"
+      }
+    ]
   }
 }
