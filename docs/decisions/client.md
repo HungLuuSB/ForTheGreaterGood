@@ -2183,3 +2183,10 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - The user: "when targeting with nuke, ignore unit selection (when you select a target with nuke, it does not launch)".
 - Attack mode on an enemy unit sent ATTACK on that unit. A silo launches only on ATTACK_GROUND (manual fire at a point, S-48), so nothing happened. Now `commandAt` splits the selection: silos (`CommandSet.isSilo`: strategic weapons only) get ATTACK_GROUND at the clicked ground point, and the rest attack the unit. A right-click on an enemy still never launches a silo.
 - Spec (`Nuke.spec`): a silo and a tank, attack mode, a click on an enemy tank. The silo launches, and the tank's order is the attack. Studio, with real A and a click on a Ravager: the launch, "Nuclear launch detected", stock 1/2 (`debug_out/screens/2026-10-27-nuke-on-unit.jpg`).
+
+### C-247 — Features' textures by models-C's names; two-digit stock counts (2026-10-27)
+
+- The tree and rock models are approved (C's 4f875faa). `MeshModels.fxVariant` built them as `feature_tree_<i>`, but their SurfaceAppearances in MeshMaterials are `fx_feature_tree_<i>` (as the deposits' `fx_deposit_<i>`), so they drew untextured. The look is now looked up by `fx_<name>_<i>`. Studio, Supreme Strait: 568 features drawn, all textured (`debug_out/screens/2026-10-27-features-meshed.jpg`).
+- Two of C's colour maps fail to load in Studio (`ContentProvider` Failure): `fx_feature_tree_2` (rbxassetid://71786331211211, the conifer, which draws grey) and `fx_feature_rock_1` (rbxassetid://111245066781069). Sent to models-C.
+- S-200 (silos hold 10, anti-nukes 20): the health bar's stock count gets 18 pixels for two digits.
+- S-202 (every weapon targets radar blips): no client line reads `canTargetRadar`, so nothing changes.

@@ -22,7 +22,7 @@ local REZ_COLOR = Color3.fromRGB(170, 90, 230) -- resurrect progress (purple)
 -- missile stock (S-47, C-56) above the health bar: the count as a number
 -- and a bar for the missile being made (F10, the user; full when stocked up)
 local PIP_H = 3
-local COUNT_W = 14 -- pixels for the count
+local COUNT_W = 18 -- pixels for the count (two digits: silos hold 10, anti-nukes 20 since S-200)
 local STOCK_COLOR = Color3.fromRGB(255, 200, 70)
 local EMPTY_COLOR = Color3.fromRGB(70, 60, 45)
 
