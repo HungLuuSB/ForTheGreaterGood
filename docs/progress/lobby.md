@@ -9,6 +9,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Role badges:** two or more non-easy AIs on one side split the work. The AI chips show each one's role (Balanced, Air, Defense, Spam, Tech) with the sim's rule (`MatchConfig.aiRoles`; `AiLevels.spec` checks it against `Skirmish.roleOf` on the same match and keeps `Config.AI_ROLES` equal to `Skirmish.ROLES`).
 - Studio (`debug_out/screens/`): `lobby_room_ai_roles` (team 2: Balanced, Air, Defense, the easy AI without a badge), `lobby_room_ai_levels` (the AI editor), `lobby_skirmish_ai_levels`.
 - Lobby specs 63 / 63; the build check passes.
+- Ready to merge: `51243401` (four AI levels and role badges; includes the merge of sim-A's `8713c298`; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-26: The Plains' side splits, S-186)
 
