@@ -57,7 +57,7 @@ return function(t: any)
 		print(string.format("    sea: %d of %d impacts splash; land: %d of %d", seaSplash, seaImpacts, landSplash, landImpacts))
 	end)
 
-	t.test("a Fusion Reactor's death blast (S-70) draws an explosion as wide as its damage", function()
+	t.test("a Fusion Reactor's death blast (S-70) draws a big explosion as wide as its damage (F15)", function()
 		local sim = Sim.new({ seed = 4, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64", scenario = "empty" })
 		local world = World.new(sim.defs)
 		NetOut.join(sim, 1)
@@ -76,12 +76,14 @@ return function(t: any)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 			Effects.update(fx, world, tick, tick * DT, 0, 0)
 			for _, b in fx.bursts do
-				if b.kind == "impact" and b.radius == blast.aoe then
+				-- a huge blast (F15): the nuke's look at its radius, no crater
+				if b.kind == "nuke" and b.radius == blast.aoe and b.noCrater then
 					found = true
 				end
 			end
 			table.clear(world.died)
 		end
-		t.expect(found, "a blast of the def's aoe")
+		t.expect(blast.aoe >= Effects.HUGE_BLAST, "the fusion reactor's blast is a huge one")
+		t.expect(found, "a blast of the def's aoe, the nuke's look without its crater")
 	end)
 end
