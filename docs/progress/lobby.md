@@ -11,6 +11,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - New Rooms spec: the pickers' sizes are MapRegistry's classes, smallest first.
 - **Studio:** the Skirmish groups and The Lakelands' details, 512 × 512 cells and 4 starts (`lobby_skirmish_sizes`); a room on The Lakelands (`lobby_room_lakelands`). The lobby's map loop now takes a few seconds longer (The Lakelands loads in 3 to 4 s).
 - Lobby specs 65 / 65; the build check passes.
+- Ready to merge: `16d09d77` (maps by size; includes the merge of sim-A's `592af90a`, protocol 38: integrate only after B's protocol-38 client; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-26: anti-air with the game's missiles)
 
