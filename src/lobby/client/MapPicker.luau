@@ -40,11 +40,13 @@ function MapPicker.facts(map: any): { { string } }
 	}
 	local info = map.info
 	if type(info) == "table" then
+		-- (S-193: a Wind Turbine's power/s at the weakest and strongest wind; a
+		-- Tidal Generator's power/s, 0 without water)
 		if info.windMin ~= nil and info.windMax ~= nil then
-			table.insert(rows, { "Wind", `{info.windMin} to {info.windMax}` })
+			table.insert(rows, { "Wind", `{info.windMin} to {info.windMax} power/s per turbine` })
 		end
 		if info.tidal ~= nil then
-			table.insert(rows, { "Tidal", tostring(info.tidal) })
+			table.insert(rows, { "Tidal", if info.tidal > 0 then `{info.tidal} power/s per generator` else "None (no water)" })
 		end
 		if type(info.features) == "table" and #info.features > 0 then
 			local names = {}

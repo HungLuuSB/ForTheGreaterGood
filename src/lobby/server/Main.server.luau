@@ -168,7 +168,17 @@ task.spawn(function()
 			local geo = { bounds = StartAreas.bounds(layers.grid), starts = layers.starts, startBoxes = layers.startBoxes, splits = SpawnBoxes.splitList(layers.sideSplits) }
 			-- F4 (S-189): small (≤256 cells a side), medium (≤512), large
 			local size = MapRegistry.sizeClass(layers.grid.cellsX)
-			table.insert(list, { id = id, name = entry.name, starts = #layers.starts, geo = geo, size = size, cells = layers.grid.cellsX })
+			-- G12 (S-193): wind, tides and features for the map panel, once
+			-- MapRegistry has them (cached by the registry; the big maps take a second)
+			local info = nil
+			local details = (MapRegistry :: any).details
+			if details then
+				local okInfo, d = pcall(details, id)
+				if okInfo and type(d) == "table" then
+					info = { windMin = d.windMin, windMax = d.windMax, tidal = d.tidal, features = d.features }
+				end
+			end
+			table.insert(list, { id = id, name = entry.name, starts = #layers.starts, geo = geo, size = size, cells = layers.grid.cellsX, info = info })
 			previews[id] = MapPreview.build(layers, 128)
 		else
 			warn(`[Lobby] map {id}: {layers}`)
@@ -204,7 +214,7 @@ getMaps.OnServerInvoke = function(_player: Player): any
 	local out = {}
 	for _, m in Ctx.maps do
 		local p = previews[m.id]
-		table.insert(out, { id = m.id, name = m.name, starts = m.starts, geo = m.geo, size = m.size, cells = m.cells, preview = p })
+		table.insert(out, { id = m.id, name = m.name, starts = m.starts, geo = m.geo, size = m.size, cells = m.cells, info = m.info, preview = p })
 	end
 	return { ready = true, maps = out }
 end
