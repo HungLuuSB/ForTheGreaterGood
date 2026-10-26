@@ -11,6 +11,7 @@ sand-grey paint with cyan accents, Chaos gunmetal with orange accents; team
 plates are a `team` kind under the color map's alpha (rig.md 6).
 """
 
+import contextlib
 import math
 import os
 from dataclasses import dataclass, field
@@ -167,6 +168,40 @@ class PieceSpec:
 # ---------------------------------------------------------------------------
 # Detail helpers (baked into the textures only)
 # ---------------------------------------------------------------------------
+
+
+def lifted(fn, dy):
+    """`fn` (a build or details function) with everything it adds raised by
+    `dy` studs: the F18 towers keep their turrets and stand them higher."""
+    import bmesh
+    from mathutils import Vector
+
+    def g(p):
+        before = set(p.bm.verts)
+        fn(p)
+        bmesh.ops.translate(p.bm, vec=Vector((0, 0, dy)), verts=[v for v in p.bm.verts if v not in before])
+    return g
+
+
+@contextlib.contextmanager
+def pitched(p, pivot, deg):
+    """Everything built inside the `with` block is tilted `deg` degrees
+    about the X axis through `pivot` (Roblox space), the front (-Z) going up:
+    a raised gun (the F18 artillery towers)."""
+    import bmesh
+    from mathutils import Matrix
+
+    before = set(p.bm.verts)
+    yield
+    bmesh.ops.rotate(p.bm, cent=lib.R(*pivot), matrix=Matrix.Rotation(math.radians(deg), 3, "X"),
+                     verts=[v for v in p.bm.verts if v not in before])
+
+
+def pitched_point(at, pivot, deg):
+    """Where `pitched` puts the Roblox-space point `at` (for a muzzle)."""
+    a = math.radians(deg)
+    dy, dz = at[1] - pivot[1], at[2] - pivot[2]
+    return (at[0], pivot[1] + dy * math.cos(a) - dz * math.sin(a), pivot[2] + dy * math.sin(a) + dz * math.cos(a))
 
 
 def bolt(p, at, n, r=0.04, h=0.03):

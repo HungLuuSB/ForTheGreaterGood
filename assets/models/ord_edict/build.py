@@ -1,8 +1,13 @@
 """Edict (Order artillery emplacement, T2 structure, footprint 3): mesh,
 textures, rig data. blender -b --factory-startup --python-exit-code 1 -P assets/models/ord_edict/build.py
 
-From its blockout, at the size scale (S-104: footprint 3, 24 x 24 studs,
-about 7.5 tall): bigger and more elaborate than the T1 Gauntlet, not a
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved turret stands LIFT studs higher
+on a stepped three-tier fortress (the emplacement as the first tier, a
+second tier with a team band and buttresses, a third with lit slits) and
+its long gun is raised 20 degrees (gun tip ~23 studs, the F18 blockout).
+First built from its blockout, at the size scale (S-104: footprint 3):
+bigger and more elaborate than the T1 Gauntlet, not a
 rescale. Big shapes first: a chamfered slab, a sloped armored emplacement
 with a front glacis, diamond buttresses at the corners, team plates on the
 side slopes and the glacis, hinged ready-ammo hatches, an ammo bunker with
@@ -24,9 +29,15 @@ from towers import antenna, clamped_cable, glow_strip, louver  # noqa: E402
 from mech import hazard, octagon, rect, rivets  # noqa: E402
 from unit import UP, ring, seam  # noqa: E402
 
-TURRET_PIVOT = (0.0, 2.6, 1.0)
-GY = 4.5  # gun axis height
-MUZZLE = (0.0, GY, -19.4)
+LIFT = 17.4 - 4.5  # F18: the gun's root at the blockout's 17.4
+ELEV = 20  # F18: the long gun raised
+RING = 2.6 + LIFT  # 15.5, the turret ring on top of the third tier
+TURRET_PIVOT = (0.0, RING, 1.0)
+GY = 4.5  # gun axis height before the lift (the turret is built there, then lifted)
+MANTLET = (0.0, GY, -4.3)  # the gun pitches about the mantlet
+_m = unit.pitched_point((0.0, GY, -19.4), MANTLET, ELEV)
+MUZZLE = (0.0, round(_m[1] + LIFT, 3), round(_m[2], 3))
+T2Y, T3Y = 8.2, RING - 0.4  # the second and third tiers' tops
 BODY = octagon(9.0, 2.2, 0.0, 1.0)  # x -9..9, z -8..10
 TOP = 0.86  # the body's upper walls slope in to this share
 
@@ -52,24 +63,35 @@ def build_base(p):
             p.prism_y(diamond(sx * 8.1, cz, 1.2), 0.6, 2.5, "paint", bevel=0.1, top_scale=0.55)
     # ready-ammo hatches on the deck, hinged
     for sx in (-1, 1):
-        p.box((sx * 5.5, 2.74, -4.9), (1.7, 0.1, 1.7), "trim", bevel=0.03)
-        p.cylinder("x", (sx * 5.5, 2.8, -4.05), 0.1, 1.2, 8, "steel")
-    # turret ring with a thin running band
-    p.cylinder("y", (0, 2.82, 1.0), 5.3, 0.24, 32, "dark")
-    p.cylinder("y", (0, 2.66, 1.0), 5.45, 0.06, 32, "light")
+        p.box((sx * 4.2, 2.74, -7.0), (1.4, 0.1, 1.2), "trim", bevel=0.03)
+        p.cylinder("x", (sx * 4.2, 2.8, -6.45), 0.1, 1.0, 8, "steel")
+    # F18: the second tier (team band, buttresses), the third (lit slits), the ring
+    p.prism_y(octagon(7.0, 1.8, 0.0, 1.0), 2.7, T2Y, "paint", bevel=0.14, top_scale=0.93)
+    p.prism_y(octagon(7.15, 1.85, 0.0, 1.0), 4.0, 4.6, "team", bevel=0.02)
+    for sx in (-1, 1):
+        for cz in (-3.6, 5.6):
+            p.prism_y(diamond(sx * 5.9, cz, 1.0), 2.7, 7.0, "paint", bevel=0.08, top_scale=0.45)
+    p.prism_y(octagon(5.4, 1.4, 0.0, 1.0), T2Y, T3Y, "paint", bevel=0.14, top_scale=0.95)
+    p.box((0, T3Y - 2.6, 1.0 - 5.42), (5.0, 0.3, 0.05), "light")
+    for sx in (-1, 1):
+        p.box((sx * 5.42, T3Y - 2.6, 1.0), (0.05, 0.3, 4.2), "light")
+    p.box((0, T2Y + 1.6, 1.0 - 5.43), (1.4, 2.2, 0.05), "dark")  # a door onto the second tier
+    p.prism_y(octagon(5.9, 1.5, 0.0, 1.0), T3Y, RING - 0.1, "trim", bevel=0.08)
+    p.cylinder("y", (0, RING - 0.02, 1.0), 5.0, 0.2, 32, "dark")
+    p.cylinder("y", (0, RING - 0.22, 1.0), 5.15, 0.06, 32, "light")
     # ammo bunker (back right) with a team roof, a lit door and a feed rail
-    p.prism_y(rect(6.8, 8.0, 1.6, 1.3), 2.6, 4.4, "trim", bevel=0.1, top_scale=0.92)
-    p.box((6.8, 4.42, 8.0), (2.6, 0.05, 2.0), "team", bevel=0.01)
-    p.box((6.8, 3.3, 6.69), (1.4, 0.9, 0.05), "dark")
-    p.box((6.8, 3.85, 6.67), (1.4, 0.1, 0.05), "power")
-    clamped_cable(p, [(5.6, 2.75, 7.0), (4.6, 2.78, 6.0), (3.6, 2.8, 5.2)], r=0.12)
+    p.prism_y(rect(6.4, 9.2, 1.6, 1.0), 2.6, 4.4, "trim", bevel=0.1, top_scale=0.92)
+    p.box((6.4, 4.42, 9.2), (2.6, 0.05, 1.6), "team", bevel=0.01)
+    p.box((7.82, 3.3, 9.2), (0.05, 0.9, 1.2), "dark")
+    p.box((7.84, 3.85, 9.2), (0.05, 0.1, 1.2), "power")
+    clamped_cable(p, [(4.8, 2.75, 8.6), (3.6, 4.6, 7.9), (2.6, 7.6, 7.3)], r=0.12)
     # fire-control cabin (back left): window strip, mast, dish-less sensor box
-    p.prism_y(rect(-6.8, 8.0, 1.5, 1.3), 2.6, 4.6, "paint", bevel=0.1, top_scale=0.9)
-    p.box((-6.8, 4.62, 8.0), (2.3, 0.05, 1.9), "team", bevel=0.01)
-    p.box((-6.8, 3.9, 6.69), (2.2, 0.3, 0.05), "light")
-    p.cylinder("y", (-7.4, 5.8, 8.4), 0.12, 2.4, 6, "steel")
-    p.box((-7.4, 7.1, 8.4), (0.9, 0.5, 0.5), "trim", bevel=0.03)
-    p.box((-7.4, 7.1, 8.13), (0.6, 0.2, 0.05), "light")
+    p.prism_y(rect(-6.4, 9.2, 1.5, 1.0), 2.6, 4.6, "paint", bevel=0.1, top_scale=0.9)
+    p.box((-6.4, 4.62, 9.2), (2.3, 0.05, 1.5), "team", bevel=0.01)
+    p.box((-7.82, 3.9, 9.2), (0.05, 0.3, 1.4), "light")
+    p.cylinder("y", (-7.0, 5.8, 9.6), 0.12, 2.4, 6, "steel")
+    p.box((-7.0, 7.1, 9.6), (0.9, 0.5, 0.5), "trim", bevel=0.03)
+    p.box((-7.0, 7.1, 9.33), (0.6, 0.2, 0.05), "light")
     # vents, side strips, hazard edge, corner lights, a cable run
     for sx in (-1, 1):
         louver(p, (sx * 9.02, 1.2, -3.0), (0, 0, 1), (sx, 0, 0), 2.6, 0.8, slats=3)
@@ -80,7 +102,7 @@ def build_base(p):
     for sx in (-1, 1):
         for sz in (-1, 1):
             p.box((sx * 10.2, 0.68, sz * 10.2), (0.45, 0.12, 0.45), "light")
-    clamped_cable(p, [(-5.4, 2.75, 7.2), (-4.6, 2.78, 6.0), (-3.6, 2.8, 5.2)], r=0.1)
+    clamped_cable(p, [(-4.9, 2.75, 8.6), (-3.6, 4.6, 7.9), (-2.6, 7.6, 7.3)], r=0.1)
 
 
 def details_base(p):
@@ -88,7 +110,9 @@ def details_base(p):
         rivets(p, (sx * 9.02, 0.85, -5.4), (sx * 9.02, 0.85, 7.4), 12, (sx, 0, 0))
         seam(p, (sx * 9.02, 1.8, -5.6), (sx * 9.02, 1.8, 7.6), (sx, 0, 0))
     seam(p, (-6.6, 1.8, -8.02), (6.6, 1.8, -8.02), (0, 0, -1))
-    ring(p, (0, 2.95, 1.0), UP, 4.4)
+    for y in (6.4, 11.0):
+        seam(p, (-3.6, y, 1.0 - (5.42 if y > T2Y else 7.0)), (3.6, y, 1.0 - (5.42 if y > T2Y else 7.0)), (0, 0, -1))
+    ring(p, (0, RING + 0.09, 1.0), UP, 4.4)
     rivets(p, (-10.4, 0.601, 11.2), (10.4, 0.601, 11.2), 14, UP)
 
 
@@ -118,18 +142,19 @@ def build_turret(p):
     p.box((1.8, 4.3, 5.62), (2.4, 1.4, 0.05), "grille")
     antenna(p, (-3.3, 6.1, 4.6), 2.2)
     # mantlet, very long gun, evacuator, slotted muzzle brake
-    p.box((0, GY, -4.3), (2.8, 2.0, 1.8), "trim", bevel=0.14)
-    p.ocyl((0, GY, -5.1), (0, 0, -1), 0.82, 2.6, 16, "trim")  # sleeve
-    p.ocyl((0, GY, -5.1), (0, 0, -1), 0.55, 13.0, 16, "paint")
-    p.ocyl((0, GY, -10.0), (0, 0, -1), 0.78, 1.8, 16, "paint")  # evacuator
-    for z in (-7.9, -12.6, -15.4):
-        p.ocyl((0, GY, z), (0, 0, -1), 0.6, 0.14, 16, "steel")
-    p.ocyl((0, GY, -16.9), (0, 0, -1), 0.62, 0.16, 16, "weapon")
-    p.box((0, GY, -18.6), (1.6, 1.3, 1.5), "dark", bevel=0.08)
-    for z in (-18.2, -18.9):
-        for sx in (-1, 1):
-            p.box((sx * 0.81, GY, z), (0.05, 0.9, 0.3), "grille")
-    p.ocyl((0, GY, -19.35), (0, 0, -1), 0.4, 0.04, 14, "dark")
+    with unit.pitched(p, MANTLET, ELEV):
+        p.box((0, GY, -4.3), (2.8, 2.0, 1.8), "trim", bevel=0.14)
+        p.ocyl((0, GY, -5.1), (0, 0, -1), 0.82, 2.6, 16, "trim")  # sleeve
+        p.ocyl((0, GY, -5.1), (0, 0, -1), 0.55, 13.0, 16, "paint")
+        p.ocyl((0, GY, -10.0), (0, 0, -1), 0.78, 1.8, 16, "paint")  # evacuator
+        for z in (-7.9, -12.6, -15.4):
+            p.ocyl((0, GY, z), (0, 0, -1), 0.6, 0.14, 16, "steel")
+        p.ocyl((0, GY, -16.9), (0, 0, -1), 0.62, 0.16, 16, "weapon")
+        p.box((0, GY, -18.6), (1.6, 1.3, 1.5), "dark", bevel=0.08)
+        for z in (-18.2, -18.9):
+            for sx in (-1, 1):
+                p.box((sx * 0.81, GY, z), (0.05, 0.9, 0.3), "grille")
+        p.ocyl((0, GY, -19.35), (0, 0, -1), 0.4, 0.04, 14, "dark")
 
 
 def details_turret(p):
@@ -143,9 +168,9 @@ def details_turret(p):
 
 unit.run(__file__, "ord_edict", "order", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
-                 unit.PieceSpec("turret", "base", TURRET_PIVOT, build_turret, details_turret)],
+                 unit.PieceSpec("turret", "base", TURRET_PIVOT, unit.lifted(build_turret, LIFT), unit.lifted(details_turret, LIFT))],
          attachments={"muzzle": {"parent": "turret", "at": list(MUZZLE)}},
          budget=6000,
-         previews=[("35", (-34, 26, -40), (0, 3.0, -3.0), 50),
-                   ("80", (0, 58, 9), (0, 2, -3.0), 50),
-                   ("close", (-17, 13, -20), (0, 4.0, -4.0), 38)])
+         previews=[("35", (-44, 40, -54), (0, 12.0, -3.0), 50),
+                   ("80", (0, 66, 9), (0, 8, -3.0), 50),
+                   ("close", (-18, 26, -22), (0, 15.0, -4.0), 38)])

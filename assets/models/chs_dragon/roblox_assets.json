@@ -1,0 +1,68 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-181 mesh, rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar where needed), review: 3372 triangles, glow share 1.2%",
+  "bar": {
+    "model": "rbxassetid://84650359018954",
+    "meshes": {
+      "base": "rbxassetid://132390443813007",
+      "base_glow_power": "rbxassetid://89845336222195",
+      "base_glow_running": "rbxassetid://77440078772047",
+      "base_glow_weapon": "rbxassetid://94015175500166",
+      "belly": "rbxassetid://108837311860168",
+      "belly_glow_running": "rbxassetid://129824306326085",
+      "fanL": "rbxassetid://81331029737412",
+      "fanL_glow_power": "rbxassetid://119686066229126",
+      "fanR": "rbxassetid://70740995821733",
+      "fanR_glow_power": "rbxassetid://122882419219049",
+      "flame": "rbxassetid://95375656544246",
+      "flame_glow_weapon": "rbxassetid://82390908331394",
+      "laser_l": "rbxassetid://137682191669736",
+      "laser_l_glow_weapon": "rbxassetid://115236903333637",
+      "laser_r": "rbxassetid://94553400781865",
+      "laser_r_glow_weapon": "rbxassetid://91352241058398"
+    },
+    "decals": {
+      "ALB": "rbxassetid://128442113474429",
+      "RGH": "rbxassetid://122796704262011",
+      "NOR": "rbxassetid://135665075040820",
+      "MTL": "rbxassetid://129134380303594",
+      "EMI": "rbxassetid://99939724871614"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://135749405101554",
+      "NOR": "rbxassetid://109724797991632",
+      "RGH": "rbxassetid://102063394742987",
+      "MTL": "rbxassetid://117494066036463",
+      "EMI": "rbxassetid://71117324124000"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_dragon_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://122580550482222",
+    "meshes": {
+      "base": "rbxassetid://79939578558369",
+      "belly": "rbxassetid://126578645947693",
+      "fanL": "rbxassetid://110343934098288",
+      "fanR": "rbxassetid://121816731042587",
+      "flame": "rbxassetid://72368796708750",
+      "laser_l": "rbxassetid://88810417687216",
+      "laser_r": "rbxassetid://73067054948082"
+    },
+    "decals": {
+      "ALB": "rbxassetid://74283283048559",
+      "RGH": "rbxassetid://97468793569842",
+      "NOR": "rbxassetid://70933840472264",
+      "MTL": "rbxassetid://80069001683574",
+      "EMI": "rbxassetid://135598101161193"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://98091693726614",
+      "NOR": "rbxassetid://85760820564842",
+      "RGH": "rbxassetid://112532702746975",
+      "MTL": "rbxassetid://96203322995049",
+      "EMI": "rbxassetid://101962857609052"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_dragon_wreck_bar in FTGG Art",
+    "revision": "S-181 wreck, rigged in FTGG Art 2026-10-26, review: 2456 triangles"
+  }
+}

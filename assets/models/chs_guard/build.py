@@ -10,6 +10,11 @@ amber sensor. The `barrel` (pitch, -60..+60 degrees): a ribbed armored
 shroud and a stubby laser tube with a glowing lens; `muzzle` at the lens.
 Chaos reads rugged and improvised (M-14). Writes export/ through
 tools/unit.py.
+
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved mesh scaled x1.259 (the
+`scale` below), so it stands as tall as its approved F18 blockout
+(~17.5 studs) and reads heavier; same shapes, pieces and anchors.
 """
 
 import math
@@ -89,11 +94,14 @@ def details_barrel(p):
     rivets(p, (0.81, 11.0, -0.7), (0.81, 11.0, -2.5), 4, (1, 0, 0))
 
 
+F18 = 1.259  # the F18 scale (old top 13.9 -> 17.5 studs)
+
 unit.run(__file__, "chs_guard", "chaos", footprint=2,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("turret", "base", TURRET, build_turret, details_turret),
                  unit.PieceSpec("barrel", "turret", BARREL, build_barrel, details_barrel)],
          attachments={"muzzle": {"parent": "barrel", "at": list(MUZZLE)}},
          budget=4000,
-         previews=[("35", (-20, 16, -24), (0, 6.5, 0), 40),
-                   ("close", (-9, 14, -10), (0, 10.6, -1.0), 35)])
+         scale=(F18, F18, F18),
+         previews=[("35", (-25.2, 20.1, -30.2), (0.0, 8.2, 0.0), 40),
+                   ("close", (-11.3, 17.6, -12.6), (0.0, 13.3, -1.3), 35)])

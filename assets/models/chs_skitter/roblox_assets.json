@@ -1,0 +1,72 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-181 mesh, rigged in FTGG Art 2026-10-26, review: 2384 triangles, glow share 3.1%",
+  "bar": {
+    "model": "rbxassetid://88616196501975",
+    "meshes": {
+      "base": "rbxassetid://89004402345314",
+      "base_glow_power": "rbxassetid://121952402439266",
+      "shinBL": "rbxassetid://108698033653922",
+      "shinBL_glow_running": "rbxassetid://111225365320862",
+      "shinBR": "rbxassetid://128552696712295",
+      "shinBR_glow_running": "rbxassetid://122597826029099",
+      "shinFL": "rbxassetid://79313336958068",
+      "shinFL_glow_running": "rbxassetid://83181840594232",
+      "shinFR": "rbxassetid://81142028605628",
+      "shinFR_glow_running": "rbxassetid://132016691190775",
+      "thighBL": "rbxassetid://114200964198753",
+      "thighBR": "rbxassetid://127278508892414",
+      "thighFL": "rbxassetid://86037145844886",
+      "thighFR": "rbxassetid://137475837896399",
+      "torso": "rbxassetid://122718980576499",
+      "torso_glow_head": "rbxassetid://130584827438674",
+      "torso_glow_weapon": "rbxassetid://129716233282560"
+    },
+    "decals": {
+      "ALB": "rbxassetid://80254113630023",
+      "RGH": "rbxassetid://83815510553046",
+      "NOR": "rbxassetid://114392995666833",
+      "MTL": "rbxassetid://124801220787309",
+      "EMI": "rbxassetid://80741751181879"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://130879619899350",
+      "NOR": "rbxassetid://106107035988752",
+      "RGH": "rbxassetid://98412885433373",
+      "MTL": "rbxassetid://89881383762203",
+      "EMI": "rbxassetid://131983264276596"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_skitter_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://136165998294133",
+    "meshes": {
+      "base": "rbxassetid://119676966737513",
+      "shinBL": "rbxassetid://137968154505515",
+      "shinBR": "rbxassetid://99023354827827",
+      "shinFL": "rbxassetid://112079805979862",
+      "shinFR": "rbxassetid://103642151439244",
+      "thighBL": "rbxassetid://77249302889397",
+      "thighBR": "rbxassetid://125083057945269",
+      "thighFL": "rbxassetid://105700268357141",
+      "thighFR": "rbxassetid://78840443031661",
+      "torso": "rbxassetid://80920813764182"
+    },
+    "decals": {
+      "ALB": "rbxassetid://138466669175863",
+      "RGH": "rbxassetid://132200523334101",
+      "NOR": "rbxassetid://85741157841196",
+      "MTL": "rbxassetid://115419590253024",
+      "EMI": "rbxassetid://122068990590813"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://124523327142785",
+      "NOR": "rbxassetid://105364820606318",
+      "RGH": "rbxassetid://101008647258724",
+      "MTL": "rbxassetid://92868819313847",
+      "EMI": "rbxassetid://130702429620799"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_skitter_wreck_bar in FTGG Art",
+    "revision": "S-181 wreck, rigged in FTGG Art 2026-10-26, review: 1792 triangles"
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "id": "ord_advbotlab",
+  "footprintStuds": 40,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        10.0,
+        0.0
+      ],
+      "size": [
+        40.0,
+        20.0,
+        39.1006
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        -13.0,
+        20.2,
+        15.0
+      ],
+      "size": [
+        4.0,
+        1.4,
+        0.3
+      ],
+      "pivot": [
+        -13.0,
+        19.8,
+        15.0
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.8,
+        -8.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -9.0,
+        16.3,
+        -8.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        9.0,
+        16.3,
+        -8.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        -3.0,
+        16.3,
+        -8.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        3.0,
+        16.3,
+        -8.0
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "radar"
+  ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        9.6725,
+        0.0
+      ],
+      "size": [
+        37.5,
+        18.105,
+        37.5
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        8.6,
+        -7.3175
+      ],
+      "size": [
+        18.9,
+        16.0,
+        12.565
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -13.0,
+        20.2,
+        14.83
+      ],
+      "size": [
+        3.4,
+        0.2,
+        0.04
+      ]
+    }
+  ],
+  "glowShare": 0.0241,
+  "triangles": {
+    "base": 2332,
+    "radar": 56,
+    "total": 2388
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
