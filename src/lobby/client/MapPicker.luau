@@ -51,7 +51,8 @@ function MapPicker.facts(map: any): { { string } }
 		if type(info.features) == "table" and #info.features > 0 then
 			local names = {}
 			for _, f in info.features do
-				table.insert(names, Ui.label2(tostring(f)))
+				local word = tostring(f)
+				table.insert(names, string.upper(string.sub(word, 1, 1)) .. string.sub(word, 2))
 			end
 			table.insert(rows, { "Features", table.concat(names, ", ") })
 		end
