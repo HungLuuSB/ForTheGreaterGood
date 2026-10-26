@@ -12,7 +12,12 @@ local GroundMeshes = {}
 GroundMeshes.ANYWAY = false -- Studio: draw review entries too (Invoke("groundanyway", true))
 
 export type Piece = { mesh: string, center: { number }, size: { number }, material: string }
-export type Entry = { status: string, tiles: { Piece }, details: { Piece }? }
+export type Entry = { status: string, tiles: { Piece }, details: { Piece }?, step: number? } -- step: the bake's height sampling (map-ground.md; 4 when absent)
+
+GroundMeshes.STEP = 4 -- studs: a bake's height sampling unless its entry says otherwise
+-- bakes made coarser before the manifest carried `step` (models-C's
+-- `coarsen`; remove once the manifest says so itself)
+GroundMeshes.COARSE = table.freeze({ lakelands = 8 } :: { [string]: number })
 
 -- The plain look per material key: a Roblox material name and a colour,
 -- the voxel terrain's own (Render/Terrain) so a map looks the same before
@@ -48,6 +53,18 @@ function GroundMeshes.entryFor(mapId: string?, manifest: { [string]: Entry }?): 
 		return e
 	end
 	return nil
+end
+
+-- The height sampling of the baked ground drawn for `mapId` when it is
+-- coarser than the sim's smooth ground can stand on unchanged (C-235): the
+-- step in studs, or nil (no mesh ground, or a 4-stud bake).
+function GroundMeshes.drawnStep(mapId: string?, manifest: { [string]: Entry }?): number?
+	local e = GroundMeshes.entryFor(mapId, manifest)
+	if e == nil then
+		return nil
+	end
+	local step = e.step or GroundMeshes.COARSE[GroundMeshes.nameOf(mapId) :: string] or GroundMeshes.STEP
+	return if step > GroundMeshes.STEP then step else nil
 end
 
 -- The plain look of material key `key` (unknown keys look like grass).

@@ -37,6 +37,37 @@ function Terrain.groundY(layers: Layers.Layers, x: number, z: number): number
 	return a + (b - a) * tz
 end
 
+-- The baked mesh ground's height at (x, z) on a map baked with height
+-- samples every `step` studs from its corner (models-C's `coarsen`, the
+-- Lakelands at 8: C-235). Each sample is the smooth ground's height there
+-- (on the 8-stud grid: the average of the four cells round a corner), and
+-- each square between samples is two flat triangles split along its
+-- flatter diagonal, as `assets/maps/tools/ground.py` builds them. So units
+-- stand on what is drawn, not on the cell centres the coarse mesh skips.
+function Terrain.drawnY(layers: Layers.Layers, x: number, z: number, step: number): number
+	local g = layers.grid
+	local nx, nz = math.floor(g.sizeX / step), math.floor(g.sizeZ / step) -- squares per side
+	local fx = math.clamp((x - g.originX) / step, 0, nx)
+	local fz = math.clamp((z - g.originZ) / step, 0, nz)
+	local i, j = math.min(math.floor(fx), nx - 1), math.min(math.floor(fz), nz - 1)
+	local tx, tz = fx - i, fz - j
+	local x0, z0 = g.originX + i * step, g.originZ + j * step
+	local h00, h10 = Terrain.groundY(layers, x0, z0), Terrain.groundY(layers, x0 + step, z0)
+	local h01, h11 = Terrain.groundY(layers, x0, z0 + step), Terrain.groundY(layers, x0 + step, z0 + step)
+	if math.abs(h00 - h11) <= math.abs(h10 - h01) then
+		-- split along 00-11: (00, 11, 10) where tx >= tz, else (00, 01, 11)
+		if tx >= tz then
+			return h00 + tx * (h10 - h00) + tz * (h11 - h10)
+		end
+		return h00 + tz * (h01 - h00) + tx * (h11 - h01)
+	end
+	-- split along 10-01: (00, 01, 10) below it, else (10, 01, 11)
+	if tx + tz <= 1 then
+		return h00 + tx * (h10 - h00) + tz * (h01 - h00)
+	end
+	return h11 + (1 - tx) * (h01 - h11) + (1 - tz) * (h10 - h11)
+end
+
 -- Water surface at (x, z), or nil on dry land (the cell's own value).
 function Terrain.waterY(layers: Layers.Layers, x: number, z: number): number?
 	local g = layers.grid

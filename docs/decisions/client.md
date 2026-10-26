@@ -2055,3 +2055,17 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Checked in Studio (The Plains): Thug and Mace balls 0.90 in (255, 225, 120), beside the Lancer's 0.9 × 0.9 × 2.6 shell in the same colour.
 
 **Why:** the user, via sim-A: "Thug / Mace's plasma should be the same size as the tank, their shot explode like a small hit vfx of the tank because they should have no aoe damage to their shot at all."
+
+### C-235 — Units stand on a coarser bake's surface (2026-10-26, models-C's `coarsen`)
+
+- models-C bakes The Lakelands with a height sample every 8 studs, not 4: Field.coarsen keeps every other sample of the export. The kept samples sit on the sim's cell corners. Each one is the average of its four cells, so the mesh never passes through the cell-centre heights the client placed units on.
+- Measured across the map from `ground.json`: off by 0.10 stud on average and under 0.56 for 99% of cells. But at the foot or top of a cliff the gap reaches about 2 studs on flat grass. 224 cells are like that, mirrored round the map. Steeper cells, up to 14.5 studs off, are impassable cliffs under C's rock details.
+- Fix:
+  - `Core/Terrain.drawnY(layers, x, z, step)` rebuilds the bake's surface from the sim's layers: the smooth height at each `step` corner, and two flat triangles per square split along the flatter diagonal, as `ground.py` builds them.
+  - `World.welcome` sets `world.drawnStep` from `GroundMeshes.drawnStep(mapId)`: the manifest entry's `step`, else `GroundMeshes.COARSE` (lakelands = 8) until the manifest carries `step`. It is nil for 4-stud bakes and for maps without mesh ground.
+  - `World.groundY` uses the drawn surface when `drawnStep` is set, so units, wrecks, bars, rings, effects and the fog blanket all follow the mesh. Contacts and MissileView now read heights through `World.groundY` too.
+- The contract (`docs/contracts/map-ground.md`) gains the entry's optional `step` and the triangle rule.
+- Spec: on 4,003 spots on The Lakelands, including the flagged ridge-foot cells, `drawnY` is within 0.05 stud of a surface built independently from `ground.json`, where the cell-centre surface is up to 7.45 studs off. The hundredths come from squares whose two diagonals are almost equally flat, where the export's rounded heights tip the split.
+- Studio: three Lancers at the ridge's foot (x −972 to −956, z −1580) sit on the drawn grass and slope; screenshot `debug_out/screens/2026-10-26-lakelands-ridge-foot.jpg`. The ground's 402 pieces took about 160 s to load on the first run of a session and about 55 s once cached. The first figure is past the loading screen's 115 s hold.
+
+**Why:** models-C's note with the bake: on coarsened maps the mesh and Core/Terrain's heights differ on slopes.
