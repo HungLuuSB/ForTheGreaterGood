@@ -76,11 +76,12 @@ return function(t: any)
 			for id in world.units do
 				t.expect(ref.units[id] ~= nil, `tick {tick}: extra unit {id}`)
 			end
-			-- tactical positions are the sim's within wire precision (1/32 stud)
+			-- tactical positions are the sim's within wire precision (a quarter
+			-- stud since protocol 38: within 1/8, S-189)
 			for id, u in world.units do
 				if u.tier == "tactical" and sim.world.slot[id] then
 					local dx, dz = u.x - sim.world.posX[id], u.z - sim.world.posZ[id]
-					t.expect(math.abs(dx) <= 8 / 256 and math.abs(dz) <= 8 / 256, `tick {tick}: unit {id} off the sim by {dx}, {dz}`)
+					t.expect(math.abs(dx) <= 1 / 8 + 1e-9 and math.abs(dz) <= 1 / 8 + 1e-9, `tick {tick}: unit {id} off the sim by {dx}, {dz}`)
 					if #u.snaps >= 2 then
 						moved += 1
 					end

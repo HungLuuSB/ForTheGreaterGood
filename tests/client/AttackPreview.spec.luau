@@ -75,8 +75,11 @@ return function(t: any)
 	end)
 
 	t.test("a bomber's carpet: the preview's spots are where its salvo lands (S-178, F33)", function()
-		local sim = Sim.new({ seed = 9, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "empty" })
-		local bomber = Spawn.unit(sim, "ord_absolution", 1, -380, 0, math.pi / 2)
+		local sim = Sim.new({ seed = 9, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:192", scenario = "empty" })
+		-- far enough out to climb and release on its first pass: a bomber
+		-- that misses the window goes round and comes back on another line
+		-- (D91), which no preview can know
+		local bomber = Spawn.unit(sim, "ord_absolution", 1, -700, 0, math.pi / 2)
 		local world = World.new(sim.defs)
 		NetOut.join(sim, 1)
 		local g = sim.map.layers.grid

@@ -12,6 +12,7 @@ local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
 local Client = require("./Support/Client")
 local Combat = require("../Sim/Combat/Combat")
+local Skirmish = require("../Sim/AI/Skirmish")
 local RunAll = require("./RunAll")
 
 local L = Sensors.Level
@@ -788,6 +789,44 @@ return function(t: RunAll.Context)
 
 	-- S-26 (client requests 9 and 10): the ally team's sight map and the
 	-- wrecks it knows, so the client's fog and wrecks match the server's.
+	t.test("the sight diff reads only marked rows (S-191) and still equals the team's sight: two AIs, the reveal cheat on and off", function()
+		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "map:coastline", scenario = "standard_start" })
+		local brains = { Skirmish.new(sim, 1, "hard"), Skirmish.new(sim, 2, "hard") }
+		local s = sim.sensors
+		local mismatches, checks = 0, 0
+		for tick = 1, 15 * 90 do
+			if tick == 15 * 40 then
+				Sensors.reveal(sim, 1, 1)
+			elseif tick == 15 * 45 then
+				Sensors.reveal(sim, 1, -1)
+			end
+			for _, b in brains do
+				Skirmish.tick(b)
+			end
+			Sim.step(sim)
+			if sim.tick % NetOut.SIGHT_EVERY == 0 then
+				for _, ally in s.teams do
+					local los, mine = s.maps[ally].los, (sim.net.sight[ally] :: any).cells
+					for i = 0, s.width * s.depth - 1 do
+						if (buffer.readu16(los, i * 2) > 0) ~= (buffer.readu8(mine, i) == 1) then
+							mismatches += 1
+						end
+					end
+				end
+				checks += 1
+			end
+		end
+		t.expect(checks > 600, `{checks} sensor ticks checked`)
+		t.equal(mismatches, 0, "every sensor tick, every cell")
+		local units = 0
+		for _, id in sim.world.ids do
+			if sim.world.owner[id] ~= 0 then
+				units += 1
+			end
+		end
+		t.expect(units > 15, `the AIs built and moved ({units} units)`)
+	end)
+
 	t.test("sight and wrecks: the client's fog equals the ally team's sight, wrecks come and go as the team sees them", function()
 		local players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 1 }, { id = 3, team = 3, allyTeam = 2 } }
 		local sim = Sim.new({ seed = 5, players = players, mapId = "flat:96" })

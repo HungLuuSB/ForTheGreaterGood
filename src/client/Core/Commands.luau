@@ -19,8 +19,9 @@ end
 -- A whole command as a payload (the cheat line's, from CheatText.parse; C-120).
 Commands.encode = encode
 
--- The cell rectangle covering world points `xs`/`zs` (e.g. the ground hits of
--- the screen corners), clamped to the map and the u8 wire range.
+-- The map-cell rectangle covering world points `xs`/`zs` (e.g. the ground
+-- hits of the screen corners), clamped to the map (u16 on the wire since
+-- protocol 38; a rectangle touching an edge covers what flies past it, S-189).
 function Commands.cameraRect(grid: Grid.Grid, xs: { number }, zs: { number }): (number, number, number, number)
 	local minX, minZ, maxX, maxZ = math.huge, math.huge, -math.huge, -math.huge
 	for i = 1, #xs do
@@ -28,7 +29,7 @@ function Commands.cameraRect(grid: Grid.Grid, xs: { number }, zs: { number }): (
 		minX, maxX = math.min(minX, cx), math.max(maxX, cx)
 		minZ, maxZ = math.min(minZ, cz), math.max(maxZ, cz)
 	end
-	local limX, limZ = math.min(grid.cellsX, 256) - 1, math.min(grid.cellsZ, 256) - 1
+	local limX, limZ = grid.cellsX - 1, grid.cellsZ - 1
 	return math.clamp(minX, 0, limX), math.clamp(minZ, 0, limZ), math.clamp(maxX, 0, limX), math.clamp(maxZ, 0, limZ)
 end
 

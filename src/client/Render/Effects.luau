@@ -438,10 +438,13 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		local color = PROJ_COLOR[kind] or PROJ_COLOR.BALLISTIC
 		local fxDef = p.weapon.fx
 		if fxDef and fxDef.trail == "plasma" then
-			-- a plasma shot (S-181): a glowing ball in the weapon's colour, bigger for a bigger blast
+			-- a plasma shot (S-181): a glowing ball in the weapon's colour, bigger
+			-- for a bigger blast; one with no blast (the Thug's, the Mace's) as
+			-- thick as a tank shell (S-190)
 			local c = fxDef.color
 			color = if c then Color3.fromRGB(c.r or 255, c.g or 140, c.b or 40) else Color3.fromRGB(255, 140, 40)
-			local d = math.clamp(1.4 + (p.weapon.aoe or 0) * 0.08, 1.4, 4.5)
+			local aoe = p.weapon.aoe or 0
+			local d = if aoe <= 0 then PROJ_SIZE.BALLISTIC.X else math.clamp(1.4 + aoe * 0.08, 1.4, 4.5)
 			size = Vector3.new(d, d, d)
 		end
 		if part.Size ~= size then

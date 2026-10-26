@@ -279,8 +279,15 @@ Effects.LARGE_IMPACT = 1.8
 Effects.FLAME_SECONDS = 0.35 -- a flame stream's life (S-181)
 Effects.HUGE_BLAST = 90 -- studs: a death blast this wide plays the nuke's look scaled to it (F15)
 Effects.BLAST_SHOWN = 0.6 -- an ordinary death blast's burst, as a share of its damage radius
+-- A shot with no blast whose impact is "explosion_small" (the Thug's and
+-- Mace's plasma, S-190) bursts like a tank shell's small hit: the Lancer's
+-- (aoe 3), not the smallest burst its missing blast radius would give.
+Effects.SMALL_HIT = 3
 function Effects.impactSize(weapon: any): number
 	local impact = weapon and weapon.fx and weapon.fx.impact
+	if impact == "explosion_small" and ((weapon :: any).aoe or 0) <= 0 then
+		return Effects.SMALL_HIT
+	end
 	local large = type(impact) == "string" and string.find(impact, "_large", 1, true) ~= nil
 	return weaponSize(weapon) * (if large then Effects.LARGE_IMPACT else 1)
 end

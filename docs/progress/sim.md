@@ -14,6 +14,8 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 - **Maps and movement:** 2 × 2 deposits (S-184), side splits (S-186), jets over the map (S-183), Maneuver leash, builders stop at their reach, footprint-2 clearance (S-185).
 - **New units (S-181):** bots and labs, Tzar, Centurion, Dragon, Liche. Transports wait for a load / unload mechanic.
 - **AI (S-187):** Hard - Aggressive, team roles, teamwork, counters, tidy generators, the new units.
+- **Sight diff (S-191, B's watchdog):** NetOut diffs only the sight rows Sensors changed: the empty Lakelands preview 1.50 → 0.03 ms per tick, a 4-AI Lakelands match 0.55 → 0.16 ms.
+- **Plasma (S-190, the user):** every plasma shot in the tank shell's colour; Thug and Mace lose their splash (direct hits only) and use the tank's small hit.
 - **Bigger maps (S-189, F4):** protocol 38: positions on a fixed 64-stud wire grid (same 4 bytes, ±8,192 studs), maps up to 1,024 cells, The Lakelands (512 cells, 2v2) as the first medium map, aircraft and shots up to 512 studs past the edge. Replay format 6.
 - **Open:** large (1,024) maps after a Studio check, transports, the balance checkpoint after this round, Scavengers / Legion (roadmap).
 

@@ -65,13 +65,16 @@ Minimap.ICON_SCALE = 0.5 -- the minimap's unit icons against the strategic layer
 local DRAW_ORDER = { ghost = 1, structure = 2, unit = 3, blip = 3 }
 
 -- One dot per known unit, ghosts and structures first, selected units last
--- (drawn in this order, so the selection stays on top).
+-- (drawn in this order, so the selection stays on top). An aircraft past
+-- the map's edge (up to Grid.OVERFLY since protocol 38, S-189) sits on the
+-- minimap's edge, like BAR's, rather than clipped away.
 function Minimap.dots(world: World.World, selected: { [number]: boolean }): { Dot }
 	local g = world.grid
 	local out = {}
 	for id, u in world.units do
 		local x, z = u.rx or u.sx or u.x, u.rz or u.sz or u.z
 		local mu, mv = Minimap.toMap(g, x, z)
+		mu, mv = math.clamp(mu, 0, 1), math.clamp(mv, 0, 1)
 		local flags = u.flags or 0
 		local def = World.def(world, u)
 		local kind: "unit" | "structure" | "blip" | "ghost" = "unit"
