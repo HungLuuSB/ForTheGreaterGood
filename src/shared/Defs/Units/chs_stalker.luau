@@ -16,7 +16,7 @@ return Templates.extend(Templates.Unit, {
 	moveClass = "WHEELED",
 	cost = { supply = 120, power = 1700, buildTime = 3600 },
 	health = 380,
-	movement = { maxSpeed = 40, accel = 16, brake = 32, turnRate = 130 },
+	movement = { maxSpeed = 24, accel = 16, brake = 32, turnRate = 130 },
 	sensors = { sight = 130, track = 380, trackError = 12, trackDrain = 18 },
 	model = "chs_stalker",
 	icon = "tracking",

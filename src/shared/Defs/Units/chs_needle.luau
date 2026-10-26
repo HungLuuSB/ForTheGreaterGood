@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	armorClass = "LIGHT",
 	cost = { supply = 95, power = 1250, buildTime = 2700 },
 	health = 460,
-	movement = { maxSpeed = 40, accel = 36, brake = 46, turnRate = 420 },
+	movement = { maxSpeed = 24, accel = 36, brake = 46, turnRate = 420 },
 	sensors = { sight = 150, airSight = 210 },
 	weapons = { { def = "chs_ir_sam", turretPiece = "torso", pitchPiece = "launcher", muzzle = "muzzle", stockpile = 4 } },
 	pieces = { "base", "torso", "launcher", "muzzle" },

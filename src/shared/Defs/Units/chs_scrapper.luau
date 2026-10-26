@@ -8,7 +8,7 @@ return Templates.extend(Templates.Builder, {
 	faction = "chaos",
 	cost = { supply = 100, power = 1200, buildTime = 2600 },
 	health = 600, -- faction pass (S-62)
-	movement = { maxSpeed = 32, accel = 11, brake = 22, turnRate = 100 },
+	movement = { maxSpeed = 19.2, accel = 11, brake = 22, turnRate = 100 },
 	sensors = { sight = 95 },
 	buildPower = 90, -- faction pass (S-62)
 	canResurrect = true, -- T1 workers resurrect wrecks (S-168, the user)

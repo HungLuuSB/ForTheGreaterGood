@@ -15,7 +15,7 @@ return Templates.extend(Templates.TankT1, {
 	footprint = 1,
 	cost = { supply = 260, power = 2800, buildTime = 7000 },
 	health = 1000, -- faction pass (S-62)
-	movement = { maxSpeed = 26, accel = 10, brake = 20, turnRate = 90 },
+	movement = { maxSpeed = 15.6, accel = 10, brake = 20, turnRate = 90 },
 	sensors = { sight = 150 },
 	weapons = { { def = "ord_mlrs", turretPiece = "launcher", muzzle = "muzzle" } },
 	pieces = { "base", "launcher", "turret", "muzzle" },

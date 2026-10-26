@@ -888,7 +888,10 @@ end
 -- filling from the base outward. The first free slot from the k-th on; nil
 -- when the block has no room (spotNear then).
 Skirmish.GEN_ROW = 4
-Skirmish.GEN_GAP = 24 -- studs between generator centres (16 wide: an 8-stud lane)
+-- studs between generator centres (16 wide): 16-stud, two-cell lanes, which
+-- every footprint-2 unit can drive through (S-193, G3: units wedged into the
+-- 8-stud lanes of the 24-stud block, which their clearance let them enter)
+Skirmish.GEN_GAP = 32
 function Skirmish.blockSpot(brain: Brain, defId: string, k: number, builder: number): (number?, number?)
 	local sim = brain.sim
 	local def = sim.defs.units[defId]
@@ -1339,8 +1342,27 @@ local function census(brain: Brain): Census
 			for k, order in sim.orders.queue[id] or {} do
 				-- (the head order stays while its frame is built: the frame counts then)
 				local framed = k == 1 and order.started and (sim.build.target[id] or 0) ~= 0
-				if order.kind == "build" and not framed and sim.defs.unitByIndex[order.defIndex :: number].extractor then
-					c.extractors += 1
+				if order.kind == "build" and not framed then
+					local od = sim.defs.unitByIndex[order.defIndex :: number]
+					if od.extractor then
+						c.extractors += 1
+					-- factories too (S-193, G1: a second builder ordered a second
+					-- bot lab while the first still walked to its site)
+					elseif od.id == brain.prefix .. "botlab" then
+						c.botFrames += 1
+					elseif od.id == brain.prefix .. "advbotlab" then
+						c.advBotFrames += 1
+					elseif od.id == brain.prefix .. "advairfield" then
+						c.advAirFrames += 1
+					elseif od.id == airfield then
+						c.airFrames += 1
+					elseif od.id == shipyard then
+						c.shipFrames += 1
+					elseif od.id == advPlant then
+						table.insert(c.advFrames, 0)
+					elseif od.buildOptions and od.domain == "structure" then
+						c.frames += 1 -- a vehicle plant
+					end
 				end
 			end
 		end
@@ -1536,8 +1558,10 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if cfg.botLab and not isCommander and #c.factories > 0 and c.extractors >= 3 and #c.botLabs + c.botFrames == 0 then
-			-- (S-187) a Bot Lab / Pit beside the plant: bots in the mix
+		if cfg.botLab and not isCommander and #c.factories > 0 and established and #c.botLabs + c.botFrames == 0 then
+			-- (S-187) a Bot Lab / Pit beside the plant: bots in the mix; only
+			-- once the economy and an army stand (S-193, G1: one factory type
+			-- early, not a plant and two labs)
 			local lab = brain.prefix .. "botlab"
 			local x, z = spotNear(brain, lab, brain.homeX + brain.toward * 60, brain.homeZ - 110, id)
 			if x and z then

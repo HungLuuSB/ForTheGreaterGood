@@ -58,6 +58,21 @@ return function(t: RunAll.Context)
 		t.expect(w.goalX[tank] <= g.sizeX / 2, `the tank's goal is on the map ({w.goalX[tank]})`)
 	end)
 
+	t.test("map details for the lobby's panel (S-193, G12): wind, tidal, features, size", function()
+		local plains = MapRegistry.details("map:plains") :: MapRegistry.Details
+		t.deepEqual(plains.features, { "flat", "roads" })
+		t.equal(plains.tidal, 0, "no water, no tidal power")
+		t.equal(plains.starts, 16)
+		local coast = MapRegistry.details("map:coastline") :: MapRegistry.Details
+		t.expect(table.find(coast.features, "water") ~= nil and coast.tidal > 0, "a sea: water and tidal power")
+		t.expect(coast.windMin < coast.windMax and coast.windMin >= 0, `wind {coast.windMin}..{coast.windMax}`)
+		local lakes = MapRegistry.details("map:lakelands") :: MapRegistry.Details
+		t.equal(lakes.sizeClass, "medium")
+		t.equal(lakes.sizeX, 4096)
+		t.equal(MapRegistry.details("map:lakelands"), lakes, "cached")
+		t.equal(MapRegistry.details("none"), nil)
+	end)
+
 	t.test("the wire reaches past a 1,024-cell map's edge by more than Grid.OVERFLY", function()
 		local g = Grid.new(1024, 1024)
 		local edge = g.sizeX / 2 + Grid.OVERFLY

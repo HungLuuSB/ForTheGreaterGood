@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 3,
 	cost = { supply = 900, power = 10000, buildTime = 20000 },
 	health = 6600,
-	movement = { maxSpeed = 18, accel = 4, brake = 7, turnRate = 30 },
+	movement = { maxSpeed = 10.8, accel = 4, brake = 7, turnRate = 30 },
 	sensors = { sight = 260, radar = 600, radarError = 45 },
 	weapons = { { def = "chs_flak", turretPiece = "turret1", muzzle = "muzzle1" } },
 	pieces = { "base", "turret1", "turret2", "muzzle1", "muzzle2" },

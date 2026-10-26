@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 110, power = 900, buildTime = 3000 },
 	health = 980,
-	movement = { maxSpeed = 32, accel = 10, brake = 14, turnRate = 65 },
+	movement = { maxSpeed = 19.2, accel = 10, brake = 14, turnRate = 65 },
 	sensors = { sight = 200 },
 	weapons = { { def = "chs_barracuda_gun", turretPiece = "turret1", muzzle = "muzzle1" } },
 	pieces = { "base", "turret1", "turret2", "muzzle1", "muzzle2" },

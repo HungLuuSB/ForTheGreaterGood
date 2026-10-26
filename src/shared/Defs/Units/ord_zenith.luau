@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 320, power = 5000, buildTime = 9000 },
 	health = 700,
-	movement = { maxSpeed = 75, accel = 30, brake = 40, turnRate = 210 },
+	movement = { maxSpeed = 45, accel = 30, brake = 40, turnRate = 210 },
 	sensors = { sight = 120 },
 	buildPower = 180,
 	buildRange = 34, -- 70% of 48 (client request 7, S-19)

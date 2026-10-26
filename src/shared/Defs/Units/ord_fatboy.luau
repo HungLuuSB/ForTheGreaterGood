@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	armorClass = "ARMORED",
 	cost = { supply = 600, power = 7000, buildTime = 16000 },
 	health = 4800,
-	movement = { maxSpeed = 18, accel = 12, brake = 24, turnRate = 300 },
+	movement = { maxSpeed = 10.8, accel = 12, brake = 24, turnRate = 300 },
 	sensors = { sight = 180 },
 	weapons = { { def = "ord_fatboy_cannon", turretPiece = "cannon", muzzle = "muzzle" } },
 	pieces = { "base", "cannon", "muzzle" },

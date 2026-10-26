@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	armorClass = "ARMORED",
 	cost = { supply = 130, power = 1500, buildTime = 3300 },
 	health = 1100,
-	movement = { maxSpeed = 32, accel = 30, brake = 40, turnRate = 380 },
+	movement = { maxSpeed = 19.2, accel = 30, brake = 40, turnRate = 380 },
 	sensors = { sight = 130 },
 	weapons = { { def = "chs_thug_cannon", turretPiece = "torso", muzzle = "muzzle" } },
 	pieces = { "base", "torso", "muzzle" },
