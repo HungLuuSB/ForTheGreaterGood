@@ -558,7 +558,7 @@ local function startMatch()
 				end
 			end
 			local level = sim.match.ai and sim.match.ai[pid]
-			name = name or (if level then `AI ({level})` else nil)
+			name = name or (if level then `AI ({Lobby.levelName(level)})` else nil)
 		end
 		table.insert(players, { id = pid, team = p.team, allyTeam = p.allyTeam, name = name })
 	end

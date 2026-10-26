@@ -17,7 +17,13 @@
 
 local Lobby = {}
 
-Lobby.LEVELS = { "easy", "normal", "hard" }
+Lobby.LEVELS = { "easy", "normal", "hard", "hard_aggressive" } -- MatchConfig.LEVELS ("hard" is Hard - Balanced; S-187)
+local LEVEL_NAMES = { easy = "Easy", normal = "Normal", hard = "Hard - Balanced", hard_aggressive = "Hard - Aggressive" }
+
+-- An AI level's name for players ("Hard - Balanced", S-187).
+function Lobby.levelName(level: string?): string
+	return if level then LEVEL_NAMES[level] or level else "?"
+end
 Lobby.MODES = { "FFA", "TEAM" }
 Lobby.WINS = { "COMMAND_ENDS", "ANNIHILATION" }
 Lobby.FACTIONS = { "order", "chaos" }
@@ -316,7 +322,7 @@ function Lobby.results(s: State, sim: any, startTick: number, stats: { [number]:
 			name = sl.name or `Player {pid}`
 		else
 			aiNumber += 1
-			name = `AI {aiNumber} ({if sl then sl.level else "?"})`
+			name = `AI {aiNumber} ({Lobby.levelName(if sl then sl.level else nil)})`
 		end
 		table.insert(out.players, {
 			id = pid,

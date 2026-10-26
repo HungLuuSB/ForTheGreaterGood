@@ -1981,3 +1981,30 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Checked in Studio (Crossroads, Teams: you and a Normal AI against an Easy AI): the panel with the ally's income and bank and its buttons, 300 supply given ("You gave AI (normal) 300 supply", the bank 1.0k → 701), a request ("You ask for power"); the panel hidden in the lobby. Specs: Share, SmartReclaim; Upgrades and Placement on patches. Nanoframe's pads for the new labs wait on models-C's registration after S-181 reaches main.
 
 **Why:** the user's playtest (F23, F42) and sim-A's phase 2.
+
+### C-227 — Playtest small items: Ctrl + wheel turns, rotation carries on, stock as a number, wider tower lasers (2026-10-26, F2, F14, F10, F11)
+
+- **F2:** Ctrl + wheel turns the camera, 7.5° a notch, within the ±45° limit (Q / C still turn).
+- **F14:** a placement's rotation carries on to every later placement (`Api` keeps the last facing; Facing.spec).
+- **F10:** a stockpile's row above the health bar is its count as a number and one bar filling with the missile being made (full when stocked up), instead of a pip per missile. Checked in Studio: an anti-nuke at "3", bar full.
+- **F11:** the Sentry, Guard, Overwatch and Twin Guard lasers draw 1.8× wider (`Lasers.WIDER`): in Studio core 0.69 / glow 2.14 studs (was 0.39 / 1.19).
+
+**Why:** the user's playtest (F2, F10, F11, F14).
+
+### C-228 — Tower lasers after the user's look; the camera turns all the way round (2026-10-26)
+
+- **Where a hit ends:** a hitscan hit (lasers, beams, tracers) ends on the hit unit's drawn body: the line from the muzzle toward the middle of the nearest drawn model's box at the server's hit point, where it first meets that model (a raycast against it; `Effects.bodyAt`, set by Main). The server aims at its sim height's middle, near the top of most models, so tower lasers ran to the tanks' turrets (the user); ending at the box's middle then hid the burst inside the tank (the user again). Checked in Studio: an Overwatch's laser on a Juggernaut ends at (0.0, 0.3, −2.3) in the model's box (half sizes 3.2, 3.6, 4.3), its front surface; the start is the tower's muzzle attachment (28.7 vs 28.8).
+- **The look:** F11's wider towers widen the glow 1.8× and the core only by its square root, the core wavers ±22 % as the bolt lives, the glow fades along the line (0.6 → 0.78 → 0.9 transparency) instead of a uniform rod, and the impact halo is smaller and fainter. At the muzzle a white-hot flash and a soft halo in the beam's colour 1.15× as wide as the glow leaving it (the user: without one the glow looked wider than its starting point).
+- **Camera:** no rotation limit; Q / C and Ctrl + wheel turn it all the way round (the user).
+
+**Why:** the user's look at the Overwatch's beam and their camera request (via sim-A).
+
+### C-229 — AI levels, per-shot power, side splits, formation preview (2026-10-26, S-186, S-187, F34, F40)
+
+- Merged m-sim-2 8713c298 (S-186, S-187). The shell-timing scene's count accepts 26.
+- **AI levels:** the in-match lobby offers Easy, Normal, Hard - Balanced ("hard") and Hard - Aggressive ("hard_aggressive") in a dropdown (the names don't fit segments); AI names read "AI 1 (Hard - Aggressive)" (`Lobby.levelName`).
+- **Per-shot power:** a weapon with `shotCost.power` shows "20 power/shot" on its stats line (unit panel, build menu tooltips); lasers hold fire without power (S-187).
+- **F40:** the pre-game's fallback boxes (before START_BOXES) pass the map's `sideSplits` to `StartAreas.sides`.
+- **F34, formation lines:** the right-drag line move (LINE flag; Ctrl adds GROUP) now previews each unit's slot along the line, as the order sends them (`Orders.lineSlots`), each with a tick facing across the line away from the group. Checked in Studio: six Lancers, the preview's six slots, the units spread into them. Units keep their travel heading at the end (asked sim-A about turning them to face).
+
+**Why:** sim-A's S-186 / S-187 and the playtest's F34 / F40.
