@@ -71,9 +71,14 @@ Config.MAP_SIZES = table.freeze({
 Config.NAME_MIN = 3 -- room name, characters
 Config.NAME_MAX = 32
 Config.PASSWORD_MAX = 32
-Config.MIN_PLAYERS = 2 -- a room's human cap (players and spectators)
+Config.MIN_PLAYERS = 2 -- a room's cap: people in it, AIs included (G11)
 Config.MAX_PLAYERS = 16
-Config.DEFAULT_PLAYERS = 8
+Config.DEFAULT_PLAYERS = 16 -- every room's cap; only someone with authority sets another (G11)
+-- Who has authority besides the experience's owner (or a group's rank 254
+-- and up) and Studio: user IDs (G11, the user: "this limit can only be
+-- altered by a person with authority").
+Config.ADMINS = table.freeze({}) :: { number }
+Config.ADMIN_RANK = 254
 Config.MAX_ROOMS = 40 -- per lobby server
 
 -- Match contract timing (contract section 6), seconds.

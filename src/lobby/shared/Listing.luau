@@ -152,7 +152,7 @@ function Listing.checkHop(r: Listed, user: number, password: any, isFriend: (num
 	if r.phase ~= "setup" then
 		return "That room is in a match"
 	end
-	if r.members >= r.maxPlayers then
+	if r.members + r.ai >= r.maxPlayers then
 		return "That room is full"
 	end
 	if r.privacy == "friends" and not isFriend(user, r.hostUser) then

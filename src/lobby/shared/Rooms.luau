@@ -247,6 +247,17 @@ function Rooms.new(id: string, opts: NewRoom, user: number, userName: string, ma
 	return room, nil
 end
 
+-- The people a room holds against its cap: its members and its AIs (G11).
+function Rooms.headcount(room: Room): number
+	local n = #room.members
+	for _, s in room.slots do
+		if s.kind == "ai" then
+			n += 1
+		end
+	end
+	return n
+end
+
 -- A member joins. Returns nil, or why not. They sit if the map has a free
 -- start, else spectate.
 function Rooms.join(room: Room, maps: { MapInfo }, user: number, userName: string, password: any): string?
@@ -256,7 +267,7 @@ function Rooms.join(room: Room, maps: { MapInfo }, user: number, userName: strin
 	if room.phase ~= "setup" then
 		return "This room is in a match"
 	end
-	if #room.members >= room.maxPlayers then
+	if Rooms.headcount(room) >= room.maxPlayers then
 		return "This room is full"
 	end
 	if room.password and password ~= room.password then
@@ -476,6 +487,9 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 		local map = mapOf(maps, room.settings.mapId)
 		if map == nil or #room.slots >= capacity(room, map) then
 			return "No free seat on this map"
+		end
+		if Rooms.headcount(room) >= room.maxPlayers then
+			return `The room is full: {room.maxPlayers} people, AIs included`
 		end
 		if msg.faction ~= nil and not find(Config.FACTIONS, msg.faction) then
 			return "Bad faction"
