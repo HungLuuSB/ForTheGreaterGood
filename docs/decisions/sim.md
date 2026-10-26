@@ -2791,6 +2791,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Reclaim orders and Smart Reclaim take them like wrecks; they're never resurrected.
   - A tree pays power at `Build.POWER_RECLAIM_RATE` (1 power/s per point of build power, ten times supply's); a rock pays supply.
   - A rock occupies its cell as `Passability.ROCK` (0xFFFF; unit IDs now end at 65534), and frees it when reclaimed.
+  - Each feature gets its own heading: the golden angle times its place in the list, so the headings spread evenly with no RNG. Clients turn the model by it, so a forest isn't one tree repeated.
 - **Wire, protocol 40:**
   - WRECK gains `featureKind u8` (0 = a unit's wreck, 1 tree, 2 rock), 15 bytes.
   - A feature's defIndex is 0, and its supply / fullSupply count its own resource (a tree's power).
@@ -2802,6 +2803,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **For the streams:**
   - client-B draws trees and rocks from WRECK `featureKind` (hover: power or supply left).
   - models-C models "feature_tree" and "feature_rock".
+  - Drawing contract (models-C asked): a rock sits at its cell's centre and fills that one 8-stud cell; a tree is a point and blocks nothing. A tree's base fits about 4 studs: copses jitter ±22 studs, so trees can stand close. Make a few variants of each; the client picks one and a scale from the wreck ID and turns it by the wire heading.
 - **Tests:**
   - `Features.spec`:
     - Supreme Strait's features are there from the start;

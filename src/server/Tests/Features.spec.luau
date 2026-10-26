@@ -58,6 +58,16 @@ return function(t: RunAll.Context)
 		end
 		t.expect(trees >= 300, `{trees} trees`)
 		t.expect(rocks >= 100, `{rocks} rocks`)
+		-- each turned its own way, so a forest isn't drawn as one tree repeated
+		local headings = {}
+		for _, wid in c.wreckIds do
+			headings[math.floor(c.wreckHeading[wid] * 8)] = true
+		end
+		local turns = 0
+		for _ in headings do
+			turns += 1
+		end
+		t.expect(turns >= 40, `{turns} headings`)
 		-- nothing is built on a rock
 		local rock = nearest(sim, FeatureDefs.ROCK, 0, 0)
 		local ok = Placement.check(sim, sim.defs.units.ord_generator, c.wreckX[rock], c.wreckZ[rock], nil, 1)
