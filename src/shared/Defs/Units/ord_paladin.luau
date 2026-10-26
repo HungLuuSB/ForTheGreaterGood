@@ -15,7 +15,7 @@ return Templates.extend(Templates.TankT1, {
 	footprint = 2, -- size shows tech level (S-104)
 	cost = { supply = 360, power = 3600, buildTime = 9000 },
 	health = 3850, -- tier rebalance (S-157, the user): was 3200; faction pass (S-62)
-	movement = { maxSpeed = 28, accel = 10, brake = 20, turnRate = 80 },
+	movement = { maxSpeed = 16.8, accel = 10, brake = 20, turnRate = 80 },
 	sensors = { sight = 230 },
 	weapons = { { def = "ord_heavy_cannon", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "muzzle" },

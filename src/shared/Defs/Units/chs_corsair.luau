@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 3,
 	cost = { supply = 400, power = 4000, buildTime = 10500 },
 	health = 2800,
-	movement = { maxSpeed = 24, accel = 7, brake = 11, turnRate = 42 },
+	movement = { maxSpeed = 14.4, accel = 7, brake = 11, turnRate = 42 },
 	sensors = { sight = 240, sonar = 300 },
 	weapons = { { def = "chs_naval_gun", turretPiece = "turret1", muzzle = "muzzle1" }, { def = "chs_asw_torpedo", turretPiece = "turret2", muzzle = "muzzle2" }, { def = "chs_naval_sam", turretPiece = "launcher", muzzle = "muzzle3" } },
 	pieces = { "base", "turret1", "turret2", "launcher", "muzzle1", "muzzle2", "muzzle3" },

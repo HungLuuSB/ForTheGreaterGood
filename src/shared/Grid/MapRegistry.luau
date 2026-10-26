@@ -106,6 +106,108 @@ end
 -- Layers for a map ID, nil for "none". Errors on an unknown or malformed ID.
 local loadRaw: (string) -> Layers.Layers?
 
+-- What the lobby's map panel shows (S-193, G12; field names are lobby-D's):
+--   windMin, windMax  power per second a Wind Turbine makes at the map's
+--                     weakest and strongest wind
+--   tidal             power per second a Tidal Generator makes (0 on a map
+--                     without water)
+--   features          sorted, any of "water", "hills", "cliffs", "roads",
+--                     "flat"
+-- plus its size (cells, studs, class), starts and deposits. It builds the
+-- map once (a medium map takes a few seconds) and caches the answer.
+export type Details = {
+	name: string,
+	cellsX: number,
+	cellsZ: number,
+	sizeX: number, -- studs
+	sizeZ: number,
+	sizeClass: SizeClass,
+	starts: number,
+	deposits: number,
+	windMin: number,
+	windMax: number,
+	tidal: number,
+	features: { string },
+}
+local TURBINE = require("../Defs/Units/ord_windmill").wind.max :: number
+local TIDAL = (require("../Defs/Units/ord_tidal") :: any).production.power :: number
+local WIND_DEFAULT = { 0.1, 0.9 } -- Economy.WIND_DEFAULT (S-177)
+MapRegistry.HILLS = 12 -- studs of height range over dry land: "hills"
+MapRegistry.CLIFF = 8 -- studs between neighbouring dry cells (45°): "cliffs"
+local detailsCache: { [string]: Details } = {}
+
+function MapRegistry.details(mapId: string): Details?
+	local cached = detailsCache[mapId]
+	if cached then
+		return cached
+	end
+	local layers = loadRaw(mapId)
+	if layers == nil then
+		return nil
+	end
+	local g = layers.grid
+	local lo, hi, water, cliffs, roads, deposits = math.huge, -math.huge, false, false, false, 0
+	for cz = 0, g.cellsZ - 1 do
+		for cx = 0, g.cellsX - 1 do
+			local i = cz * g.cellsX + cx
+			if Layers.getSupply(layers, i) > 0 then
+				deposits += 1
+			end
+			if Layers.getTerrain(layers, i) == Layers.Terrain.ROAD then
+				roads = true
+			end
+			if Layers.getWater(layers, i) > 0 then
+				water = true
+			else
+				local h = Layers.getHeight(layers, i)
+				lo, hi = math.min(lo, h), math.max(hi, h)
+				if not cliffs and cx + 1 < g.cellsX and Layers.getWater(layers, i + 1) <= 0 and math.abs(Layers.getHeight(layers, i + 1) - h) >= MapRegistry.CLIFF then
+					cliffs = true
+				end
+				if not cliffs and cz + 1 < g.cellsZ and Layers.getWater(layers, i + g.cellsX) <= 0 and math.abs(Layers.getHeight(layers, i + g.cellsX) - h) >= MapRegistry.CLIFF then
+					cliffs = true
+				end
+			end
+		end
+	end
+	local features = {}
+	if water then
+		table.insert(features, "water")
+	end
+	if hi - lo >= MapRegistry.HILLS then
+		table.insert(features, "hills")
+	elseif not cliffs then
+		table.insert(features, "flat")
+	end
+	if cliffs then
+		table.insert(features, "cliffs")
+	end
+	if roads then
+		table.insert(features, "roads")
+	end
+	table.sort(features)
+	local wind = layers.wind or WIND_DEFAULT
+	local name = string.match(mapId, "^map:([%w_]+)$")
+	local entry = name and (MapRegistry.NAMED[name] or MapRegistry.HANDMADE[name])
+	local d: Details = {
+		name = if entry then entry.name else mapId,
+		cellsX = g.cellsX,
+		cellsZ = g.cellsZ,
+		sizeX = g.sizeX,
+		sizeZ = g.sizeZ,
+		sizeClass = MapRegistry.sizeClass(math.max(g.cellsX, g.cellsZ)),
+		starts = #layers.starts,
+		deposits = deposits,
+		windMin = wind[1] * TURBINE,
+		windMax = wind[2] * TURBINE,
+		tidal = if water then TIDAL else 0,
+		features = features,
+	}
+	table.freeze(d.features)
+	detailsCache[mapId] = table.freeze(d)
+	return d
+end
+
 -- The map's layers, its deposits grown into 2 × 2 patches (S-184).
 function MapRegistry.load(mapId: string): Layers.Layers?
 	local layers = loadRaw(mapId)

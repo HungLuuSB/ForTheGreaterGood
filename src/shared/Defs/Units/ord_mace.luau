@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	armorClass = "LIGHT",
 	cost = { supply = 120, power = 1500, buildTime = 3200 },
 	health = 650,
-	movement = { maxSpeed = 40, accel = 36, brake = 46, turnRate = 420 },
+	movement = { maxSpeed = 24, accel = 36, brake = 46, turnRate = 420 },
 	sensors = { sight = 150 },
 	weapons = { { def = "ord_mace_plasma", turretPiece = "torso", muzzle = "muzzle" } },
 	pieces = { "base", "torso", "muzzle" },

@@ -10,7 +10,7 @@ return Templates.extend(Templates.Builder, {
 	categories = { "GROUND", "WORKER", "COMMANDER" },
 	cost = { supply = 1000, power = 10000, buildTime = 30000 },
 	health = 3400,
-	movement = { maxSpeed = 22, accel = 9, brake = 18, turnRate = 85 },
+	movement = { maxSpeed = 13.2, accel = 9, brake = 18, turnRate = 85 },
 	sensors = { sight = 130 },
 	buildPower = 300,
 	footprint = 2, -- a 10-stud walking mech (S-124, the user via models-C)

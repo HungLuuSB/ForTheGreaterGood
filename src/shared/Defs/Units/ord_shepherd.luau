@@ -18,7 +18,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 260, power = 3600, buildTime = 6500 },
 	health = 900,
-	movement = { maxSpeed = 34, accel = 12, brake = 24, turnRate = 100 },
+	movement = { maxSpeed = 20.4, accel = 12, brake = 24, turnRate = 100 },
 	sensors = { sight = 150, radar = 380, radarError = 15 },
 	weapons = { { def = "ord_mobile_point_interceptor", muzzle = "muzzle" } },
 	pieces = { "base", "launcher", "muzzle" },

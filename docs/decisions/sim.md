@@ -2646,3 +2646,33 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **State at the decision:** baked grounds for Ridgeline, Coastline, Twin Lakes, Crossroads, Normandy, The Canyon (4-stud, in review) and The Lakelands (8-stud, approved); none for The Plains. Random `mapgen:` maps and test maps have no bake.
 - **Sim:** nothing changes. The sim's heights come from the map layers; the client stands units on the drawn surface (C-235).
 - **Asks:** models-C bakes The Plains, and bakes every new map as part of authoring it. Client-B makes mesh ground the default path, and looks into mesh water and mesh ground for unbaked maps (generated from the layers at load).
+
+## S-193 — Playtest feedback 2, first batch: slower units, Fatboy/Tzar shells, one factory type early, wider generator lanes, map details (G8, G10, G1, G3, G12) (2026-10-26)
+
+- **G8, "units are so fast: lower speed of all units by 40%":**
+  - Every unit def's `maxSpeed`, and `minSpeed` for jets, is × 0.6: 97 values in 85 files. A Lancer goes from 28 to 16.8, a Falcon from 240 to 144.
+  - Acceleration, braking and turn rates are unchanged. So units reach their (lower) top speed sooner, and jets turn tighter circles: turn radius = speed / turn rate.
+  - Projectiles are unchanged.
+- **G10, "Fatboy and Tzar projectile must be identical to the projectile of the tank (golden yellow shot)":**
+  - `ord_fatboy_cannon` and `chs_tzar_cannon` lose `fx.trail = "plasma"` and `fx.color`, so the client draws them as its normal shell.
+  - They gain `muzzle = "flash_large"`, and keep `impact = "explosion_huge"` and their big blasts (aoe 48 / 40).
+- **G1, "AI Hard Aggressive build a lot of factories instead of concentrate on 1 type early game (1 vehicle and 2 bot labs)":**
+  - The census now counts factories a builder has been ordered to build but not started: bot labs, advanced labs, airfields, shipyards, plants. Extractors were already counted this way (S-104).
+  - Before, a second builder ordered a second bot lab while the first still walked to its site.
+  - The bot lab also waits until the AI is established: 6 extractors, 6 army units, 200 supply stored, the same gate as the airfield. So every level and role opens on its vehicle plant alone.
+- **G3, "unit still try to get itself stuck inside a grid of generators":**
+  - The AI's generator block (S-187) placed 16-stud generators 24 studs apart, leaving 8-stud lanes.
+  - Since S-185 (F24), footprint-2 units need clearance 1, so they path into one-cell gaps that are narrower than they are, and wedge there. Clearance per cell can't tell a one-cell gap from a two-cell one.
+  - `Skirmish.GEN_GAP` is now 32: 16-stud, two-cell lanes they drive through.
+  - Still open: a player's own buildings with one-cell gaps can trap them the same way. The real fix is a "fits a 2 × 2 square" pass layer for even footprints, to do if it still shows.
+- **G12, map info for the lobby's panel:** `MapRegistry.details(mapId)` returns, built once and cached:
+  - the map's name, cells, studs, size class, starts and deposits;
+  - `windMin` / `windMax`: one Wind Turbine's power at the map's weakest and strongest wind;
+  - `tidal`: a Tidal Generator's power; 0 without water;
+  - `features`: "cliffs" (8+ studs between neighbouring dry cells), "flat" (no hills or cliffs), "hills" (12+ studs of dry height range), "roads", "water".
+  - The field names are lobby-D's.
+- **Tests:**
+  - `Orders.spec`: GUARD and ASSIST timed for the slower units.
+  - `NewUnits.spec`: Fatboy and Tzar draw as shells and keep their blasts.
+  - `AIRoles.spec`: Hard - Aggressive builds no bot lab in its first 3 minutes and never two; the generator lanes are 16 studs.
+  - `BigMaps.spec`: map details.

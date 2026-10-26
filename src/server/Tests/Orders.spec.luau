@@ -265,8 +265,8 @@ return function(t: RunAll.Context)
 		on(sim, CT.GUARD, 1, { guard }, vip)
 		at(sim, CT.MOVE, 1, { vip }, 200, 200)
 		local worst = 0
-		steps(sim, 900, function(i)
-			if i > 300 then
+		steps(sim, 1200, function(i)
+			if i > 600 then -- (S-193: slower units take this long to close the gap)
 				worst = math.max(worst, dist(w, guard, w.posX[vip], w.posZ[vip]))
 			end
 			return nil
@@ -554,7 +554,7 @@ return function(t: RunAll.Context)
 			local w = sim.world
 			Spawn.unit(sim, "ord_sovereign", 1, -300, -300) -- some income
 			local leader = Spawn.unit(sim, "ord_mason", 1, 0, 0, 0)
-			local helper = Spawn.unit(sim, "ord_mason", 1, -60, 0, 0)
+			local helper = Spawn.unit(sim, "ord_mason", 1, 20, 0, 0) -- (S-193: near enough to help at the slower speed)
 			for _ = 1, 4 do
 				Sim.step(sim)
 			end
