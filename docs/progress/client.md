@@ -6,6 +6,14 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Playtest round 2 (G2, G4, G9, G14, G15, G16):**
+  - Planes no longer snap crossing mountains; they climb and dip smoothly.
+  - Tank turrets stay on target while the hull turns, as far as the server's own turret allows.
+  - Hovering a wreck shows its supply left in the unit panel, with no floating black label.
+  - Dragging a row of buildings shows every planned building, green or red, before you release.
+  - Planned and queued buildings show through hills and units.
+  - The Commander turns its upper body toward what it builds, repairs or reclaims.
+- Ready to merge: `f53717fe` (C-237..C-241; test_client 321 / 321, test 573 / 573, build passed. Studio: Twin Lakes and The Plains; screenshots debug_out/screens/2026-10-26-g*.jpg)
 - **Mesh water (C-236, S-192):** water is now drawn as flat see-through surfaces with moving ripples, darker where it's deep, instead of Roblox terrain water. Maps without an approved ground bake keep Roblox's terrain ground for now: approving the six bakes in review, plus a bake for The Plains, moves every lobby map to mesh ground.
 - Ready to merge: `e90da29e` (C-236, main 5975cb5b merged in; test_client 317 / 317, test 573 / 573, build passed. Studio, Coastline: debug_out/screens/2026-10-26-water-*.jpg)
 - Ready to merge: `6a77b33b` (main ae6356ad merged in; the Lakelands' ground sampling read from the manifest's `step`, the client's stand-in table removed; test_client 316 / 316, test 573 / 573, build passed)
