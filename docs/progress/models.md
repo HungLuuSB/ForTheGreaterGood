@@ -782,6 +782,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `641b3ee0` (the user approved the F18 towers, F6 advanced extractors and S-181 units with their wrecks, and the Lakelands ground: they now draw in game; manifest, docs; includes the merge of `main` e43b5726).
 - Ready to merge: `11bdc65a` (the user approved the last 40 meshes in review with their wrecks: every mesh is approved, so no unit draws as a blockout any more; manifest, docs).
 - Ready to merge: `145e7b32` (the user approved the 42 older wrecks: every wreck is approved; `ground.lakelands.step = 8` in the manifest for client-B's C-235; manifest, ground.py, docs).
+- Ready to merge: `d0383a51` (the last four meshes with wrecks: ord_pharos, chs_scylla, ord_empyrean, chs_rookery, `review`, so their blockouts draw until approved; every def now has a mesh; `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs).
 
 ## Requests
 
