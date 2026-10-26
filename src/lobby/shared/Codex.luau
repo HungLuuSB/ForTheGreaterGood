@@ -303,6 +303,11 @@ export type Weapon = {
 	lockRange: number?,
 	targets: { string },
 	stock: number?, -- stockpile capacity
+	stockSeconds: number?, -- seconds to build one stockpiled round
+	stockPower: number?, -- power one stockpiled round costs
+	speed: number?, -- projectile speed (studs/s)
+	launch: string?, -- "vertical": straight up, then over
+	alpha: number, -- the most one hit does (its best armor class)
 }
 
 local function weapon(w: any): Weapon
@@ -329,7 +334,66 @@ local function weapon(w: any): Weapon
 		lockRange = w.lockRange,
 		targets = table.clone(w.targets or {}),
 		stock = if w.stockpile then w.stockpile.capacity else nil,
+		stockSeconds = if w.stockpile then w.stockpile.buildTime else nil,
+		stockPower = if w.stockpile and w.stockpile.cost then w.stockpile.cost.power else nil,
+		speed = if w.type ~= "HITSCAN" and w.type ~= "BEAM" then w.projectileSpeed else nil,
+		launch = w.launch,
+		alpha = (w.damage or {})[class] or 0,
 	}
+end
+
+-- The biggest of each article stat over every unit and structure (the bars'
+-- full length): supply, power, buildSeconds, health, speed, sight, radar,
+-- dps, range, buildPower; for weapons wDps, wRange, wAlpha, wAoe.
+function Codex.maxima(c: Codex): { [string]: number }
+	local cached = (c :: any).maxima
+	if cached then
+		return cached
+	end
+	local m: { [string]: number } = {}
+	local function see(key: string, v: number?)
+		if v and v > (m[key] or 0) then
+			m[key] = v
+		end
+	end
+	for id in c.entries do
+		local s = Codex.stats(c, id)
+		see("supply", s.supply)
+		see("power", s.power)
+		see("buildSeconds", s.buildSeconds)
+		see("health", s.health)
+		see("speed", s.speed)
+		see("sight", s.sight)
+		see("radar", s.radar)
+		see("dps", s.dps)
+		see("range", s.range)
+		see("buildPower", s.buildPower)
+		for _, w in s.weapons do
+			see("wDps", w.dps)
+			see("wRange", w.range)
+			see("wAlpha", w.alpha)
+			see("wAoe", w.aoe)
+		end
+	end
+	;(c :: any).maxima = m
+	return m
+end
+
+-- How a value reads next to its number in a weapon card (BAR's wiki):
+-- reload, alpha (one hit), area of effect and range in words.
+local WORDS: { [string]: { { number | string } } } = {
+	reload = { { 0.5, "very fast" }, { 1.5, "fast" }, { 3, "medium" }, { 6, "slow" }, { math.huge, "very slow" } },
+	alpha = { { 50, "light" }, { 200, "medium" }, { 600, "heavy" }, { 1500, "very heavy" }, { math.huge, "devastating" } },
+	aoe = { { 8, "small" }, { 20, "medium" }, { 40, "large" }, { 80, "huge" }, { math.huge, "gigantic" } },
+	range = { { 150, "short" }, { 300, "medium" }, { 600, "long" }, { math.huge, "very long" } },
+}
+function Codex.word(kind: string, v: number): string
+	for _, step in WORDS[kind] or {} do
+		if v < (step[1] :: number) then
+			return step[2] :: string
+		end
+	end
+	return ""
 end
 
 -- article numbers ---------------------------------------------------------------

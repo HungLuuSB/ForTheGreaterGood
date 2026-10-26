@@ -1,0 +1,53 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-166 mesh from the approved blockout, rigged in FTGG Art 2026-10-26, review: 2952 triangles, glow share 0.7%",
+  "bar": {
+    "model": "rbxassetid://88530121756757",
+    "meshes": {
+      "base": "rbxassetid://128865888108962",
+      "base_glow_head": "rbxassetid://109852685459543",
+      "base_glow_running": "rbxassetid://83386067463845",
+      "launcher": "rbxassetid://123708462798068",
+      "launcher_glow_head": "rbxassetid://107671257450128",
+      "launcher_glow_weapon": "rbxassetid://130994169602461"
+    },
+    "decals": {
+      "ALB": "rbxassetid://91967427475703",
+      "RGH": "rbxassetid://96657586254275",
+      "NOR": "rbxassetid://131213050215809",
+      "MTL": "rbxassetid://101466688032688",
+      "EMI": "rbxassetid://118810174509963"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://76615433256541",
+      "NOR": "rbxassetid://133918373828915",
+      "RGH": "rbxassetid://133265618972974",
+      "MTL": "rbxassetid://73462035337607",
+      "EMI": "rbxassetid://87475676350107"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_scylla_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://103002214850410",
+    "meshes": {
+      "base": "rbxassetid://131370441804774",
+      "launcher": "rbxassetid://85684177561446"
+    },
+    "decals": {
+      "ALB": "rbxassetid://137915121739361",
+      "RGH": "rbxassetid://96701696728636",
+      "NOR": "rbxassetid://82950731689018",
+      "MTL": "rbxassetid://115486254661790",
+      "EMI": "rbxassetid://88274983514694"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://136367006781721",
+      "NOR": "rbxassetid://99369868554203",
+      "RGH": "rbxassetid://115985919048511",
+      "MTL": "rbxassetid://97298434021267",
+      "EMI": "rbxassetid://112153541117033"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_scylla_wreck_bar in FTGG Art",
+    "revision": "S-166 wreck, rigged in FTGG Art 2026-10-26, review: 2596 triangles"
+  }
+}

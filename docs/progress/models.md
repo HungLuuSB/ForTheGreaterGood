@@ -26,7 +26,7 @@ Queue:
 | S-181 | **New units from the playtest (sim-A's S-181), blockouts**, approved and registered (S-181 is in `main` at `7c933c5c`; the game draws them now). Bot factories with build pads and nano emitters: `ord_botlab` (armored hall, portal gantry over a lit pad, 3 emitters) / `chs_botlab` "Bot Pit" (round scrap-walled pit open at the front, two crane masts whose hooks spray), `ord_advbotlab` (the same grown to fp 5: heavy gantry, 4 emitters, radar) / `chs_advbotlab` (bigger spiked pit, tower crane over it, lamp masts, furnace stacks). T1 bots, fp 1, on two legs (the Commander walker legs, rig.md 10, without hip yokes: client pieces `thighL` / `shinL` / `footL` and R, swing X, from the new `Blockouts/Bots.luau`; the Skitter's four `thighFL`… / `shinFL`…): `ord_artisan` (constructor, emitter arm) / `chs_tinker` (hunched, crane boom with a claw), `ord_lazarus` (medic: glass dome, team cross, repair arm) / `chs_graverobber` (scavenger: scrap hopper, claw arm), `ord_glint` (slim runner, a laser on each arm) / `chs_skitter` (four-legged crawler, plasma snout), `ord_mace` (long plasma barrel over the shoulder) / `chs_thug` (stocky, spiked pads, cannon forearm), `ord_kestrel` (missile pod on the shoulder) / `chs_needle` (three bare tubes over the back). T2: `ord_fatboy` (fat body on thick legs, a huge plasma cannon turret on top) / `chs_tzar` (long heavy tank, fat plasma cannon), `chs_centurion` (12-stud armored knight, shield, red laser lance). Air: `ord_liche` (swept flying wing, four buried engines, bomb bay with one huge bomb) / `chs_dragon` (dragon-headed hull with horns and glowing eyes, spined back, fan wings, fire nozzle under the belly, green lasers at the wing tips; 32-stud span). **Meshes (2026-10-26):** all 19 with wrecks, every texture map loading in FTGG Art. Bots on the shared leg kit `tools/bots.py` (the blockouts' hip / knee / ankle points: armored Order legs with team stripes, bare Chaos struts with pistons and claw toes; `swing` X anims in `tools/animate.py`), labs with their build pads and emitters in `tools/anchors.py` | **approved** (2026-10-26) | meshes: `s181_mesh_bots.jpg`, `s181_mesh_air.jpg`, `s181_mesh_labs.jpg` (Studio `Workspace.S181MeshReview`); blockouts: `s181_units.jpg`, `s181_bots_close.jpg`, `s181_factories.jpg`, `s181_air.jpg` (Order front / Chaos behind; a Lancer and a Paladin for scale). Studio: `Workspace.S181Review` |
 | F6 | **Advanced extractors: the T1's size, an upgraded T1** (your call 2026-10-26: "T2 of the T1 extractor must be the same size, they should look like an upgrade version"; asked sim-A to make both defs footprint 2, the T1's 2 × 2 deposit patch, instead of S-184's 4). `ord_advextractor`: the T1's slab and octagonal armored housing with its team deck, plus a second armored tier with a lit band and radiator fins, a taller turning drill tower with two glowing bands and a four-armed crown, twin pumps, hoppers, corner lights (11 studs to the T1's 6). `chs_advextractor`: the T1's four-legged pyramid derrick, taller with two tiers of bracing, armored feet with spikes, a heavier head with a lamp, a thicker turning drill with four glowing bands, two engine drums instead of one, fuel tanks (15 studs to the T1's 8). **Meshes:** each built from its T1's mesh code with the upgrade added (Order: the second armored tier, radiator fins, a taller drill tower with three bands and a four-armed crown; Chaos: the derrick nearly twice as tall, five brace rings, armored spiked feet, a second engine drum, fuel tanks), with wrecks | **approved** (2026-10-26) | meshes in `f18_mesh_55_close_lasers_extractors.jpg` (right: each T1 then its T2); `f6_advextractor_55_close.jpg` (left the T1 mesh, right the new T2 blockout; Order front, Chaos behind, a Lancer). Studio: `Workspace.F6Review` |
 | F27 | **Unit death explosion** (the user's reference `assets/reference/unit_explosion`, via client-B): the template `ReplicatedStorage.Vfx.Death` that Render/Vfx plays for every death (C-232), written by `assets/fx/vfx/build_vfx.py` into `place/Vfx.model.json` (mapped in the three project files like MeshMaterials). A ground burst at scale 1 = a 7-stud explosion: a white-hot flash, a rolling orange fireball, a ring of fire racing out along the ground, fire burning on low in the middle, long streaking sparks (stretched solid streaks: the built-in spark texture vanishes at RTS range), dark debris thrown in arcs, lit brown-black smoke billowing up, glowing embers, a glowing scorch, an orange light (0.55 s). Built-in Studio textures only. Live sync: restart `rojo serve` once to pick up the new `Vfx` entry | **approved** (2026-10-26) | `vfx_death_035s_side.jpg`, `vfx_death_090s_side.jpg`, `vfx_death_030s_rts.jpg`, `vfx_death_070s_rts.jpg` (FTGG Art, scale 3 ≈ a T1 death, frozen at 0.3–0.9 s) |
-| S | **sim-A's request (first in the queue):** pending blockouts under the sim's fixed IDs, in `Blockouts/Pending/` until the defs land. Naval SAM platforms, fp 3, floating at y = 0: `ord_pharos` (round armored caisson with a team deck ring and fenders, a lighthouse tower with a team band, gallery and glowing lantern, crowned by the `launcher`: a sensor head between two canister pods with ready-lit caps) / `chs_scylla` (a ruin afloat: drum floats under a tilted slab deck, ruined columns, one toppled, a crooked spiked pedestal with an amber eye slit; the `launcher` a slab skull with six missile tubes fanned out like necks, amber mouths). Advanced rearm pads, fp 4, two bays: `ord_empyrean` (armored apron, two team-ringed landing circles, a control tower with a glass cab and radar mast between the bays at the back, blast deflectors, rearm booms, fuel blocks) / `chs_rookery` (patched dark slab with a grate, two circles with amber lamps, a scrap barricade, fuel tanks and hose, a crane stub over a bay, a lattice light mast, crates). Meshes after your look review | blockout | `t2_navalsam_pads_blockout_55_close.jpg`, `t2_navalsam_pads_blockout_55_220.jpg` (with a Lancer and the T1 pads) |
+| S | **sim-A's request (first in the queue):** pending blockouts under the sim's fixed IDs, in `Blockouts/Pending/` until the defs land. Naval SAM platforms, fp 3, floating at y = 0: `ord_pharos` (round armored caisson with a team deck ring and fenders, a lighthouse tower with a team band, gallery and glowing lantern, crowned by the `launcher`: a sensor head between two canister pods with ready-lit caps) / `chs_scylla` (a ruin afloat: drum floats under a tilted slab deck, ruined columns, one toppled, a crooked spiked pedestal with an amber eye slit; the `launcher` a slab skull with six missile tubes fanned out like necks, amber mouths). Advanced rearm pads, fp 4, two bays: `ord_empyrean` (armored apron, two team-ringed landing circles, a control tower with a glass cab and radar mast between the bays at the back, blast deflectors, rearm booms, fuel blocks) / `chs_rookery` (patched dark slab with a grate, two circles with amber lamps, a scrap barricade, fuel tanks and hose, a crane stub over a bay, a lattice light mast, crates). Meshes after your look review. **Blockouts approved and meshed (2026-10-26)**, with wrecks, every texture map loading in FTGG Art | review | meshes: `last4_mesh_vs_blockout.jpg` (blockouts left, meshes right; Studio `Workspace.Last4Review`); blockouts: `t2_navalsam_pads_blockout_55_close.jpg`, `t2_navalsam_pads_blockout_55_220.jpg` (with a Lancer and the T1 pads) |
 
 **Resume here (2026-10-26):**
 - **Items 5 and 6 done:** the 26 T2 structures and 56 wrecks are in the manifest as `review`. Item 7 done. F18 blockouts in (row F18), waiting for your look review before the meshes. S-181 blockouts in `Pending/` (row S-181): register them once S-181 is in `main`. S-181 blockouts approved and registered; F18 towers and F6 extractors approved (2026-10-26); all their meshes, wrecks, the Lakelands ground and the F27 death explosion approved 2026-10-26.
@@ -46,17 +46,17 @@ Queue:
 Every unit def: its blockout, mesh and wreck status in the mesh manifest (`review` = drawn as the blockout in game until you approve it).
 
 <!-- status-table:begin -->
-182 defs: 179 hand-made blockouts; 178 meshes (178 approved, 0 in review); 178 wrecks (136 approved). Generated by `lune run assets/models/tools/status_table.luau`.
+182 defs: 179 hand-made blockouts; 182 meshes (178 approved, 4 in review); 182 wrecks (178 approved). Generated by `lune run assets/models/tools/status_table.luau`.
 
 | Def | Name | Tier | Domain | Blockout | Mesh | Wreck |
 |---|---|---|---|---|---|---|
-| `chs_warlord` | Warlord | 0 | ground | hand-made | approved | review |
-| `ord_sovereign` | Sovereign | 0 | ground | hand-made | approved | review |
+| `chs_warlord` | Warlord | 0 | ground | hand-made | approved | approved |
+| `ord_sovereign` | Sovereign | 0 | ground | hand-made | approved | approved |
 | `chs_graverobber` | Graverobber | 1 | ground | hand-made | approved | approved |
 | `chs_hellmouth` | Hellmouth | 1 | ground | hand-made | approved | approved |
 | `chs_hornet` | Hornet | 1 | ground | hand-made | approved | approved |
 | `chs_jackal` | Jackal | 1 | ground | hand-made | approved | approved |
-| `chs_locust` | Locust | 1 | ground | hand-made | approved | review |
+| `chs_locust` | Locust | 1 | ground | hand-made | approved | approved |
 | `chs_needle` | Needle | 1 | ground | hand-made | approved | approved |
 | `chs_ravager` | Ravager | 1 | ground | hand-made | approved | approved |
 | `chs_scrapper` | Scrapper | 1 | ground | hand-made | approved | approved |
@@ -75,19 +75,19 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `ord_mason` | Mason | 1 | ground | hand-made | approved | approved |
 | `ord_oracle` | Oracle | 1 | ground | hand-made | approved | approved |
 | `ord_verdict` | Verdict | 1 | ground | hand-made | approved | approved |
-| `chs_harpy` | Harpy | 1 | air | hand-made | approved | review |
-| `chs_plague` | Plague | 1 | air | hand-made | approved | review |
-| `chs_vulture` | Vulture | 1 | air | hand-made | approved | review |
-| `chs_wasp` | Wasp | 1 | air | hand-made | approved | review |
-| `ord_absolution` | Absolution | 1 | air | hand-made | approved | review |
-| `ord_falcon` | Falcon | 1 | air | hand-made | approved | review |
-| `ord_guardian` | Guardian | 1 | air | hand-made | approved | review |
-| `ord_skywright` | Skywright | 1 | air | hand-made | approved | review |
+| `chs_harpy` | Harpy | 1 | air | hand-made | approved | approved |
+| `chs_plague` | Plague | 1 | air | hand-made | approved | approved |
+| `chs_vulture` | Vulture | 1 | air | hand-made | approved | approved |
+| `chs_wasp` | Wasp | 1 | air | hand-made | approved | approved |
+| `ord_absolution` | Absolution | 1 | air | hand-made | approved | approved |
+| `ord_falcon` | Falcon | 1 | air | hand-made | approved | approved |
+| `ord_guardian` | Guardian | 1 | air | hand-made | approved | approved |
+| `ord_skywright` | Skywright | 1 | air | hand-made | approved | approved |
 | `chs_barracuda` | Barracuda | 1 | naval | hand-made | approved | approved |
-| `chs_lamprey` | Lamprey | 1 | naval | hand-made | approved | review |
+| `chs_lamprey` | Lamprey | 1 | naval | hand-made | approved | approved |
 | `chs_wrecker` | Wrecker | 1 | naval | hand-made | approved | approved |
 | `ord_sentry` | Envoy | 1 | naval | hand-made | approved | approved |
-| `ord_silence` | Silence | 1 | naval | hand-made | approved | review |
+| `ord_silence` | Silence | 1 | naval | hand-made | approved | approved |
 | `ord_tidewright` | Tidewright | 1 | naval | hand-made | approved | approved |
 | `chs_airfield` | Aerodrome | 1 | structure | hand-made | approved | approved |
 | `chs_airpad` | Roost | 1 | structure | hand-made | approved | approved |
@@ -114,7 +114,7 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `chs_windmill` | Wind Pylon | 1 | structure | hand-made | approved | approved |
 | `ord_airfield` | Airfield | 1 | structure | hand-made | approved | approved |
 | `ord_airpad` | Aerie | 1 | structure | hand-made | approved | approved |
-| `ord_barrier` | Barrier | 1 | structure | hand-made | approved | review |
+| `ord_barrier` | Barrier | 1 | structure | hand-made | approved | approved |
 | `ord_beamer` | Beamer | 1 | structure | hand-made | approved | approved |
 | `ord_botlab` | Bot Lab | 1 | structure | hand-made | approved | approved |
 | `ord_bulwark` | Bulwark | 1 | structure | hand-made | approved | approved |
@@ -138,41 +138,41 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `ord_windmill` | Wind Turbine | 1 | structure | hand-made | approved | approved |
 | `chs_centurion` | Centurion | 2 | ground | hand-made | approved | approved |
 | `chs_chimera` | Chimera | 2 | ground | hand-made | approved | approved |
-| `chs_cyclops` | Cyclops | 2 | ground | hand-made | approved | review |
-| `chs_forgemaster` | Forgemaster | 2 | ground | hand-made | approved | review |
-| `chs_gorgon` | Gorgon | 2 | ground | hand-made | approved | review |
+| `chs_cyclops` | Cyclops | 2 | ground | hand-made | approved | approved |
+| `chs_forgemaster` | Forgemaster | 2 | ground | hand-made | approved | approved |
+| `chs_gorgon` | Gorgon | 2 | ground | hand-made | approved | approved |
 | `chs_griffin` | Griffin | 2 | ground | hand-made | approved | approved |
-| `chs_hydra` | Hydra | 2 | ground | hand-made | approved | review |
-| `chs_juggernaut` | Juggernaut | 2 | ground | hand-made | approved | review |
-| `chs_minotaur` | Minotaur | 2 | ground | hand-made | approved | review |
+| `chs_hydra` | Hydra | 2 | ground | hand-made | approved | approved |
+| `chs_juggernaut` | Juggernaut | 2 | ground | hand-made | approved | approved |
+| `chs_minotaur` | Minotaur | 2 | ground | hand-made | approved | approved |
 | `chs_mire` | Mire | 2 | ground | hand-made | approved | approved |
-| `chs_shroud` | Shroud | 2 | ground | hand-made | approved | review |
-| `chs_stalker` | Stalker | 2 | ground | hand-made | approved | review |
+| `chs_shroud` | Shroud | 2 | ground | hand-made | approved | approved |
+| `chs_stalker` | Stalker | 2 | ground | hand-made | approved | approved |
 | `chs_tzar` | Tzar | 2 | ground | hand-made | approved | approved |
-| `ord_arbiter` | Arbiter | 2 | ground | hand-made | approved | review |
-| `ord_architect` | Architect | 2 | ground | hand-made | approved | review |
+| `ord_arbiter` | Arbiter | 2 | ground | hand-made | approved | approved |
+| `ord_architect` | Architect | 2 | ground | hand-made | approved | approved |
 | `ord_custodian` | Custodian | 2 | ground | hand-made | approved | approved |
 | `ord_fatboy` | Fatboy | 2 | ground | hand-made | approved | approved |
-| `ord_judgement` | Judgement | 2 | ground | hand-made | approved | review |
-| `ord_paladin` | Paladin | 2 | ground | hand-made | approved | review |
-| `ord_seraph` | Seraph | 2 | ground | hand-made | approved | review |
+| `ord_judgement` | Judgement | 2 | ground | hand-made | approved | approved |
+| `ord_paladin` | Paladin | 2 | ground | hand-made | approved | approved |
+| `ord_seraph` | Seraph | 2 | ground | hand-made | approved | approved |
 | `ord_shepherd` | Shepherd | 2 | ground | hand-made | approved | approved |
 | `ord_tideguard` | Tideguard | 2 | ground | hand-made | approved | approved |
-| `ord_veil` | Veil | 2 | ground | hand-made | approved | review |
-| `ord_warden` | Warden | 2 | ground | hand-made | approved | review |
+| `ord_veil` | Veil | 2 | ground | hand-made | approved | approved |
+| `ord_warden` | Warden | 2 | ground | hand-made | approved | approved |
 | `chs_banshee` | Banshee | 2 | air | hand-made | approved | approved |
 | `chs_behemoth` | Behemoth | 2 | air | hand-made | approved | approved |
-| `chs_condor` | Condor | 2 | air | hand-made | approved | review |
+| `chs_condor` | Condor | 2 | air | hand-made | approved | approved |
 | `chs_dragon` | Dragon | 2 | air | hand-made | approved | approved |
-| `chs_leech` | Leech | 2 | air | hand-made | approved | review |
+| `chs_leech` | Leech | 2 | air | hand-made | approved | approved |
 | `chs_manticore` | Manticore | 2 | air | hand-made | approved | approved |
 | `chs_wraith` | Wraith | 2 | air | generic | approved | approved |
 | `ord_archangel` | Archangel | 2 | air | hand-made | approved | approved |
 | `ord_archon` | Archon | 2 | air | hand-made | approved | approved |
 | `ord_liche` | Liche | 2 | air | hand-made | approved | approved |
 | `ord_phantom` | Phantom | 2 | air | hand-made | approved | approved |
-| `ord_tidewatch` | Tidewatch | 2 | air | hand-made | approved | review |
-| `ord_zenith` | Zenith | 2 | air | hand-made | approved | review |
+| `ord_tidewatch` | Tidewatch | 2 | air | hand-made | approved | approved |
+| `ord_zenith` | Zenith | 2 | air | hand-made | approved | approved |
 | `chs_corsair` | Corsair | 2 | naval | hand-made | approved | approved |
 | `chs_kraken` | Kraken | 2 | naval | hand-made | approved | approved |
 | `chs_leviathan` | Leviathan | 2 | naval | hand-made | approved | approved |
@@ -193,17 +193,17 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `chs_blackout` | Blackout | 2 | structure | hand-made | approved | approved |
 | `chs_breaker` | Breaker | 2 | structure | hand-made | approved | approved |
 | `chs_bulwark` | Bulwark | 2 | structure | hand-made | approved | approved |
-| `chs_carapace` | Carapace | 2 | structure | hand-made | approved | review |
+| `chs_carapace` | Carapace | 2 | structure | hand-made | approved | approved |
 | `chs_cataclysm` | Cataclysm | 2 | structure | hand-made | approved | approved |
 | `chs_cerberus` | Cerberus | 2 | structure | hand-made | approved | approved |
 | `chs_deepear` | Deepear | 2 | structure | hand-made | approved | approved |
 | `chs_fusion` | Hellforge | 2 | structure | hand-made | approved | approved |
-| `chs_hailstorm` | Hailstorm | 2 | structure | hand-made | approved | review |
-| `chs_inferno` | Inferno | 2 | structure | hand-made | approved | review |
+| `chs_hailstorm` | Hailstorm | 2 | structure | hand-made | approved | approved |
+| `chs_inferno` | Inferno | 2 | structure | hand-made | approved | approved |
 | `chs_maw` | Maw | 2 | structure | hand-made | approved | approved |
-| `chs_rookery` | Rookery | 2 | structure | hand-made | – | – |
+| `chs_rookery` | Rookery | 2 | structure | hand-made | review | review |
 | `chs_scourge` | Scourge | 2 | structure | generic | approved | approved |
-| `chs_scylla` | Scylla | 2 | structure | hand-made | – | – |
+| `chs_scylla` | Scylla | 2 | structure | hand-made | review | review |
 | `chs_seekerspire` | Seeker Spire | 2 | structure | hand-made | approved | approved |
 | `chs_wyvern` | Wyvern | 2 | structure | hand-made | approved | approved |
 | `ord_advairfield` | Advanced Airfield | 2 | structure | hand-made | approved | approved |
@@ -216,22 +216,22 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `ord_beacon` | Beacon | 2 | structure | hand-made | approved | approved |
 | `ord_choir` | Choir | 2 | structure | hand-made | approved | approved |
 | `ord_edict` | Edict | 2 | structure | hand-made | approved | approved |
-| `ord_empyrean` | Empyrean | 2 | structure | hand-made | – | – |
+| `ord_empyrean` | Empyrean | 2 | structure | hand-made | review | review |
 | `ord_fusion` | Fusion Reactor | 2 | structure | hand-made | approved | approved |
-| `ord_lumen` | Lumen | 2 | structure | hand-made | approved | review |
-| `ord_phalanx` | Phalanx | 2 | structure | hand-made | approved | review |
-| `ord_pharos` | Pharos | 2 | structure | hand-made | – | – |
+| `ord_lumen` | Lumen | 2 | structure | hand-made | approved | approved |
+| `ord_phalanx` | Phalanx | 2 | structure | hand-made | approved | approved |
+| `ord_pharos` | Pharos | 2 | structure | hand-made | review | review |
 | `ord_providence` | Providence | 2 | structure | hand-made | approved | approved |
-| `ord_radiance` | Radiance | 2 | structure | hand-made | approved | review |
+| `ord_radiance` | Radiance | 2 | structure | hand-made | approved | approved |
 | `ord_rampart` | Rampart | 2 | structure | hand-made | approved | approved |
 | `ord_sanction` | Sanction | 2 | structure | generic | approved | approved |
 | `ord_sanctum` | Sanctum | 2 | structure | hand-made | approved | approved |
 | `ord_tribunal` | Tribunal | 2 | structure | hand-made | approved | approved |
 | `ord_veilspire` | Veilspire | 2 | structure | hand-made | approved | approved |
 | `ord_witness` | Witness | 2 | structure | hand-made | approved | approved |
-| `chs_ragnarok` | Ragnarok | 3 | structure | hand-made | approved | review |
-| `ord_citadel` | Citadel | 3 | structure | hand-made | approved | review |
-| `ord_reckoning` | Reckoning | 3 | structure | hand-made | approved | review |
+| `chs_ragnarok` | Ragnarok | 3 | structure | hand-made | approved | approved |
+| `ord_citadel` | Citadel | 3 | structure | hand-made | approved | approved |
+| `ord_reckoning` | Reckoning | 3 | structure | hand-made | approved | approved |
 <!-- status-table:end -->
 
 ## Summary (second review queue, 2026-10-23)
@@ -780,6 +780,9 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `19588182` (S-181 meshes: the 15 units' meshes and all 19 wrecks, `review`, so nothing new draws in game; includes `1a586bf4`; `Mesh.isAttachmentPiece` matches Blockout's; manifest, `place/MeshMaterials.model.json`, status table, docs).
 - Ready to merge: `8e0c2db5` (the Lakelands' ground mesh, `ground.lakelands`, `review`, so the client keeps drawing it its own way until approved; `assets/maps/lakelands`, the bake's `coarsen` option, manifest, docs; includes the merge of `main` 9d7da230).
 - Ready to merge: `641b3ee0` (the user approved the F18 towers, F6 advanced extractors and S-181 units with their wrecks, and the Lakelands ground: they now draw in game; manifest, docs; includes the merge of `main` e43b5726).
+- Ready to merge: `11bdc65a` (the user approved the last 40 meshes in review with their wrecks: every mesh is approved, so no unit draws as a blockout any more; manifest, docs).
+- Ready to merge: `145e7b32` (the user approved the 42 older wrecks: every wreck is approved; `ground.lakelands.step = 8` in the manifest for client-B's C-235; manifest, ground.py, docs).
+- Ready to merge: `d0383a51` (the last four meshes with wrecks: ord_pharos, chs_scylla, ord_empyrean, chs_rookery, `review`, so their blockouts draw until approved; every def now has a mesh; `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs).
 
 ## Requests
 

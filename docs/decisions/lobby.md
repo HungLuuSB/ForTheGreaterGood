@@ -156,3 +156,19 @@ The user approved it (queue item 5). "Invite" in the room calls `SocialService:P
 - **Full view** hides the lobby's own panels and its top bar; the stage takes the page, so drags anywhere turn the camera.
 - **Cost:** 25 more of client-B's modules are mounted read-only, the same rule as the kit: B keeps their APIs stable, and the lobby's build check fails when one changes its requires.
 - **Alternatives:** running a small sim in the lobby (the whole sim on the client for a preview), or the lobby's own simple effects (looks that drift from the match).
+
+## L-23 (2026-10-26): a loading screen on joining the lobby
+
+- **Decision:** the user asked for the lobby to load its assets the way a match does. On joining, a full-screen loading screen in the match start's look (key art, a tip, the olive bar) stays until the lobby has cached what it draws. Weights follow the match's `Render/Preload`: connected 0.10, the map list 0.10, every approved unit mesh built 0.55 (`MeshModels.start` with all defs), textures 0.25 (`PreloadAsync` on MeshMaterials, the Vfx templates and the icon sheets). Then it fades out.
+- **Why:** the showroom and the battle behind no longer pop in from blockouts to meshes, and Units opens instantly.
+- **Escape hatch:** a mesh that fails counts as done. After 12 s a Continue button lets the player in without waiting (a slow asset download shouldn't keep anyone out).
+- **Measured in Studio:** 138 meshes and the textures in about 25 s.
+
+## L-24 (2026-10-26): the Units article's numbers in BAR's wiki look
+
+- **Decision:** the user's reference (BAR's unit wiki). The unit's stats stay on top, the weapons below:
+  - **Cost** and **General stats** are bar rows: an uppercase label, an icon cell and a dark bar filled to the value's share of the game's biggest (`Codex.maxima`), with the number in the middle. Cost has supply, power and build time. General stats has health, speed, sight, radar, DPS, range, build power, stockpile and ammo, each only when the unit has it.
+  - **Details** keeps the rows that aren't amounts: value, build, armor, movement, other sensors, stealth, countermeasures, income, storage, size.
+  - **Weapons** are cards: a coloured tile by kind, the name in capitals, the kind and a stock round's power cost. Then one row per figure: the number in red, what it is, and a word for how it reads (reload "slow", alpha "very heavy", aoe "large", range "very long": `Codex.word`). Last, a sentence on what it does and the damage per hit. The header folds the rows.
+- **Bars on a square-root scale:** linear against the biggest value (the strategic structures) would leave most units' bars a sliver.
+- **Icons are text glyphs** that Roblox's fallback fonts draw, checked in Studio; several, such as ✹ ➚ ↻ ◷ ⌖ ➤, show as empty boxes and are avoided. No image uploads needed.

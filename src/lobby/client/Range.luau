@@ -405,12 +405,15 @@ local function arcPitch(w: any): number
 	end
 	return Ballistics.launchPitch(w.projectileSpeed or 200, g, (w.range or 200) * Range.RANGE_SHARE, 0, w.highArc == true) or math.rad(45)
 end
-local function arcSpeed(w: any, pitch: number, dist: number): number
-	local s2 = math.sin(2 * pitch)
-	if s2 < 1e-3 then
+-- (`dy`: the target's height over the muzzle; a tall unit's shell drops
+-- more, so it's launched slower or it flies over the board)
+local function arcSpeed(w: any, pitch: number, dist: number, dy: number): number
+	local c = math.cos(pitch)
+	local rise = dist * math.tan(pitch) - dy
+	if rise < 1e-3 or c < 1e-3 then
 		return w.projectileSpeed or 200
 	end
-	return math.sqrt((w.gravity or 0) * dist / s2)
+	return math.sqrt((w.gravity or 0) * dist * dist / (2 * c * c * rise))
 end
 
 -- Turret yaw (degrees, hull-relative, as the sim's: from the hull's
@@ -534,7 +537,7 @@ local function fire(u: Unit, s: Slot, now: number)
 		gravity = 0
 	elseif gravity > 0 then
 		local pitch = arcPitch(w)
-		local s0 = arcSpeed(w, pitch, dist)
+		local s0 = arcSpeed(w, pitch, dist, d.Y)
 		v = dirFlat * (s0 * math.cos(pitch)) + Vector3.new(0, s0 * math.sin(pitch), 0)
 	else
 		v = if d.Magnitude > 1e-6 then d.Unit * speed else dirFlat * speed

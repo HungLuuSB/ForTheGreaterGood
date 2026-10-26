@@ -1,0 +1,82 @@
+{
+  "id": "chs_scylla_wreck",
+  "wreckOf": "chs_scylla",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0646,
+        3.5572,
+        -0.0198
+      ],
+      "size": [
+        19.4193,
+        12.9167,
+        21.2025
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -0.0356,
+        8.6849,
+        -2.0251
+      ],
+      "size": [
+        5.6372,
+        4.6872,
+        9.0598
+      ],
+      "pivot": [
+        0.0,
+        8.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        0.0,
+        9.3,
+        -6.4
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1652,
+    "launcher": 944,
+    "total": 2596
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

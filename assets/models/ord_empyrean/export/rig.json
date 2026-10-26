@@ -1,0 +1,98 @@
+{
+  "id": "ord_empyrean",
+  "footprintStuds": 32,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        6.825,
+        0.0
+      ],
+      "size": [
+        29.9484,
+        13.65,
+        29.9484
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        7.0625,
+        0.0
+      ],
+      "size": [
+        28.85,
+        12.425,
+        28.85
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        2.405,
+        3.7775
+      ],
+      "size": [
+        26.8,
+        1.75,
+        10.855
+      ]
+    }
+  ],
+  "glowShare": 0.0794,
+  "triangles": {
+    "base": 3324,
+    "total": 3324
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

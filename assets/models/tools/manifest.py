@@ -110,6 +110,8 @@ def grounds(skip=()):
             continue
         rig, ids = load(rig_p), load(ids_p)["meshes"]
         e = {"status": "approved" if name in GROUND_APPROVED else "review", "tiles": [], "details": []}
+        if rig.get("step", 4) != 4:  # a coarsened bake (STYLES[name].coarsen): the client rebuilds its surface
+            e["step"] = rig["step"]
         for m in rig["meshes"]:
             e[m["kind"]].append({"mesh": ids[m["name"]], "center": m["center"], "size": m["size"],
                                  "material": m["material"]})
@@ -216,6 +218,13 @@ APPROVED_WRECKS = {
     "ord_sanctuary", "chs_advairfield", "chs_advshipyard", "chs_advvehplant", "chs_allseer", "chs_augur", "chs_basilisk", "chs_blackout",
     "chs_bulwark", "chs_deepear", "chs_fusion", "chs_seekerspire", "chs_wyvern", "ord_advairfield", "ord_advshipyard", "ord_advvehplant",
     "ord_aegis", "ord_beacon", "ord_choir", "ord_fusion", "ord_sanctum", "ord_tribunal", "ord_veilspire", "ord_witness",
+    # 2026-10-26: the 42 older wrecks (meshes approved in earlier rounds)
+    "chs_warlord", "ord_sovereign", "chs_locust", "chs_harpy", "chs_plague", "chs_vulture", "chs_wasp", "ord_absolution",
+    "ord_falcon", "ord_guardian", "ord_skywright", "chs_lamprey", "ord_silence", "ord_barrier", "chs_cyclops", "chs_forgemaster",
+    "chs_gorgon", "chs_hydra", "chs_juggernaut", "chs_minotaur", "chs_shroud", "chs_stalker", "ord_arbiter", "ord_architect",
+    "ord_judgement", "ord_paladin", "ord_seraph", "ord_veil", "ord_warden", "chs_condor", "chs_leech", "ord_tidewatch",
+    "ord_zenith", "chs_carapace", "chs_hailstorm", "chs_inferno", "ord_lumen", "ord_phalanx", "ord_radiance", "chs_ragnarok",
+    "ord_citadel", "ord_reckoning",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 

@@ -3931,6 +3931,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				},
 			},
 			status = "approved",
+			step = 8,
 			tiles = {
 				{
 					center = { -1920, 19.625, -1920 },
@@ -10779,7 +10780,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://132725489584573",
 				},
 				model = "rbxassetid://71084957688871",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0036, 4.1055, -0.0281 },
@@ -10792,7 +10792,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 2.2754, 2.3404, 2.2366 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 992,
 			},
 		},
@@ -11588,7 +11588,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://86639374541250",
 				},
 				model = "rbxassetid://123476319338351",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0188, 1.9576, 1.3695 },
@@ -11611,7 +11610,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.2537, 1.6934, 1.6857 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1144,
 			},
 		},
@@ -12003,7 +12002,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://88061453488501",
 				},
 				model = "rbxassetid://98893993165134",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { -0.0817, 4.256, 1.068 },
@@ -12031,7 +12029,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 5.169, 8.2312, 5.0664 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1572,
 			},
 		},
@@ -12853,7 +12851,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://126115449926679",
 				},
 				model = "rbxassetid://84618560472236",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0128, 1.804, -0.1014 },
@@ -12876,7 +12873,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.8991, 1.0468, 8.0792 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1472,
 			},
 		},
@@ -13485,7 +13482,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://109222668268775",
 				},
 				model = "rbxassetid://72360036677903",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0556, 1.8733, -0.0994 },
@@ -13533,7 +13529,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.7506, 1.5221, 1.4677 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 992,
 			},
 		},
@@ -14204,7 +14200,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://105801019276697",
 				},
 				model = "rbxassetid://87883717451600",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0221, 1.3314, -0.002 },
@@ -14217,7 +14212,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 3.9022, 3.1949, 5.16 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1320,
 			},
 		},
@@ -14296,7 +14291,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://86219006111513",
 				},
 				model = "rbxassetid://133260518836213",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0162, 1.557, -0.6435 },
@@ -14309,7 +14303,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 3.0577, 0.6738, 2.4513 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 744,
 			},
 		},
@@ -14819,7 +14813,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://128424423220845",
 				},
 				model = "rbxassetid://117344933750899",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0159, 1.8011, -0.0369 },
@@ -14847,7 +14840,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 2.9552, 0.9946, 3.4412 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1936,
 			},
 		},
@@ -15021,7 +15014,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://133914078839444",
 				},
 				model = "rbxassetid://108141198792256",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { -0.0257, 9.5633, -3.5639 },
@@ -15054,7 +15046,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 3.6381, 8.1474, 3.1473 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 2868,
 			},
 		},
@@ -15388,7 +15380,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://130174483948394",
 				},
 				model = "rbxassetid://121068576949343",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					armL = {
 						center = { -2.3222, 4.64, -2.0591 },
@@ -15421,7 +15412,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 4.27, 3.9396, 3.4271 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1832,
 			},
 		},
@@ -15652,7 +15643,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://105854857957290",
 				},
 				model = "rbxassetid://97651983916931",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0043, 0.404, 0.3861 },
@@ -15670,7 +15660,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.8042, 0.3585, 0.6873 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 536,
 			},
 		},
@@ -15802,7 +15792,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://128093110985294",
 				},
 				model = "rbxassetid://83703169704022",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.013, 1.9127, 1.8454 },
@@ -15830,7 +15819,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.2269, 1.9052, 1.9092 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1032,
 			},
 		},
@@ -16195,7 +16184,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://71089724646220",
 				},
 				model = "rbxassetid://131778326483540",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { 0.0135, 2.1271, -1.9484 },
@@ -16223,7 +16211,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 2.1523, 1.0498, 2.1293 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1168,
 			},
 		},
@@ -16592,7 +16580,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://81703967506065",
 				},
 				model = "rbxassetid://76110516940037",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { -0.0469, 2.9156, -4.5212 },
@@ -16625,7 +16612,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 5.0137, 1.8586, 5.2453 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1764,
 			},
 		},
@@ -17151,7 +17138,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://75676234472404",
 				},
 				model = "rbxassetid://119089549175358",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0139, 1.5216, -0.6472 },
@@ -17169,7 +17155,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 4.6409, 0.4118, 0.8415 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 648,
 			},
 		},
@@ -17245,7 +17231,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://85408750369198",
 				},
 				model = "rbxassetid://102129253096260",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0673, 5.658, -0.0231 },
@@ -17258,7 +17243,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 7.5645, 1.1232, 8.0066 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1300,
 			},
 		},
@@ -17605,6 +17590,72 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				triangles = 1492,
 			},
 		},
+		chs_rookery = {
+			attachments = {},
+			glow = {
+				{
+					center = { 13, 10, -14.02 },
+					channel = "head",
+					mesh = "rbxassetid://120157113284282",
+					name = "base_glow_head",
+					piece = "base",
+					size = { 1.4, 0.4, 0.04 },
+					strength = 2.5,
+					tint = { 255, 236, 205 },
+				},
+				{
+					center = { 0, 1.05, -2 },
+					channel = "running",
+					mesh = "rbxassetid://138583568064896",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 25.458, 0.4, 10.258 },
+					strength = 2,
+					tint = { 255, 150, 55 },
+				},
+			},
+			glowShare = 0.0048,
+			maps = {
+				ALB = "rbxassetid://108301965640188",
+				EMI = "rbxassetid://117746220261193",
+				MTL = "rbxassetid://139264978356937",
+				NOR = "rbxassetid://126910357359201",
+				RGH = "rbxassetid://75866292932903",
+			},
+			model = "rbxassetid://118263607094728",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 5.15, 0.1285 },
+					mesh = "rbxassetid://94940418798283",
+					size = { 29.9632, 10.3, 30.2203 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+			},
+			triangles = 2332,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://95799147292817",
+					MTL = "rbxassetid://85406740745930",
+					NOR = "rbxassetid://92257503232622",
+					RGH = "rbxassetid://78228998411040",
+				},
+				model = "rbxassetid://119194671722407",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { -0.1787, 4.7978, 0.1152 },
+						mesh = "rbxassetid://113515735722293",
+						size = { 30.0642, 9.814, 30.3097 },
+					},
+				},
+				status = "review",
+				triangles = 1816,
+			},
+		},
 		chs_scourge = {
 			attachments = {
 				muzzle = {
@@ -17827,6 +17878,110 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				},
 				status = "approved",
 				triangles = 2636,
+			},
+		},
+		chs_scylla = {
+			attachments = {
+				muzzle = {
+					at = { 0, 9.3, -6.4 },
+					parent = "launcher",
+				},
+			},
+			glow = {
+				{
+					center = { -0.6, 5.6, -3.1 },
+					channel = "head",
+					mesh = "rbxassetid://109852685459543",
+					name = "base_glow_head",
+					piece = "base",
+					size = { 2.9496, 0.4, 0.9696 },
+					strength = 2.5,
+					tint = { 255, 236, 205 },
+				},
+				{
+					center = { -7.4, 9.75, -6.2 },
+					channel = "running",
+					mesh = "rbxassetid://83386067463845",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 0.5, 0.5, 0.5 },
+					strength = 2,
+					tint = { 255, 150, 55 },
+				},
+				{
+					center = { 0, 8.7, -1.42 },
+					channel = "head",
+					mesh = "rbxassetid://107671257450128",
+					name = "launcher_glow_head",
+					piece = "launcher",
+					size = { 3.1, 0.3, 0.06 },
+					strength = 2.5,
+					tint = { 255, 236, 205 },
+				},
+				{
+					center = { 0, 8.55, -5.8324 },
+					channel = "weapon",
+					mesh = "rbxassetid://130994169602461",
+					name = "launcher_glow_weapon",
+					piece = "launcher",
+					size = { 5.3946, 2.2608, 1.1752 },
+					strength = 1.5,
+					tint = { 255, 175, 70 },
+				},
+			},
+			glowShare = 0.0065,
+			maps = {
+				ALB = "rbxassetid://76615433256541",
+				EMI = "rbxassetid://87475676350107",
+				MTL = "rbxassetid://73462035337607",
+				NOR = "rbxassetid://133918373828915",
+				RGH = "rbxassetid://133265618972974",
+			},
+			model = "rbxassetid://88530121756757",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 3.3796, 0 },
+					mesh = "rbxassetid://128865888108962",
+					size = { 19.16, 12.2408, 21 },
+				},
+				launcher = {
+					center = { 0, 8.8012, -2.09 },
+					mesh = "rbxassetid://123708462798068",
+					parent = "base",
+					pivot = { 0, 8, 0 },
+					size = { 5.7124, 4.7578, 8.58 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+				"launcher",
+			},
+			triangles = 2952,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://136367006781721",
+					MTL = "rbxassetid://97298434021267",
+					NOR = "rbxassetid://99369868554203",
+					RGH = "rbxassetid://115985919048511",
+				},
+				model = "rbxassetid://103002214850410",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { 0.0646, 3.5572, -0.0198 },
+						mesh = "rbxassetid://131370441804774",
+						size = { 19.4193, 12.9167, 21.2025 },
+					},
+					launcher = {
+						center = { -0.0356, 8.6849, -2.0251 },
+						mesh = "rbxassetid://85684177561446",
+						size = { 5.6372, 4.6872, 9.0598 },
+					},
+				},
+				status = "review",
+				triangles = 2596,
 			},
 		},
 		chs_seekerspire = {
@@ -18221,7 +18376,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://75010840859158",
 				},
 				model = "rbxassetid://132259852080632",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					array = {
 						center = { 0.1406, 7.3052, 2.2227 },
@@ -18264,7 +18418,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.8202, 1.5927, 1.5296 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 980,
 			},
 		},
@@ -19106,7 +19260,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://78727002404275",
 				},
 				model = "rbxassetid://107160623339231",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.014, 3.1469, -0.1467 },
@@ -19149,7 +19302,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.7041, 1.5553, 1.4792 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 940,
 			},
 		},
@@ -20449,7 +20602,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://82074466618434",
 				},
 				model = "rbxassetid://112911975683567",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0395, 1.6523, 1.8309 },
@@ -20472,7 +20624,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.1572, 1.592, 1.5655 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 640,
 			},
 		},
@@ -20834,7 +20986,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://118667509160786",
 				},
 				model = "rbxassetid://72903472639833",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					armL = {
 						center = { -3.7329, 6.4103, -0.0941 },
@@ -20912,7 +21063,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 10.9156, 6.5284, 6.3597 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 8256,
 			},
 		},
@@ -21020,7 +21171,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://71508212672565",
 				},
 				model = "rbxassetid://127845074372157",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0168, 1.6363, 1.8431 },
@@ -21043,7 +21193,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.1724, 1.6124, 1.5615 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 604,
 			},
 		},
@@ -21656,7 +21806,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://119015203486772",
 				},
 				model = "rbxassetid://120423499550753",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.035, 1.1428, -0.5241 },
@@ -21674,7 +21823,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 5.1298, 0.4216, 0.975 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 552,
 			},
 		},
@@ -22786,7 +22935,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://87175667160677",
 				},
 				model = "rbxassetid://130624391649472",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0055, 2.1165, -0.1426 },
@@ -22829,7 +22977,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.7435, 1.4822, 1.4736 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1020,
 			},
 		},
@@ -23030,7 +23178,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://109516682312019",
 				},
 				model = "rbxassetid://122409515875098",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0177, 1.9691, -0.3327 },
@@ -23053,7 +23200,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.9115, 1.0543, 8.3442 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1752,
 			},
 		},
@@ -23459,7 +23606,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://122614323477867",
 				},
 				model = "rbxassetid://125376987043054",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0183, 1.6114, 0.0249 },
@@ -23467,7 +23613,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 8.0504, 3.2692, 3.2717 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 412,
 			},
 		},
@@ -24183,7 +24329,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://107515844893626",
 				},
 				model = "rbxassetid://84016307182628",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { 0.0775, 5.7118, -9.7686 },
@@ -24211,7 +24356,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 8.301, 3.5, 8.1022 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1392,
 			},
 		},
@@ -25296,6 +25441,72 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				triangles = 3410,
 			},
 		},
+		ord_empyrean = {
+			attachments = {},
+			glow = {
+				{
+					center = { 0, 2.405, 3.7775 },
+					channel = "power",
+					mesh = "rbxassetid://104718143025771",
+					name = "base_glow_power",
+					piece = "base",
+					size = { 26.8, 1.75, 10.855 },
+					strength = 2.5,
+					tint = { 130, 225, 255 },
+				},
+				{
+					center = { 0, 7.0625, 0 },
+					channel = "running",
+					mesh = "rbxassetid://134511300447998",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 28.85, 12.425, 28.85 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+			},
+			glowShare = 0.0794,
+			maps = {
+				ALB = "rbxassetid://136695584765877",
+				EMI = "rbxassetid://123986902562296",
+				MTL = "rbxassetid://116447903615785",
+				NOR = "rbxassetid://134242113999111",
+				RGH = "rbxassetid://116144765897296",
+			},
+			model = "rbxassetid://114030713501938",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 6.825, 0 },
+					mesh = "rbxassetid://79699117645808",
+					size = { 29.9484, 13.65, 29.9484 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+			},
+			triangles = 3324,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://95488930599152",
+					MTL = "rbxassetid://72898774675305",
+					NOR = "rbxassetid://103377311731961",
+					RGH = "rbxassetid://139178247984872",
+				},
+				model = "rbxassetid://119615631415468",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { 0.0911, 6.5152, 0.1082 },
+						mesh = "rbxassetid://99082379844086",
+						size = { 30.344, 13.6028, 30.1257 },
+					},
+				},
+				status = "review",
+				triangles = 2756,
+			},
+		},
 		ord_extractor = {
 			anim = {
 				drill = {
@@ -25477,7 +25688,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://113262267353726",
 				},
 				model = "rbxassetid://87761482115882",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0224, 1.2696, -0.5308 },
@@ -25490,7 +25700,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 2.2768, 0.6554, 2.3 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 716,
 			},
 		},
@@ -26467,7 +26677,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://117475404656329",
 				},
 				model = "rbxassetid://116589971687684",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0265, 1.5143, 1.1165 },
@@ -26490,7 +26699,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.2322, 1.5751, 1.5792 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1036,
 			},
 		},
@@ -27119,7 +27328,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://96171142220807",
 				},
 				model = "rbxassetid://90171375079751",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0107, 1.7728, -0.0699 },
@@ -27147,7 +27355,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 3.6005, 1.1773, 3.6848 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1600,
 			},
 		},
@@ -28000,7 +28208,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://100402458662507",
 				},
 				model = "rbxassetid://105288528168586",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0404, 1.6369, -0.0099 },
@@ -28013,7 +28220,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 4.5423, 3.0895, 5.0417 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1124,
 			},
 		},
@@ -28957,7 +29164,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://112551644554944",
 				},
 				model = "rbxassetid://102773790735950",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0045, 1.3972, -0.0875 },
@@ -28980,7 +29186,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 4.9082, 2.1934, 14.2228 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1836,
 			},
 		},
@@ -29066,7 +29272,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://74412781390879",
 				},
 				model = "rbxassetid://109457220694124",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0167, 4.7208, -0.002 },
@@ -29079,7 +29284,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 1.5927, 2.5759, 1.5653 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1576,
 			},
 		},
@@ -29184,6 +29389,120 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				},
 				status = "approved",
 				triangles = 552,
+			},
+		},
+		ord_pharos = {
+			attachments = {
+				muzzle = {
+					at = { -1.8, 20.2, -2.7 },
+					parent = "launcher",
+				},
+			},
+			glow = {
+				{
+					center = { 0, 12.5, -0.05 },
+					channel = "head",
+					mesh = "rbxassetid://108415501080895",
+					name = "base_glow_head",
+					piece = "base",
+					size = { 0.5, 3, 4.94 },
+					strength = 2.5,
+					tint = { 255, 236, 205 },
+				},
+				{
+					center = { 0, 17.2, 0 },
+					channel = "power",
+					mesh = "rbxassetid://123716573531214",
+					name = "base_glow_power",
+					piece = "base",
+					size = { 3.8, 2.2, 3.8 },
+					strength = 2.5,
+					tint = { 130, 225, 255 },
+				},
+				{
+					center = { 0, 3.01, 0 },
+					channel = "running",
+					mesh = "rbxassetid://72412414593464",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 13.178, 2.52, 13.178 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+				{
+					center = { 0, 20.2, -1.22 },
+					channel = "head",
+					mesh = "rbxassetid://132287266387726",
+					name = "launcher_glow_head",
+					piece = "launcher",
+					size = { 0.8, 0.6, 0.06 },
+					strength = 2.5,
+					tint = { 255, 236, 205 },
+				},
+				{
+					center = { 0, 20.2, -2.55 },
+					channel = "weapon",
+					mesh = "rbxassetid://125513200299447",
+					name = "launcher_glow_weapon",
+					piece = "launcher",
+					size = { 4.96, 1.3326, 0.06 },
+					strength = 1.5,
+					tint = { 190, 240, 255 },
+				},
+			},
+			glowShare = 0.022,
+			maps = {
+				ALB = "rbxassetid://92139237299872",
+				EMI = "rbxassetid://107985302072323",
+				MTL = "rbxassetid://129324402995261",
+				NOR = "rbxassetid://88621746866192",
+				RGH = "rbxassetid://103176552643800",
+			},
+			model = "rbxassetid://101957280133306",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 9.15, 0 },
+					mesh = "rbxassetid://101294746264469",
+					size = { 23.1, 19.3, 23.1 },
+				},
+				launcher = {
+					center = { 0, 19.975, -0.315 },
+					mesh = "rbxassetid://80454125550522",
+					parent = "base",
+					pivot = { 0, 19.8, 0 },
+					size = { 5.4, 2.35, 4.43 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+				"launcher",
+			},
+			triangles = 3412,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://132027025382205",
+					MTL = "rbxassetid://113927041446299",
+					NOR = "rbxassetid://110109528689634",
+					RGH = "rbxassetid://122830865433783",
+				},
+				model = "rbxassetid://96847373522491",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { 0.1225, 8.9988, -0.0452 },
+						mesh = "rbxassetid://94500687298694",
+						size = { 23.509, 19.5034, 23.5229 },
+					},
+					launcher = {
+						center = { 0.1488, 19.9438, -0.5411 },
+						mesh = "rbxassetid://100437105243708",
+						size = { 5.5602, 2.6063, 4.735 },
+					},
+				},
+				status = "review",
+				triangles = 3060,
 			},
 		},
 		ord_providence = {
@@ -29470,7 +29789,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://134030278219165",
 				},
 				model = "rbxassetid://114435619583335",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { -0.0549, 10.7613, -4.1505 },
@@ -29503,7 +29821,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 3.7718, 9.1691, 3.9372 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 2356,
 			},
 		},
@@ -29693,7 +30011,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://79183382751171",
 				},
 				model = "rbxassetid://71664201662018",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0439, 1.3816, -0.0179 },
@@ -29711,7 +30028,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 6.2344, 0.6863, 12.1011 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 964,
 			},
 		},
@@ -30524,7 +30841,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://77013541975234",
 				},
 				model = "rbxassetid://105373833684899",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.026, 1.9689, -0.1592 },
@@ -30572,7 +30888,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.6772, 1.4814, 1.4296 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1228,
 			},
 		},
@@ -31026,7 +31342,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://82320260911447",
 				},
 				model = "rbxassetid://140207527854569",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0123, 0.472, 0.4276 },
@@ -31044,7 +31359,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.8693, 0.3742, 0.7125 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 452,
 			},
 		},
@@ -31152,7 +31467,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://128843795876207",
 				},
 				model = "rbxassetid://86603319112201",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0135, 1.5266, 1.056 },
@@ -31175,7 +31489,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.2643, 1.6454, 1.5274 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 732,
 			},
 		},
@@ -31621,7 +31935,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://124285358715231",
 				},
 				model = "rbxassetid://80201166614682",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					armL = {
 						center = { -3.3635, 6.6193, 0.0042 },
@@ -31699,7 +32012,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 10.4481, 5.0917, 4.9702 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 8164,
 			},
 		},
@@ -32059,7 +32372,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://95827781137986",
 				},
 				model = "rbxassetid://88242443891526",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0063, 1.699, 1.4491 },
@@ -32087,7 +32399,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.2391, 1.8514, 1.7352 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1264,
 			},
 		},
@@ -32708,7 +33020,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://82978162650648",
 				},
 				model = "rbxassetid://105287651004417",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					array = {
 						center = { 0.0227, 3.8661, 1.6327 },
@@ -32761,7 +33072,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.7679, 1.5114, 1.5356 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1204,
 			},
 		},
@@ -33262,7 +33573,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://94843060728799",
 				},
 				model = "rbxassetid://109214427731407",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { 0.0134, 2.9411, -5.4705 },
@@ -33300,7 +33610,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 4.8276, 1.8209, 5.7026 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 2764,
 			},
 		},
@@ -33661,7 +33971,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://96914919117227",
 				},
 				model = "rbxassetid://84631558931259",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0002, 1.8304, 1.4527 },
@@ -33684,7 +33993,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.4216, 1.0863, 1.0897 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1412,
 			},
 		},
