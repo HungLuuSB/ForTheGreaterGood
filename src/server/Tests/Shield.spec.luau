@@ -868,6 +868,9 @@ return function(t: RunAll.Context)
 			local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
 			local w = sim.world
 			local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+			-- only the attack order's beam (S-185: idle weapons search on every
+			-- sensor tick, so it would otherwise fire before the order)
+			World.setFireState(w, tower, World.FireState.HOLD_FIRE)
 			local target = Spawn.unit(sim, "chs_juggernaut", 2, 0, 280, math.pi)
 			local scout = Spawn.unit(sim, "ord_herald", 1, 60, 200, 0)
 			for _, id in { target, scout } do

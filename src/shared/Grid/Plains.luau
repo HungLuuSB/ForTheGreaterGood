@@ -69,6 +69,16 @@ function Plains.build(): Layers.Layers
 		table.insert(starts, { -starts[i][1], starts[i][2] }) -- the mirror of the west cell centre
 	end
 	layers.starts = starts
+	-- (S-186, lobby-D: with three sides, contiguous blocks gave side 2 the
+	-- south-west and north-east groups, two corners apart.) Hints 1–4 are
+	-- the north-west group, 5–8 south-west, 9–12 north-east, 13–16
+	-- south-east; within a group 1–2 are its north row, 3–4 its south row.
+	layers.sideSplits = {
+		[3] = { { 1, 2, 3, 4, 5, 6, 7, 8 }, { 9, 10, 11, 12 }, { 13, 14, 15, 16 } },
+		[5] = { { 1, 2, 3, 4 }, { 5, 6, 7, 8 }, { 9, 10, 11, 12 }, { 13, 14 }, { 15, 16 } },
+		[6] = { { 1, 2 }, { 3, 4 }, { 5, 6, 7, 8 }, { 9, 10 }, { 11, 12 }, { 13, 14, 15, 16 } },
+		[7] = { { 1, 2 }, { 3, 4 }, { 5, 6 }, { 7, 8 }, { 9, 10, 11, 12 }, { 13, 14 }, { 15, 16 } },
+	}
 	-- deposits: a cell and its mirror twin, 3+ cells from any other deposit
 	-- and `hintGap` studs from every hint (5 cells for a home deposit: a
 	-- Commander stands there; HINT_CLEAR for the fields, so each hint keeps

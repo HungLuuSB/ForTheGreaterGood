@@ -170,6 +170,38 @@ return function(t: RunAll.Context)
 		t.expect((nextHit :: any).damage < low * 1.4, `and it starts low again: {(nextHit :: any).damage}`)
 	end)
 
+	t.test("laser shots cost power: a Sentry fires while the team has it, and holds when it's gone (S-187, the user)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "ord_sentry_tower", 1, 0, 0)
+		local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, 120, math.pi)
+		World.setFireState(w, tank, World.FireState.HOLD_FIRE)
+		World.setMoveState(w, tank, World.MoveState.HOLD_POSITION)
+		World.setHealth(w, tank, 1e6)
+		local acc = sim.eco.accounts[1].power
+		local cost = (sim.defs.weapons.ord_sentry_laser.shotCost :: any).power
+		local function shots(ticks: number, refill: number?): number
+			local n = 0
+			for _ = 1, ticks do
+				if refill then
+					acc.stored = refill
+				end
+				Sim.step(sim)
+				for _, e in sim.combat.events do
+					if e.kind == "FIRE" and e.unit == tower then
+						n += 1
+					end
+				end
+			end
+			return n
+		end
+		t.expect(shots(15 * 5, 1000) >= 4, "with power it fires")
+		local drawn = acc.drawn
+		shots(15 * 2, 1000)
+		t.expect(acc.drawn - drawn >= cost, `each shot draws {cost} power`)
+		t.equal(shots(15 * 5, 0), 0, "with none it holds")
+	end)
+
 	t.test("the lobbing guns fire on the high arc and hit a still target at medium range", function()
 		for _, id in { "ord_gauntlet", "chs_talos" } do
 			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })

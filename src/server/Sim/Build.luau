@@ -79,7 +79,6 @@ end
 
 Build.CREEP_SPEED = 3 -- studs/s: slower than this, a builder counts as stopped (S-185)
 Build.STOP_INSIDE = 6 -- studs: an approaching builder stops this far inside its reach, so a nudge doesn't put it out of range
-local braking: { [number]: number } = setmetatable({}, { __mode = "k" }) :: any -- builder → tick it began an early stop (cleared on its next move)
 
 -- Drive toward (x, z) unless already moving there. With `targetHalf`, a
 -- builder starts braking once its braking distance would carry it into
@@ -100,16 +99,16 @@ local function approach(sim: Types.Sim, id: number, x: number, z: number, target
 			if sqrt(dx * dx + dz * dz) - v * v / (2 * brake) <= (d.buildRange or 0) + targetHalf - Build.STOP_INSIDE then
 				Nav.clearOrder(nav, w, id)
 				w.goalX[id], w.goalZ[id] = stopPoint(sim, id)
-				braking[id] = sim.tick
+				sim.build.braking[id] = sim.tick
 			end
 		end
 		return
 	end
-	local since = braking[id]
+	local since = sim.build.braking[id]
 	if since and v > Build.CREEP_SPEED and sim.tick - since < 45 then
 		return -- still braking from its early stop
 	end
-	braking[id] = nil
+	sim.build.braking[id] = nil
 	Nav.issueMove(nav, w, sim.tick, { id }, x, z)
 end
 

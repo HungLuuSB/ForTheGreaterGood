@@ -190,6 +190,7 @@ return function(t: RunAll.Context)
 		local start = layers.starts[1]
 		local sx, sz = g:cellAt(start[1], start[2])
 		local dx, dz = g:cellCenter(sx + 4, sz + 4)
+		dx, dz = PlacementRules.depositNear(layers, dx, dz, 16) -- on the patch (S-184)
 		local t1 = Spawn.unit(sim, "ord_extractor", 1, dx, dz)
 		Spawn.unit(sim, "ord_generator", 1, start[1] - 60, start[2]) -- some power
 		local builder = Spawn.unit(sim, "ord_architect", 1, dx - 30, dz)
