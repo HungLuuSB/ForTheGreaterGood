@@ -1,0 +1,69 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-181 mesh, rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar where needed), review: 2204 triangles, glow share 2.6%",
+  "bar": {
+    "model": "rbxassetid://85157768399119",
+    "meshes": {
+      "base": "rbxassetid://101223244357159",
+      "base_glow_head": "rbxassetid://87143722687666",
+      "base_glow_power": "rbxassetid://98918355666771",
+      "base_glow_running": "rbxassetid://118041576344078",
+      "footL": "rbxassetid://135327701643451",
+      "footL_glow_running": "rbxassetid://74633025963275",
+      "footR": "rbxassetid://128675087827132",
+      "footR_glow_running": "rbxassetid://76980882429433",
+      "nano": "rbxassetid://107963504082293",
+      "nano_glow_power": "rbxassetid://122190242394547",
+      "shinL": "rbxassetid://117703311898063",
+      "shinR": "rbxassetid://125027695468978",
+      "thighL": "rbxassetid://92059568050866",
+      "thighL_glow_running": "rbxassetid://92187395193692",
+      "thighR": "rbxassetid://114612641154876",
+      "thighR_glow_running": "rbxassetid://95510418545697"
+    },
+    "decals": {
+      "ALB": "rbxassetid://115941143212392",
+      "RGH": "rbxassetid://113545651801366",
+      "NOR": "rbxassetid://134841210583310",
+      "MTL": "rbxassetid://114429111745048",
+      "EMI": "rbxassetid://98519113611843"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://114789066284880",
+      "NOR": "rbxassetid://129204672308831",
+      "RGH": "rbxassetid://90767334488747",
+      "MTL": "rbxassetid://82552558273393",
+      "EMI": "rbxassetid://79493361042685"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_artisan_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://85526634876390",
+    "meshes": {
+      "base": "rbxassetid://126260300212196",
+      "footL": "rbxassetid://81221665632849",
+      "footR": "rbxassetid://74691883599137",
+      "nano": "rbxassetid://92266227699653",
+      "shinL": "rbxassetid://77477674328908",
+      "shinR": "rbxassetid://118978922746707",
+      "thighL": "rbxassetid://135642816051940",
+      "thighR": "rbxassetid://73036524155825"
+    },
+    "decals": {
+      "ALB": "rbxassetid://105739939770886",
+      "RGH": "rbxassetid://93285907292104",
+      "NOR": "rbxassetid://80844386140785",
+      "MTL": "rbxassetid://89112635499065",
+      "EMI": "rbxassetid://77271139098903"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://124719932604581",
+      "NOR": "rbxassetid://97269827082884",
+      "RGH": "rbxassetid://85609747181382",
+      "MTL": "rbxassetid://130221780540390",
+      "EMI": "rbxassetid://82491821846598"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_artisan_wreck_bar in FTGG Art",
+    "revision": "S-181 wreck, rigged in FTGG Art 2026-10-26, review: 2152 triangles"
+  }
+}

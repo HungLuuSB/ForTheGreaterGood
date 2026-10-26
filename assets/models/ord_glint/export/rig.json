@@ -1,0 +1,533 @@
+{
+  "id": "ord_glint",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.0,
+        0.0
+      ],
+      "size": [
+        1.42,
+        0.7,
+        1.1
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.15,
+        0.0037
+      ],
+      "size": [
+        1.78,
+        1.7,
+        2.2925
+      ],
+      "pivot": [
+        0.0,
+        3.3,
+        0.0
+      ]
+    },
+    "arm_l": {
+      "parent": "torso",
+      "center": [
+        -1.135,
+        3.9,
+        -0.8425
+      ],
+      "size": [
+        0.63,
+        0.64,
+        2.7151
+      ],
+      "pivot": [
+        -1.0,
+        3.9,
+        0.2
+      ]
+    },
+    "arm_r": {
+      "parent": "torso",
+      "center": [
+        1.135,
+        3.9,
+        -0.8425
+      ],
+      "size": [
+        0.63,
+        0.64,
+        2.7151
+      ],
+      "pivot": [
+        1.0,
+        3.9,
+        0.2
+      ]
+    },
+    "thighL": {
+      "parent": "base",
+      "center": [
+        -0.55,
+        2.1393,
+        -0.1053
+      ],
+      "size": [
+        0.5176,
+        1.8165,
+        0.7055
+      ],
+      "pivot": [
+        -0.55,
+        2.8,
+        0.0
+      ]
+    },
+    "shinL": {
+      "parent": "thighL",
+      "center": [
+        -0.55,
+        0.9104,
+        -0.0767
+      ],
+      "size": [
+        0.4704,
+        1.2628,
+        0.732
+      ],
+      "pivot": [
+        -0.55,
+        1.456,
+        -0.2025
+      ]
+    },
+    "footL": {
+      "parent": "shinL",
+      "center": [
+        -0.5501,
+        0.2076,
+        -0.035
+      ],
+      "size": [
+        0.5625,
+        0.4151,
+        1.08
+      ],
+      "pivot": [
+        -0.55,
+        0.45,
+        0.1
+      ]
+    },
+    "thighR": {
+      "parent": "base",
+      "center": [
+        0.55,
+        2.1393,
+        -0.1053
+      ],
+      "size": [
+        0.5176,
+        1.8165,
+        0.7055
+      ],
+      "pivot": [
+        0.55,
+        2.8,
+        0.0
+      ]
+    },
+    "shinR": {
+      "parent": "thighR",
+      "center": [
+        0.55,
+        0.9104,
+        -0.0767
+      ],
+      "size": [
+        0.4704,
+        1.2628,
+        0.732
+      ],
+      "pivot": [
+        0.55,
+        1.456,
+        -0.2025
+      ]
+    },
+    "footR": {
+      "parent": "shinR",
+      "center": [
+        0.5501,
+        0.2076,
+        -0.035
+      ],
+      "size": [
+        0.5625,
+        0.4151,
+        1.08
+      ],
+      "pivot": [
+        0.55,
+        0.45,
+        0.1
+      ]
+    }
+  },
+  "attachments": {
+    "arm_l_muzzle": {
+      "parent": "arm_l",
+      "at": [
+        -1.2,
+        3.9,
+        -2.35
+      ]
+    },
+    "arm_r_muzzle": {
+      "parent": "arm_r",
+      "at": [
+        1.2,
+        3.9,
+        -2.35
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "torso",
+    "arm_l",
+    "arm_r",
+    "thighL",
+    "shinL",
+    "footL",
+    "thighR",
+    "shinR",
+    "footR"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "thighL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.95,
+        0.52
+      ],
+      "size": [
+        0.8,
+        0.3,
+        0.04
+      ]
+    },
+    {
+      "name": "torso_glow_running",
+      "piece": "torso",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.25,
+        -0.3
+      ],
+      "size": [
+        1.75,
+        0.08,
+        0.9
+      ]
+    },
+    {
+      "name": "torso_glow_head",
+      "piece": "torso",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.05,
+        -1.06
+      ],
+      "size": [
+        0.5,
+        0.1226,
+        0.0724
+      ]
+    },
+    {
+      "name": "arm_l_glow_running",
+      "piece": "arm_l",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.46,
+        3.9,
+        -0.45
+      ],
+      "size": [
+        0.04,
+        0.12,
+        1.2
+      ]
+    },
+    {
+      "name": "arm_l_glow_weapon",
+      "piece": "arm_l",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        -1.2,
+        3.9,
+        -2.23
+      ],
+      "size": [
+        0.26,
+        0.2472,
+        0.06
+      ]
+    },
+    {
+      "name": "arm_r_glow_running",
+      "piece": "arm_r",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        1.46,
+        3.9,
+        -0.45
+      ],
+      "size": [
+        0.04,
+        0.12,
+        1.2
+      ]
+    },
+    {
+      "name": "arm_r_glow_weapon",
+      "piece": "arm_r",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        1.2,
+        3.9,
+        -2.23
+      ],
+      "size": [
+        0.26,
+        0.2472,
+        0.06
+      ]
+    },
+    {
+      "name": "thighL_glow_running",
+      "piece": "thighL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -0.784,
+        2.128,
+        -0.1012
+      ],
+      "size": [
+        0.03,
+        0.8064,
+        0.0799
+      ]
+    },
+    {
+      "name": "footL_glow_running",
+      "piece": "footL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -0.55,
+        0.3,
+        -0.555
+      ],
+      "size": [
+        0.3938,
+        0.08,
+        0.03
+      ]
+    },
+    {
+      "name": "thighR_glow_running",
+      "piece": "thighR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.784,
+        2.128,
+        -0.1012
+      ],
+      "size": [
+        0.03,
+        0.8064,
+        0.0799
+      ]
+    },
+    {
+      "name": "footR_glow_running",
+      "piece": "footR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.55,
+        0.3,
+        -0.555
+      ],
+      "size": [
+        0.3938,
+        0.08,
+        0.03
+      ]
+    }
+  ],
+  "glowShare": 0.0395,
+  "triangles": {
+    "base": 316,
+    "torso": 236,
+    "arm_l": 372,
+    "arm_r": 372,
+    "thighL": 324,
+    "shinL": 180,
+    "footL": 88,
+    "thighR": 324,
+    "shinR": 180,
+    "footR": 88,
+    "total": 2480
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

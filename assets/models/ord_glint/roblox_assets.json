@@ -1,0 +1,76 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-181 mesh, rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar where needed), review: 2480 triangles, glow share 4.0%",
+  "bar": {
+    "model": "rbxassetid://100996150326467",
+    "meshes": {
+      "arm_l": "rbxassetid://109147712891363",
+      "arm_l_glow_running": "rbxassetid://97654627634060",
+      "arm_l_glow_weapon": "rbxassetid://71354328018818",
+      "arm_r": "rbxassetid://124274965059475",
+      "arm_r_glow_running": "rbxassetid://95845369492452",
+      "arm_r_glow_weapon": "rbxassetid://106378427197656",
+      "base": "rbxassetid://117392767092418",
+      "base_glow_running": "rbxassetid://137882778182110",
+      "footL": "rbxassetid://89817779554608",
+      "footL_glow_running": "rbxassetid://83439826535636",
+      "footR": "rbxassetid://103348749436859",
+      "footR_glow_running": "rbxassetid://124216361682112",
+      "shinL": "rbxassetid://131155637922349",
+      "shinR": "rbxassetid://124667547260809",
+      "thighL": "rbxassetid://134775964260183",
+      "thighL_glow_running": "rbxassetid://78653297105206",
+      "thighR": "rbxassetid://90435752111045",
+      "thighR_glow_running": "rbxassetid://103913355795311",
+      "torso": "rbxassetid://124165339350748",
+      "torso_glow_head": "rbxassetid://96097327901756",
+      "torso_glow_running": "rbxassetid://111501993509197"
+    },
+    "decals": {
+      "ALB": "rbxassetid://107701649710431",
+      "RGH": "rbxassetid://131075297755753",
+      "NOR": "rbxassetid://127026795404178",
+      "MTL": "rbxassetid://123751401606896",
+      "EMI": "rbxassetid://128968746611802"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://82660776609598",
+      "NOR": "rbxassetid://94213617413722",
+      "RGH": "rbxassetid://114564860825724",
+      "MTL": "rbxassetid://118445699615170",
+      "EMI": "rbxassetid://109651144865909"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_glint_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://88219699822885",
+    "meshes": {
+      "arm_l": "rbxassetid://85683742704397",
+      "arm_r": "rbxassetid://83515508603950",
+      "base": "rbxassetid://79408527219966",
+      "footL": "rbxassetid://131566720258300",
+      "footR": "rbxassetid://71366141049573",
+      "shinL": "rbxassetid://84632249782366",
+      "shinR": "rbxassetid://78665481675662",
+      "thighL": "rbxassetid://89977553538349",
+      "thighR": "rbxassetid://114105169370952",
+      "torso": "rbxassetid://126670178828010"
+    },
+    "decals": {
+      "ALB": "rbxassetid://132801988931135",
+      "RGH": "rbxassetid://120260161116314",
+      "NOR": "rbxassetid://116788426909872",
+      "MTL": "rbxassetid://134335978912926",
+      "EMI": "rbxassetid://108697341825274"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://92716686994239",
+      "NOR": "rbxassetid://105127455346392",
+      "RGH": "rbxassetid://92426254878932",
+      "MTL": "rbxassetid://104581016666664",
+      "EMI": "rbxassetid://100377838800908"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_glint_wreck_bar in FTGG Art",
+    "revision": "S-181 wreck, rigged in FTGG Art 2026-10-26, review: 2044 triangles"
+  }
+}
