@@ -246,6 +246,18 @@
       }
     },
     {
+      "Name": "chs_centurion",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://98020985596964",
+        "NormalMapContent": "rbxassetid://134457579978218",
+        "RoughnessMapContent": "rbxassetid://137147859224951",
+        "MetalnessMapContent": "rbxassetid://78205446472996",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_cerberus",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -342,6 +354,18 @@
       }
     },
     {
+      "Name": "chs_dragon",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://135749405101554",
+        "NormalMapContent": "rbxassetid://109724797991632",
+        "RoughnessMapContent": "rbxassetid://102063394742987",
+        "MetalnessMapContent": "rbxassetid://117494066036463",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_extractor",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -434,6 +458,18 @@
         "NormalMapContent": "rbxassetid://122646362635707",
         "RoughnessMapContent": "rbxassetid://99538460740363",
         "MetalnessMapContent": "rbxassetid://117189226454147",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "chs_graverobber",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://87100079365440",
+        "NormalMapContent": "rbxassetid://117357930791165",
+        "RoughnessMapContent": "rbxassetid://76161993619137",
+        "MetalnessMapContent": "rbxassetid://109863536984608",
         "EmissiveStrength": 0
       }
     },
@@ -678,6 +714,18 @@
       }
     },
     {
+      "Name": "chs_needle",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://77530144573561",
+        "NormalMapContent": "rbxassetid://95323682017707",
+        "RoughnessMapContent": "rbxassetid://93370396011559",
+        "MetalnessMapContent": "rbxassetid://135398703137529",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_plague",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -810,6 +858,18 @@
       }
     },
     {
+      "Name": "chs_skitter",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://130879619899350",
+        "NormalMapContent": "rbxassetid://106107035988752",
+        "RoughnessMapContent": "rbxassetid://98412885433373",
+        "MetalnessMapContent": "rbxassetid://89881383762203",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_smog",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -882,6 +942,18 @@
       }
     },
     {
+      "Name": "chs_thug",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://94025331894308",
+        "NormalMapContent": "rbxassetid://123983462390743",
+        "RoughnessMapContent": "rbxassetid://117230443003310",
+        "MetalnessMapContent": "rbxassetid://71050402897484",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_tidal",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -894,6 +966,18 @@
       }
     },
     {
+      "Name": "chs_tinker",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://126578574965585",
+        "NormalMapContent": "rbxassetid://113003911854285",
+        "RoughnessMapContent": "rbxassetid://88726293857380",
+        "MetalnessMapContent": "rbxassetid://104816839614929",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_twin_guard",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -902,6 +986,18 @@
         "NormalMapContent": "rbxassetid://117542224133985",
         "RoughnessMapContent": "rbxassetid://134034165214185",
         "MetalnessMapContent": "rbxassetid://103004999371744",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "chs_tzar",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://92737261737913",
+        "NormalMapContent": "rbxassetid://91397009683253",
+        "RoughnessMapContent": "rbxassetid://73688682832278",
+        "MetalnessMapContent": "rbxassetid://103077576211793",
         "EmissiveStrength": 0
       }
     },
@@ -1446,6 +1542,18 @@
       }
     },
     {
+      "Name": "ord_artisan",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://114789066284880",
+        "NormalMapContent": "rbxassetid://129204672308831",
+        "RoughnessMapContent": "rbxassetid://90767334488747",
+        "MetalnessMapContent": "rbxassetid://82552558273393",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_barrier",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -1662,6 +1770,18 @@
       }
     },
     {
+      "Name": "ord_fatboy",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://107085452954885",
+        "NormalMapContent": "rbxassetid://102234044268084",
+        "RoughnessMapContent": "rbxassetid://129417967974817",
+        "MetalnessMapContent": "rbxassetid://75430465582472",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_fusion",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -1694,6 +1814,18 @@
         "NormalMapContent": "rbxassetid://85969927328418",
         "RoughnessMapContent": "rbxassetid://103485108242038",
         "MetalnessMapContent": "rbxassetid://77157633494604",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_glint",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://82660776609598",
+        "NormalMapContent": "rbxassetid://94213617413722",
+        "RoughnessMapContent": "rbxassetid://114564860825724",
+        "MetalnessMapContent": "rbxassetid://118445699615170",
         "EmissiveStrength": 0
       }
     },
@@ -1758,6 +1890,18 @@
       }
     },
     {
+      "Name": "ord_kestrel",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://86322644439070",
+        "NormalMapContent": "rbxassetid://127468182307158",
+        "RoughnessMapContent": "rbxassetid://139615122810947",
+        "MetalnessMapContent": "rbxassetid://94408110180125",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_lancer",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -1770,6 +1914,30 @@
       }
     },
     {
+      "Name": "ord_lazarus",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://132116343164036",
+        "NormalMapContent": "rbxassetid://91154815061734",
+        "RoughnessMapContent": "rbxassetid://86340681845410",
+        "MetalnessMapContent": "rbxassetid://139964183505605",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_liche",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://111019924361997",
+        "NormalMapContent": "rbxassetid://107829260037779",
+        "RoughnessMapContent": "rbxassetid://75778954433636",
+        "MetalnessMapContent": "rbxassetid://111464358059279",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_lumen",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -1778,6 +1946,18 @@
         "NormalMapContent": "rbxassetid://114848452400668",
         "RoughnessMapContent": "rbxassetid://71624204945740",
         "MetalnessMapContent": "rbxassetid://91463532141351",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_mace",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://79477519394612",
+        "NormalMapContent": "rbxassetid://89114338997923",
+        "RoughnessMapContent": "rbxassetid://121466370407193",
+        "MetalnessMapContent": "rbxassetid://113190729909354",
         "EmissiveStrength": 0
       }
     },
@@ -2262,6 +2442,18 @@
       }
     },
     {
+      "Name": "wreck_chs_advbotlab",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://81913493139701",
+        "NormalMapContent": "rbxassetid://136874724346700",
+        "RoughnessMapContent": "rbxassetid://74584898272675",
+        "MetalnessMapContent": "rbxassetid://71361215453052",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_advextractor",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2406,6 +2598,18 @@
       }
     },
     {
+      "Name": "wreck_chs_botlab",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://118520391017966",
+        "NormalMapContent": "rbxassetid://98247502117571",
+        "RoughnessMapContent": "rbxassetid://137725896045415",
+        "MetalnessMapContent": "rbxassetid://92012720595896",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_breaker",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2450,6 +2654,18 @@
         "NormalMapContent": "rbxassetid://106055161380746",
         "RoughnessMapContent": "rbxassetid://77252785333136",
         "MetalnessMapContent": "rbxassetid://90050851868202",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_chs_centurion",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://136907331930930",
+        "NormalMapContent": "rbxassetid://110832821959176",
+        "RoughnessMapContent": "rbxassetid://104719504783211",
+        "MetalnessMapContent": "rbxassetid://108967196188713",
         "EmissiveStrength": 0
       }
     },
@@ -2550,6 +2766,18 @@
       }
     },
     {
+      "Name": "wreck_chs_dragon",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://98091693726614",
+        "NormalMapContent": "rbxassetid://85760820564842",
+        "RoughnessMapContent": "rbxassetid://112532702746975",
+        "MetalnessMapContent": "rbxassetid://96203322995049",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_extractor",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2642,6 +2870,18 @@
         "NormalMapContent": "rbxassetid://74316612830309",
         "RoughnessMapContent": "rbxassetid://109222668268775",
         "MetalnessMapContent": "rbxassetid://75242742837739",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_chs_graverobber",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://85166086691973",
+        "NormalMapContent": "rbxassetid://109312300985211",
+        "RoughnessMapContent": "rbxassetid://140327741884556",
+        "MetalnessMapContent": "rbxassetid://75816163166200",
         "EmissiveStrength": 0
       }
     },
@@ -2886,6 +3126,18 @@
       }
     },
     {
+      "Name": "wreck_chs_needle",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://114497834047387",
+        "NormalMapContent": "rbxassetid://115452829489329",
+        "RoughnessMapContent": "rbxassetid://132099300499275",
+        "MetalnessMapContent": "rbxassetid://92415061822345",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_plague",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3018,6 +3270,18 @@
       }
     },
     {
+      "Name": "wreck_chs_skitter",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://124523327142785",
+        "NormalMapContent": "rbxassetid://105364820606318",
+        "RoughnessMapContent": "rbxassetid://101008647258724",
+        "MetalnessMapContent": "rbxassetid://92868819313847",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_smog",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3090,6 +3354,18 @@
       }
     },
     {
+      "Name": "wreck_chs_thug",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://97515771462250",
+        "NormalMapContent": "rbxassetid://106909526779657",
+        "RoughnessMapContent": "rbxassetid://107479411285908",
+        "MetalnessMapContent": "rbxassetid://103981555875921",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_tidal",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3102,6 +3378,18 @@
       }
     },
     {
+      "Name": "wreck_chs_tinker",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://97258025617762",
+        "NormalMapContent": "rbxassetid://128806849910812",
+        "RoughnessMapContent": "rbxassetid://127541574064693",
+        "MetalnessMapContent": "rbxassetid://77029363622278",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_twin_guard",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3110,6 +3398,18 @@
         "NormalMapContent": "rbxassetid://88033320986518",
         "RoughnessMapContent": "rbxassetid://83656550275235",
         "MetalnessMapContent": "rbxassetid://124304276108607",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_chs_tzar",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://99307579528497",
+        "NormalMapContent": "rbxassetid://73513842738774",
+        "RoughnessMapContent": "rbxassetid://122476671040368",
+        "MetalnessMapContent": "rbxassetid://91051184080653",
         "EmissiveStrength": 0
       }
     },
@@ -3246,6 +3546,18 @@
       }
     },
     {
+      "Name": "wreck_ord_advbotlab",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://111006740095344",
+        "NormalMapContent": "rbxassetid://101082432974818",
+        "RoughnessMapContent": "rbxassetid://110795941232735",
+        "MetalnessMapContent": "rbxassetid://112733508774412",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_advextractor",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3366,6 +3678,18 @@
       }
     },
     {
+      "Name": "wreck_ord_artisan",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://124719932604581",
+        "NormalMapContent": "rbxassetid://97269827082884",
+        "RoughnessMapContent": "rbxassetid://85609747181382",
+        "MetalnessMapContent": "rbxassetid://130221780540390",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_barrier",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3410,6 +3734,18 @@
         "NormalMapContent": "rbxassetid://140022768602543",
         "RoughnessMapContent": "rbxassetid://76464620497119",
         "MetalnessMapContent": "rbxassetid://84873131882280",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_botlab",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://105320312077242",
+        "NormalMapContent": "rbxassetid://131017035539198",
+        "RoughnessMapContent": "rbxassetid://84671536630345",
+        "MetalnessMapContent": "rbxassetid://136527557315906",
         "EmissiveStrength": 0
       }
     },
@@ -3570,6 +3906,18 @@
       }
     },
     {
+      "Name": "wreck_ord_fatboy",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://76183698515582",
+        "NormalMapContent": "rbxassetid://87357008836412",
+        "RoughnessMapContent": "rbxassetid://88130813637516",
+        "MetalnessMapContent": "rbxassetid://121338185245948",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_fusion",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3602,6 +3950,18 @@
         "NormalMapContent": "rbxassetid://108003319497291",
         "RoughnessMapContent": "rbxassetid://106685704010073",
         "MetalnessMapContent": "rbxassetid://102821522571686",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_glint",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://92716686994239",
+        "NormalMapContent": "rbxassetid://105127455346392",
+        "RoughnessMapContent": "rbxassetid://92426254878932",
+        "MetalnessMapContent": "rbxassetid://104581016666664",
         "EmissiveStrength": 0
       }
     },
@@ -3666,6 +4026,18 @@
       }
     },
     {
+      "Name": "wreck_ord_kestrel",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://130032044845274",
+        "NormalMapContent": "rbxassetid://103530688423029",
+        "RoughnessMapContent": "rbxassetid://94871364694211",
+        "MetalnessMapContent": "rbxassetid://123331319872038",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_lancer",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3678,6 +4050,30 @@
       }
     },
     {
+      "Name": "wreck_ord_lazarus",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://137580310197036",
+        "NormalMapContent": "rbxassetid://79858021382938",
+        "RoughnessMapContent": "rbxassetid://133787876981916",
+        "MetalnessMapContent": "rbxassetid://83315038485839",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_liche",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://100979851335725",
+        "NormalMapContent": "rbxassetid://105899066536862",
+        "RoughnessMapContent": "rbxassetid://127995605329043",
+        "MetalnessMapContent": "rbxassetid://96620977539039",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_lumen",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3686,6 +4082,18 @@
         "NormalMapContent": "rbxassetid://115084004779989",
         "RoughnessMapContent": "rbxassetid://100402458662507",
         "MetalnessMapContent": "rbxassetid://130267162756127",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_mace",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://120277569995860",
+        "NormalMapContent": "rbxassetid://71561830445112",
+        "RoughnessMapContent": "rbxassetid://119817390105516",
+        "MetalnessMapContent": "rbxassetid://105582408596733",
         "EmissiveStrength": 0
       }
     },
