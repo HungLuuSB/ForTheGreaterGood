@@ -23,5 +23,27 @@
       "EMI": "rbxassetid://137448842538304"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_advbotlab_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://125374875246887",
+    "meshes": {
+      "base": "rbxassetid://115100621906185"
+    },
+    "decals": {
+      "ALB": "rbxassetid://87233542718429",
+      "RGH": "rbxassetid://86954343432214",
+      "NOR": "rbxassetid://74394846449232",
+      "MTL": "rbxassetid://76848696725962",
+      "EMI": "rbxassetid://136587082876082"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://81913493139701",
+      "NOR": "rbxassetid://136874724346700",
+      "RGH": "rbxassetid://74584898272675",
+      "MTL": "rbxassetid://71361215453052",
+      "EMI": "rbxassetid://83292095258345"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advbotlab_wreck_bar in FTGG Art",
+    "revision": "S-181 wreck, rigged in FTGG Art 2026-10-26, review: 2648 triangles"
   }
 }
