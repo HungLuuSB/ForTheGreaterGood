@@ -176,7 +176,58 @@ Two or more AIs above easy on one side share out roles in player order: **balanc
 | Spam | a bot lab, 1 more item queued per factory; small frequent waves (×0.6 the size, growing by 1); little artillery: cheap units to overrun defences |
 | Tech | the advanced plant at 400 supply instead of 900; a bot lab and its advanced lab; waves 1.3× larger |
 
-## 7. Known limits
+## 7. Planned (the user, 2026-10-26; not built yet)
+
+Ideas for the next AI pass. None of this is in the code; sections 1–6 describe what is.
+
+### 7.1 The tech role builds the team's economy
+
+In a team of 2+ AIs, the tech AI becomes the side's economy and T2 supplier instead of a slower fighter:
+
+1. **Scale T1 power:** Solar Arrays, or Wind Turbines when the map's wind makes them beat a Generator.
+2. **Rush T2:**
+   - fund supply (orbs) and power with a Depot and by reclaiming its own factory;
+   - build the advanced plant and **advanced constructors** (Architect / Forgemaster), and **give them to the frontline AIs**.
+3. **Scale on T2:**
+   - Fusion Reactors;
+   - **share resources** with its allies.
+4. **Past a resource threshold, spam T2 units** into the battlefield.
+
+### 7.2 Roles pick their start spots
+
+In the pre-game, roles choose start spots by position on the map:
+
+- **Backline:** tech and air AIs.
+  - With 8 AIs on a side: 2 tech and 1 air.
+  - The other AIs choose their own roles.
+- **Frontline:** AIs that can produce units and defences.
+  - They hold off on T2 for a set time and wait for the tech AI's advanced constructors.
+  - If those don't arrive in time, they go to T2 on their own.
+
+### 7.3 Escorted large waves
+
+A large wave goes with:
+
+- a jammer;
+- a radar vehicle;
+- a mobile anti-nuke;
+- anti-air, when the enemy uses aircraft.
+
+Today a wave gets radar and fire-control vehicles on every faction. Only Chaos adds a jammer, and the mobile anti-nuke goes only once an enemy silo is known.
+
+### 7.4 Defend the deposits early
+
+In the early game, the AI secures its deposits (orb spots) with defence structures, so raids can't pick off its extractors.
+
+Today only hard turrets its far extractors, and only after 5 extractors and 4 army units stand.
+
+### 7.5 Helper bots reclaim
+
+The AI builds helper bots (Lazarus / Graverobber) to **reclaim resources**: wrecks and features on the battlefield and around the base, after fights, behind its waves.
+
+Today a bot lab builds two helpers, but the AI never orders them to reclaim.
+
+## 8. Known limits
 
 - **It has no plan for the map.** It goes the shortest way to the nearest known target, and its lanes are fixed offsets, not chokepoints.
 - **It doesn't learn.** It reacts to what it sees now (counters, recalls, retreats), but doesn't remember what worked earlier in the match.
