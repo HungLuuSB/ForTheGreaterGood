@@ -1,8 +1,12 @@
 """Rampart (Order coastal battery, T2 structure, footprint 3): mesh, textures,
 rig data. blender -b --factory-startup --python-exit-code 1 -P assets/models/ord_rampart/build.py
 
-From its blockout, at the size scale (S-104: footprint 3, 24 x 24 studs,
-about 7 tall): bigger and more elaborate than the T1 turrets, not a
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved turret stands LIFT studs higher
+on a square gun tower over the bunker: four round corner bartizans with
+team bands, caps and lamps, a parapet, a sloped glacis, lit slits, a team
+band (top ~25 studs with the radio mast, the F18 blockout). First built
+from its blockout, at the size scale (S-104: footprint 3): bigger and more elaborate than the T1 turrets, not a
 rescale. Big shapes first: a chamfered slab, a heavy sea-wall bunker with
 a recurved wave-return front (embrasure slots and a lit sensor line), two
 corner bastions with searchlights (the blockout's lights), large team
@@ -26,10 +30,13 @@ from towers import antenna, clamped_cable, glow_strip, louver  # noqa: E402
 from mech import hazard, octagon, rect, rivets  # noqa: E402
 from unit import UP, ring, seam  # noqa: E402
 
-TURRET_PIVOT = (0.0, 3.5, 1.0)
-GY = 4.8  # gun axis height
+LIFT = 19.7 - 4.8  # F18: the guns at the blockout's 19.7
+RING = 3.5 + LIFT  # 18.4, the turret ring on top of the tower
+TURRET_PIVOT = (0.0, RING, 1.0)
+GY = 4.8  # gun axis height before the lift (the turret is built there, then lifted)
 GX = 1.6  # guns either side
-MUZZLE = (-GX, GY, -14.1)
+MUZZLE = (-GX, GY + LIFT, -14.1)
+TW = 5.0  # the tower's half width, centred on the ring
 DECK = 3.2  # bunker roof height
 WALL = [(-10.8, 0.5), (-9.7, 1.3), (-8.6, 2.2), (-7.6, 2.9), (-6.9, 3.4), (-6.3, 3.4), (-6.3, 0.5)]  # (z, y)
 
@@ -52,9 +59,30 @@ def build_base(p):
     # large team plates on the deck either side of the ring
     for sx in (-1, 1):
         p.box((sx * 7.2, DECK + 0.03, 3.6), (3.8, 0.06, 6.4), "team", bevel=0.02)
-    # turret ring with a running band
-    p.cylinder("y", (0, 3.35, 1.0), 5.0, 0.3, 32, "dark")
-    p.cylinder("y", (0, DECK + 0.02, 1.0), 5.15, 0.04, 32, "light")
+    # F18: the square gun tower, glacis, bartizans, parapet, slits, team band
+    p.prism_y(rect(0, 1.0, TW, TW), DECK, RING - 0.6, "paint", bevel=0.14, top_scale=0.97)
+    p.prism_x([(1.0 - TW - 2.4, DECK), (1.0 - TW, DECK), (1.0 - TW, DECK + 6.0)], -TW + 0.3, TW - 0.3, "paint", bevel=0.1)
+    p.box((0, RING - 4.4, 1.0 - TW - 0.03), (2 * TW - 0.4, 0.7, 0.06), "team", bevel=0.01)
+    for sx in (-1, 1):
+        p.box((sx * (TW + 0.03), RING - 4.4, 1.0), (0.06, 0.7, 2 * TW - 0.4), "team", bevel=0.01)
+        p.box((sx * (TW + 0.02), RING - 2.4, 1.0), (0.05, 0.3, 3.6), "light")
+    p.box((0, RING - 2.4, 1.0 - TW - 0.02), (4.6, 0.3, 0.05), "light")
+    p.box((0, 9.0, 1.0 - TW - 0.02), (1.4, 2.2, 0.05), "dark")  # a door onto the bunker deck
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            c = (sx * TW, 1.0 + sz * TW)
+            p.cylinder("y", (c[0], (DECK + RING) / 2 + 0.3, c[1]), 1.35, RING - DECK + 0.6, 16, "paint", bevel=0.06)
+            p.cylinder("y", (c[0], RING - 4.4, c[1]), 1.45, 0.8, 16, "team")
+            p.cylinder("y", (c[0], RING + 0.85, c[1]), 1.55, 0.5, 16, "trim", bevel=0.04)
+            p.box((c[0], RING + 1.25, c[1]), (0.5, 0.3, 0.5), "light")
+    for sz, along in ((-1, "x"), (1, "x")):
+        p.box((0, RING + 0.3, 1.0 + sz * (TW - 0.3)), (2 * TW - 2.4, 1.0, 0.6), "paint", bevel=0.06)
+    for sx in (-1, 1):
+        p.box((sx * (TW - 0.3), RING + 0.3, 1.0), (0.6, 1.0, 2 * TW - 2.4), "paint", bevel=0.06)
+    # turret ring with a running band, on the tower top
+    p.cylinder("y", (0, RING - 0.15, 1.0), 4.6, 0.3, 32, "dark")
+    p.cylinder("y", (0, RING - 0.6, 1.0), 4.75, 0.06, 32, "light")
+    clamped_cable(p, [(TW + 0.2, DECK, 4.0), (TW + 0.15, 9.0, 3.8), (TW + 0.1, RING - 3.0, 3.6)], r=0.09)
     # magazine hatch and vents at the back, a rail along the rear edge
     p.box((0, DECK + 0.06, 8.4), (3.6, 0.12, 2.0), "trim", bevel=0.04)
     hazard(p, (0, DECK + 0.13, 8.4), (1, 0, 0), UP, 3.0, 0.3, stripes=8)
@@ -85,7 +113,9 @@ def details_base(p):
     for sx in (-1, 1):
         rivets(p, (sx * 10.02, 0.8, -5.6), (sx * 10.02, 0.8, 9.6), 12, (sx, 0, 0))
         seam(p, (sx * 10.02, 2.5, -5.6), (sx * 10.02, 2.5, 9.8), (sx, 0, 0))
-    ring(p, (0, 3.51, 1.0), UP, 4.4)
+    ring(p, (0, RING + 0.01, 1.0), UP, 4.0)
+    for y in (7.0, 11.0):
+        seam(p, (-TW, y, 1.0 - TW - 0.02), (TW, y, 1.0 - TW - 0.02), (0, 0, -1))
     seam(p, (-9.6, 2.9, -7.64), (9.6, 2.9, -7.64), (0, 1, -0.7))
     seam(p, (-9.6, 1.3, -9.74), (9.6, 1.3, -9.74), (0, 1, -0.8))
 
@@ -140,9 +170,9 @@ def details_turret(p):
 
 unit.run(__file__, "ord_rampart", "order", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
-                 unit.PieceSpec("turret", "base", TURRET_PIVOT, build_turret, details_turret)],
+                 unit.PieceSpec("turret", "base", TURRET_PIVOT, unit.lifted(build_turret, LIFT), unit.lifted(details_turret, LIFT))],
          attachments={"muzzle": {"parent": "turret", "at": list(MUZZLE)}},
          budget=6000,
-         previews=[("35", (-34, 26, -40), (0, 3.0, -2.0), 50),
-                   ("80", (0, 58, 9), (0, 2, -2.0), 50),
-                   ("close", (-17, 13, -20), (0, 4.0, -3.0), 38)])
+         previews=[("35", (-44, 40, -54), (0, 12.0, -3.0), 50),
+                   ("80", (0, 66, 9), (0, 8, -3.0), 50),
+                   ("close", (-18, 26, -22), (0, 17.0, -4.0), 38)])

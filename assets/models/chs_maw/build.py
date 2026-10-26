@@ -1,8 +1,13 @@
 """Maw (Chaos heavy turret, T2 structure, footprint 3): mesh, textures, rig
 data. blender -b --factory-startup --python-exit-code 1 -P assets/models/chs_maw/build.py
 
-Redesigned at the size scale (S-104, M-26: footprint 1 -> 3, 24 x 24
-studs, about 13 tall), from its scaled blockout (turret pivot, gun, mouth,
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved turret stands LIFT studs higher
+on a scrap drum tower: a fat ribbed lower drum with spikes on its rim, four
+raking struts up the tall ribbed upper drum, team plates and amber slits,
+a full-height ladder (top ~23 studs, the F18 blockout). First redesigned
+at the size scale (S-104, M-26: footprint 1 -> 3, 24 x 24 studs), from
+its scaled blockout (turret pivot, gun, mouth,
 ammo drum and muzzle where Scale.scaled puts them), and bigger and more
 elaborate than the T1 Spike, not a rescale. Big shapes first: a patched
 pad, a round sloped base ringed with reactive blocks and amber strips, big
@@ -27,10 +32,12 @@ from towers import antenna, band_round, clamped_cable, louver  # noqa: E402
 from mech import cable, drum, hazard, octagon, rivets  # noqa: E402
 from unit import UP, ring  # noqa: E402
 
-S = 2.682  # the blockout's scale (footprint 1 -> 3)
-TURRET_PIVOT = (0.0, 2.8 * S, 0.0)  # 7.51
-GY = 4.0 * S  # 10.73, gun axis height
-MUZZLE = (0.0, GY, -5.5 * S)  # -14.75
+S = 2.682  # the first blockout's scale (footprint 1 -> 3)
+LIFT = 18.6 - 4.0 * S  # F18: the gun at the blockout's 18.6
+TURRET_PIVOT = (0.0, 2.8 * S + LIFT, 0.0)  # 15.38
+GY = 4.0 * S  # 10.73, the gun axis before the lift (the turret is built there, then lifted)
+MUZZLE = (0.0, GY + LIFT, -5.5 * S)  # -14.75
+B2 = 6.4  # the lower drum's rim
 TZ = 0.2 * S  # 0.54, the turret drum's centre
 B1 = 3.75  # base deck height
 D1 = TURRET_PIVOT[1]  # drum top
@@ -66,26 +73,57 @@ def build_base(p):
     p.cylinder("y", (-5.6, B1 + 1.2, -4.8), 0.1, 2.4, 6, "steel")
     p.box((-5.6, B1 + 2.5, -4.8), (0.6, 0.4, 0.5), "dark")
     p.box((-5.6, B1 + 2.5, -5.07), (0.42, 0.24, 0.04), "head")
-    # the tall ribbed drum, glowing collar, a ladder at the back
-    p.cylinder("y", (0, (B1 + D1) / 2, 0), 5.4, D1 - B1, 24, "paint", bevel=0.06)
+    # F18: a fat ribbed lower drum with spikes, then the tall ribbed upper drum
+    p.cylinder("y", (0, (B1 + B2) / 2, 0), 7.1, B2 - B1, 28, "paint", bevel=0.06)
+    p.cylinder("y", (0, B2 + 0.2, 0), 7.4, 0.4, 28, "trim", bevel=0.04)
+    for i in range(14):
+        a = 2 * math.pi * (i + 0.5) / 14
+        c, s = math.cos(a), math.sin(a)
+        p.obox((s * 7.15, (B1 + B2) / 2, c * 7.15), (c, 0, -s), (s, 0, c), 0.4, B2 - B1 - 0.3, 0.3, "trim")
+    for i in range(6):  # spikes leaning out of the rim
+        a = 2 * math.pi * i / 6
+        c, s = math.cos(a), math.sin(a)
+        p.ocyl((s * 7.0, B2 + 0.3, c * 7.0), (s * 0.5, 1.0, c * 0.5), 0.35, 2.2, 6, "steel", radius2=0.02)
+    p.cylinder("y", (0, (B2 + D1) / 2, 0), 5.4, D1 - B2, 24, "paint", bevel=0.06)
     for i in range(12):
         a = 2 * math.pi * (i + 0.5) / 12
         c, s = math.cos(a), math.sin(a)
-        p.obox((s * 5.45, (B1 + D1) / 2, c * 5.45), (c, 0, -s), (s, 0, c), 0.36, D1 - B1 - 0.4, 0.3, "trim")
+        p.obox((s * 5.45, (B2 + D1) / 2, c * 5.45), (c, 0, -s), (s, 0, c), 0.36, D1 - B2 - 0.4, 0.3, "trim")
+    p.cylinder("y", (0, 10.8, 0), 5.65, 0.6, 24, "dark")
     p.cylinder("y", (0, D1 - 0.25, 0), 5.5, 0.16, 24, "power")
+    # team plates front and back, amber slits under the collar
+    for sz in (-1, 1):
+        p.obox((0, 8.6, sz * 5.62), (1, 0, 0), (0, 0, sz), 3.4, 2.0, 0.08, "team", bevel=0.015)
+    for k in range(3):
+        a = math.radians(-90 + k * 90)
+        c, s = math.cos(a), math.sin(a)
+        p.obox((s * 5.47, D1 - 3.0, -c * 5.47), (c, 0, s), (s, 0, -c), 2.4, 0.3, 0.05, "light")
+    # four raking struts from the lower rim up the upper drum
+    for i in range(4):
+        a = 2 * math.pi * (i + 0.5) / 4
+        c, s = math.cos(a), math.sin(a)
+        lo, hi = (s * 6.9, B2 + 0.3, c * 6.9), (s * 5.55, D1 - 2.2, c * 5.55)
+        d = [hi[k] - lo[k] for k in range(3)]
+        length = math.sqrt(sum(x * x for x in d))
+        mid = tuple((lo[k] + hi[k]) / 2 for k in range(3))
+        u, dn = (c, 0, -s), [x / length for x in d]
+        n = (u[1] * dn[2] - u[2] * dn[1], u[2] * dn[0] - u[0] * dn[2], u[0] * dn[1] - u[1] * dn[0])  # n x u = the strut's run
+        p.obox(mid, u, n, 0.9, length, 0.7, "trim", bevel=0.06)
+    # a ladder up the back, full height
     for x in (-0.4, 0.4):
-        p.box((x, (B1 + D1) / 2, 5.75), (0.08, D1 - B1, 0.08), "steel")
-    for k in range(6):
-        p.box((0, B1 + 0.4 + k * 0.6, 5.75), (0.8, 0.06, 0.06), "steel")
-    louver(p, (0, 5.4, -5.42), (1, 0, 0), (0, 0, -1), 2.2, 1.0, slats=3)
-    clamped_cable(p, [(3.2, B1, 5.8), (3.6, 5.0, 4.0), (3.8, 6.8, 3.6)], r=0.1)
+        p.box((x, (B2 + D1) / 2, 5.75), (0.08, D1 - B2, 0.08), "steel")
+    for k in range(int((D1 - B2) / 0.6)):
+        p.box((0, B2 + 0.4 + k * 0.6, 5.75), (0.8, 0.06, 0.06), "steel")
+    louver(p, (0, 5.0, -7.12), (1, 0, 0), (0, 0, -1), 2.2, 1.0, slats=3)
+    clamped_cable(p, [(3.2, B1, 7.3), (3.6, 6.6, 5.6), (3.8, 12.0, 5.4)], r=0.1)
     for sx in (-1, 1):
         p.box((sx * 10.0, 0.52, -10.0), (0.5, 0.24, 0.5), "light")
 
 
 def details_base(p):
     band_round(p, 1.6, 8.5, segments=24)
-    band_round(p, 5.6, 5.42, segments=20)
+    band_round(p, 5.2, 7.12, segments=24)
+    band_round(p, 13.0, 5.42, segments=20)
     ring(p, (0, D1 + 0.01, 0), UP, 4.6)
     rivets(p, (-6.4, B1 + 0.01, 2.2), (6.4, B1 + 0.01, 2.2), 12, UP)
 
@@ -133,9 +171,9 @@ def details_turret(p):
 
 unit.run(__file__, "chs_maw", "chaos", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
-                 unit.PieceSpec("turret", "base", TURRET_PIVOT, build_turret, details_turret)],
+                 unit.PieceSpec("turret", "base", TURRET_PIVOT, unit.lifted(build_turret, LIFT), unit.lifted(details_turret, LIFT))],
          attachments={"muzzle": {"parent": "turret", "at": [round(v, 3) for v in MUZZLE]}},
          budget=6000,
-         previews=[("35", (-34, 30, -40), (0, 5.0, -3.0), 50),
-                   ("80", (0, 60, 9), (0, 4, -3.0), 50),
-                   ("close", (-17, 16, -20), (0, 8.0, -4.0), 38)])
+         previews=[("35", (-44, 40, -54), (0, 12.0, -3.0), 50),
+                   ("80", (0, 66, 9), (0, 8, -3.0), 50),
+                   ("close", (-18, 24, -22), (0, 15.0, -4.0), 38)])

@@ -33,6 +33,9 @@ def a(motion, axis, rng=None):
 
 
 HELI = {"rotor": a("spin", Y)}
+# the S-181 walking bots (rig.md 10 without the hip yokes; tools/bots.py): every leg segment swings
+BOT = {f"{j}{s}": a("swing", X) for j in ("thigh", "shin", "foot") for s in "LR"}
+BOT4 = {f"{j}{s}": a("swing", X) for j in ("thigh", "shin") for s in ("FL", "FR", "BL", "BR")}  # the Skitter
 # the Commander mechs (M-31, rig.md 10): torso and head turn, every limb swings
 WALKER = {"torso": a("turn", Y), "head": a("turn", Y), "armL": a("swing", X), "armR": a("swing", X),
           "forearmR": a("swing", X), **{f"{j}{s}": a("swing", X) for j in ("hip", "thigh", "shin", "foot") for s in "LR"}}
@@ -56,8 +59,13 @@ ANIM = {
     "ord_reckoning": {"hatch": a("open", Z, 110), "hatch2": a("open", (0, 0, -1), 110)},
     "chs_ragnarok": {"hatch": a("open", X, 110)},
     "ord_absolution": {"bay": a("open", Z, 60)}, "chs_plague": {"bay": a("open", Z, 60)},
+    "ord_liche": {"bay": a("open", Z, 60)},
     # beam tower lids (the `retracted` pose closes them; Blockouts/Pending)
     "ord_sovereign": WALKER, "chs_warlord": WALKER,
+    **{u: BOT for u in ("ord_artisan", "chs_tinker", "ord_lazarus", "chs_graverobber", "ord_glint", "ord_mace", "chs_thug",
+                        "ord_kestrel", "chs_needle", "ord_fatboy", "chs_centurion")},
+    "chs_skitter": BOT4,
+    "chs_dragon": {"fanL": a("spin", Y), "fanR": a("spin", Y)},
     "ord_radiance": {"shellL": a("open", (0, 0, -1), 90), "shellR": a("open", Z, 90)},
     "chs_inferno": {"shellL": a("open", (0, 0, -1), 90), "shellR": a("open", Z, 90)},
 }
