@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-166 mesh from the approved blockout, rigged in FTGG Art 2026-10-26, review: 3324 triangles, glow share 7.9%",
+  "bar": {
+    "model": "rbxassetid://114030713501938",
+    "meshes": {
+      "base": "rbxassetid://79699117645808",
+      "base_glow_power": "rbxassetid://104718143025771",
+      "base_glow_running": "rbxassetid://134511300447998"
+    },
+    "decals": {
+      "ALB": "rbxassetid://76895919008780",
+      "RGH": "rbxassetid://82056459844405",
+      "NOR": "rbxassetid://102346333518250",
+      "MTL": "rbxassetid://106243508242034",
+      "EMI": "rbxassetid://80139080698195"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://136695584765877",
+      "NOR": "rbxassetid://134242113999111",
+      "RGH": "rbxassetid://116144765897296",
+      "MTL": "rbxassetid://116447903615785",
+      "EMI": "rbxassetid://123986902562296"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_empyrean_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://119615631415468",
+    "meshes": {
+      "base": "rbxassetid://99082379844086"
+    },
+    "decals": {
+      "ALB": "rbxassetid://75135741757867",
+      "RGH": "rbxassetid://90241395875713",
+      "NOR": "rbxassetid://89504971525182",
+      "MTL": "rbxassetid://93829131738145",
+      "EMI": "rbxassetid://112466211996177"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://95488930599152",
+      "NOR": "rbxassetid://103377311731961",
+      "RGH": "rbxassetid://139178247984872",
+      "MTL": "rbxassetid://72898774675305",
+      "EMI": "rbxassetid://123599974888214"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_empyrean_wreck_bar in FTGG Art",
+    "revision": "S-166 wreck, rigged in FTGG Art 2026-10-26, review: 2756 triangles"
+  }
+}

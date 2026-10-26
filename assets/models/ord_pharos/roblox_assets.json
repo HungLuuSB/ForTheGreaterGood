@@ -1,0 +1,54 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-166 mesh from the approved blockout, rigged in FTGG Art 2026-10-26, review: 3412 triangles, glow share 2.2%",
+  "bar": {
+    "model": "rbxassetid://101957280133306",
+    "meshes": {
+      "base": "rbxassetid://101294746264469",
+      "base_glow_head": "rbxassetid://108415501080895",
+      "base_glow_power": "rbxassetid://123716573531214",
+      "base_glow_running": "rbxassetid://72412414593464",
+      "launcher": "rbxassetid://80454125550522",
+      "launcher_glow_head": "rbxassetid://132287266387726",
+      "launcher_glow_weapon": "rbxassetid://125513200299447"
+    },
+    "decals": {
+      "ALB": "rbxassetid://108749652008022",
+      "RGH": "rbxassetid://82629238779696",
+      "NOR": "rbxassetid://135943169295348",
+      "MTL": "rbxassetid://97933568289165",
+      "EMI": "rbxassetid://131857758658134"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://92139237299872",
+      "NOR": "rbxassetid://88621746866192",
+      "RGH": "rbxassetid://103176552643800",
+      "MTL": "rbxassetid://129324402995261",
+      "EMI": "rbxassetid://107985302072323"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_pharos_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://96847373522491",
+    "meshes": {
+      "base": "rbxassetid://94500687298694",
+      "launcher": "rbxassetid://100437105243708"
+    },
+    "decals": {
+      "ALB": "rbxassetid://96643115112701",
+      "RGH": "rbxassetid://123877527407215",
+      "NOR": "rbxassetid://110958351358179",
+      "MTL": "rbxassetid://103236356932018",
+      "EMI": "rbxassetid://88053556916082"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://132027025382205",
+      "NOR": "rbxassetid://110109528689634",
+      "RGH": "rbxassetid://122830865433783",
+      "MTL": "rbxassetid://113927041446299",
+      "EMI": "rbxassetid://71726127221587"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_pharos_wreck_bar in FTGG Art",
+    "revision": "S-166 wreck, rigged in FTGG Art 2026-10-26, review: 3060 triangles"
+  }
+}
