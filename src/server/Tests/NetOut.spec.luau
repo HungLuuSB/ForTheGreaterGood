@@ -147,13 +147,13 @@ return function(t: RunAll.Context)
 			for id, u in view.units do
 				t.expect(expected[id] == true, `player {pid} still shows unit {id}`)
 				if u.tier == "tactical" then
-					t.expect(math.abs(u.x - w.posX[id]) < 1 / 32 and math.abs(u.z - w.posZ[id]) < 1 / 32, `tactical unit {id} position`)
+					t.expect(math.abs(u.x - w.posX[id]) <= 1 / 8 and math.abs(u.z - w.posZ[id]) <= 1 / 8, `tactical unit {id} position`) -- quarter studs (S-189)
 					local def = sim.defs.unitByIndex[w.defIndex[id]]
 					t.equal(u.health, math.clamp(math.ceil(w.health[id] / def.health * 255), 0, 255), `tactical unit {id} health`)
 				elseif w.slot[id] then
 					local kx, kz = Sensors.knownPosition(sim, team, id)
-					local cx, cz = g:cellAt(u.x, u.z)
-					t.equal(g:index(cx, cz), (g:encode(kx :: number, kz :: number)), `strategic unit {id} cell`)
+					-- the 8-stud square of its known position (S-189)
+					t.expect(math.abs(u.x - (kx :: number)) <= 4.125 and math.abs(u.z - (kz :: number)) <= 4.125, `strategic unit {id} position`)
 				end
 			end
 		end

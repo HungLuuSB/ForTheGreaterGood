@@ -259,12 +259,9 @@ function Pregame.command(sim: Types.Sim, player: number, cmd: Schema.Command): b
 	end
 	local g = (sim.map :: any).grid
 	if t == CT.START_POS then
-		local cell = cmd.cell :: number
-		if cell < g.cellCount then
-			local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
-			if Pregame.validPick(sim, player, x, z) then
-				pg.picks[player] = { x, z }
-			end
+		local x, z = g:decodeOnMap(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
+		if Pregame.validPick(sim, player, x, z) then
+			pg.picks[player] = { x, z }
 		end
 	elseif t == CT.READY then
 		pg.ready[player] = cmd.value == 1 or nil
@@ -295,11 +292,10 @@ function Pregame.command(sim: Types.Sim, player: number, cmd: Schema.Command): b
 	elseif t == CT.BUILD and #cmd.unitIds == 0 then
 		local d = sim.defs.unitByIndex[cmd.defIndex :: number]
 		local options = Pregame.commanderDef(sim, player).buildOptions
-		local cell = cmd.cell :: number
-		if d and options and table.find(options, d.id) and cell < g.cellCount then
+		if d and options and table.find(options, d.id) then
 			local list = if bit32.band(cmd.flags, Schema.CmdFlag.QUEUE) ~= 0 then pg.builds[player] or {} else {}
 			if #list < Schema.PREBUILD_MAX then
-				local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
+				local x, z = g:decodeOnMap(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
 				table.insert(list, { defIndex = d.index, x = x, z = z, facing = cmd.facing or 0 })
 			end
 			pg.builds[player] = list

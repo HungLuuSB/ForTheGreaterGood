@@ -70,21 +70,14 @@ local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
 	end
 	local g = nav.grid
 	local cell = cmd.cell :: number
-	if cell >= g.cellCount then
-		return -- outside this map: ignore (the record itself was well-formed)
-	end
 	local units = ownedUnits(sim.world, player, cmd.unitIds)
 	if #units == 0 then
 		return
 	end
-	local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
+	local x, z = g:decodeOnMap(cell, cmd.offX :: number, cmd.offZ :: number)
 	local lx, lz
 	if band(cmd.flags, LINE) ~= 0 then
-		local cell2 = cmd.cell2 :: number
-		if cell2 >= g.cellCount then
-			return
-		end
-		lx, lz = g:decode(cell2, cmd.offX2 :: number, cmd.offZ2 :: number)
+		lx, lz = g:decodeOnMap(cmd.cell2 :: number, cmd.offX2 :: number, cmd.offZ2 :: number)
 	end
 	local kind = KIND_OF[cmd.cmdType] :: any
 	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz, group = band(cmd.flags, GROUP) ~= 0 }, band(cmd.flags, QUEUE) ~= 0)
@@ -134,11 +127,7 @@ local function applyBuild(sim: Types.Sim, player: number, cmd: Schema.Command)
 		return
 	end
 	local g = (sim.map :: any).grid
-	local cell = cmd.cell :: number
-	if cell >= g.cellCount then
-		return
-	end
-	local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
+	local x, z = g:decodeOnMap(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
 	-- factories queue the unit; mobile builders take a (queueable) build order
 	local factories, builders = {}, {}
 	for _, id in units do
@@ -169,11 +158,10 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 		return
 	elseif cmdType == CT.ATTACK_GROUND then
 		local g = if sim.map then (sim.map :: any).grid else nil
-		local cell = cmd.cell :: number
-		if g == nil or cell >= g.cellCount then
+		if g == nil then
 			return
 		end
-		local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
+		local x, z = g:decodeOnMap(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
 		Orders.give(sim, ownedUnits(w, player, cmd.unitIds), { kind = "attackGround", x = x, z = z }, band(cmd.flags, QUEUE) ~= 0)
 		return
 	elseif cmdType == CT.CAMERA then
@@ -194,11 +182,10 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	elseif cmdType == CT.AREA then
 		-- Smart Reclaim / repair / resurrect (S-183): builders only
 		local g = if sim.map then (sim.map :: any).grid else nil
-		local cell = cmd.cell :: number
-		if g == nil or cell >= g.cellCount then
+		if g == nil then
 			return
 		end
-		local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
+		local x, z = g:decodeOnMap(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
 		local builders = {}
 		for _, id in ownedUnits(w, player, cmd.unitIds) do
 			local d = sim.defs.unitByIndex[w.defIndex[id]]

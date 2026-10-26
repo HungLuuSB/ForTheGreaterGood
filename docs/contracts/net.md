@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **36**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-26). Everything here is `Schema.PROTOCOL_VERSION` **38**, as built and tested (protocol 38, S-189: wire positions on a fixed grid, section 3), including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -40,8 +40,8 @@ Names and reliability: `Schema.Channel`.
 | Quantity | Wire | Decode |
 |---|---|---|
 | Unit ID | u16 | Unique among live units, ghosts and the reuse window: an ID is reused only 10 s after its unit died, and never while any team still remembers it as a ghost. The server tracks generations internally (D109); the wire never needs them. |
-| Position (units) | `cell u16, offX u8, offZ u8` | `cell = cz × cellsX + cx`; `x = (cx + offX / 256) × 8 + originX`, same for z. Use `Grid:decode(cell, offX, offZ)` with the map's grid (from the map ID). |
-| Strategic position | `cell u16` | Cell only. Draw at the cell center (`Grid:decode(cell, 128, 128)`). |
+| Position (units) | `cell u16, offX u8, offZ u8` | Since protocol 38 (S-189) a **wire position**, the same for every map: `cell` is one of 256 × 256 wire cells of 64 studs centred on the origin, the offsets quarter studs: `x = ((cell % 256) × 256 + offX) / 4 − 8192`, z with `cell // 256` and offZ. Use `Grid:decode(cell, offX, offZ)` / `Grid:encode(x, z)`; never treat `cell` as a map cell. Positions can lie past the map's edge (aircraft and shots, up to `Grid.OVERFLY` 512 studs). Before 38: the map cell index and 1/32-stud offsets. |
+| Strategic position | `cell u16` + `offX`, `offZ` 3 bits each | The wire cell and its offsets' top 3 bits: an 8-stud square. The decoder gives offX / offZ at the square's centre: `Grid:decode(r.cell, r.offX, r.offZ)` (protocol 38; before: a map cell, drawn at `Grid:decode(cell, 128, 128)`). |
 | Projectile / event position | `cell u16, offX u8, offZ u8, y i16` | x, z as above; `y = i16 / 8` studs (`Schema.Y_SCALE`). |
 | Velocity | `vx, vy, vz i16` | studs per second = `i16 / 8`. |
 | Heading | u8 | `heading × 360 / 256` degrees, 0 = +Z, counter-clockwise (radians: `× 2π / 256`). |
@@ -82,7 +82,7 @@ The client never receives a hidden unit, a radar contact's true position, or a h
 
 ## 5. Tiers, ENTER / LEAVE, Tactical, State
 
-The camera is sent by the client as a `CAMERA` command (cell rectangle `minX, minZ, maxX, maxZ`, u8 each; at most ~5 per second; guide 15.5).
+The camera is sent by the client as a `CAMERA` command (map-cell rectangle `minX, minZ, maxX, maxZ`, u16 each since protocol 38, u8 before; at most ~5 per second; guide 15.5). A rectangle touching the map's edge also covers everything past that edge (aircraft over it, S-189).
 - **No camera** means no tactical tier: everything arrives as strategic records.
 - **Tactical tier:** own / allied or VISIBLE units inside the camera rectangle. A unit enters within **+2 cells** of it and leaves beyond **+5 cells** (hysteresis).
 
@@ -115,7 +115,7 @@ A Tactical or State record always refers to a unit the client got an ENTER for. 
 ## 6. Strategic
 
 - Every 5th tick (3 Hz) the server sends a full **snapshot** of every known unit that is not tactical for this player. That includes own units outside the camera and ghosts of structures that died unseen.
-- Record: `unitId u16, cell u16, icon 8 bits | team 4 bits (team − 1) | flags 5 bits | 7 reserved bits (0)`, 7 B (protocol 36, S-169: teams 1..16; bits LSB-first: icon 0–7, team 8–11, flags 12–16; before 36: 6 B with team 8–10, flags 11–15).
+- Record: `unitId u16, cell u16, icon 8 bits | team 4 bits (team − 1) | flags 5 bits | offX 3 bits | offZ 3 bits | 1 reserved bit (0)`, 7 B (protocol 38, S-189: the position is a wire cell plus the offsets' top 3 bits, section 3; protocol 36, S-169: teams 1..16; bits LSB-first: icon 0–7, team 8–11, flags 12–16, offX 17–19, offZ 20–22; before 38 the 7 bits after the flags were reserved and `cell` a map cell; before 36: 6 B with team 8–10, flags 11–15).
 - Flags:
   - `RADAR_ONLY 1`, `SONAR_ONLY 2`, `UNDER_ATTACK 4` (since protocol 23, S-68: own and allied units an enemy hit in the last 3 s), `GHOST 8`, `TRACKED 16`;
   - all 5 flag bits are in use.
@@ -135,7 +135,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | `IMPACT 6` | `projId u16, pos`, 9 B | For projectiles the client has, or any impact in the camera area. Explosion effect; drop the projectile. Projectiles that reach the end of their life also send one (no damage). A strategic missile's IMPACT is its detonation (`aoe` 150). |
 | `INTERCEPTOR 14` | as SPAWN_PROJ, 19 B (protocol 16) | SPAWN_PROJ of a missile fired at a strategic missile (S-48). `targetId` is the **projectile ID** of the strategic missile it chases (always one the client has: see below), not a unit. Steer it with `Guidance.vertical` / `pn` against that projectile's predicted position and velocity (vy included). Its IMPACT is the interceptor's burst. |
 | `LAUNCH_WARNING 15` | `projId u16, pos`, 9 B (protocol 16) | A strategic missile (`weapon.strategic`) was launched from `pos` (the silo). **Every player** gets it, camera or not, in the launch tick. **Strategic missiles are sent to every player wherever they fly:** its SPAWN_STRATEGIC arrives in the same tick. |
-| `ALERT 18` | `alert u8, cell u16, defIndex u16` (0 = none), 6 B (protocol 23, S-68) | To the player it concerns (Sim/Alerts): UNIT_ATTACKED 1 / STRUCTURE_ATTACKED 2 (one per 400-stud zone per 20 s), UNIT_LOST 3 / STRUCTURE_LOST 4 (one per zone per 5 s), BUILD_DONE 5 (each factory unit and finished frame), STALL_SUPPLY 6 / STALL_POWER 7 (the team's ratio dropped below 1; once per 30 s each; cell 0), NUKE_LAUNCH 8 (every player, at the silo), COMMANDER_ATTACKED 9 (one per 10 s). `cell` is where it happened. |
+| `ALERT 18` | `alert u8, cell u16, offX u8, offZ u8, defIndex u16` (0 = none), 8 B (protocol 23, S-68; the offsets since protocol 38: a wire position, section 3) | To the player it concerns (Sim/Alerts): UNIT_ATTACKED 1 / STRUCTURE_ATTACKED 2 (one per 400-stud zone per 20 s), UNIT_LOST 3 / STRUCTURE_LOST 4 (one per zone per 5 s), BUILD_DONE 5 (each factory unit and finished frame), STALL_SUPPLY 6 / STALL_POWER 7 (the team's ratio dropped below 1; once per 30 s each; cell 0), NUKE_LAUNCH 8 (every player, at the silo), COMMANDER_ATTACKED 9 (one per 10 s). `cell, offX, offZ` is where it happened. |
 | `SPAWN_STRATEGIC 17` | SPAWN_PROJ's fields (`targetId` 0), then `goal pos`, 25 B (protocol 18) | A strategic missile the client doesn't have yet, to **every player** wherever it is (S-48): at launch, or on joining mid-flight. `goal` is the spot it flies to. Step it every tick with `Lofted.step(x, y, z, vx, vy, vz, gx, gy, gz, gy + weapon.apex, weapon.gravity, rad(weapon.turnRate) / 15, Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z)), 1/15)` (`Shared/Combat/Lofted`, S-51): straight up to `climbHeight`, the pitch-over, the arc. The phase comes from its state, so a copy first seen mid-flight steps the same (a client copy stays within 0.15 studs of the server's over a whole flight). Its IMPACT is the detonation, ~12.7 s after launch. |
 | `SHIELD 19` | `unitId u16, charge u8, flags u8`, 5 B (protocol 24, S-79) | A shield dome generator in P's tactical tier: right after its ENTER, then whenever its charge (0..255 of the def's `shield.capacity`) moved 4 or its flags changed. Flags (`Schema.ShieldFlag`): UP 1 (the dome stands; without it the dome is down until 25%), RECHARGING 2 (below capacity and powered). The radius is the def's `shield.radius`. Generators enter and leave the tactical tier with margins grown by their dome's radius (in cells), so P has the dome wherever it shows. |
 | `SHIELD_FIELD 21` | `projId u16, pos (the dome's centre: the generator's base), radius u16 (studs), force u8 (0..255 of full), phase u8 (1 braking, 2 repelled)`, 13 B (protocol 24, S-79) | **Not sent since S-93** (every projectile is destroyed at the surface: SHIELD_HIT with ABSORBED), but still decoded; it returns if the field does. A projectile P has came into an enemy dome's field this tick, or is in one when its SPAWN_PROJ is sent (then right after it). Step it with `ShieldField.step(x, y, z, vx, vy, vz, weapon.gravity, cx, cy, cz, radius, force / 255, ShieldField.mass(weapon), phase, 1/15)` (`Shared/Combat/ShieldField`) instead of `Ballistics.step` until the returned phase is DONE (3); then fly on plainly. Projectiles corrections cover shells in a field every 5 ticks, on their turn or breach, and as they leave it. |
@@ -180,8 +180,8 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 ## 7a. Sight map and wrecks (Events channel, protocol 10, S-26; client requests 9 and 10)
 
 **Sight.** The client's fog is the ally team's sight, exactly: sensor cells (16 studs, 2 × 2 grid cells; `grid.sensorX × grid.sensorZ`, index `z × sensorX + x`, `Grid:sensorCellAt(x, z)`) that any unit of the ally team (own or allied) has in LOS. Air sight (against aircraft only) is not part of it.
-- `SIGHT_ROWS`: rows `firstRow .. firstRow + rowCount − 1` of the map as a bitset, `rowBytes = ceil(sensorX / 8)` bytes per row; cell x of a row is bit `x % 8` of byte `x // 8`; 1 = in sight. Sent after a WELCOME (the whole map, in records of at most 640 bytes of bits), and instead of SIGHT_CELLS when a tick's changes are larger.
-- `SIGHT_CELLS`: up to 255 cells that changed since the last sight record, each `cell index | 0x8000` (`Schema.SIGHT_SEEN`) when it is now in sight, the bare index when it no longer is. Apply them in order.
+- `SIGHT_ROWS` (`firstRow u16` since protocol 38, u8 before; `rowCount u8, rowBytes u8`, the bits): rows `firstRow .. firstRow + rowCount − 1` of the map as a bitset, `rowBytes = ceil(sensorX / 8)` bytes per row; cell x of a row is bit `x % 8` of byte `x // 8`; 1 = in sight. Sent after a WELCOME (the whole map, in records of at most 640 bytes of bits), and instead of SIGHT_CELLS when a tick's changes are larger.
+- `SIGHT_CELLS`: up to 255 cells that changed since the last sight record, each a u24 (low u16 then high u8; u16 before protocol 38): `cell index | 0x800000` (`Schema.SIGHT_SEEN`, bit 23; bit 15 before 38) when it is now in sight, the bare index when it no longer is. Apply them in order.
 - Sent on sensor ticks (every 2nd tick, `NetOut.SIGHT_EVERY`) when something changed. The client's map then equals `Sensors` LOS at the end of every sensor tick (tested on every one).
 - Spectators get no sight records: they have no fog.
 
@@ -192,7 +192,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 - **Supply and resurrect (protocol 35, S-168):** WRECK carries `supply` (whole units left in the wreck when sent) and `fullSupply` (what it held when the unit died: `Combat.WRECK_SUPPLY_FRACTION` 0.5 × the def's supply cost). `WRECK_STATE` follows on sensor ticks (every 2nd tick) for a wreck the client has, while its spot is in the team's sight, when its `supply` or its resurrect progress `rez` (0..255) changed since the last sent; a WRECK whose `rez` isn't 0 is followed by one at once. Out of sight the client keeps the last values. The values to show: a dark-green bar `supply / fullSupply` (below 1 only), a purple bar `rez / 255` (above 0 only); a hover can name the wreck (its `defIndex`) and its `supply`; the reclaimable supply of an area is the sum of the known wrecks' `supply`.
 - Wreck IDs are the server's (1-based, never reused within a match); RECLAIM commands target them.
 
-**Cost** (`lune run stress`, 800 units, two players): sight ~0.3–0.4 KB/s and wrecks ~0.12 KB/s per player in a large battle (events 0.72 → 1.22 KB/s, total 15.4 KB/s of 35); a join adds the whole map once (2 KB on a 256-cell map) plus 10 B per known wreck.
+**Cost** (`lune run stress`, 800 units, two players): sight ~0.3–0.4 KB/s and wrecks ~0.12 KB/s per player in a large battle (events 0.72 → 1.22 KB/s, total 15.4 KB/s of 35); a join adds the whole map once (2 KB on a 256-cell map, 8 KB on 512, 33 KB on 1,024) plus 14 B per known wreck.
 
 ## 8. Homing corrections (Projectiles channel, D102)
 

@@ -362,7 +362,7 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				view.ownStatus[e.unitId :: number] = { health = e.health :: number, build = e.build :: number, queueHead = e.queueHead :: number, queueProgress = e.queueProgress :: number, queueCount = e.queueCount :: number }
 				continue
 			elseif kind == EK.ALERT then
-				local x, z = view.grid:decode(e.cell :: number, 128, 128)
+				local x, z = view.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 				table.insert(view.alerts, { alert = e.alert :: number, x = x, z = z, defIndex = e.defIndex :: number, tick = view.tick or 0 })
 				continue
 			elseif kind == EK.LAUNCH_WARNING then
@@ -617,7 +617,7 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 		local ids = {}
 		for _, r in records do
 			table.insert(ids, r.unitId)
-			local x, z = g:decode(r.cell, 128, 128) -- cell center
+			local x, z = g:decode(r.cell, r.offX :: number, r.offZ :: number) -- the 8-stud square's centre (S-189)
 			view.units[r.unitId] = { tier = "strategic", team = r.team, icon = r.icon, flags = r.flags, x = x, z = z }
 		end
 		mention(view, "Strategic", ids)

@@ -429,10 +429,11 @@ return function(sim: Types.Sim)
 		local x, z = nx[k], nz[k]
 		local tx, tz = x + sin(h) * v * DT, z + cos(h) * v * DT
 		if p.air then
-			-- aircraft stay over the map (S-183, F3; jets turn back first, Air.steerJet)
+			-- aircraft stay within Air.OVERFLY of the map (S-189; over it
+			-- before protocol 38, S-183; jets turn back first, Air.steerJet)
 			local g = nav.grid
-			tx = math.clamp(tx, g.originX + 1, g.originX + g.sizeX - 1)
-			tz = math.clamp(tz, g.originZ + 1, g.originZ + g.sizeZ - 1)
+			tx = math.clamp(tx, g.originX - Air.OVERFLY, g.originX + g.sizeX + Air.OVERFLY)
+			tz = math.clamp(tz, g.originZ - Air.OVERFLY, g.originZ + g.sizeZ + Air.OVERFLY)
 		end
 		local exit = exitOf[k]
 		if exit then

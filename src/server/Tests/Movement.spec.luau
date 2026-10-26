@@ -42,6 +42,14 @@ local function eastTarget(sim: Sim.Sim): number
 	error("no target")
 end
 
+-- A map cell (and an offset in 1/256 of it) as a wire position (S-189: the
+-- wire's cells aren't the map's).
+local function wire(sim: Sim.Sim, c: number, ox: number, oz: number): (number, number, number)
+	local g = (sim.nav :: Nav.Nav).grid
+	local cx, cz = g:coords(c)
+	return g:encode((cx + ox / 256) * 8 + g.originX, (cz + oz / 256) * 8 + g.originZ)
+end
+
 local function allIdle(w: World.World): boolean
 	for _, id in w.ids do
 		if w.orderId[id] ~= 0 then
@@ -55,8 +63,8 @@ end
 -- nil), and each unit's slot as assigned when the order was issued.
 local function march(mapId: string, maxTicks: number): (Sim.Sim, number?, { [number]: { number } })
 	local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, scenario = "march_test", mapId = mapId })
-	local target = eastTarget(sim)
-	assert(Sim.submit(sim, 1, encode({ cmdType = CT.MOVE, flags = 0, unitIds = table.clone(sim.world.ids), cell = target, offX = 128, offZ = 128 })))
+	local tc, tx, tz = wire(sim, eastTarget(sim), 128, 128)
+	assert(Sim.submit(sim, 1, encode({ cmdType = CT.MOVE, flags = 0, unitIds = table.clone(sim.world.ids), cell = tc, offX = tx, offZ = tz })))
 	Sim.step(sim)
 	local slots = {}
 	for _, id in sim.world.ids do
@@ -228,8 +236,8 @@ return function(t: RunAll.Context)
 
 	t.test("one move order shares one field", function()
 		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, scenario = "march_test", mapId = "gen:7:96" })
-		local target = eastTarget(sim)
-		assert(Sim.submit(sim, 1, encode({ cmdType = CT.MOVE, flags = 0, unitIds = table.clone(sim.world.ids), cell = target, offX = 0, offZ = 0 })))
+		local tc, tx, tz = wire(sim, eastTarget(sim), 0, 0)
+		assert(Sim.submit(sim, 1, encode({ cmdType = CT.MOVE, flags = 0, unitIds = table.clone(sim.world.ids), cell = tc, offX = tx, offZ = tz })))
 		Sim.step(sim)
 		local w = sim.world
 		local orderId = w.orderId[w.ids[1]]
@@ -326,11 +334,12 @@ return function(t: RunAll.Context)
 		end
 	end)
 
-	t.test("STOP ends orders; out-of-map cells are ignored", function()
+	t.test("STOP ends orders; a point past the edge moves to the edge", function()
 		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, scenario = "march_test", mapId = "flat:32" })
 		local w = sim.world
 		local ids = table.clone(w.ids)
-		assert(Sim.submit(sim, 1, encode({ cmdType = CT.MOVE, flags = 0, unitIds = ids, cell = 32 * 32 - 1, offX = 0, offZ = 0 })))
+		local tc, tx, tz = wire(sim, 32 * 32 - 1, 0, 0)
+		assert(Sim.submit(sim, 1, encode({ cmdType = CT.MOVE, flags = 0, unitIds = ids, cell = tc, offX = tx, offZ = tz })))
 		Sim.step(sim)
 		t.expect(w.orderId[ids[1]] ~= 0, "moving")
 		assert(Sim.submit(sim, 1, encode({ cmdType = CT.STOP, flags = 0, unitIds = ids })))
@@ -342,11 +351,15 @@ return function(t: RunAll.Context)
 		for _, id in ids do
 			t.equal(w.speed[id], 0, "stopped units brake to 0")
 		end
-		local before = Sim.hash(sim)
-		assert(Sim.submit(sim, 1, encode({ cmdType = CT.MOVE, flags = 0, unitIds = ids, cell = 60000, offX = 0, offZ = 0 })))
+		-- (S-189) a point past the map's edge orders a move to the edge
+		local g = (sim.nav :: Nav.Nav).grid
+		local oc, ox, oz = g:encode(5000, 5000)
+		assert(Sim.submit(sim, 1, encode({ cmdType = CT.MOVE, flags = 0, unitIds = ids, cell = oc, offX = ox, offZ = oz })))
 		Sim.step(sim)
-		t.expect(allIdle(w), "a cell outside the map is ignored")
-		t.notEqual(Sim.hash(sim), before, "(only the tick changed)")
+		t.expect(not allIdle(w), "a point past the edge is a move")
+		for _, id in ids do
+			t.expect(w.goalX[id] <= g.originX + g.sizeX and w.goalZ[id] <= g.originZ + g.sizeZ, "to a goal on the map")
+		end
 	end)
 
 	t.test("idle units cost nothing: no dirty bits and no packets without movement", function()
