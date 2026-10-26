@@ -154,7 +154,9 @@ function Pregame.clockText(world: World.World): string?
 	if clock == nil then
 		return nil
 	end
-	if bit32.band(clock.flags, Schema.PickClockFlag.MAX_WAIT) ~= 0 then
+	if bit32.band(clock.flags, Schema.PickClockFlag.LOADING) ~= 0 then
+		return "Waiting for players to load" -- the clocks start once everyone is in (S-174)
+	elseif bit32.band(clock.flags, Schema.PickClockFlag.MAX_WAIT) ~= 0 then
 		return `The match starts anyway in {mmss(clock.seconds)}`
 	elseif clock.seconds > 0 then
 		return `Pick time {mmss(clock.seconds)}`

@@ -10,7 +10,9 @@
 -- Above it, the last gifts and requests (SHARE events) for a few seconds.
 -- Hidden during the pre-game. A placeholder look in the UI kit.
 
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
@@ -20,7 +22,7 @@ local TeamColors = require("../Render/TeamColors")
 
 local TeamPanel = {}
 
-TeamPanel.WIDTH = 330
+TeamPanel.WIDTH = 356
 TeamPanel.ROW = 20
 TeamPanel.DOUBLE_CLICK = 0.35 -- seconds: two clicks on Units give the selection
 TeamPanel.DRAG_PIXELS = 6 -- a drag on ■ / ϟ past this is a gift, not an ask
@@ -256,11 +258,11 @@ local function build(panel: Panel, api: Api.Api, players: { TeamColors.Player })
 		swatch.BorderSizePixel = 0
 		swatch.Parent = frame
 		local name = label(frame, 14, 104, Kit.COLOR.text, Enum.TextXAlignment.Left)
-		local supply = label(frame, 120, 62, SUPPLY, Enum.TextXAlignment.Right)
-		local power = label(frame, 184, 62, POWER, Enum.TextXAlignment.Right)
+		local supply = label(frame, 118, 74, SUPPLY, Enum.TextXAlignment.Right)
+		local power = label(frame, 194, 74, POWER, Enum.TextXAlignment.Right)
 		local buttons = Instance.new("Frame")
 		buttons.BackgroundTransparency = 1
-		buttons.Position = UDim2.fromOffset(250, 0)
+		buttons.Position = UDim2.fromOffset(276, 0)
 		buttons.Size = UDim2.fromOffset(68, TeamPanel.ROW)
 		buttons.Parent = frame
 		if me.player ~= 0 and p.allyTeam == me.allyTeam and p.id ~= me.player then
@@ -272,10 +274,31 @@ local function build(panel: Panel, api: Api.Api, players: { TeamColors.Player })
 	end
 end
 
+-- Is a match on: not the in-match lobby's preview or its results (the
+-- Remotes folder's "Lobby" attribute, where there is one).
+local phaseAt, phaseOk = -math.huge, true
+local function matchOn(now: number): boolean
+	if now - phaseAt < 1 then
+		return phaseOk
+	end
+	phaseAt = now
+	local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+	local json = remotes and remotes:GetAttribute("Lobby")
+	phaseOk = true
+	if type(json) == "string" then
+		local ok, data = pcall(function()
+			return HttpService:JSONDecode(json)
+		end)
+		local phase = ok and type(data) == "table" and type(data.state) == "table" and data.state.phase
+		phaseOk = phase == nil or phase == "playing" or phase == "waiting"
+	end
+	return phaseOk
+end
+
 -- Once a frame.
 function TeamPanel.step(panel: Panel, api: Api.Api, now: number)
 	local world = api.world
-	panel.gui.Enabled = world.joined and not world.pregame.active
+	panel.gui.Enabled = world.joined and not world.pregame.active and matchOn(now)
 	if not panel.gui.Enabled then
 		return
 	end
@@ -325,8 +348,9 @@ function TeamPanel.step(panel: Panel, api: Api.Api, now: number)
 		r.name.Text = nameOf(p.id) .. (if p.id == world.me.player then " (you)" else "")
 		local eco = world.teamEco[p.team]
 		if eco then
-			r.supply.Text = `+{short(eco.supply.income)} · {short(eco.supply.stored)}`
-			r.power.Text = `+{short(eco.power.income)} · {short(eco.power.stored)}`
+			-- (the wire's income is in tenths per second, as Api reads it)
+			r.supply.Text = `+{short(eco.supply.income / 10)} · {short(eco.supply.stored)}`
+			r.power.Text = `+{short(eco.power.income / 10)} · {short(eco.power.stored)}`
 		else
 			r.supply.Text, r.power.Text = "", ""
 		end

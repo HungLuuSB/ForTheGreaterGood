@@ -108,13 +108,13 @@ return function(t: any)
 			end
 		end
 		t.expect(#impacts >= 3, `the salvo landed ({#impacts})`)
-		-- the first bomb on the spot, each next one salvo.delay x speed on
-		-- (the server's bomber still turns away during its salvo: until it
-		-- holds its heading, sim-A, only the first spot is checked exactly)
-		local first = math.sqrt((impacts[1][1] - tx) ^ 2 + (impacts[1][2] - tz) ^ 2)
-		local gap = math.sqrt((impacts[2][1] - impacts[1][1]) ^ 2 + (impacts[2][2] - impacts[1][2]) ^ 2)
-		print(string.format("    carpet: first bomb %.1f studs from the spot (blast %d), the next %.1f on (previewed %.1f)", first, w.aoe, gap, step))
-		t.expect(first <= w.aoe, `the first bomb inside the first ring ({first})`)
-		t.expect(math.abs(gap - step) <= w.aoe, `the bombs' spacing is the preview's ({gap} vs {step})`)
+		-- each bomb inside its previewed blast ring (the bomber holds its
+		-- heading through the salvo, S-178)
+		local worst = 0
+		for k = 1, 3 do
+			worst = math.max(worst, math.sqrt((impacts[k][1] - pts[k][1]) ^ 2 + (impacts[k][2] - pts[k][2]) ^ 2))
+		end
+		print(string.format("    carpet: 3 bombs, the worst %.1f studs from its previewed spot (blast %d)", worst, w.aoe))
+		t.expect(worst <= w.aoe, `each bomb inside its previewed ring ({worst})`)
 	end)
 end

@@ -57,6 +57,8 @@ Controls.REPEAT_KEY = Enum.KeyCode.Y
 Controls.TOGGLE_KEY = Enum.KeyCode.U
 Controls.CANCEL_KEY = Enum.KeyCode.X
 Controls.ALERT_KEY = Enum.KeyCode.J
+-- command modes whose left drag is a zone (Smart Reclaim, F42, S-183)
+Controls.AREA_MODES = { reclaim = true, repair = true, resurrect = true } :: { [string]: boolean }
 -- a UI that takes keys first (the build menu while open): true = consumed
 Controls.capture = nil :: ((InputObject) -> boolean)?
 -- the pre-game's left click (C-218): the ground point under the cursor;
@@ -68,9 +70,9 @@ Controls.HINT = {
 	move = "MOVE: left-click where to go",
 	patrol = "PATROL: left-click the far end of the patrol",
 	guard = "GUARD: left-click a unit to guard (or a builder to assist)",
-	repair = "REPAIR: left-click an own unit or frame",
-	reclaim = "RECLAIM: left-click a wreck",
-	resurrect = "RESURRECT: left-click a wreck (it refills with supply, then comes back for power)",
+	repair = "REPAIR: left-click an own unit or frame, or drag a zone",
+	reclaim = "RECLAIM: left-click a wreck, or drag a zone (every wreck in it)",
+	resurrect = "RESURRECT: left-click a wreck, or drag a zone (refills with supply, then comes back for power)",
 	upgrade = "UPGRADE: drag a circle, or click an extractor",
 }
 
@@ -93,6 +95,7 @@ export type Controls = {
 	lineTo: Vector3?,
 	areaFrom: Vector3?, -- an area drag's center (extractor placement, Upgrade extractors; C-121)
 	areaTo: Vector3?, -- its edge, while dragging
+	areaMode: string?, -- the command mode of a zone drag (Smart Reclaim, F42), else nil
 	attacking: boolean, -- attack mode (A): the next left click attacks (C-57)
 }
 
@@ -246,7 +249,7 @@ function Controls.bind(api: Api.Api): Controls
 	hint.Parent = gui
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 
-	local self: Controls = { boxFrame = box, placeFrom = nil, lineFrom = nil, lineTo = nil, areaFrom = nil, areaTo = nil, attacking = false }
+	local self: Controls = { boxFrame = box, placeFrom = nil, lineFrom = nil, lineTo = nil, areaFrom = nil, areaTo = nil, areaMode = nil, attacking = false }
 	local leftStart: Vector2? = nil
 	local boxing = false
 	local rightStart: Vector2? = nil
@@ -329,6 +332,11 @@ function Controls.bind(api: Api.Api): Controls
 		elseif mode == "upgrade" and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			-- Upgrade extractors: the release gives it (a drag is the circle)
 			self.areaFrom, self.areaTo = Controls.groundAt(cam(), mouse.X, mouse.Y), nil
+			leftStart, boxing = mouse, false
+			return
+		elseif Controls.AREA_MODES[mode or ""] and input.UserInputType == Enum.UserInputType.MouseButton1 then
+			-- Smart Reclaim (F42): a drag is the zone, a click the one target (on release)
+			self.areaFrom, self.areaTo, self.areaMode = Controls.groundAt(cam(), mouse.X, mouse.Y), nil, mode
 			leftStart, boxing = mouse, false
 			return
 		elseif mode and input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -436,6 +444,26 @@ function Controls.bind(api: Api.Api): Controls
 				api.actions.place(to.X, to.Z, shift(), shift())
 			end
 			self.placeFrom, self.areaFrom, self.areaTo, leftStart = nil, nil, nil, nil
+			return
+		end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and self.areaFrom and self.areaMode then
+			-- Smart Reclaim / repair / resurrect: the zone, or the clicked target
+			local from, to, kind = self.areaFrom :: Vector3, self.areaTo, self.areaMode :: string
+			self.areaFrom, self.areaTo, self.areaMode, leftStart = nil, nil, nil, nil
+			if to then
+				local radius = math.sqrt((to.X - from.X) ^ 2 + (to.Z - from.Z) ^ 2)
+				api.actions.areaOrder(kind, from.X, from.Z, radius, shift())
+				if not shift() then
+					api.actions.setCommandMode(nil)
+				end
+			else
+				local id = pickAt(world, Controls.projector(cam()), mouse.X, mouse.Y)
+				local u = if id then world.units[id] else nil
+				local x, z = if from then from.X elseif u then u.x else nil, if from then from.Z elseif u then u.z else nil
+				if x and z then
+					api.actions.commandAt(x, z, id, shift(), shift(), ctrl())
+				end
+			end
 			return
 		end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 and self.areaFrom then

@@ -1970,3 +1970,14 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - AttackPreview.spec against the server's run (an Absolution, 3 bombs): the first bomb 7.5 studs from the spot (blast 14), the next 42.5 on (previewed 40). The server's bomber turns away during its salvo, so bombs 2-3 curve off the straight line; sim-A asked to hold the heading until the salvo is out (the user's "line of bombs"), then the spec checks every spot.
 
 **Why:** the user's playtest F33.
+
+### C-226 — Team panel and sharing; Smart Reclaim; 2 × 2 deposits; pre-game loading (2026-10-26, F23, F42, S-176, S-183, S-184)
+
+- Merged m-sim-2 676ddca (allies' Eco records, AREA, 2 × 2 deposit patches, LOADING, the carpet holding its heading). Specs follow: deposits by patch, the heavy-shell shield scene with a target inside the dome's edge (Ravager 78 studs), the carpet spec checks all three bombs (worst 9.5 studs, blast 14).
+- **Team panel** (`UI/TeamPanel`, bottom right; F23): every player by ally team in its colour; on each ally's row Units (one click asks the allies for units, two give the selection), ■ and ϟ (one click asks; click and drag up: a slider over the bank, given on release); the last gifts and requests above it for 8 s (`Core/Share`: SHARE_UNITS / SHARE_RESOURCE / REQUEST, SHARE lines). `World.teamEco` keeps every Eco record by team (the own one still drives the top bar). Hidden in the pre-game and the in-match lobby. The debug HUD (F3) starts off outside Studio, over the panel when shown.
+- **Smart Reclaim** (F42): in reclaim, repair or resurrect mode a drag is a zone (the area circle), a click the one target; the zone is one AREA command (`Api.actions.areaOrder`) for every selected unit that has the command, its order line ends in the circle until the server reports the builder idle.
+- **2 × 2 deposits** (S-184): the extractor ghost snaps to the nearest patch centre within 16 studs (`PlacementRules.depositNear`), the advanced one centred on the T1's patch; extractor drags take each patch once; deposit markers are one per patch at twice the size.
+- **Pre-game:** PICK_CLOCK's LOADING reads "Waiting for players to load".
+- Checked in Studio (Crossroads, Teams: you and a Normal AI against an Easy AI): the panel with the ally's income and bank and its buttons, 300 supply given ("You gave AI (normal) 300 supply", the bank 1.0k → 701), a request ("You ask for power"); the panel hidden in the lobby. Specs: Share, SmartReclaim; Upgrades and Placement on patches. Nanoframe's pads for the new labs wait on models-C's registration after S-181 reaches main.
+
+**Why:** the user's playtest (F23, F42) and sim-A's phase 2.
