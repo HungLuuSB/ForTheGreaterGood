@@ -494,6 +494,235 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				},
 			},
 		},
+		feature_rock = {
+			attachments = {},
+			glow = {  },
+			glowShare = 0,
+			maps = {
+				ALB = "rbxassetid://111245066781069",
+				EMI = "rbxassetid://115878236063767",
+				MTL = "rbxassetid://89896451516123",
+				NOR = "rbxassetid://116761933036249",
+				RGH = "rbxassetid://76099319120108",
+			},
+			model = "rbxassetid://96458438323323",
+			pieces = {
+				base = {
+					center = { 0.102, 2.1585, 0.0803 },
+					mesh = "rbxassetid://74537432916961",
+					size = { 7.4802, 5.5171, 6.5158 },
+				},
+			},
+			status = "approved",
+			teamPieces = {
+				"base",
+			},
+			triangles = 120,
+			variants = {
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://111245066781069",
+						EMI = "rbxassetid://115878236063767",
+						MTL = "rbxassetid://89896451516123",
+						NOR = "rbxassetid://116761933036249",
+						RGH = "rbxassetid://76099319120108",
+					},
+					model = "rbxassetid://96458438323323",
+					pieces = {
+						base = {
+							center = { 0.102, 2.1585, 0.0803 },
+							mesh = "rbxassetid://74537432916961",
+							size = { 7.4802, 5.5171, 6.5158 },
+						},
+					},
+					status = "approved",
+					teamPieces = {
+						"base",
+					},
+					triangles = 120,
+				},
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://77821885600290",
+						EMI = "rbxassetid://140732093700668",
+						MTL = "rbxassetid://84232131295691",
+						NOR = "rbxassetid://134542829762458",
+						RGH = "rbxassetid://132063669824340",
+					},
+					model = "rbxassetid://119626897679407",
+					pieces = {
+						base = {
+							center = { -0.319, 1.6086, 0.0432 },
+							mesh = "rbxassetid://112552344836944",
+							size = { 7.2543, 4.4172, 6.788 },
+						},
+					},
+					status = "approved",
+					teamPieces = {
+						"base",
+					},
+					triangles = 140,
+				},
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://71175040227965",
+						EMI = "rbxassetid://135838135752926",
+						MTL = "rbxassetid://82715099480907",
+						NOR = "rbxassetid://133467937883165",
+						RGH = "rbxassetid://81231009880604",
+					},
+					model = "rbxassetid://97230173227117",
+					pieces = {
+						base = {
+							center = { -0.5439, 2.7589, 0.1521 },
+							mesh = "rbxassetid://120433555848816",
+							size = { 7.9206, 6.7178, 6.6709 },
+						},
+					},
+					status = "approved",
+					teamPieces = {
+						"base",
+					},
+					triangles = 100,
+				},
+			},
+		},
+		feature_tree = {
+			attachments = {},
+			glow = {  },
+			glowShare = 0,
+			maps = {
+				ALB = "rbxassetid://140539493858752",
+				EMI = "rbxassetid://71560355007318",
+				MTL = "rbxassetid://92167435560537",
+				NOR = "rbxassetid://85233898040688",
+				RGH = "rbxassetid://133956165433238",
+			},
+			model = "rbxassetid://89028753019651",
+			pieces = {
+				base = {
+					center = { 0.2496, 8.1476, -0.2152 },
+					mesh = "rbxassetid://96388137183501",
+					size = { 6.9748, 16.9149, 7.0859 },
+				},
+			},
+			status = "approved",
+			teamPieces = {
+				"base",
+			},
+			triangles = 144,
+			variants = {
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://140539493858752",
+						EMI = "rbxassetid://71560355007318",
+						MTL = "rbxassetid://92167435560537",
+						NOR = "rbxassetid://85233898040688",
+						RGH = "rbxassetid://133956165433238",
+					},
+					model = "rbxassetid://89028753019651",
+					pieces = {
+						base = {
+							center = { 0.2496, 8.1476, -0.2152 },
+							mesh = "rbxassetid://96388137183501",
+							size = { 6.9748, 16.9149, 7.0859 },
+						},
+					},
+					status = "approved",
+					teamPieces = {
+						"base",
+					},
+					triangles = 144,
+				},
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://71786331211211",
+						EMI = "rbxassetid://114286859739913",
+						MTL = "rbxassetid://91236532697756",
+						NOR = "rbxassetid://101486926188661",
+						RGH = "rbxassetid://91421911223952",
+					},
+					model = "rbxassetid://106445463474503",
+					pieces = {
+						base = {
+							center = { 0.1237, 5.5263, 0.0447 },
+							mesh = "rbxassetid://104502615669409",
+							size = { 7.5542, 11.6725, 7.4121 },
+						},
+					},
+					status = "approved",
+					teamPieces = {
+						"base",
+					},
+					triangles = 126,
+				},
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://88962306675940",
+						EMI = "rbxassetid://137093981760219",
+						MTL = "rbxassetid://103772518596044",
+						NOR = "rbxassetid://134104130561685",
+						RGH = "rbxassetid://78591333787524",
+					},
+					model = "rbxassetid://135274431682964",
+					pieces = {
+						base = {
+							center = { -0.1241, 5.435, -0.209 },
+							mesh = "rbxassetid://78034571749526",
+							size = { 9.7763, 11.514, 9.0231 },
+						},
+					},
+					status = "approved",
+					teamPieces = {
+						"base",
+					},
+					triangles = 272,
+				},
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://107775701542664",
+						EMI = "rbxassetid://91394104283297",
+						MTL = "rbxassetid://133938472085276",
+						NOR = "rbxassetid://118456062775383",
+						RGH = "rbxassetid://87875972489267",
+					},
+					model = "rbxassetid://138997681068544",
+					pieces = {
+						base = {
+							center = { -0.0435, 4.7474, -0.2919 },
+							mesh = "rbxassetid://104984391132858",
+							size = { 7.4023, 10.1388, 8.043 },
+						},
+					},
+					status = "approved",
+					teamPieces = {
+						"base",
+					},
+					triangles = 252,
+				},
+			},
+		},
 		ord_interceptor = {
 			attachments = {},
 			glow = {
