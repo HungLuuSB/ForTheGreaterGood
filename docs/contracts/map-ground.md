@@ -28,7 +28,7 @@ In `src/shared/Defs/Meshes/Registry.luau` (the models stream's manifest), next t
 ground = {
 	canyon = {                        -- the map name (MapRegistry key)
 		status = "review",            -- "approved" shows it in game; "review" only with Invoke("groundanyway", true) in Studio
-		step = 8,                     -- optional: the bake's height sampling in studs when coarser than the export's 4 (`coarsen`, C-235)
+		step = 8,                     -- the bake's height sampling in studs, written only when coarser than the export's 4 (`coarsen`, C-235)
 		tiles = {                     -- the ground surface, split so no mesh passes Roblox's triangle limit
 			{ mesh = "rbxassetid://…", center = { x, y, z }, size = { sx, sy, sz }, material = "desert" },
 			…
