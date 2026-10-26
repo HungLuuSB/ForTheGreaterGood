@@ -806,3 +806,4 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
    - size, CFrame (turned 180° about Y), joints, `RootOffset`, `TeamColor` tags, `SurfaceAppearance`s and glow settings as in rig.md 7;
    - put the result in `ReplicatedStorage.Models.<id>`.
    `InsertService:LoadAsset` on the raw Open Cloud `model` gives unrigged MeshParts at 100× scale (`rig_model.luau` normalizes them in "FTGG Art"), so the manifest route is simpler. Alternatively the user can copy the rigged `ReplicatedStorage.ModelReview.<id>_bar` models from "FTGG Art" into the game place's `ReplicatedStorage.Models` (rename to `<id>`).
+- Ready to merge: `b81fab52` (S-192: the Plains' ground mesh, `ground.plains`, `review`, so the client keeps drawing it its own way until approved; `assets/maps/plains`, ground.py's `ground` merge, manifest, docs).
