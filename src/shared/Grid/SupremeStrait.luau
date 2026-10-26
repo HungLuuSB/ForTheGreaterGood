@@ -7,7 +7,8 @@
 -- `lune run map_compile supreme_strait` into Shared/Grid/Maps/supreme_strait
 -- (docs/design/maps.md).
 --
--- Point-symmetric: two seas with reef islets bite in from the north-west and
+-- North is the screen's top (-z: the camera at yaw 0 looks toward -z), as in
+-- BAR's images. Point-symmetric: two seas with reef islets bite in from the north-west and
 -- south-east corners; a sand strait joins the plateaus through the middle;
 -- each plateau has a crater lake, mesas and sand paths down to the sea;
 -- rocky mountains in the other two corners. 16 start hints, 1-8 south-west.

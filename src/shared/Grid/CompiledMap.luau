@@ -9,7 +9,8 @@
 --   waterLevel             studs: cells below it are sea
 --   wind                   { min, max } fractions of a turbine's best, or nil
 --   height                 Base64 of an i16 per cell (Layers' raw steps,
---                          little-endian), rows south to north (cz)
+--                          little-endian), rows by cz from -z (the screen's
+--                          top, the source image's top row) to +z
 --   terrain                run-length "count:type," of Layers.Terrain per cell
 --   deposits               { { cx, cz, value } } (each a 2 × 2 patch's corner
 --                          cell once loaded: Layers.expandDeposits)

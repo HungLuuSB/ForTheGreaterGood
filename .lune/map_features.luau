@@ -85,7 +85,7 @@ end
 
 local out: { { any } } = {}
 local function add(kind: string, x: number, z: number)
-	table.insert(out, { kind, 0.5 + x / size, 0.5 - z / size })
+	table.insert(out, { kind, 0.5 + x / size, 0.5 + z / size }) -- (v from the image's top, -z: map_compile)
 end
 
 -- trees: copses on grass near its edges, then a few lone ones
@@ -148,7 +148,7 @@ end
 local lines = {
 	"--!strict",
 	`-- {compiled.name}'s map features (S-197): one side's trees and rocks as map`,
-	"-- fractions { kind, u (from the west edge), v (from the north edge), value? };",
+	"-- fractions { kind, u (from the image's left), v (from its top, -z), value? };",
 	"-- `lune run map_compile` adds the twins. First written by",
 	`-- \`lune run map_features {name} {seed}\`; edit freely.`,
 	"return {",

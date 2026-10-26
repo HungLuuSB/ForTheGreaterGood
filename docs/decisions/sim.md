@@ -2765,6 +2765,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - **Starts:** the user's 8v8 spawn points (16 circles on the compiled render, point-symmetric).
   - The client's `SupremeStrait.feature` now names cells sea, beach, grass or mountain, from the compiled layers.
 - **Ground:** models-C re-bakes `ground.supreme_strait` from the new layers. The S-195 bake was of the hand-shaped version, which the user didn't approve.
+- **Orientation fix (models-C's finding, after the user saw the bake):** the compiler put the image's top row (BAR's north) at +z. The game camera at yaw 0 looks toward −z, so +z is the screen's bottom, and the map showed as BAR's mirrored top to bottom, with the seas north-east and south-west. Now an image's top row is −z: `map_compile` maps v to z directly (metal, starts and features too), and `map_features` writes v from −z. Supreme Strait recompiled: the seas are north-west and south-east on screen, as in BAR.
 - **Tests:** `SupremeStrait.spec`, rewritten for the compiled map:
   - point symmetry;
   - every land class reaches every start;
@@ -2808,3 +2809,33 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
     - reclaiming a tree pays power and a rock supply, freeing its cell;
     - a client knows every feature without seeing it.
   - `Schema.spec`: protocol 40's WRECK.
+
+## S-198 — Economy balance: extractors cost power, converters 1 supply / 1,200 power, share and convert levels on the resource bar (the user) (2026-10-27)
+
+- **Asked:**
+  1. "Orb deposit costs energy to run."
+  2. "Energy supply converter costs 1 orb and 1200 energy to build. Converts spare 70 energy to 1 orb."
+  3. "2 new thresholds (change with the slider on both resources bar)": the total energy stored (drag it down to share the rest fairly with all allies), the total orb stored (the same), and the converter threshold ("energy stored past this point can be used by converters … If you have 80 spare, only 1 converter can use it").
+- **Extractor upkeep:**
+  - `extractor.upkeep` power per second: T1 3, T2 15.
+  - `Economy.step` pays it right after production. Short of power, extractors deliver the share of their supply that was paid for (`Account.extractRatio`).
+  - An extractor on bare ground extracts nothing and costs nothing.
+- **Converters:**
+  - Both factions: 1 supply and 1,200 power to build (60 / 1,200 before), 70 power a second into 1 supply (Chaos converted 60 : 1 before).
+  - They burn only power stored above `Account.convertAt` (default `CONVERTER_RESERVE`, 0.5). Each needs its whole 70 spare above that level, so 80 spare runs one, not two. Before, each burned whatever was above a fixed 50%, partially.
+- **Share levels:**
+  - `Resource.shareLevel` (default 1). Each economy window, what's stored above level × storage goes to the allies, split fairly. Each ally takes up to its own level, so nothing bounces back.
+  - What nobody takes stays; overflow above storage is still wasted when nobody takes it.
+- **Wire, protocol 40** (with S-197): command `ECO_LEVEL` 31.
+  - Its params, with no unit IDs, are `ecoLevel u8` (`Schema.EcoLevel` SUPPLY_SHARE 1, POWER_SHARE 2, CONVERT 3) and `value u8` (percent).
+  - It sets the sender's team's level.
+  - The Eco record adds `supplyShare, powerShare, convertAt` (u8 percent each), 44 bytes. That's what the client's sliders show.
+- **For client-B:** a slider on each resource bar for its share level, and a third on the power bar for the convert level. Each sends ECO_LEVEL; the Eco record shows each slider's current value.
+- **Tests:**
+  - `EcoLevels.spec`:
+    - extractors without power give nothing, and with it their full rate for 3 power a second;
+    - 80 spare runs one of two converters;
+    - share levels split fairly and respect the receivers' own levels;
+    - the converter's cost.
+  - `Economy.spec`: updated for the upkeep and the whole-chunk converter.
+  - `Schema.spec`: ECO_LEVEL and the Eco record's golden bytes.

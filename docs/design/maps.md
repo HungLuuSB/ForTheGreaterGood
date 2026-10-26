@@ -11,6 +11,7 @@ How a map is made (S-196, the user: "follow Beyond All Reason's pipeline for map
 | `metal.png` | metalmap (8-bit RGB, red dots) | 16 × size | A red dot per metal spot; full red = `metalValue`, dimmer red less. |
 | `minimap.png` | minimap | 1024 × 1024 | The overview: the lobby's preview, the minimap. |
 | `features.luau` | featureplacer (mapconfig) | | The map's trees and rocks (S-197): { kind, u, v, value? } as fractions; with point symmetry, one side (the compiler adds the twins). Trees reclaim into power, rocks into supply; rocks block their cell. `lune run map_features` writes a first list. |
+| (orientation) | | | Every image's top row is BAR's north and the game's −z: the camera at yaw 0 looks toward −z, so the image's top is the screen's top. u runs left to right (+x), v top to bottom (+z). |
 | `mapinfo.luau` | mapinfo.lua | | Settings: name, description, `size` (BAR units), `cells` (our cells a side), `height` {min, max}, `waterLevel`, `wind`, `types`, `metalValue`, `symmetry`, `starts` (fractions: u from the west edge, v from the north), optional `sideSplits`. |
 
 `size` is BAR's map size in map units (512 elmos). Our maps run at The Canyon's scale, about 13 cells per BAR unit. A 24 × 24 BAR map is 320 cells (2,560 studs), so `cells` is set in mapinfo.
