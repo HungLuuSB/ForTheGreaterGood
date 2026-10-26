@@ -32,12 +32,13 @@ return function(t: any)
 
 	t.test("a coarser bake: units stand on the mesh, not on the cell centres it skips (C-235)", function()
 		local manifest: any = {
-			lakelands = { status = "approved", tiles = { TILE } },
+			lakelands = { status = "approved", tiles = { TILE }, step = 8 },
 			canyon = { status = "approved", tiles = { TILE } },
-			plains = { status = "approved", tiles = { TILE }, step = 8 },
+			plains = { status = "approved", tiles = { TILE } },
 		}
 		t.equal(GroundMeshes.drawnStep("map:lakelands", manifest), 8, "the Lakelands' bake samples every 8 studs")
-		t.equal(GroundMeshes.drawnStep("map:plains", manifest), 8, "an entry's own step")
+		t.equal(GroundMeshes.drawnStep("map:lakelands"), 8, "and the manifest says so (models-C writes `step` for a coarser bake)")
+		t.equal(GroundMeshes.drawnStep("map:plains", manifest), nil, "an entry without a step: a 4-stud bake")
 		t.equal(GroundMeshes.drawnStep("map:canyon", manifest), nil, "a 4-stud bake: the smooth ground as it is")
 		t.equal(GroundMeshes.drawnStep("map:ridgeline", manifest), nil, "no mesh ground")
 		-- the bake itself: its 8-stud samples, each square two triangles split

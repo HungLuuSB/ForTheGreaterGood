@@ -15,9 +15,6 @@ export type Piece = { mesh: string, center: { number }, size: { number }, materi
 export type Entry = { status: string, tiles: { Piece }, details: { Piece }?, step: number? } -- step: the bake's height sampling (map-ground.md; 4 when absent)
 
 GroundMeshes.STEP = 4 -- studs: a bake's height sampling unless its entry says otherwise
--- bakes made coarser before the manifest carried `step` (models-C's
--- `coarsen`; remove once the manifest says so itself)
-GroundMeshes.COARSE = table.freeze({ lakelands = 8 } :: { [string]: number })
 
 -- The plain look per material key: a Roblox material name and a colour,
 -- the voxel terrain's own (Render/Terrain) so a map looks the same before
@@ -63,7 +60,7 @@ function GroundMeshes.drawnStep(mapId: string?, manifest: { [string]: Entry }?):
 	if e == nil then
 		return nil
 	end
-	local step = e.step or GroundMeshes.COARSE[GroundMeshes.nameOf(mapId) :: string] or GroundMeshes.STEP
+	local step = e.step or GroundMeshes.STEP
 	return if step > GroundMeshes.STEP then step else nil
 end
 
