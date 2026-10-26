@@ -221,6 +221,12 @@ In the early game, the AI secures its deposits (orb spots) with defence structur
 
 Today only hard turrets its far extractors, and only after 5 extractors and 4 army units stand.
 
+### 7.5 Helper bots reclaim
+
+The AI builds helper bots (Lazarus / Graverobber) to **reclaim resources**: wrecks and features on the battlefield and around the base, after fights, behind its waves.
+
+Today a bot lab builds two helpers, but the AI never orders them to reclaim.
+
 ## 8. Known limits
 
 - **It has no plan for the map.** It goes the shortest way to the nearest known target, and its lanes are fixed offsets, not chokepoints.
