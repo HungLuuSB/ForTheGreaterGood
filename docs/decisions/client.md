@@ -2143,3 +2143,37 @@ The watchdog's WARN / INFO lines (S-140) stay on.
   - the mesas in red rock (`debug_out/screens/2026-10-26-dgun-bolt.jpg`, `…-supreme-strait-laser-card.jpg`).
 - A D-Gun point up a mesa's slope was never fired, and the order stayed pending. sim-A fixed it in S-194: the D-Gun aims in yaw only. Checked in Studio: the same shot fires and burns a Ravager on its path.
 - Follow-up: the server now sends only the bolt's end IMPACT. The units it burns through show as their DEATHs, so the client's flight-time check and spawn-tick bookkeeping are gone, and the bolt ends at its own IMPACT. Spec: one IMPACT; three tanks seen dying on the client.
+
+### C-243 — Supreme Strait by day; no atmosphere setting (2026-10-27)
+
+- The user: "Supreme Strait time of day is day, not night". `MapLook` gives `map:supreme_strait` the "clear" preset (13:00, crisp air), a sea-dark skirt past its edges (its seas run to them), and light daytime motes. Studio: `debug_out/screens/2026-10-27-supreme-strait-day.jpg`.
+- The user: "remove the option to change the environment from the setting". The Atmosphere row is gone from Settings > Graphics > Lighting, and `Settings` has no `atmosphere` key; `SettingsMenu.applySettings` always applies "map". Every map has its own lighting and time of day (`Core/MapLook`), the moonlit night unless it names another.
+
+### C-244 — Build-menu digits keep working; extractor hint on free deposits; an idle builder's flow (2026-10-27)
+
+- **Digits:**
+  - The user: "when click one number key (1-5)… lost the ability to choose number until re-open the build panel", and "When I assign commander + a unit to a group, I can't use number of the build panel".
+  - The digits pick build items while the menu is armed (B or a tab key). Picking a structure used to disarm it, so the next digit fell to control-group recall. And with the menu armed, Ctrl+digit was taken as a build pick, so no group was set.
+  - Now the menu stays armed until the selection changes, and Ctrl+digit always sets a control group. Studio: B, 1 (extractor), cancel, 2 (generator) without B again; Ctrl+2 on the Commander and a Lancer, 2, B, 3: placing a solar array, 2 selected.
+- **Extractor hint (the user's QoL):** with builders selected and nothing being placed, a free deposit under the mouse shows the extractor they'd put there as the placement ghost (`Api.state.depositHint`, `actions.depositHintAt`). It's T2 when a selected builder can build the advanced extractor, else T1. Right-click orders it; Shift queues it. A deposit under an own extractor shows none: upgrades stay the Upgrade command's (C-121). The search radius is 24 studs, so the mouse anywhere on a 16-stud patch finds it. Spec `DepositHint.spec`. Studio: the ghost on the deposit, and a right-click raised the frame (`debug_out/screens/2026-10-27-deposit-hint.jpg`).
+- **Idle builder's flow:**
+  - The user: "why the commander shows -8.3 while its idling".
+  - `UnitFlow.buildTarget` took the nearest own unfinished frame in reach as a builder's work. It now takes the server's WORK when sent (protocol 39): idle means no building cost, and an assist follows its builder.
+  - Studio: an idle Commander between two unfinished frames shows +1.0 and +20 (`…-idle-commander-flow.jpg`).
+
+### C-245 — Protocol 40 on the client: Space for the front of the queue, trees and rocks, economy levels (2026-10-27, S-196..S-199)
+
+- **Space (the user's QoL, FRONT, S-199):**
+  - Held Space sets `Api.state.front`. Every order `Orders.FRONTABLE` names (MOVE, FIGHT, PATROL, ATTACK, ATTACK_GROUND, GUARD, REPAIR, RECLAIM, RESURRECT, BUILD, AREA, DGUN) is sent with `CmdFlag.FRONT`.
+  - `Waypoints` puts it first on the drawn order line, with the old orders after it.
+  - Spec `FrontOrder.spec`: a detour with Space runs first, then the long move resumes. Studio: real Space plus a right-click left the Commander two orders.
+- **Map features (S-197):**
+  - A WRECK's `featureKind` becomes `World.Wreck.feature`.
+  - `Render/Deaths` draws features apart from wrecks (no cap): models-C's `fx.feature_tree` / `fx.feature_rock` variant (`MeshModels.fxVariant`, approved, or review with `Invoke("featuresanyway", true)`) and a ±15% scale, both picked from the wreck ID, turned by the wire heading. Until then a stand-in: a trunk under a crown, a grey block. Stand-ins swap for the mesh once it's built.
+  - The unit panel's hover says "Tree" / "Rock", "Reclaim with a builder for its power" / "supply", and "Power left N / M" on a yellow bar.
+  - Resurrect skips features. Reclaim zones leave them out: 568 on Supreme Strait would ring the whole map.
+  - Studio, Supreme Strait: 398 trees and 170 rocks drawn; the tree hover reads "Power left 150 / 150"; the start at (−1148, 124) after the map's flip (`debug_out/screens/2026-10-27-features-placeholders.jpg`).
+- **Economy levels (S-198):**
+  - The resource bar has markers you drag along the fill: white share levels on both bars, an orange converter level on the power bar. Releasing one sends ECO_LEVEL (`actions.setEcoLevel`). The markers then sit at the Eco record's `supplyShare` / `powerShare` / `convertAt`, and hovering one says what it does.
+  - Studio: the API's levels came back as 40% supply share and 70% converter (`…-eco-levels.jpg`). The mouse drag itself can't be driven from the test harness (GUI events don't fire there), so it's unchecked.
+- **Upkeep (S-198):** `UnitFlow` charges an extractor's power upkeep (T1 3/s, T2 15/s), with extraction and upkeep scaled by the team's power ratio. UnitStats lists it with the other upkeep.

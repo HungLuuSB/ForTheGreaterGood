@@ -686,7 +686,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 cmdType   u8      1 MOVE, 2 FIGHT, 3 ATTACK, 4 ATTACK_GROUND, 5 PATROL, 6 GUARD, 7 STOP,
                   8 BUILD, 9 REPAIR, 10 RECLAIM, 11 SET_FIRE_STATE, 12 SET_MOVE_STATE,
                   13 TOGGLE, 14 CAMERA, 15 REPEAT, 16 CANCEL   (0 is invalid)
-flags     u8      bit0 = queue (shift), bit1 = line formation; other bits reserved
+flags     u8      bit0 = queue (shift), bit1 = line formation, bit2 = group (ctrl, S-137), bit3 = front (space, S-199); other bits reserved
 count     u16     number of unit IDs: 1..200 (CAMERA: 0)
 unitIds   u16 × count
 params    by cmdType:
@@ -1564,7 +1564,7 @@ When the camera is zoomed far out, hide models and draw icons (flat billboards o
 
 - Box select (project unit positions to screen), double-click selects all of type on screen, control groups (Ctrl+1–9).
 - Right-click **smart command**: enemy → attack, ally → guard, wreck → reclaim, unfinished structure → repair, ground → move.
-- Shift queues commands; queued paths draw as lines for selected units.
+- Shift queues commands; queued paths draw as lines for selected units. Space puts the order at the front of the queue: the order under way stops (a builder's frame keeps standing) and resumes once the new one is done (BAR's space; S-199).
   - Implementation (S-4, `Sim/Orders.luau`): per-unit order queues. FIGHT (attack-move, BAR behavior, S-14) advances while no enemy is within weapon range, stops and fires while one is, and goes on when none are left; seeing an enemy doesn't stop it. PATROL loops; ATTACK force-fires a known target even on hold fire; GUARD follows an ally; REPAIR also heals damaged units (free, at the build rate); queued BUILD and RECLAIM run in order.
 - Line formation by right-click drag.
 - Attack order (BAR's A key, C-57): A, then left-click an enemy unit (ATTACK) or the ground (ATTACK_GROUND, how a nuke silo fires, 10.9); Shift keeps the mode, right click cancels. With a silo selected the cursor previews the nuke's arc, its blast and flight time (C-58).

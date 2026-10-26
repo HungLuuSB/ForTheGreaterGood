@@ -30,6 +30,10 @@ GroundMeshes.FALLBACK = table.freeze({
 	desert = { material = "Limestone", color = { 186, 148, 100 } },
 	redrock = { material = "Sandstone", color = { 168, 88, 58 } },
 	cliff = { material = "Sandstone", color = { 150, 78, 52 } }, -- strata walls (details only; models-C, M-35)
+	-- Supreme Strait in BAR's colours (S-196, models-C's re-bake)
+	strait_grass = { material = "Grass", color = { 92, 104, 64 } },
+	strait_rock = { material = "Rock", color = { 108, 100, 92 } },
+	strait_sand = { material = "Sand", color = { 176, 158, 120 } },
 } :: { [string]: { material: string, color: { number } } })
 
 -- The map name in an ID ("map:canyon" → "canyon"), or nil.

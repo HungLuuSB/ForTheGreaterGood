@@ -2791,6 +2791,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Reclaim orders and Smart Reclaim take them like wrecks; they're never resurrected.
   - A tree pays power at `Build.POWER_RECLAIM_RATE` (1 power/s per point of build power, ten times supply's); a rock pays supply.
   - A rock occupies its cell as `Passability.ROCK` (0xFFFF; unit IDs now end at 65534), and frees it when reclaimed.
+  - Each feature gets its own heading: the golden angle times its place in the list, so the headings spread evenly with no RNG. Clients turn the model by it, so a forest isn't one tree repeated.
 - **Wire, protocol 40:**
   - WRECK gains `featureKind u8` (0 = a unit's wreck, 1 tree, 2 rock), 15 bytes.
   - A feature's defIndex is 0, and its supply / fullSupply count its own resource (a tree's power).
@@ -2802,6 +2803,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **For the streams:**
   - client-B draws trees and rocks from WRECK `featureKind` (hover: power or supply left).
   - models-C models "feature_tree" and "feature_rock".
+  - Drawing contract (models-C asked): a rock sits at its cell's centre and fills that one 8-stud cell; a tree is a point and blocks nothing. A tree's base fits about 4 studs: copses jitter ±22 studs, so trees can stand close. Make a few variants of each; the client picks one and a scale from the wreck ID and turns it by the wire heading.
 - **Tests:**
   - `Features.spec`:
     - Supreme Strait's features are there from the start;
@@ -2839,3 +2841,15 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
     - the converter's cost.
   - `Economy.spec`: updated for the upkeep and the whole-chunk converter.
   - `Schema.spec`: ECO_LEVEL and the Eco record's golden bytes.
+
+## S-199 — FRONT: an order to the head of the queue (the user, through client-B) (2026-10-27)
+
+- **Asked:** "Hold Space to insert command to the front of the queue." client-B asked for it as a command flag in protocol 40, so the protocol needn't move again.
+- **Wire:** `Schema.CmdFlag.FRONT` 8 (the flags mask is now 15). It applies to every order command: MOVE, FIGHT, PATROL, ATTACK, ATTACK_GROUND, GUARD, REPAIR, RECLAIM, RESURRECT, BUILD (mobile builders), AREA, DGUN. Other commands ignore it. With QUEUE as well, FRONT wins.
+- **In the sim** (`Orders.give(..., queued, front)`):
+  - The new order goes in at the head of each unit's queue, and the rest stays.
+  - The order under way stops: its work ends (`Build.commandIdle`; an unfinished frame keeps standing), and a move halts. It's marked not started, so it starts over once the new order is done. The builder walks back, finds its frame (`frameAt`) and finishes it rather than placing a new one. A patrol keeps its two ends.
+  - An automatic order (move state, S-34) isn't kept; FRONT replaces it, like any command.
+  - Factories: FRONT puts an order first on the list for new units. A factory's BUILD still appends to production.
+  - DGUN out of range: the walk goes first. When the bolt fires, the walk ends and the queue goes on (`Orders.endWalk`); without FRONT the Commander stops there, as before.
+- **Tests:** Orders.spec: a FRONT move goes first, then the interrupted move, then the queued one; a FRONT BUILD mid-build finishes first, then the builder finishes the same frame; a FRONT D-Gun walks, fires and goes on to its queued move. Schema.spec: the reserved-bit case moved to 16.

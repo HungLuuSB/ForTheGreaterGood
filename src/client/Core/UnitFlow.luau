@@ -6,7 +6,9 @@
 -- and what the client knows:
 --   production       generators, solar (def.production)
 --   wind             the turbine's max × the team's current wind (Eco)
---   extractor        rate × every deposit value under its footprint
+--   extractor        rate × every deposit value under its footprint, at the
+--                    share of its power upkeep paid (S-198: the team's power
+--                    ratio), and the upkeep itself
 --   converter        while on: power in, supply out
 --   upkeep           radar / jammer / tracking drain (while on, if switchable)
 --   building         a factory with a queue, or a builder next to an own
@@ -16,6 +18,7 @@
 
 local Layers = require("@shared/Grid/Layers")
 local PlacementRules = require("@shared/Grid/PlacementRules")
+local Schema = require("@shared/Net/Schema")
 local World = require("./World")
 
 local UnitFlow = {}
@@ -26,11 +29,27 @@ export type Context = {
 	queue: { number }?, -- a factory's queue (def indices), Api.state.factoryQueues
 	wind: number?, -- 0..1, Api.state.economy.wind
 	ratio: number?, -- 0..1, the slower of the team's supply / power stall ratios
+	powerRatio: number?, -- 0..1, the team's power stall ratio (an extractor's upkeep paid, S-198)
 }
 
--- The own unfinished frame a builder `u` is working on (nearest within its
--- range), or nil.
+-- The own unfinished frame a builder `u` is working on, or nil: the
+-- server's WORK when it sends it (protocol 39; the user: "why the commander
+-- shows -8.3 while its idling": the nearest frame in range was taken as its
+-- work though another builder raised it), else the nearest within its range.
+local WK = Schema.WorkKind
 function UnitFlow.buildTarget(world: World.World, u: World.Unit, def: any): World.Unit?
+	if u.workKind ~= nil then
+		if u.workKind ~= WK.BUILD and u.workKind ~= WK.REPAIR and u.workKind ~= WK.ASSIST then
+			return nil -- idle, reclaiming or resurrecting: no building cost
+		end
+		local t = u.workTarget and world.units[u.workTarget]
+		if t and u.workKind == WK.ASSIST and not (t.build and t.build < 1) then
+			-- assisting a builder: its frame
+			local tdef = World.def(world, t)
+			return if tdef then UnitFlow.buildTarget(world, t, tdef) else nil
+		end
+		return if t and t.build and t.build < 1 then t else nil
+	end
 	local range = (def.buildRange or 0) + UnitFlow.REACH
 	local best, bestD = nil, range * range
 	for _, s in world.units do
@@ -82,7 +101,10 @@ function UnitFlow.parts(world: World.World, u: World.Unit, def: any, ctx: Contex
 		out.powerIn += def.wind.max * (ctx.wind or 0)
 	end
 	if def.extractor then
-		out.supplyIn += def.extractor.rate * depositsUnder(world, def, u.x, u.z)
+		local upkeep = def.extractor.upkeep or 0
+		local paid = if upkeep > 0 then (ctx.powerRatio or 1) else 1
+		out.supplyIn += def.extractor.rate * depositsUnder(world, def, u.x, u.z) * paid
+		out.powerOut += upkeep * paid
 	end
 	if def.converter and on then
 		out.powerOut += def.converter.power or 0

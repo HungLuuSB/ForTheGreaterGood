@@ -204,7 +204,7 @@ function UnitStats.of(world: World.World, u: World.Unit): Sheet
 	if p and ((p.supply or 0) > 0 or (p.power or 0) > 0) then
 		sheet.income = { supply = p.supply or 0, power = p.power or 0 }
 	end
-	local upkeep = (s.trackDrain or 0) + (s.jamDrain or 0) + (s.radarDrain or 0) -- radars drain power since S-72
+	local upkeep = (s.trackDrain or 0) + (s.jamDrain or 0) + (s.radarDrain or 0) + (def.extractor and def.extractor.upkeep or 0) -- radars drain power since S-72; extractors since S-198
 	sheet.upkeep = positive(upkeep)
 	if def.converter then
 		sheet.converter = { power = def.converter.power or 0, supply = def.converter.supply or 0 }

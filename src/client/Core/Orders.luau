@@ -26,11 +26,15 @@ export type Intent = {
 	defIndex: number?, -- BUILD: what to build at (x, z)
 	facing: number?, -- BUILD: 0..3
 	group: boolean?, -- MOVE / FIGHT / PATROL with Ctrl: keep together at the slowest unit's speed (GROUP, S-137, C-169)
+	front: boolean?, -- Space held: to the head of the queue, the order under way resumes after it (FRONT, protocol 40, S-199)
 	areaOp: number?, -- AREA: Schema.AreaOp, the circle around (x, z) of `radius` (Smart Reclaim, S-183)
 	radius: number?,
 }
 
 local GROUPABLE = { [CT.MOVE] = true, [CT.FIGHT] = true, [CT.PATROL] = true }
+-- the orders FRONT puts at the head of the queue (S-199)
+local FRONTABLE = { [CT.MOVE] = true, [CT.FIGHT] = true, [CT.PATROL] = true, [CT.ATTACK] = true, [CT.ATTACK_GROUND] = true, [CT.GUARD] = true, [CT.REPAIR] = true, [CT.RECLAIM] = true, [CT.RESURRECT] = true, [CT.BUILD] = true, [CT.AREA] = true, [CT.DGUN] = true }
+Orders.FRONTABLE = FRONTABLE
 
 Orders.KIND = table.freeze({
 	move = CT.MOVE,
@@ -151,7 +155,7 @@ function Orders.encode(world: World.World, intent: Intent, ids: { number }): { b
 		local chunk = table.move(ids, i, math.min(i + limit - 1, #ids), 1, {})
 		local cmd: Schema.Command = {
 			cmdType = intent.cmdType,
-			flags = (if intent.queue then Schema.CmdFlag.QUEUE else 0) + (if intent.group and GROUPABLE[intent.cmdType] then Schema.CmdFlag.GROUP else 0),
+			flags = (if intent.queue then Schema.CmdFlag.QUEUE else 0) + (if intent.group and GROUPABLE[intent.cmdType] then Schema.CmdFlag.GROUP else 0) + (if intent.front and FRONTABLE[intent.cmdType] then Schema.CmdFlag.FRONT else 0),
 			unitIds = chunk,
 		}
 		if intent.targetId then

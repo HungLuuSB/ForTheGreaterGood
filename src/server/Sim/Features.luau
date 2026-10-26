@@ -25,7 +25,11 @@ function Features.spawn(sim: Types.Sim)
 		return
 	end
 	local g = pm.grid
-	for _, f in list do
+	-- each one turned its own way (the golden angle steps through every
+	-- heading evenly), so clients draw a varied forest without any RNG
+	local GOLDEN = math.pi * (3 - math.sqrt(5))
+	for k, f in ipairs(list) do
+		local heading = (k * GOLDEN) % (2 * math.pi) - math.pi
 		local kind = FeatureDefs.KINDS[f.kind]
 		assert(kind, `Features: unknown kind {f.kind}`)
 		local cx, cz = g:cellAt(f.x, f.z)
@@ -39,10 +43,10 @@ function Features.spawn(sim: Types.Sim)
 				continue
 			end
 			local x, z = g:cellCenter(cx, cz)
-			Combat.addFeature(sim.combat, x, z, kind.id, f.value or kind.value)
+			Combat.addFeature(sim.combat, x, z, kind.id, f.value or kind.value, heading)
 			Passability.setOccupied(pm, cx, cz, 1, Passability.ROCK)
 		else
-			Combat.addFeature(sim.combat, f.x, f.z, kind.id, f.value or kind.value)
+			Combat.addFeature(sim.combat, f.x, f.z, kind.id, f.value or kind.value, heading)
 		end
 	end
 	if sim.nav then

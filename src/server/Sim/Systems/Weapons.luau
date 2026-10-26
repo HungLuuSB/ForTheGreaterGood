@@ -795,7 +795,7 @@ return function(sim: Types.Sim)
 						sim.orders.dgunX[id], sim.orders.dgunZ[id] = nil, nil -- one bolt per DGUN order (S-194)
 						if sim.orders.dgunWalk[id] then
 							sim.orders.dgunWalk[id] = nil
-							Orders.stopCommand(sim, id) -- it walked into range: stop there
+							Orders.endWalk(sim, id) -- it walked into range: stop there (or go on with the queue, S-199)
 						end
 					elseif weapon.manualFire then
 						Air.clearGround(sim, id) -- one shot per order (S-48)
