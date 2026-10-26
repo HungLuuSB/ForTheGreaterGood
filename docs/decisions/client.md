@@ -2015,3 +2015,12 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **Loading screen text** (the user: hard to see over the key art): a dark outline on the title, the players and the tip, the players larger and semibold, a strip behind the tip; no card behind the text (the user tried it: worse).
 
 **Why:** the user's preload request (via sim-A) and their look at the loading screen.
+
+### C-231 — The bots walk; the Dragon's fans turn (2026-10-26, S-181, models-C 4f6f268f)
+
+- Merged m-models 4f6f268f (the 19 S-181 blockouts registered, the bots' legs renamed to the walker convention). Nanoframe.spec passes again: all client specs pass.
+- `PieceScripts/Bot`: the eleven biped bots (Artisan, Tinker, Lazarus, Graverobber, Glint, Mace, Thug, Kestrel, Needle, Fatboy, Centurion) walk the Commander's stride on `thigh` / `shin` / `foot` L and R, without the torso twist (their torso is the weapon turret, aimed by Default) or arm swing (none), the pelvis dipping 5 % of the hip height. A stride covers 2.9 hip heights at the bot's top speed (0.25..1.2 s); the swing is scaled per bot (models-C: Fatboy ×0.5, Centurion ×1.15). Skitter walks a diagonal gait on its four splayed legs (FL with BR, FR with BL). Stopped, legs ease to rest.
+- `Bot.Dragon`: the Dragon's ducted fans (`fanL` / `fanR`) turn all the time, faster while it moves.
+- Ambient.spec: the bots stride and rest, the torso stays, Skitter's pairs swing together, the fans turn, Fatboy strides slower than Glint. Checked in Studio at a quarter speed: Glint, Mace, Fatboy, Centurion and Skitter walking.
+
+**Why:** the new walking units (S-181) and models-C's leg kit.

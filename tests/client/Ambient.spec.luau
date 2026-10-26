@@ -7,6 +7,8 @@
 local PieceAnim = require("../../src/client/Core/PieceAnim")
 local PieceMotion = require("../../src/client/Core/PieceMotion")
 local Default = require("../../src/client/Core/PieceScripts/Default")
+local Registry = require("../../src/client/Core/PieceScripts/Registry")
+local Bot = require("../../src/client/Core/PieceScripts/Bot")
 local World = require("../../src/client/Core/World")
 local Defs = require("@shared/Defs/Defs")
 
@@ -139,5 +141,46 @@ return function(t: any)
 		t.expect(angle(s, 1, "wheelL", 1) ~= w0, "moving: wheels roll")
 		t.expect(math.abs(offset(s, 2, "trolley", 3)) > 0.5, "producing: the gantry runs")
 		t.expect(angle(s, 3, "rotor", rotorAxis) ~= m0, "the windmill turns")
+	end)
+
+	t.test("the walking bots stride, Skitter's diagonal pairs swing, the Dragon's fans turn (S-181)", function()
+		local MOVING = World.State.MOVING
+		for _, id in { "ord_glint", "ord_fatboy", "chs_centurion" } do
+			local world = World.new(defs)
+			world.me.team = 1
+			local u = unit(world, 1, id, { state = MOVING })
+			local s = PieceAnim.new(defs.weaponByIndex)
+			PieceAnim.add(s, 1, defs.units[id], Registry.forDef(defs.units[id]))
+			local swing = 0
+			for _ = 1, 60 do
+				run(s, world, 1 / 60)
+				swing = math.max(swing, math.abs(angle(s, 1, "thighL", 1)))
+			end
+			t.expect(swing > math.rad(5), `{id}: the thighs swing ({math.deg(swing)}°)`)
+			t.equal(angle(s, 1, "torso", 2), 0, `{id}: the torso (its turret) doesn't twist with the walk`)
+			u.state = 0
+			run(s, world, 1.5)
+			t.expect(math.abs(angle(s, 1, "thighL", 1)) < math.rad(0.5), `{id}: at rest when stopped`)
+		end
+		do -- Skitter: FL with BR, FR with BL
+			local world = World.new(defs)
+			world.me.team = 1
+			unit(world, 1, "chs_skitter", { state = MOVING })
+			local s = PieceAnim.new(defs.weaponByIndex)
+			PieceAnim.add(s, 1, defs.units.chs_skitter, Registry.forDef(defs.units.chs_skitter))
+			run(s, world, 0.12)
+			local fl, br, fr = angle(s, 1, "thighFL", 1), angle(s, 1, "thighBR", 1), angle(s, 1, "thighFR", 1)
+			t.expect(math.abs(fl) > math.rad(1) and math.abs(fl - br) < 1e-6 and math.abs(fl + fr) < 1e-6, `diagonal pairs ({fl}, {br}, {fr})`)
+		end
+		do -- the Dragon's fans
+			local world = World.new(defs)
+			world.me.team = 1
+			unit(world, 1, "chs_dragon", { alt = 40 })
+			local s = PieceAnim.new(defs.weaponByIndex)
+			PieceAnim.add(s, 1, defs.units.chs_dragon, Registry.forDef(defs.units.chs_dragon))
+			run(s, world, 1)
+			t.expect(angle(s, 1, "fanL", 2) ~= 0 and angle(s, 1, "fanR", 2) ~= 0, "both fans turn")
+		end
+		t.expect(Bot.stride(defs.units.ord_fatboy) > Bot.stride(defs.units.ord_glint), "Fatboy's strides are slower than Glint's")
 	end)
 end
