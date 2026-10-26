@@ -95,15 +95,15 @@ local VALUE_TYPES = { { CT.SET_FIRE_STATE, 2 }, { CT.SET_MOVE_STATE, 2 }, { CT.T
 local function randomCommand(rng: Prng.Prng): Command
 	local kind = rng:nextInteger(1, 6)
 	if kind == 6 then
-		local minX, minZ = rng:nextInteger(0, 255), rng:nextInteger(0, 255)
+		local minX, minZ = rng:nextInteger(0, 1023), rng:nextInteger(0, 1023)
 		return {
 			cmdType = CT.CAMERA,
 			flags = 0,
 			unitIds = {},
 			minX = minX,
 			minZ = minZ,
-			maxX = rng:nextInteger(minX, 255),
-			maxZ = rng:nextInteger(minZ, 255),
+			maxX = rng:nextInteger(minX, 1023),
+			maxZ = rng:nextInteger(minZ, 1023),
 		}
 	end
 	local unitIds = {}
@@ -209,6 +209,8 @@ local function randomStrategic(rng: Prng.Prng): Strategic
 	return {
 		unitId = rng:nextInteger(1, 65535),
 		cell = rng:nextInteger(0, 65535),
+		offX = rng:nextInteger(0, 7) * 32 + 16, -- an 8-stud square's centre: what decoding gives (S-189)
+		offZ = rng:nextInteger(0, 7) * 32 + 16,
 		icon = rng:nextInteger(0, 255),
 		team = rng:nextInteger(1, Schema.MAX_TEAMS),
 		flags = rng:nextInteger(0, 15),
@@ -281,7 +283,7 @@ return function(t: RunAll.Context)
 		t.equal(buffer.len(encodeOne(Schema.encodeCommand, { cmdType = CT.STOP, flags = 0, unitIds = { 1 } })), 6)
 		t.equal(buffer.len(encodeOne(Schema.encodeCommand, BIG_COMMAND)), 4 + 400 + 8)
 		local camera: Command = { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 0, maxZ = 0 }
-		t.equal(buffer.len(encodeOne(Schema.encodeCommand, camera)), 8)
+		t.equal(buffer.len(encodeOne(Schema.encodeCommand, camera)), 12) -- u16 cells since protocol 38
 		local build: Command = { cmdType = CT.BUILD, flags = 0, unitIds = { 1 }, defIndex = 1, cell = 0, offX = 0, offZ = 0, facing = 0 }
 		t.equal(buffer.len(encodeOne(Schema.encodeCommand, build)), 4 + 2 + 2 + 4 + 1)
 
@@ -293,20 +295,23 @@ return function(t: RunAll.Context)
 		t.equal(buffer.len(encodeOne(Schema.encodeTickHeader, 0)), Schema.TICK_HEADER_BYTES)
 	end)
 
-	t.test("strategic bit layout: icon bits 0-7, team 8-11, flags 12-16, 7 reserved (protocol 36)", function()
+	t.test("strategic bit layout: icon bits 0-7, team 8-11, flags 12-16, offX 17-19, offZ 20-22, 1 reserved (protocol 38)", function()
 		local rec: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = 1 }
 		-- 1 + (2 - 1) * 2^8 + 1 * 2^12 = 0x1101
 		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, rec)), { 0x02, 0x01, 0x04, 0x03, 0x01, 0x11, 0x00 })
-		local top: Strategic = { unitId = 1, cell = 0, icon = 255, team = 16, flags = 31 }
-		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, top)), { 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x01 })
+		local top: Strategic = { unitId = 1, cell = 0, offX = 240, offZ = 240, icon = 255, team = 16, flags = 31 }
+		-- offsets' top 3 bits: 7 << 17 and 7 << 20 → byte 3 = 0x01 + 0x0E + 0x70
+		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, top)), { 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x7F })
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeStrategic, top), Schema.decodeStrategic)[1], top)
-		expectRejected(t, Schema.decodeStrategic, { 1, 0, 0, 0, 0, 0, 0x02 }, "reserved bits")
+		local corner = Packer.readAll(encodeOne(Schema.encodeStrategic, { unitId = 1, cell = 0, offX = 33, offZ = 0, icon = 0, team = 1, flags = 0 }), Schema.decodeStrategic)[1]
+		t.deepEqual({ corner.offX, corner.offZ }, { 48, 16 }, "decoded to the 8-stud square's centre")
+		expectRejected(t, Schema.decodeStrategic, { 1, 0, 0, 0, 0, 0, 0x80 }, "reserved bits")
 	end)
 
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 37, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 38, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -331,7 +336,7 @@ return function(t: RunAll.Context)
 		}
 		t.equal(hex(encodeOne(Schema.encodeCommand, line)), "01 03 01 00 01 00 34 12 01 02 78 56 03 04")
 		local camera: Command = { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 1, minZ = 2, maxX = 3, maxZ = 4 }
-		t.equal(hex(encodeOne(Schema.encodeCommand, camera)), "0e 00 00 00 01 02 03 04")
+		t.equal(hex(encodeOne(Schema.encodeCommand, camera)), "0e 00 00 00 01 00 02 00 03 00 04 00") -- u16 cells (protocol 38)
 		-- version 7: REPEAT (S-13)
 		local repeatOn: Command = { cmdType = CT.REPEAT, flags = 0, unitIds = { 0x0102 }, value = 1 }
 		t.equal(hex(encodeOne(Schema.encodeCommand, repeatOn)), "0f 00 01 00 02 01 01")
@@ -380,9 +385,9 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 19, 1, 0, 0, 4 }, "shield flags 4")
 		expectRejected(t, Schema.decodeEvent, { 20, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 3 }, "shield hit flags 3")
 		expectRejected(t, Schema.decodeEvent, { 21, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 3 }, "shield field phase 3")
-		-- version 23: ALERT (S-68): alert kind, cell, defIndex
-		local alert: Schema.Event = { kind = Schema.EventKind.ALERT, alert = Schema.AlertKind.UNIT_LOST, cell = 0x0102, defIndex = 0x0304 }
-		t.equal(hex(encodeOne(Schema.encodeEvent, alert)), "12 03 02 01 04 03")
+		-- version 23: ALERT (S-68): alert kind, cell, defIndex; offsets since 38 (S-189)
+		local alert: Schema.Event = { kind = Schema.EventKind.ALERT, alert = Schema.AlertKind.UNIT_LOST, cell = 0x0102, offX = 5, offZ = 6, defIndex = 0x0304 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, alert)), "12 03 02 01 05 06 04 03")
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, alert), Schema.decodeEvent)[1], alert)
 		-- version 21: OWNER CHARGES (S-63): flares, chaff left
 		local charges: State = { unitId = 1, flares = 5, chaff = 0 }
@@ -562,10 +567,12 @@ return function(t: RunAll.Context)
 		-- rows: 2 rows of 2 bytes; cells: one seen, one unseen
 		local rows: Schema.Event = { kind = EK.SIGHT_ROWS, firstRow = 3, rowCount = 2, rowBytes = 2, bits = fromBytes({ 0x01, 0x80, 0xFF, 0x00 }) }
 		local cells: Schema.Event = { kind = EK.SIGHT_CELLS, cells = { 5 + Schema.SIGHT_SEEN, 0x0102 } }
-		t.equal(hex(encodeOne(Schema.encodeEvent, rows)), "0b 03 02 02 01 80 ff 00")
-		t.equal(hex(encodeOne(Schema.encodeEvent, cells)), "0c 02 05 80 02 01")
-		t.equal(Schema.eventBytes(rows), 8)
-		t.equal(Schema.eventBytes(cells), 6)
+		t.equal(hex(encodeOne(Schema.encodeEvent, rows)), "0b 03 00 02 02 01 80 ff 00") -- firstRow u16 (protocol 38)
+		t.equal(hex(encodeOne(Schema.encodeEvent, cells)), "0c 02 05 00 80 02 01 00") -- u24 cells (protocol 38)
+		t.equal(Schema.eventBytes(rows), 9)
+		t.equal(Schema.eventBytes(cells), 8)
+		local far: Schema.Event = { kind = EK.SIGHT_CELLS, cells = { 512 * 512 - 1 + Schema.SIGHT_SEEN } }
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, far), Schema.decodeEvent)[1], far, "a 1,024-cell map's last sensor cell")
 		local decoded = Packer.readAll(encodeOne(Schema.encodeEvent, rows), Schema.decodeEvent)[1]
 		t.equal(decoded.firstRow, 3)
 		t.equal(decoded.rowCount, 2)
@@ -575,8 +582,8 @@ return function(t: RunAll.Context)
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, rows))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, cells))
 		expectRejected(t, Schema.decodeEvent, { 12, 0 }, "SIGHT_CELLS with no cells")
-		expectRejected(t, Schema.decodeEvent, { 11, 0, 0, 4 }, "SIGHT_ROWS of 0 rows")
-		expectRejected(t, Schema.decodeEvent, { 11, 0, 255, 16 }, "SIGHT_ROWS of 255 rows")
+		expectRejected(t, Schema.decodeEvent, { 11, 0, 0, 0, 4 }, "SIGHT_ROWS of 0 rows")
+		expectRejected(t, Schema.decodeEvent, { 11, 0, 0, 255, 16 }, "SIGHT_ROWS of 255 rows")
 		local ok = pcall(encodeOne, Schema.encodeEvent, { kind = EK.SIGHT_CELLS, cells = {} } :: Schema.Event)
 		t.expect(not ok, "an empty SIGHT_CELLS is refused")
 		ok = pcall(encodeOne, Schema.encodeEvent, { kind = EK.SIGHT_ROWS, firstRow = 0, rowCount = 2, rowBytes = 2, bits = buffer.create(3) } :: Schema.Event)
@@ -711,7 +718,7 @@ return function(t: RunAll.Context)
 			{ cmdType = CT.SET_FIRE_STATE, flags = 0, unitIds = { 1 }, value = 0 },
 			{ cmdType = CT.SET_MOVE_STATE, flags = 0, unitIds = { 1 }, value = 2 },
 			{ cmdType = CT.TOGGLE, flags = 0, unitIds = { 1 }, value = 1 },
-			{ cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 255, maxZ = 255 },
+			{ cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 1023, maxZ = 1023 },
 		}, Schema.encodeCommand, Schema.decodeCommand)
 
 		roundTrip(t, {
@@ -734,9 +741,9 @@ return function(t: RunAll.Context)
 		}, Schema.encodeState, Schema.decodeState)
 
 		roundTrip(t, {
-			{ unitId = 1, cell = 0, icon = 0, team = 1, flags = 0 },
-			{ unitId = 65535, cell = 65535, icon = 255, team = 8, flags = 31 },
-			{ unitId = 2, cell = 1, icon = 126, team = 7, flags = Schema.StrategicFlag.GHOST },
+			{ unitId = 1, cell = 0, offX = 16, offZ = 16, icon = 0, team = 1, flags = 0 },
+			{ unitId = 65535, cell = 65535, offX = 240, offZ = 240, icon = 255, team = 8, flags = 31 },
+			{ unitId = 2, cell = 1, offX = 16, offZ = 112, icon = 126, team = 7, flags = Schema.StrategicFlag.GHOST },
 		}, Schema.encodeStrategic, Schema.decodeStrategic)
 	end)
 
@@ -782,7 +789,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, cmd, { CT.ATTACK, 0, 1, 0, 1, 0, 0, 0 }, "targetId 0 is reserved")
 		expectRejected(t, cmd, { CT.TOGGLE, 0, 1, 0, 1, 0, 2 }, "value 2 out of range")
 		expectRejected(t, cmd, { CT.CAMERA, 0, 1, 0, 1, 0 }, "CAMERA with 1 unit IDs")
-		expectRejected(t, cmd, { CT.CAMERA, 0, 0, 0, 5, 0, 4, 0 }, "min > max")
+		expectRejected(t, cmd, { CT.CAMERA, 0, 0, 0, 5, 0, 0, 0, 4, 0, 0, 0 }, "min > max")
 		expectRejected(t, cmd, { CT.BUILD, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4 }, "facing 4 outside 0..3")
 		expectRejected(t, cmd, { CT.BUILD, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0x80 }, "facing 128")
 

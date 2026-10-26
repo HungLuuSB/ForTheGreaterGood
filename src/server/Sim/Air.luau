@@ -18,6 +18,7 @@
 local AirState = require("./AirState")
 local Combat = require("./Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
+local Grid = require("@shared/Grid/Grid")
 local EW = require("./EW")
 local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
@@ -40,7 +41,10 @@ Air.LOITER_RADIUS = 220 -- studs; wider than a jet's turn circle at cruise speed
 Air.ARRIVE_RADIUS = 40 -- studs: a jet's move ends this close to its goal, or once it flew toward it and the goal fell behind (client request 17)
 Air.CRUISE = 0.75 -- fraction of max speed while circling
 Air.LAND_RADIUS = table.freeze({ JET = 60, HELI = 12 })
-Air.EDGE_MARGIN = 60 -- studs: jets turn back toward the map before leaving it
+-- Aircraft fly past the map's edge (S-189, F3: the wire carries them since
+-- protocol 38): jets turn back once over the edge, and no aircraft goes
+-- further than OVERFLY past it (the widest jet turn, the Liche's, is 372).
+Air.OVERFLY = Grid.OVERFLY -- 512 studs
 
 local sqrt, atan2 = math.sqrt, math.atan2
 local PI, TAU = math.pi, 2 * math.pi
@@ -450,17 +454,11 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 	else
 		dirX, dirZ = tx - x, tz - z
 	end
-	-- stay over the map
+	-- past the map's edge: turn back toward its middle (S-189; it swings out
+	-- up to a turn radius, inside Air.OVERFLY)
 	local g = nav.grid
 	local cx, cz = g.originX + g.sizeX / 2, g.originZ + g.sizeZ / 2
-	-- (S-183, the playtest's F3: a jet turning back at a fixed margin
-	-- overshot the edge and was drawn pinned to it: heading out, it turns
-	-- back a turn radius earlier)
-	local turnBack = v / math.max(p.turnRate, 1e-3) + 20
-	local sx, sz = math.sin(h), math.cos(h)
-	local mx = if (x - cx) * sx > 0 then math.max(Air.EDGE_MARGIN, turnBack) else Air.EDGE_MARGIN
-	local mz = if (z - cz) * sz > 0 then math.max(Air.EDGE_MARGIN, turnBack) else Air.EDGE_MARGIN
-	if math.abs(x - cx) > g.sizeX / 2 - mx or math.abs(z - cz) > g.sizeZ / 2 - mz then
+	if math.abs(x - cx) > g.sizeX / 2 or math.abs(z - cz) > g.sizeZ / 2 then
 		dirX, dirZ = cx - x, cz - z
 	end
 

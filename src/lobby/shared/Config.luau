@@ -41,9 +41,31 @@ Config.LABELS = table.freeze({
 	ANNIHILATION = "Annihilation",
 	easy = "Easy",
 	normal = "Normal",
-	hard = "Hard",
+	hard = "Hard - Balanced", -- F41 (S-187): the id stays "hard" so old configs work
+	hard_aggressive = "Hard - Aggressive",
 	order = "Order",
 	chaos = "Chaos",
+})
+
+-- The difficulty pickers' shorter names (four buttons in a row; F41).
+Config.LEVEL_SHORT = table.freeze({
+	easy = "Easy",
+	normal = "Normal",
+	hard = "Hard · Bal.",
+	hard_aggressive = "Hard · Agg.",
+})
+
+-- The AI's team roles (S-187, the sim's Skirmish.ROLES; MatchConfig.aiRoles
+-- applies its rule, a spec keeps the two equal): two or more non-easy AIs
+-- on one side split these, in player order.
+Config.AI_ROLES = table.freeze({ "balanced", "air", "defense", "spam", "tech" })
+Config.AI_ROLE_NAMES = table.freeze({ balanced = "Balanced", air = "Air", defense = "Defense", spam = "Spam", tech = "Tech" })
+
+-- Map sizes (F4, S-189: MapRegistry.sizeClass), in the pickers' order.
+Config.MAP_SIZES = table.freeze({
+	{ id = "small", name = "Small", note = "256 cells or fewer a side" },
+	{ id = "medium", name = "Medium", note = "up to 512 cells a side" },
+	{ id = "large", name = "Large", note = "up to 1024 cells a side" },
 })
 
 Config.NAME_MIN = 3 -- room name, characters

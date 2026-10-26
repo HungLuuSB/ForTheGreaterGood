@@ -116,9 +116,13 @@ local function editSeat(gui: Instance, index: number)
 			end, if sides > 4 then 30 else 62)
 		end
 		if s.kind == "ai" then
-			Kit.segmented(Kit.row(p.content, "Difficulty", 3), options(Config.LEVELS), s.level, function(v)
+			local levels = {}
+			for _, v in Config.LEVELS do
+				table.insert(levels, { v, (Config.LEVEL_SHORT :: any)[v] or Ui.label2(v) })
+			end
+			Kit.segmented(Kit.row(p.content, "Difficulty", 3), levels, s.level, function(v)
 				send({ level = v })
-			end, 80)
+			end, 78)
 		end
 	end
 	local buttons = Ui.frame(p.content, "Buttons", UDim2.new(1, 0, 0, 34))
@@ -361,6 +365,7 @@ function Room.new(frame: Frame, _router: any): any
 	end)
 
 	local colors: { [number]: any } = {} -- by slot index, from your view
+	local roles: { [number]: string } = {} -- AI team roles by slot index (S-187)
 	local function seatChip(parent: Instance, room: any, index: number?, member: any?, order: number)
 		local s = if index then room.slots[index] else nil
 		local chip = Instance.new("TextButton")
@@ -392,6 +397,12 @@ function Room.new(frame: Frame, _router: any): any
 		Ui.label(chip, who, "label", nil, 2)
 		if s then
 			Ui.label(chip, Ui.label2(s.faction), "small", if s.faction == "order" then Color3.fromRGB(140, 180, 240) else Color3.fromRGB(236, 120, 100), 3)
+			local role = index and roles[index]
+			if role then
+				-- two or more AIs on a side share the work (the sim picks the same)
+				local badge = Ui.label(chip, string.upper((Config.AI_ROLE_NAMES :: any)[role] or role), "small", Kit.COLOR.dim, 4)
+				badge.Name = "Role"
+			end
 		end
 		local m = member or (s and s.user and memberOf(room, s.user))
 		if m then
@@ -465,6 +476,7 @@ function Room.new(frame: Frame, _router: any): any
 		local setup = room.phase == "setup"
 		local mySlot = slotOf(room, me)
 		colors = MatchConfig.colors(room, me)
+		roles = MatchConfig.aiRoles(room)
 		local hostMember = memberOf(room, room.host)
 		name.Text = room.name
 		sub.Text = `Hosted by {if hostMember then hostMember.name else "?"}   ·   Code <b>{room.id}</b>   ·   {Ui.label2(room.privacy)}{if room.locked then " · password" else ""}   ·   {#room.members}/{room.maxPlayers}`
@@ -582,8 +594,13 @@ function Room.new(frame: Frame, _router: any): any
 		Ui.clear(rules)
 		local canEdit = host and setup
 		local mapOptions = {}
+		-- (the server lists small maps first, then medium, then large: F4)
+		local sizeName = {}
+		for _, z in Config.MAP_SIZES do
+			sizeName[z.id] = z.name
+		end
 		for _, m in Net.maps or {} do
-			table.insert(mapOptions, { m.id, `{m.name} ({m.starts})` })
+			table.insert(mapOptions, { m.id, `{m.name} ({m.starts}) · {sizeName[m.size] or "Small"}` })
 		end
 		local function choice(label: string, order2: number, opts: { { string } }, value: string, shown: string, key: string)
 			local cell = Ui.field(rules, label, order2, RULE_H)

@@ -336,6 +336,9 @@ local _lobbyUI = LobbyUI.new(remotes) -- the lobby and results screens (C-70; pr
 -- this client's progress (Render/Preload) and hides once the match starts
 local matchLoading = MatchLoading.new(remotes)
 local preload = Preload.new()
+local LOAD_HOLD = 115 -- seconds at most the first CAMERA waits for the preload (the sim's Pregame.LOAD_WAIT is 120)
+local holdSince: number? = nil
+local loadedAt: number? = nil
 Controls.capture = function(input: InputObject): boolean
 	if SettingsMenu.capturing and input.UserInputType == Enum.UserInputType.Keyboard then
 		return true -- Settings > Keys is taking this key (C-159)
@@ -407,6 +410,38 @@ Controls.pregameClick = function(ground: Vector3?): boolean
 		PregamePanel.refuse(pregamePanel, "Pick a spot inside your area, away from the other starts.", os.clock())
 	end
 	return true
+end
+-- a hitscan hit on a drawn unit: the line from the muzzle toward the middle
+-- of the nearest model's box at the hit, ended where it first meets that
+-- model (Core/Effects.bodyAt)
+local bodyParams = RaycastParams.new()
+bodyParams.FilterType = Enum.RaycastFilterType.Include
+Effects.bodyAt = function(x0: number, y0: number, z0: number, x: number, _y: number, z: number): (number?, number?, number?)
+	local best, bestD = nil, math.huge
+	for id, u in world.units do
+		if u.tier == "tactical" and u.rx and u.rz then
+			local d = (u.rx - x) ^ 2 + (u.rz - z) ^ 2
+			local def = World.def(world, u)
+			local reach = ((def and def.footprint) or 1) * 4 + 3
+			if d < bestD and d <= reach * reach then
+				best, bestD = id, d
+			end
+		end
+	end
+	local model = best and UnitRenderer.modelOf(renderer, best)
+	if model == nil then
+		return nil, nil, nil
+	end
+	local centre = model:GetBoundingBox().Position
+	local from = Vector3.new(x0, y0, z0)
+	local dir = centre - from
+	if dir.Magnitude < 1e-3 then
+		return centre.X, centre.Y, centre.Z
+	end
+	bodyParams.FilterDescendantsInstances = { model }
+	local hit = workspace:Raycast(from, dir.Unit * (dir.Magnitude + 4), bodyParams)
+	local at = if hit then hit.Position else centre
+	return at.X, at.Y, at.Z
 end
 Overlay.bind(overlay, api, os.clock)
 local hud = Hud.new()
@@ -969,6 +1004,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	_lobbyUI.gui.Enabled = replay == nil
 	MatchLoading.step(matchLoading, now, Preload.progress(preload, world))
+	-- twice the meshes building at once behind the loading screen (nothing to draw)
+	MeshModels.AT_ONCE = if matchLoading.gui.Enabled then 16 else 8
 	ReplayBar.step(replayBar, replay, if replay then `REPLAY: player {replay.replay.header.viewer}'s view` elseif world.joined and world.me.player == 0 then "SPECTATING: every player, no fog" else nil)
 	if world.rejected then
 		if not warned then
@@ -1076,6 +1113,23 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		end
 	end
 	local payload = Camera.apply(camState, world, workspace.CurrentCamera, now)
+	-- a lobby match's first CAMERA waits until this client has loaded
+	-- everything (or LOAD_HOLD seconds): the pre-game's clocks start on every
+	-- human's first command (S-182), so nobody's pick time runs while they
+	-- still load (the user: every model ready before the match)
+	if payload and loadedAt == nil then
+		holdSince = holdSince or now
+		local progress = Preload.progress(preload, world)
+		if not MatchLoading.isMatch(matchLoading) then
+			loadedAt = now -- not a lobby match: nothing to wait for
+		elseif progress >= 0.999 or now - holdSince >= LOAD_HOLD then
+			loadedAt = now
+			print(string.format("[Client] loaded in %.1f s (%s)", now - holdSince, if progress >= 0.999 then "everything ready" else "gave up waiting"))
+		else
+			camState.lastRect = nil -- sent again once loaded
+			payload = nil
+		end
+	end
 	if payload then
 		cmd:FireServer(payload)
 	end

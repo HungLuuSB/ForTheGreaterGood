@@ -231,6 +231,17 @@ return function(t: RunAll.Context)
 		t.equal(r.slots[Rooms.slotOf(r, B) :: number].team, 3)
 	end)
 
+	t.test("the map pickers' sizes are MapRegistry's classes, smallest first (F4)", function()
+		local MapRegistry = require("@shared/Grid/MapRegistry")
+		local ids = {}
+		for _, z in Config.MAP_SIZES do
+			table.insert(ids, z.id)
+		end
+		t.deepEqual(ids, { MapRegistry.sizeClass(128), MapRegistry.sizeClass(512), MapRegistry.sizeClass(1024) })
+		t.equal(MapRegistry.sizeClass(256), "small")
+		t.equal(MapRegistry.sizeClass(257), "medium")
+	end)
+
 	t.test("free for all seats one player per start, up to 16", function()
 		local r = room()
 		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:big" })

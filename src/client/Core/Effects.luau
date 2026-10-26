@@ -44,6 +44,10 @@ Effects.SHOOTER_RADIUS = 12 -- studs: a unit this close to a launch point with t
 Effects.SNAP_STUDS = 60
 Effects.TRACER_SECONDS = 0.09
 Effects.LASER_SECONDS = 0.12 -- a laser bolt's line, drawn whole at once (C-198)
+-- Where a hitscan shot from (x0, y0, z0) at the server's hit point (x1,
+-- y1, z1) meets the hit unit's drawn body (its surface toward the shooter,
+-- on the line to the model's middle), or nil (Main sets it from the models)
+Effects.bodyAt = nil :: ((x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) -> (number?, number?, number?))?
 Effects.BEAM_SECONDS = 0.45 -- a BEAM shot without a duration of its own (S-96, C-112)
 -- Beam durations until the sim's `beamDuration` (S-113) is in the defs: the
 -- user's look (C-128): Radiance's ray lingers 3 s, Inferno's 1.5 s.
@@ -190,7 +194,7 @@ export type Warning = { projId: number, x: number, y: number, z: number, born: n
 -- height under it (air bursts sit well above it); `dx, dy, dz`: the
 -- direction it faces (a muzzle's shot, a launch's flight), when known
 -- (C-47); `tx, ty, tz`: where flares head, or the missile a laser hits (C-48).
-export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, water: number?, dx: number?, dy: number?, dz: number?, tx: number?, ty: number?, tz: number? }
+export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, water: number?, dx: number?, dy: number?, dz: number?, tx: number?, ty: number?, tz: number?, noCrater: boolean? }
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
@@ -273,8 +277,17 @@ end
 -- radius alone gives (C-52).
 Effects.LARGE_IMPACT = 1.8
 Effects.FLAME_SECONDS = 0.35 -- a flame stream's life (S-181)
+Effects.HUGE_BLAST = 90 -- studs: a death blast this wide plays the nuke's look scaled to it (F15)
+Effects.BLAST_SHOWN = 0.6 -- an ordinary death blast's burst, as a share of its damage radius
+-- A shot with no blast whose impact is "explosion_small" (the Thug's and
+-- Mace's plasma, S-190) bursts like a tank shell's small hit: the Lancer's
+-- (aoe 3), not the smallest burst its missing blast radius would give.
+Effects.SMALL_HIT = 3
 function Effects.impactSize(weapon: any): number
 	local impact = weapon and weapon.fx and weapon.fx.impact
+	if impact == "explosion_small" and ((weapon :: any).aoe or 0) <= 0 then
+		return Effects.SMALL_HIT
+	end
 	local large = type(impact) == "string" and string.find(impact, "_large", 1, true) ~= nil
 	return weaponSize(weapon) * (if large then Effects.LARGE_IMPACT else 1)
 end
@@ -950,6 +963,17 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		if x0 == nil and shooter then
 			x0, y0, z0 = shooter.rx or shooter.x, (shooter.ry or World.groundY(world, shooter.x, shooter.z)) + 2.5, shooter.rz or shooter.z
 		end
+		-- a hit ends on the hit unit's drawn body, where the line toward its
+		-- middle meets the model's surface: the server aims at its sim
+		-- height's middle, near the top of most models (the user: a tower's
+		-- laser went to the tank's head; then: its burst sat inside the tank)
+		local body = Effects.bodyAt
+		if e.hit and body and x0 then
+			local bx, by, bz = body(x0, y0 :: number, z0 :: number, x1, y1, z1)
+			if bx then
+				x1, y1, z1 = bx, by :: number, bz :: number
+			end
+		end
 		if x0 then
 			local def = shooter and World.def(world, shooter)
 			local slot = def and def.weapons[e.slot]
@@ -1222,9 +1246,15 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 				b.ground = ground
 				local blast = def and (def :: any).deathBlast
 				if blast then
-					-- it explodes when killed (S-70): a blast as wide as its damage
-					local big = burst(fx, now, d.x, ground + 2, d.z, blast.aoe, "impact", Effects.EXPLOSION_SECONDS)
+					-- every unit explodes when killed (S-70, S-178, F15), its blast's
+					-- size from its def: a huge one (a Commander, a fusion reactor) as
+					-- the nuke's look scaled to its radius, smaller than a nuke's;
+					-- others a burst of part of the blast's reach
+					local huge = blast.aoe >= Effects.HUGE_BLAST
+					local radius = if huge then blast.aoe else blast.aoe * Effects.BLAST_SHOWN
+					local big = burst(fx, now, d.x, ground + 2, d.z, radius, if huge then "nuke" else "impact", if huge then Effects.DEATH_SECONDS * 2 else Effects.EXPLOSION_SECONDS)
 					big.ground = ground
+					big.noCrater = huge or nil -- a nuke's look without its crater
 				end
 			end
 		end

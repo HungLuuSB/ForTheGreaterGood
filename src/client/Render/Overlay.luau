@@ -7,6 +7,7 @@
 local Schema = require("@shared/Net/Schema")
 local Api = require("../Api")
 local Targets = require("../Core/Targets")
+local Orders = require("../Core/Orders")
 local World = require("../Core/World")
 
 local Overlay = {}
@@ -176,7 +177,35 @@ function Overlay.step(o: Overlay, api: Api.Api, now: number, lineFrom: Vector3?,
 	if lineFrom and lineTo then
 		local a = Vector3.new(lineFrom.X, groundY(lineFrom.X, lineFrom.Z), lineFrom.Z)
 		local b = Vector3.new(lineTo.X, groundY(lineTo.X, lineTo.Z), lineTo.Z)
-		segment(o, a, b, KIND_COLOR[CT.MOVE])
+		local color = KIND_COLOR[CT.MOVE]
+		segment(o, a, b, color)
+		-- the formation (F34): each unit's slot along the line, as the order
+		-- will send them (Orders.lineSlots), with a tick the way the line
+		-- faces: across it, away from where the units come from
+		local ids = Orders.able(world, CT.MOVE, api.state.selection)
+		local slots = Orders.lineSlots(world, ids, lineFrom.X, lineFrom.Z, lineTo.X, lineTo.Z)
+		local dx, dz = lineTo.X - lineFrom.X, lineTo.Z - lineFrom.Z
+		local len = math.sqrt(dx * dx + dz * dz)
+		if len > 1e-3 then
+			local nx, nz = -dz / len, dx / len
+			local cx, cz, count = 0, 0, 0
+			for _, id in ids do
+				local u = world.units[id]
+				if u then
+					cx += u.x
+					cz += u.z
+					count += 1
+				end
+			end
+			if count > 0 and ((cx / count - lineFrom.X) * nx + (cz / count - lineFrom.Z) * nz) > 0 then
+				nx, nz = -nx, -nz -- face away from the group
+			end
+			for _, slot in slots do
+				local p = Vector3.new(slot[1], groundY(slot[1], slot[2]), slot[2])
+				disc(take(o, "dot"), p.X, p.Y, p.Z, 2.2, color, 0.15)
+				segment(o, p, p + Vector3.new(nx * 4, 0, nz * 4), color)
+			end
+		end
 	end
 
 	for i = #o.flashes, 1, -1 do

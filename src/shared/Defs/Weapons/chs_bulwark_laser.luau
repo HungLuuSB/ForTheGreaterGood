@@ -9,6 +9,7 @@ return {
 	range = 215,
 	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.5,
+	shotCost = { power = 12 }, -- lasers cost energy per shot (S-187, the user)
 	accuracy = 0.3,
 	damage = { LIGHT = 84, ARMORED = 78, STRUCTURE = 52, SHIP = 64, AIR = 0, SUB = 0 },
 	aoe = 0,

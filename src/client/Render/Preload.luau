@@ -6,14 +6,16 @@
 --   0.20  the map's ground built (Render/Ground: terrain or mesh tiles)
 --   0.50  every approved unit mesh built (Render/MeshModels, started for all
 --         of them at once: both factions, so nothing pops in mid-match)
---   0.20  the meshes' textures and the icon atlas downloaded
---         (ContentProvider:PreloadAsync on the SurfaceAppearances)
+--   0.20  the meshes' textures and the icon sheets downloaded
+--         (ContentProvider:PreloadAsync on the SurfaceAppearances and
+--         IconAtlas.images; the user: every model ready before the match)
 -- A model that fails to build counts as done (its blockout draws instead).
 
 local ContentProvider = game:GetService("ContentProvider")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Meshes = require("@shared/Defs/Meshes/Registry")
+local IconAtlas = require("../UI/IconAtlas")
 local Ground = require("./Ground")
 local MeshModels = require("./MeshModels")
 local World = require("../Core/World")
@@ -38,7 +40,10 @@ local function startTextures(st: State)
 	st.texturesStarted = true
 	task.spawn(function()
 		local materials = ReplicatedStorage:WaitForChild("MeshMaterials", 30)
-		local list = if materials then materials:GetChildren() else {}
+		local list: { any } = if materials then materials:GetChildren() else {}
+		for _, image in IconAtlas.images do
+			table.insert(list, image)
+		end
 		if #list == 0 then
 			st.textures = 1
 			return

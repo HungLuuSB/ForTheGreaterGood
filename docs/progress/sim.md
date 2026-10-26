@@ -4,7 +4,22 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: your queue of 2026-10-24, items 0–8, branch `m-sim-2`)
+## Summary (latest: the beta playtest feedback, 2026-10-26, branch `m-sim-2`)
+
+**The playtest round** (`FTGG-FEEDBACK.txt`; owners and status in `docs/progress/playtest-2026-10-26.md`). Decisions S-174..S-187. Protocol 36 → 37 (pre-game v2, sharing, AREA). Replay format 5. MatchConfig v2 (host, startBoxes, ERRORS). Tests: 534 in 79 specs → 566 in 87 (fast); slow 9.
+
+- **Pre-game v2 and seats (S-174):** factions per player (the 16-player seat crash), host start / force start, 150 s picks, the AI picks after the first human, 3 s countdown, the Commanders' landing, faction switch, lobby-drawn spawn boxes; clocks wait for loading (S-182).
+- **Rules and economy:** Team Commander rule (S-175), sharing units / resources / requests (S-176), wind without RNG (S-177), Smart Reclaim and reclaim in the income (S-183), allies' Eco records (S-185).
+- **Combat and balance:** lasers ×1.5 up close and per-shot energy, death blasts for every unit, nukes 33% on Commanders, aircraft turn 1.5×, carpet bombs (S-178, S-187); BAL1–4 (S-179); radar line of sight and missile line of fire (S-182); fair first volleys (S-185).
+- **Maps and movement:** 2 × 2 deposits (S-184), side splits (S-186), jets over the map (S-183), Maneuver leash, builders stop at their reach, footprint-2 clearance (S-185).
+- **New units (S-181):** bots and labs, Tzar, Centurion, Dragon, Liche. Transports wait for a load / unload mechanic.
+- **AI (S-187):** Hard - Aggressive, team roles, teamwork, counters, tidy generators, the new units.
+- **Sight diff (S-191, B's watchdog):** NetOut diffs only the sight rows Sensors changed: the empty Lakelands preview 1.50 → 0.03 ms per tick, a 4-AI Lakelands match 0.55 → 0.16 ms.
+- **Plasma (S-190, the user):** every plasma shot in the tank shell's colour; Thug and Mace lose their splash (direct hits only) and use the tank's small hit.
+- **Bigger maps (S-189, F4):** protocol 38: positions on a fixed 64-stud wire grid (same 4 bytes, ±8,192 studs), maps up to 1,024 cells, The Lakelands (512 cells, 2v2) as the first medium map, aircraft and shots up to 512 studs past the edge. Replay format 6.
+- **Open:** large (1,024) maps after a Studio check, transports, the balance checkpoint after this round, Scavengers / Legion (roadmap).
+
+## Summary (previous round: your queue of 2026-10-24, items 0–8, branch `m-sim-2`)
 
 **Your nine items, B's watchdog run (request 65) and C's blockouts.** Fast tests and build on every commit, the slow suite on every merge; no balance reports. Protocol 33 → 34. Tests: 495 in 74 specs → 511 in 75 (fast), 8 slow. On main: d6643d4 (everything you listed under item 0 was already there), then f04d534 (S-158), 1b8da68 (S-159, S-160); S-161..S-166 merging (one merge was dropped first, see Integration notes).
 

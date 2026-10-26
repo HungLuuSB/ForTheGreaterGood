@@ -185,7 +185,7 @@ return function(t: any)
 			worst = math.max(worst, d)
 		end
 		print(string.format("    %d shells; worst delay after reaching the impact point %.1f ms", #delays, worst * DT * 1000))
-		t.expect(#delays > 30, "plenty of impacts") -- (38 since S-179 halved T1 ranges and damage)
+		t.expect(#delays > 20, "plenty of impacts") -- (38 since S-179 halved T1 ranges and damage; 26 since S-187)
 		t.expect(worst <= 1 / SUBS + 1e-9, `the burst comes within a frame of arrival (worst {worst} ticks)`)
 	end)
 
@@ -404,6 +404,11 @@ return function(t: any)
 		t.equal(Effects.countermeasure(world, nil, "IR"), "flare") -- a contact of unknown type
 		-- radar SAMs carry heavy warheads: their explosions are drawn bigger than the IR ones (C-52)
 		t.expect(Effects.impactSize(sim.defs.weapons.chs_radar_sam) > Effects.impactSize(sim.defs.weapons.chs_ir_sam), "radar SAM explosions are the bigger ones")
+		-- the Thug's and Mace's plasma has no blast: a tank shell's small hit (S-190)
+		local W = sim.defs.weapons
+		t.equal(Effects.impactSize(W.chs_thug_cannon), Effects.impactSize(W.ord_lancer_cannon), "the Thug bursts like the Lancer's shell")
+		t.equal(Effects.impactSize(W.ord_mace_plasma), Effects.impactSize(W.ord_lancer_cannon), "so does the Mace")
+		t.expect(Effects.impactSize(W.chs_tzar_cannon) > Effects.impactSize(W.ord_lancer_cannon), "the Tzar keeps its big blast")
 		-- the server says which one won (protocol 13, S-38): that wins over the guess
 		t.equal(Effects.countermeasure(world, unit("chs_wasp"), "IR", Schema.Countermeasure.DIRCM), "dircm")
 		t.equal(Effects.countermeasure(world, unit("ord_falcon"), "IR", Schema.Countermeasure.FLARES), "flare")

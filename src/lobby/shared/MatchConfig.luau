@@ -5,6 +5,7 @@
 -- `@shared/Match/MatchConfig` (S-145); this module re-exports them, so the
 -- lobby has one place to require. Pure Luau, tested under Lune.
 
+local Config = require("./Config")
 local MatchErrors = require("./MatchErrors")
 local Rooms = require("./Rooms")
 local SpawnBoxes = require("./SpawnBoxes")
@@ -87,6 +88,30 @@ function MatchConfig.colors(room: Rooms.Room, viewer: number?): { [number]: Team
 	return out
 end
 
+-- Each AI seat's team role by slot index (S-187, the sim's
+-- Skirmish.roleOf): a side's non-easy AIs, in player order, take
+-- Config.AI_ROLES in turn when there are two or more of them; nil for an AI
+-- that plays alone on its side (balanced) or is easy.
+function MatchConfig.aiRoles(room: Rooms.Room): { [number]: string }
+	local bySide: { [number]: { number } } = {}
+	for _, seat in MatchConfig.seats(room) do
+		local s = room.slots[seat.slot]
+		if s.kind == "ai" and s.level ~= "easy" then
+			bySide[seat.allyTeam] = bySide[seat.allyTeam] or {}
+			table.insert(bySide[seat.allyTeam], seat.slot)
+		end
+	end
+	local out: { [number]: string } = {}
+	for _, slots in bySide do
+		if #slots >= 2 then
+			for k, slot in slots do
+				out[slot] = Config.AI_ROLES[(k - 1) % #Config.AI_ROLES + 1]
+			end
+		end
+	end
+	return out
+end
+
 -- The config for a room that passed Rooms.checkStart, its players in
 -- MatchConfig.seats order. Every player's `start` is 0: starts are picked
 -- in the match's pre-game (S-171; the map's starts are only hints). `color`
@@ -106,7 +131,7 @@ function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now:
 			name = if m then m.name else `Player {id}`
 		else
 			aiNumber += 1
-			name = `AI {aiNumber} ({s.level})`
+			name = `AI {aiNumber} ({string.gsub(s.level, "_", " ")})`
 		end
 		table.insert(players, {
 			id = id,

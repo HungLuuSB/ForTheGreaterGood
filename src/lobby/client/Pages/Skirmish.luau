@@ -1,6 +1,7 @@
 --!strict
--- Skirmish (BAR's scenario page): map cards on the left (greyscale, in
--- color with a light outline when hovered or chosen), the chosen map's
+-- Skirmish (BAR's scenario page): map cards on the left, grouped by size
+-- (small, medium, large: F4) (greyscale, in color with a light outline
+-- when hovered or chosen), the chosen map's
 -- details on the right with your faction, the AI's level and faction, and
 -- Launch. Launch asks the server for a private room with one AI, started at
 -- once (the same start path as any room).
@@ -30,11 +31,26 @@ function Skirmish.new(frame: Frame, _router: any): any
 
 	local grid = Ui.frame(frame, "Cards", UDim2.new(1, -470, 1, -70), UDim2.fromOffset(0, 66))
 	local scroll = Kit.scroll(grid)
-	local layout = Instance.new("UIGridLayout")
-	layout.CellSize = UDim2.fromOffset(300, 210)
-	layout.CellPadding = UDim2.fromOffset(Kit.SPACE.l, Kit.SPACE.l)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Parent = scroll
+	Kit.list(scroll, Kit.SPACE.m)
+	-- one group of cards per map size, under its heading
+	local function group(order: number, title: string, note: string): Frame
+		local head = Ui.frame(scroll, "Head", UDim2.new(1, -Kit.SPACE.m, 0, 28))
+		head.LayoutOrder = order * 2 - 1
+		local hl = Kit.list(head, Kit.SPACE.s, true)
+		hl.VerticalAlignment = Enum.VerticalAlignment.Bottom
+		local t = Ui.label(head, title, "section", nil, 1)
+		t.TextSize = 20
+		Ui.label(head, note, "small", Kit.COLOR.dim, 2)
+		local cards = Ui.frame(scroll, "Group", UDim2.new(1, -Kit.SPACE.m, 0, 0))
+		cards.LayoutOrder = order * 2
+		cards.AutomaticSize = Enum.AutomaticSize.Y
+		local layout = Instance.new("UIGridLayout")
+		layout.CellSize = UDim2.fromOffset(300, 210)
+		layout.CellPadding = UDim2.fromOffset(Kit.SPACE.l, Kit.SPACE.l)
+		layout.SortOrder = Enum.SortOrder.LayoutOrder
+		layout.Parent = cards
+		return cards
+	end
 
 	local card = Ui.card(frame, "Detail", UDim2.new(0, 450, 1, -66), UDim2.new(1, -450, 0, 66), 0.1)
 	Kit.pad(card, Kit.SPACE.xl, Kit.SPACE.l)
@@ -72,9 +88,13 @@ function Skirmish.new(frame: Frame, _router: any): any
 	Kit.segmented(Kit.row(detail, "Opponent faction", 7), options(Config.FACTIONS), choice.enemy, function(v)
 		choice.enemy = v
 	end, 90)
-	Kit.segmented(Kit.row(detail, "Difficulty", 8), options(Config.LEVELS), choice.level, function(v)
+	local levels = {}
+	for _, v in Config.LEVELS do
+		table.insert(levels, { v, (Config.LEVEL_SHORT :: any)[v] or Ui.label2(v) })
+	end
+	Kit.segmented(Kit.row(detail, "Difficulty", 8), levels, choice.level, function(v)
 		choice.level = v
-	end, 70)
+	end, 76)
 	local launch = Ui.button(card, "Launch", "go", function()
 		if choice.map then
 			Net.send({ op = "quick", mapId = choice.map.id, faction = choice.faction, level = choice.level, enemy = choice.enemy })
@@ -115,8 +135,19 @@ function Skirmish.new(frame: Frame, _router: any): any
 		end
 		built = true
 		local maps = Net.loadMaps()
+		local groups: { [string]: Frame } = {}
+		local sizeName = {}
+		for k, z in Config.MAP_SIZES do
+			sizeName[z.id] = z.name
+			for _, m in maps do
+				if (m.size or "small") == z.id then
+					groups[z.id] = group(k, `{z.name} maps`, z.note)
+					break
+				end
+			end
+		end
 		for i, m in maps do
-			local tile = Ui.frame(scroll, m.id, UDim2.fromOffset(300, 210))
+			local tile = Ui.frame(groups[m.size or "small"] or scroll, m.id, UDim2.fromOffset(300, 210))
 			tile.LayoutOrder = i
 			tile.BackgroundColor3 = Color3.fromRGB(12, 13, 16)
 			tile.BackgroundTransparency = 0
@@ -140,7 +171,7 @@ function Skirmish.new(frame: Frame, _router: any): any
 			l.Position = UDim2.new(0, 12, 1, -38)
 			l.Size = UDim2.new(1, -24, 0, 30)
 			l.ZIndex = 6
-			local tag = Kit.text(tile, `{m.starts} players`, "small", Kit.COLOR.dim)
+			local tag = Kit.text(tile, `{m.starts} players · {sizeName[m.size or "small"] or "Small"}`, "small", Kit.COLOR.dim)
 			tag.Position = UDim2.new(0, 12, 1, -38)
 			tag.Size = UDim2.new(1, -24, 0, 30)
 			tag.TextXAlignment = Enum.TextXAlignment.Right

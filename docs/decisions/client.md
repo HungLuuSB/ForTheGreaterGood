@@ -1981,3 +1981,77 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Checked in Studio (Crossroads, Teams: you and a Normal AI against an Easy AI): the panel with the ally's income and bank and its buttons, 300 supply given ("You gave AI (normal) 300 supply", the bank 1.0k → 701), a request ("You ask for power"); the panel hidden in the lobby. Specs: Share, SmartReclaim; Upgrades and Placement on patches. Nanoframe's pads for the new labs wait on models-C's registration after S-181 reaches main.
 
 **Why:** the user's playtest (F23, F42) and sim-A's phase 2.
+
+### C-227 — Playtest small items: Ctrl + wheel turns, rotation carries on, stock as a number, wider tower lasers (2026-10-26, F2, F14, F10, F11)
+
+- **F2:** Ctrl + wheel turns the camera, 7.5° a notch, within the ±45° limit (Q / C still turn).
+- **F14:** a placement's rotation carries on to every later placement (`Api` keeps the last facing; Facing.spec).
+- **F10:** a stockpile's row above the health bar is its count as a number and one bar filling with the missile being made (full when stocked up), instead of a pip per missile. Checked in Studio: an anti-nuke at "3", bar full.
+- **F11:** the Sentry, Guard, Overwatch and Twin Guard lasers draw 1.8× wider (`Lasers.WIDER`): in Studio core 0.69 / glow 2.14 studs (was 0.39 / 1.19).
+
+**Why:** the user's playtest (F2, F10, F11, F14).
+
+### C-228 — Tower lasers after the user's look; the camera turns all the way round (2026-10-26)
+
+- **Where a hit ends:** a hitscan hit (lasers, beams, tracers) ends on the hit unit's drawn body: the line from the muzzle toward the middle of the nearest drawn model's box at the server's hit point, where it first meets that model (a raycast against it; `Effects.bodyAt`, set by Main). The server aims at its sim height's middle, near the top of most models, so tower lasers ran to the tanks' turrets (the user); ending at the box's middle then hid the burst inside the tank (the user again). Checked in Studio: an Overwatch's laser on a Juggernaut ends at (0.0, 0.3, −2.3) in the model's box (half sizes 3.2, 3.6, 4.3), its front surface; the start is the tower's muzzle attachment (28.7 vs 28.8).
+- **The look:** F11's wider towers widen the glow 1.8× and the core only by its square root, the core wavers ±22 % as the bolt lives, the glow fades along the line (0.6 → 0.78 → 0.9 transparency) instead of a uniform rod, and the impact halo is smaller and fainter. At the muzzle a white-hot flash and a soft halo in the beam's colour 1.15× as wide as the glow leaving it (the user: without one the glow looked wider than its starting point).
+- **Camera:** no rotation limit; Q / C and Ctrl + wheel turn it all the way round (the user).
+
+**Why:** the user's look at the Overwatch's beam and their camera request (via sim-A).
+
+### C-229 — AI levels, per-shot power, side splits, formation preview (2026-10-26, S-186, S-187, F34, F40)
+
+- Merged m-sim-2 8713c298 (S-186, S-187). The shell-timing scene's count accepts 26.
+- **AI levels:** the in-match lobby offers Easy, Normal, Hard - Balanced ("hard") and Hard - Aggressive ("hard_aggressive") in a dropdown (the names don't fit segments); AI names read "AI 1 (Hard - Aggressive)" (`Lobby.levelName`).
+- **Per-shot power:** a weapon with `shotCost.power` shows "20 power/shot" on its stats line (unit panel, build menu tooltips); lasers hold fire without power (S-187).
+- **F40:** the pre-game's fallback boxes (before START_BOXES) pass the map's `sideSplits` to `StartAreas.sides`.
+- **F34, formation lines:** the right-drag line move (LINE flag; Ctrl adds GROUP) now previews each unit's slot along the line, as the order sends them (`Orders.lineSlots`), each with a tick facing across the line away from the group. Checked in Studio: six Lancers, the preview's six slots, the units spread into them. Units keep their travel heading at the end (asked sim-A about turning them to face).
+
+**Why:** sim-A's S-186 / S-187 and the playtest's F34 / F40.
+
+### C-230 — Everything loaded before the match; a readable loading screen (2026-10-26)
+
+- **Preload** (the user: every player sees their models without waiting in game): a lobby match's first CAMERA waits until this client's preload is complete (ground, every approved unit mesh, their SurfaceAppearances and the icon sheets; `Render/Preload`), at most `LOAD_HOLD` (115 s, under the sim's Pregame.LOAD_WAIT of 120 since sim-A raised it): the pre-game's clocks start on every human's first command (S-182), so nobody's pick time runs while they still load. Behind the loading screen 16 meshes build at once (8 in game). Measured in Studio's `contract` match: 45.9 s with 8 at once, 24.5 s with 16 (a cold Studio cache; the published place will be slower to download). The pre-game's Commanders redraw as their meshes finish (they stayed blockouts).
+- **Loading screen text** (the user: hard to see over the key art): a dark outline on the title, the players and the tip, the players larger and semibold, a strip behind the tip; no card behind the text (the user tried it: worse).
+
+**Why:** the user's preload request (via sim-A) and their look at the loading screen.
+
+### C-231 — The bots walk; the Dragon's fans turn (2026-10-26, S-181, models-C 4f6f268f)
+
+- Merged m-models 4f6f268f (the 19 S-181 blockouts registered, the bots' legs renamed to the walker convention). Nanoframe.spec passes again: all client specs pass.
+- `PieceScripts/Bot`: the eleven biped bots (Artisan, Tinker, Lazarus, Graverobber, Glint, Mace, Thug, Kestrel, Needle, Fatboy, Centurion) walk the Commander's stride on `thigh` / `shin` / `foot` L and R, without the torso twist (their torso is the weapon turret, aimed by Default) or arm swing (none), the pelvis dipping 5 % of the hip height. A stride covers 2.9 hip heights at the bot's top speed (0.25..1.2 s); the swing is scaled per bot (models-C: Fatboy ×0.5, Centurion ×1.15). Skitter walks a diagonal gait on its four splayed legs (FL with BR, FR with BL). Stopped, legs ease to rest.
+- `Bot.Dragon`: the Dragon's ducted fans (`fanL` / `fanR`) turn all the time, faster while it moves.
+- Ambient.spec: the bots stride and rest, the torso stays, Skitter's pairs swing together, the fans turn, Fatboy strides slower than Glint. Checked in Studio at a quarter speed: Glint, Mace, Fatboy, Centurion and Skitter walking.
+
+**Why:** the new walking units (S-181) and models-C's leg kit.
+
+### C-232 — Death blasts by unit (2026-10-26, F15, S-178)
+
+- Every unit now has a `deathBlast` (sim-A's `Defs.defaultDeathBlast`, S-178), so every death adds a blast burst sized from its def: an ordinary one at 0.6 × its damage radius (`Effects.BLAST_SHOWN`), so small units don't white out the screen; a huge one (90 studs and up: Commanders 120, fusion reactors 120; `Effects.HUGE_BLAST`) plays the nuke's look scaled to its radius (0.8 of a nuke), held twice as long, without the nuke's crater (`Burst.noCrater`). Generator chains follow from the sim's blasts.
+- Checked in Studio (Coastline): three Lancers' small blasts; a fusion reactor's big fireball and smoke column.
+
+**Why:** the user's playtest F15 ("death explosions for every unit, by tier / energy stored; Commander a huge blast, smaller than a nuke").
+
+### C-233 — Protocol 38 on the client (2026-10-26, S-189)
+
+- Wire positions sit on a fixed 64-stud grid, independent of the map. Strategic records and ALERT decode their offsets: a strategic record gives the centre of the unit's 8-stud square. A known unit keeps its exact spot while it stays in that square, where before it kept it while it stayed in its map cell.
+- SIGHT_CELLS entries are u24: the index is the entry below `Schema.SIGHT_SEEN`. `Commands.cameraRect` clamps only to the map (u16 on the wire, up to 1,024 cells).
+- Aircraft and shots may go up to `Grid.OVERFLY` (512 studs) past the edge. The 3D view draws them there. The minimap pins their dots to its edge instead of clipping them.
+- Specs:
+  - wire precision is now a quarter stud;
+  - missiles burst at the overfly margin;
+  - the bomber carpet test starts the bomber far enough out to release on its first pass. A bomber that misses its window goes round and comes back on another line (D91), which no preview can predict. The old edge rule happened to bring it back straight.
+- Checked in Studio on The Lakelands (512 cells):
+  - camera cells up to 511, nothing dropped;
+  - three off-camera Lancers at x 1901, 1915 and 1929 drawn at 1900, 1916 and 1932;
+  - Falcons drawn out to x 2,344 on a map that ends at 2,048.
+
+**Why:** S-189 (bigger maps, F3/F4).
+
+### C-234 — Plasma without a blast looks like a tank shell (2026-10-26, S-190)
+
+- A plasma shot with no aoe (the Thug's and the Mace's since S-190) is a ball as thick as a tank shell (0.9), in the weapon's colour. Bigger plasma keeps `1.4 + aoe × 0.08`.
+- An `explosion_small` impact with no aoe bursts at `Effects.SMALL_HIT` (3, the Lancer shell's aoe) instead of falling to the smallest burst.
+- Checked in Studio (The Plains): Thug and Mace balls 0.90 in (255, 225, 120), beside the Lancer's 0.9 × 0.9 × 2.6 shell in the same colour.
+
+**Why:** the user, via sim-A: "Thug / Mace's plasma should be the same size as the tank, their shot explode like a small hit vfx of the tank because they should have no aoe damage to their shot at all."

@@ -35,6 +35,7 @@ export type Weapon = {
 	stock: number?, -- missiles in stock (own units)
 	stockCap: number?,
 	refill: number?, -- seconds per missile
+	shotPower: number?, -- power per shot (lasers, S-187: they hold fire without it)
 }
 
 export type Sheet = {
@@ -127,6 +128,7 @@ function UnitStats.weapon(defs: any, slot: number, ws: any, u: World.Unit?): Wea
 		stock = if ws.stockCapacity and u and u.stock then u.stock[slot] or 0 else nil,
 		stockCap = ws.stockCapacity,
 		refill = if w.stockpile then w.stockpile.buildTime else nil,
+		shotPower = if w.shotCost then w.shotCost.power else nil,
 	}
 end
 
@@ -263,7 +265,11 @@ function UnitStats.lines(sheet: Sheet): { string }
 	end
 	for _, w in sheet.weapons do
 		local shot = if w.shots > 1 then `{n(w.damage)}×{w.shots}` else n(w.damage)
-		table.insert(out, join({ `DPS {n(w.dps)} vs {CLASS_NAME[w.class] or w.class}`, `Range {n(w.range)}`, `Reload {n(w.reload)}s`, `±{n(w.spread)}°`, `{shot}/shot` }))
+		local parts = { `DPS {n(w.dps)} vs {CLASS_NAME[w.class] or w.class}`, `Range {n(w.range)}`, `Reload {n(w.reload)}s`, `±{n(w.spread)}°`, `{shot}/shot` }
+		if w.shotPower and w.shotPower > 0 then
+			table.insert(parts, `{n(w.shotPower)} power/shot`) -- S-187: no power, no shot
+		end
+		table.insert(out, join(parts))
 		local extra = {}
 		if w.guidance then
 			table.insert(extra, `{w.guidance} guided`)
