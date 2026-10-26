@@ -2,6 +2,13 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: The Plains' side splits, S-186)
+
+- Merged sim-A's `9583455e`: maps may carry `layers.sideSplits`, and `StartAreas.sides` takes it as a third argument.
+- The room's default spawn boxes pass the map's splits. The server sends them with the map's shape as a list (`SpawnBoxes.splitList`: a table keyed by side counts has gaps, which a remote can drop), and `SpawnBoxes.defaults` rebuilds them.
+- With 3 sides on The Plains: side 1 is the west strip, sides 2 and 3 the two eastern corners. No box spans the map's middle any more (`lobby_room_plains_3_sides`).
+- New spec: The Plains' 3-side defaults keep side 1 west and sides 2 and 3 east, apart. Lobby specs 61 / 61; the build check passes.
+
 ## Summary (2026-10-26: tracks on the ground; the Underwater place)
 
 - **Tracks clipping into the ground (the user):** units stood at the place's level, under thin floor dressing on top of it:

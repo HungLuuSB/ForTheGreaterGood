@@ -15,9 +15,28 @@ SpawnBoxes.MIN = 0.04 -- a box's smallest width and depth
 SpawnBoxes.STEP = 1000 -- boxes are kept in thousandths
 
 export type Box = { number } -- { x0, z0, x1, z1 }, fractions of the map
--- A map's shape in studs, for the defaults: its bounds, start hints and its
--- own boxes per start (optional), as the server reads them from the layers.
-export type Geometry = { bounds: { number }, starts: { { number } }, startBoxes: { { number } }? }
+-- A map's shape in studs, for the defaults: its bounds, start hints, its
+-- own boxes per start (optional) and its side splits (optional, S-186), as
+-- the server reads them from the layers. The splits travel as a list
+-- ({ n = side count, sides = each side's start indices }): a table keyed by
+-- side counts has gaps, which a remote can drop.
+export type Split = { n: number, sides: { { number } } }
+export type Geometry = { bounds: { number }, starts: { { number } }, startBoxes: { { number } }?, splits: { Split }? }
+
+-- `Layers.sideSplits` as a list for Geometry.splits.
+function SpawnBoxes.splitList(sideSplits: { [number]: { { number } } }?): { Split }?
+	if sideSplits == nil then
+		return nil
+	end
+	local out: { Split } = {}
+	for n, sides in sideSplits do
+		table.insert(out, { n = n, sides = sides })
+	end
+	table.sort(out, function(a, b)
+		return a.n < b.n
+	end)
+	return out
+end
 
 local function round(v: number): number
 	return math.floor(v * SpawnBoxes.STEP + 0.5) / SpawnBoxes.STEP
@@ -63,10 +82,18 @@ function SpawnBoxes.defaults(geo: Geometry, count: number): { [number]: Box }
 	for a = 1, count do
 		table.insert(allies, a)
 	end
+	local splits: { [number]: { { number } } }? = nil
+	if geo.splits then
+		local byCount: { [number]: { { number } } } = {}
+		for _, s in geo.splits do
+			byCount[s.n] = s.sides
+		end
+		splits = byCount
+	end
 	local b = geo.bounds
 	local w, d = b[3] - b[1], b[4] - b[2]
 	local out: { [number]: Box } = {}
-	for a, box in StartAreas.boxes(StartAreas.sides(allies, #geo.starts), geo.starts, b, geo.startBoxes) do
+	for a, box in StartAreas.boxes(StartAreas.sides(allies, #geo.starts, splits), geo.starts, b, geo.startBoxes) do
 		out[a] = { round((box[1] - b[1]) / w), round((box[2] - b[2]) / d), round((box[3] - b[1]) / w), round((box[4] - b[2]) / d) }
 	end
 	return out

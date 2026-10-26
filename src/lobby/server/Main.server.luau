@@ -39,6 +39,7 @@ local Listing = require("../shared/Listing")
 local Lobbies = require("./Lobbies")
 local MapPreview = require("../shared/MapPreview")
 local MapRegistry = require("@shared/Grid/MapRegistry")
+local SpawnBoxes = require("../shared/SpawnBoxes")
 local StartAreas = require("@shared/Match/StartAreas")
 local MatchErrors = require("../shared/MatchErrors")
 local MatchStore = require("./Services/MatchStore")
@@ -163,7 +164,7 @@ task.spawn(function()
 		if ok and layers then
 			local entry = MapRegistry.NAMED[name] or MapRegistry.HANDMADE[name]
 			-- the shape the spawn box defaults need (F26): bounds, start hints and the map's own boxes, in studs
-			local geo = { bounds = StartAreas.bounds(layers.grid), starts = layers.starts, startBoxes = layers.startBoxes }
+			local geo = { bounds = StartAreas.bounds(layers.grid), starts = layers.starts, startBoxes = layers.startBoxes, splits = SpawnBoxes.splitList(layers.sideSplits) }
 			table.insert(list, { id = id, name = entry.name, starts = #layers.starts, geo = geo })
 			previews[id] = MapPreview.build(layers, 128)
 		else

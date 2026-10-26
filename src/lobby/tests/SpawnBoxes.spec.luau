@@ -15,7 +15,7 @@ local LOBBY = { placeId = 1, jobId = "job" }
 
 local function geoOf(mapId: string): SpawnBoxes.Geometry
 	local layers = assert(MapRegistry.load(mapId))
-	return { bounds = StartAreas.bounds(layers.grid), starts = layers.starts, startBoxes = layers.startBoxes }
+	return { bounds = StartAreas.bounds(layers.grid), starts = layers.starts, startBoxes = layers.startBoxes, splits = SpawnBoxes.splitList(layers.sideSplits) }
 end
 
 local PLAINS = geoOf("map:plains")
@@ -54,7 +54,7 @@ return function(t: RunAll.Context)
 					table.insert(list, a)
 				end
 				return list
-			end)(), #PLAINS.starts), PLAINS.starts, b, PLAINS.startBoxes)
+			end)(), #PLAINS.starts, assert(MapRegistry.load("map:plains")).sideSplits), PLAINS.starts, b, PLAINS.startBoxes)
 			for a = 1, count do
 				local f, s = boxes[a], studs[a]
 				t.expect(f ~= nil, `{count} sides: side {a}`)
@@ -64,6 +64,17 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.deepEqual(SpawnBoxes.defaults(PLAINS, 17), {}, "more sides than starts")
+	end)
+
+	t.test("The Plains' own side splits (S-186): three sides don't put one in two corners", function()
+		t.expect(PLAINS.splits ~= nil and #(PLAINS.splits :: any) > 0, "the map's splits travel as a list")
+		local boxes = SpawnBoxes.defaults(PLAINS, 3)
+		-- west half, then north-east and south-east: no box spans the map
+		t.expect(boxes[1][3] <= 0.5 + 0.001, `side 1 stays west: {boxes[1][3]}`)
+		for a = 2, 3 do
+			t.expect(boxes[a][1] >= 0.5 - 0.001, `side {a} stays east: {boxes[a][1]}`)
+		end
+		t.expect(boxes[2][4] <= boxes[3][2] + 0.001 or boxes[3][4] <= boxes[2][2] + 0.001, "north-east and south-east apart")
 	end)
 
 	t.test("only the host edits boxes, in Teams, for a seated team; map and mode changes reset them", function()
