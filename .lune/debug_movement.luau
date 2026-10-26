@@ -48,7 +48,8 @@ end
 assert(target, "no target")
 
 local wr = Packer.Writer.new()
-Schema.encodeCommand(wr, { cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = table.clone(w.ids), cell = target, offX = 128, offZ = 128 })
+local tc, tx, tz = g:encode(g:cellCenter(g:coords(target))) -- a wire position (S-189)
+Schema.encodeCommand(wr, { cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = table.clone(w.ids), cell = tc, offX = tx, offZ = tz })
 assert(Sim.submit(sim, 1, wr:finish()))
 
 Sim.step(sim)

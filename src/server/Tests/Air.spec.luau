@@ -1,5 +1,6 @@
 --!strict
 local Defs = require("@shared/Defs/Defs")
+local Grid = require("@shared/Grid/Grid")
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 local Air = require("../Sim/Air")
@@ -629,15 +630,15 @@ return function(t: RunAll.Context)
 
 	-- client request 15: projectiles past the map's edge (where wire
 	-- positions are clamped) burst on it
-	t.test("projectiles leaving the map burst at the edge", function()
+	t.test("projectiles fly past the edge and burst at the overfly margin (S-189)", function()
 		local sim = Sim.new({ seed = 2, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:160" })
 		local c = sim.combat
-		local half = (sim.map :: any).grid.sizeX / 2
-		-- a shell fired out of the map ends at the edge
+		local half = (sim.map :: any).grid.sizeX / 2 + Grid.OVERFLY -- (the edge itself before protocol 38)
+		-- a shell fired out of the map, high, ends at the overfly margin
 		local weapon = sim.defs.weapons.ord_light_cannon
-		local p = Combat.spawnProjectile(c, half - 20, 20, 0, 380, 0, 0, weapon.index, 0, 1, 5) :: number
+		local p = Combat.spawnProjectile(c, half - Grid.OVERFLY - 20, 400, 0, 380, 0, 0, weapon.index, 0, 1, 5) :: number
 		local burst = nil
-		for _ = 1, 15 do
+		for _ = 1, 45 do
 			Sim.step(sim)
 			for _, e in c.events do
 				if e.kind == "IMPACT" and e.other == p then
@@ -648,7 +649,7 @@ return function(t: RunAll.Context)
 				break
 			end
 		end
-		t.expect(burst ~= nil and math.abs((burst :: any).x - half) < 1e-6, "the shell bursts on the edge")
+		t.expect(burst ~= nil and math.abs((burst :: any).x - half) < 1e-6, "the shell bursts on the margin")
 	end)
 
 	-- client request 17: a move inside the loiter radius used to count as

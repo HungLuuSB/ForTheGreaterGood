@@ -48,6 +48,7 @@ MapRegistry.NAMED = table.freeze({
 	coastline = { name = "Coastline", options = { seed = 12, cells = 128, layout = "1v1", symmetry = "mirror", water = "sea" } },
 	twin_lakes = { name = "Twin Lakes", options = { seed = 13, cells = 192, layout = "2v2", water = "lakes" } },
 	crossroads = { name = "Crossroads", options = { seed = 14, cells = 192, layout = "ffa4", water = "sea" } },
+	lakelands = { name = "The Lakelands", options = { seed = 15, cells = 512, layout = "2v2", water = "lakes" } }, -- the first medium map (S-189, F4)
 } :: { [string]: Named })
 
 -- Hand-made maps (S-53): built by their own module, not MapGen.
@@ -57,6 +58,14 @@ MapRegistry.HANDMADE = table.freeze({
 	canyon = { name = "The Canyon", build = Canyon.build },
 	plains = { name = "The Plains", build = Plains.build }, -- 8v8 (S-173)
 } :: { [string]: Handmade })
+
+-- A map's size class for the lobby's picker (S-189, F4): small up to 256
+-- cells a side (2,048 studs), medium up to 512, large above (up to
+-- Grid.MAX_CELLS, 1,024).
+export type SizeClass = "small" | "medium" | "large"
+function MapRegistry.sizeClass(cells: number): SizeClass
+	return if cells <= 256 then "small" elseif cells <= 512 then "medium" else "large"
+end
 
 -- MapGen options for a "map:" or "mapgen:" ID, nil for other IDs (and for
 -- hand-made maps).

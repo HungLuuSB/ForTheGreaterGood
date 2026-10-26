@@ -3,7 +3,7 @@ local Grid = require("@shared/Grid/Grid")
 local Prng = require("@shared/Util/Prng")
 local RunAll = require("./RunAll")
 
-local PRECISION = 1 / 32 -- one offset step: 8 studs / 256
+local STEP = 1 / 4 -- one wire offset step: 64 studs / 256 (S-189)
 
 return function(t: RunAll.Context)
 	t.test("new validates sizes and centers the map on the origin", function()
@@ -15,12 +15,12 @@ return function(t: RunAll.Context)
 		t.equal(g.originZ, -256)
 		t.equal(g.sensorX, 64)
 		t.equal(g.sensorZ, 32)
-		t.equal(Grid.new(256, 256).cellCount - 1, 65535, "largest cell index fits u16")
+		t.equal(Grid.new(1024, 1024).sizeX, 8192, "1,024-cell maps (S-189)")
 		t.equal(Grid.new(3, 3).sensorX, 2, "odd sizes round sensor cells up")
-		for _, bad in { 0, 257, 1.5, -4 } do
+		for _, bad in { 0, 1025, 1.5, -4 } do
 			t.throws(function()
 				Grid.new(bad, 16)
-			end, "integer in 1..256")
+			end, "integer in 1..1024")
 		end
 	end)
 
@@ -47,52 +47,57 @@ return function(t: RunAll.Context)
 		t.deepEqual({ g:cellCenter(0, 0) }, { -60, -60 })
 	end)
 
-	t.test("encode/decode round-trips within 1/32 stud (random)", function()
+	t.test("encode/decode round-trips within 1/8 stud, on and off the map (random, S-189)", function()
 		local rng = Prng.new(5)
-		for _, size in { { 256, 256 }, { 128, 96 }, { 7, 13 } } do
+		for _, size in { { 1024, 1024 }, { 512, 512 }, { 128, 96 }, { 7, 13 } } do
 			local g = Grid.new(size[1], size[2])
 			for _ = 1, 5000 do
-				local x = rng:nextNumber(g.originX, g.originX + g.sizeX)
-				local z = rng:nextNumber(g.originZ, g.originZ + g.sizeZ)
+				-- the map and Grid.OVERFLY around it
+				local x = rng:nextNumber(g.originX - Grid.OVERFLY, g.originX + g.sizeX + Grid.OVERFLY)
+				local z = rng:nextNumber(g.originZ - Grid.OVERFLY, g.originZ + g.sizeZ + Grid.OVERFLY)
 				local cell, offX, offZ = g:encode(x, z)
-				t.expect(cell >= 0 and cell < g.cellCount, "cell in range")
+				t.expect(cell >= 0 and cell <= 65535, "wire cell fits u16")
 				t.expect(offX >= 0 and offX <= 255 and offZ >= 0 and offZ <= 255, "offsets fit u8")
 				local dx, dz = g:decode(cell, offX, offZ)
-				t.expect(x - dx >= 0 and x - dx < PRECISION, `x error {x - dx} at {x}`)
-				t.expect(z - dz >= 0 and z - dz < PRECISION, `z error {z - dz} at {z}`)
-				local cx, cz = g:cellAt(x, z)
-				t.equal(cell, g:index(cx, cz), "encoded cell matches cellAt")
+				t.expect(math.abs(x - dx) <= STEP / 2, `x error {x - dx} at {x}`)
+				t.expect(math.abs(z - dz) <= STEP / 2, `z error {z - dz} at {z}`)
 			end
 		end
 	end)
 
-	t.test("encode is exact on offset steps", function()
-		local g = Grid.new(16, 16)
+	t.test("the wire grid is the same for every map: 64-stud cells from -8192 (S-189)", function()
+		local small, large = Grid.new(16, 16), Grid.new(1024, 1024)
+		for _, p in { { 0, 0 }, { -100.25, 37.5 }, { 4000, -4000 } } do
+			t.deepEqual({ small:encode(p[1], p[2]) }, { large:encode(p[1], p[2]) }, "map-independent")
+		end
+		t.deepEqual({ small:encode(-8192, -8192) }, { 0, 0, 0 }, "the wire's corner")
+		t.deepEqual({ small:encode(0, 0) }, { 128 * 256 + 128, 0, 0 }, "the origin: wire cell (128, 128)")
 		for _, off in { 0, 1, 128, 255 } do
-			local x = g.originX + 3 * 8 + off / 32
-			local cell, offX, offZ = g:encode(x, g.originZ)
-			t.deepEqual({ cell, offX, offZ }, { g:index(3, 0), off, 0 })
-			local dx = g:decode(cell, offX, offZ)
-			t.equal(dx, x)
+			local x = 3 * 64 + off / 4 -- wire cell 131, offset off
+			local cell, offX, offZ = small:encode(x, 0)
+			t.deepEqual({ cell, offX, offZ }, { 128 * 256 + 131, off, 0 }, "exact on offset steps")
+			t.equal((small:decode(cell, offX, offZ)), x)
 		end
 	end)
 
-	t.test("positions outside the map clamp to its edge", function()
+	t.test("positions past the wire's reach clamp to it; decodeOnMap clamps onto the map", function()
 		local g = Grid.new(16, 16)
-		t.deepEqual({ g:encode(-1000, -1000) }, { 0, 0, 0 })
-		t.deepEqual({ g:encode(1000, 1000) }, { g.cellCount - 1, 255, 255 })
-		-- The far edge itself is outside the last cell: it clamps 1/32 stud inside.
-		local cell, offX, offZ = g:encode(64, 64)
-		local x, z = g:decode(cell, offX, offZ)
-		t.equal(64 - x, PRECISION)
-		t.equal(64 - z, PRECISION)
+		t.deepEqual({ g:encode(-1e5, -1e5) }, { 0, 0, 0 })
+		t.deepEqual({ g:encode(1e5, 1e5) }, { 65535, 255, 255 })
+		local x, z = g:decode(65535, 255, 255)
+		t.equal(x, Grid.WIRE_EXTENT - STEP)
+		t.equal(z, Grid.WIRE_EXTENT - STEP)
+		-- past the map's edge: decode keeps it, decodeOnMap moves it onto the map
+		local cell, offX, offZ = g:encode(300, -200)
+		t.deepEqual({ g:decode(cell, offX, offZ) }, { 300, -200 })
+		t.deepEqual({ g:decodeOnMap(cell, offX, offZ) }, { 64 - 0.125, -64 })
 	end)
 
-	t.test("decode rejects cells outside the map", function()
+	t.test("decode rejects malformed wire cells", function()
 		local g = Grid.new(16, 16)
 		t.throws(function()
-			g:decode(256, 0, 0)
-		end, "outside a 16x16 map")
+			g:decode(65536, 0, 0)
+		end, "outside 0..65535")
 		t.throws(function()
 			g:decode(-1, 0, 0)
 		end, "outside")

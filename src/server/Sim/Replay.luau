@@ -22,7 +22,7 @@ local Packer = require("@shared/Net/Packer")
 local Replay = {}
 
 Replay.MAGIC = "FTGR"
-Replay.FORMAT_VERSION = 5 -- 2: ally teams and match options in the header; 3: cheat flags (S-102); 4: start mode (S-169); 5: factions, host, spawn boxes (S-174)
+Replay.FORMAT_VERSION = 6 -- 2: ally teams and match options in the header; 3: cheat flags (S-102); 4: start mode (S-169); 5: factions, host, spawn boxes (S-174); 6: command positions on the wire grid (protocol 38, S-189)
 Replay.Kind = table.freeze({ COMMAND = 1, CHECKPOINT = 2 })
 
 export type PlayerInfo = { id: number, team: number, allyTeam: number?, faction: ("order" | "chaos")? }

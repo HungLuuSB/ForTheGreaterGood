@@ -415,9 +415,9 @@ How `Defs.luau` does it:
 ### 5.1 Grid basics
 
 - **Cell size:** 8 × 8 studs.
-- **Max map:** 256 × 256 cells = 2048 × 2048 studs (cell index fits in `u16`).
+- **Max map:** 1,024 × 1,024 cells = 8192 × 8192 studs (`Grid.MAX_CELLS`; S-189, protocol 38: 256 × 256 before). Wire positions don't use map cell indices (5.3), so the map size doesn't touch the wire.
+- **Size classes** (`MapRegistry.sizeClass`, the lobby's picker): small up to 256 cells a side, medium up to 512, large above. Shipped: small maps, and **The Lakelands** (`map:lakelands`, 512 cells, 2v2 with lakes), the first medium one. Large maps wait for a Studio check of server memory and the client's terrain at 8,192 studs (measured in Lune: 3.5 s to build, ~350 MB, +50% tick at 600 units; `docs/progress/playtest-2026-10-26.md`, F4).
 - Center maps on the world origin; float precision drops far from it.
-- Bigger maps later: either 16-stud cells for the strategic tier, or `u32` cell indices. Decide once, before shipping.
 
 **Recommended sizes**
 
@@ -426,6 +426,7 @@ How `Defs.luau` does it:
 | 1v1 | 128 × 128 | 1024 |
 | 2v2 / 3-4 FFA | 192 × 192 | 1536 |
 | 3v3 – 4v4 / 8 FFA | 256 × 256 | 2048 |
+| Medium (S-189) | 512 × 512 | 4096 |
 
 ### 5.2 Cell data layers
 
@@ -445,12 +446,13 @@ Store each layer as its own `buffer` (flat, cache-friendly, cheap to send to Act
 ### 5.3 Coordinates on the wire
 
 ```
-position = cellIndex (u16) + offsetX (u8) + offsetZ (u8)     → 32 bits
-offset   = 0..255 → 0..8 studs  (1/32 stud ≈ 0.031 precision)
-worldX   = (cellX + offsetX/256) * 8 + mapOriginX
+position = wireCell (u16) + offsetX (u8) + offsetZ (u8)      → 32 bits
+wireCell = 64-stud cells, 256 × 256, centred on the world origin (±8192 studs)
+offset   = 0..255 → 0..64 studs  (1/4 stud precision)
+worldX   = ((wireCell % 256) * 256 + offsetX) / 4 - 8192
 ```
 
-Cell index = `cz * cellsX + cx` with 0-based cell coordinates (`Grid.index`). Encoding truncates, so the decoded position is within `[0, 1/32)` stud of the true one. Positions outside the map clamp to the edge cell, so an invalid cell never goes on the wire.
+Since protocol 38 (S-189, F4) the wire grid is the same for every map: a 1,024-cell map fits with 4,096 studs to spare past each edge, so aircraft and shots past the edge (up to `Grid.OVERFLY`, 512 studs) go on the wire as they are. Encoding rounds, so the decoded position is within 1/8 stud of the true one; positions past ±8192 clamp. Orders decode onto the map (`Grid.decodeOnMap`): a point past the edge is an order to the edge. Always use `Grid.encode` / `Grid.decode`; a wire cell is not a map cell. (Before protocol 38: the map's cell index, `cz * cellsX + cx`, and offsets in 1/32 stud, which capped maps at 256 cells and clamped everything to the edge.)
 
 Ground units don't send height: the client looks it up from its own copy of the `height` layer. Air units send altitude above ground (`u8`, 1 stud steps, 0–255).
 
@@ -1821,7 +1823,7 @@ Each milestone has **exit criteria**. Don't move on until they're met.
 | Sim rate | 15 Hz |
 | Cell size | 8 studs |
 | Sensor cell size | 16 studs |
-| Max map | 256 × 256 cells |
+| Max map | 1,024 × 1,024 cells (S-189; 512 shipped) |
 | Economy rate | 3 Hz |
 | Strategic replication | 2–4 Hz |
 | Interpolation delay | 2 ticks |
