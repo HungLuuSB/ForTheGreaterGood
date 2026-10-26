@@ -17623,7 +17623,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				RGH = "rbxassetid://75866292932903",
 			},
 			model = "rbxassetid://118263607094728",
-			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
 					center = { 0, 5.15, 0.1285 },
@@ -17631,7 +17630,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 29.9632, 10.3, 30.2203 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 			},
@@ -17644,7 +17643,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://78228998411040",
 				},
 				model = "rbxassetid://119194671722407",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.1787, 4.7978, 0.1152 },
@@ -17652,7 +17650,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 30.0642, 9.814, 30.3097 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1816,
 			},
 		},
@@ -17938,7 +17936,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				RGH = "rbxassetid://133265618972974",
 			},
 			model = "rbxassetid://88530121756757",
-			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
 					center = { 0, 3.3796, 0 },
@@ -17953,7 +17950,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 5.7124, 4.7578, 8.58 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 				"launcher",
@@ -17967,7 +17964,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://115985919048511",
 				},
 				model = "rbxassetid://103002214850410",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0646, 3.5572, -0.0198 },
@@ -17980,7 +17976,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 5.6372, 4.6872, 9.0598 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 2596,
 			},
 		},
@@ -25474,7 +25470,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				RGH = "rbxassetid://116144765897296",
 			},
 			model = "rbxassetid://114030713501938",
-			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
 					center = { 0, 6.825, 0 },
@@ -25482,7 +25477,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 29.9484, 13.65, 29.9484 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 			},
@@ -25495,7 +25490,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://139178247984872",
 				},
 				model = "rbxassetid://119615631415468",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0911, 6.5152, 0.1082 },
@@ -25503,7 +25497,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 30.344, 13.6028, 30.1257 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 2756,
 			},
 		},
@@ -29459,7 +29453,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				RGH = "rbxassetid://103176552643800",
 			},
 			model = "rbxassetid://101957280133306",
-			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
 					center = { 0, 9.15, 0 },
@@ -29474,7 +29467,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 5.4, 2.35, 4.43 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 				"launcher",
@@ -29488,7 +29481,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://122830865433783",
 				},
 				model = "rbxassetid://96847373522491",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.1225, 8.9988, -0.0452 },
@@ -29501,7 +29493,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 5.5602, 2.6063, 4.735 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 3060,
 			},
 		},
