@@ -2748,3 +2748,28 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - three deposits per hint;
   - the map is the same every time;
   - slow: four hard AIs build bases on it.
+
+## S-196 — Maps made the BAR way: image layers compiled into the game; Supreme Strait rebuilt from BAR's previews (the user) (2026-10-27)
+
+- **Asked:** "C's Supreme Strait ground need to be reworked … follow the design of this closely" (the 3D view). Then: "Follow beyond all reason pipeline for map design" (beyondallreason.info, mapping guide). On the source: "try to rebuild it first; if not satisfied, I will send you the file".
+- **Pipeline** (`docs/design/maps.md`):
+  - A named map is a folder `assets/maps/<name>/source/` like BAR's: `height.png` (BAR's heightmap), `type.png` (typemap), `metal.png` (metalmap, red dots), `minimap.png`, and `mapinfo.luau` (mapinfo.lua: size, cells, height range, water level, wind, types, metal value, symmetry, start hints).
+  - `lune run map_compile <name>` is BAR's compiler in our form. It resamples the layers to `cells` cells, enforces point symmetry, snaps start hints to open ground, and checks starts, reachability and deposits. It writes `src/shared/Grid/Maps/<name>.luau`: heights as Base64 i16, terrain run-length encoded, deposits and starts. `Shared/Grid/CompiledMap` turns that back into Layers in both runtimes (with `Shared/Util/Base64`).
+  - `lune run map_derive` derives the type, metal and minimap layers from a painted texture and the height map.
+  - `.lune/lib/Png` reads 8- and 16-bit PNGs (zlib via @lune/serde) and writes them.
+- **Supreme Strait, rebuilt:**
+  - **Sources:** BAR's preview images, fetched as WebP and converted with Windows' decoder: the 1537-pixel height map (8-bit, BAR's full 64 × 24 + 1 resolution) and the 4096-pixel dry texture.
+  - **Heights:** −6 to 83.25 studs with the water at 8. The seas are about 7 deep at their floor, enough for ships but not subs. The crater lakes come out of the height map.
+  - **Type:** green and the mesas' yellow tops are grass. Steep ground (over 1.6 studs a BAR pixel) and dark stone on high ground are rock. Grey (beaches, the strait, the sand paths, the sea floor) is sand.
+  - **Metal:** the texture's 57 cyan crystals give 76 deposits after point symmetry; 8 are under water and 4 on mesa tops.
+  - **Starts:** the user's 8v8 spawn points (16 circles on the compiled render, point-symmetric).
+  - The client's `SupremeStrait.feature` now names cells sea, beach, grass or mountain, from the compiled layers.
+- **Ground:** models-C re-bakes `ground.supreme_strait` from the new layers. The S-195 bake was of the hand-shaped version, which the user didn't approve.
+- **Tests:** `SupremeStrait.spec`, rewritten for the compiled map:
+  - point symmetry;
+  - every land class reaches every start;
+  - every dry deposit but the mesa tops' is reachable;
+  - the seas are big and apart;
+  - each start has 2+ metal spots within 140 studs;
+  - slow: four AIs build bases.
+  - Plus `Base64.spec`.
