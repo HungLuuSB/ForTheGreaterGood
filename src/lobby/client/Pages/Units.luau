@@ -11,6 +11,8 @@
 local Codex = require("../../shared/Codex")
 local Config = require("../../shared/Config")
 local Defs = require("@shared/Defs/Defs")
+local UserInputService = game:GetService("UserInputService")
+
 local IconAtlas = require("@client/UI/IconAtlas")
 local Showroom = require("../Showroom")
 local Ui = require("../Ui")
@@ -175,6 +177,8 @@ function Units.new(frame: Frame, _router: any): any
 	local selected: string? = nil
 	local compare = false
 	local colorChoice: number? = nil -- nil: faction colours
+	local refreshFire: () -> ()
+	local setFullView: (boolean) -> ()
 
 	-- left: the list ---------------------------------------------------------
 	local left = Ui.card(frame, "List", UDim2.new(0, LIST_W, 1, 0), nil, 0.08)
@@ -238,7 +242,7 @@ function Units.new(frame: Frame, _router: any): any
 		outline.Transparency = 0.4
 		outline.Parent = l
 	end
-	local hint = Kit.text(stage, "Drag to turn · scroll to zoom", "small", Color3.fromRGB(200, 204, 212))
+	local hint = Kit.text(stage, "Drag to turn · scroll to zoom · H: full view", "small", Color3.fromRGB(200, 204, 212))
 	hint.Position = UDim2.fromOffset(0, 66)
 	hint.Size = UDim2.new(1, 0, 0, 18)
 	hint.TextXAlignment = Enum.TextXAlignment.Center
@@ -258,7 +262,30 @@ function Units.new(frame: Frame, _router: any): any
 	end
 	Kit.segmented(row1, placeOptions, "auto", function(v)
 		Showroom.setPlace(v)
+		task.defer(function()
+			refreshFire()
+		end)
 	end, 74)
+	-- the firing range (L-22): targets for the unit's weapons
+	local fire = Ui.frame(row1, "Fire", UDim2.fromOffset(0, 26))
+	fire.AutomaticSize = Enum.AutomaticSize.X
+	fire.LayoutOrder = 2
+	local fl = Kit.list(fire, 6, true)
+	fl.VerticalAlignment = Enum.VerticalAlignment.Center
+	local fireToggle = Kit.toggle(fire, false, function(on)
+		Showroom.setFiring(on)
+	end)
+	fireToggle.button.LayoutOrder = 1
+	local fireLabel = Ui.label(fire, "Fire", "small", Kit.COLOR.text, 2)
+	function refreshFire()
+		if codex == nil or selected == nil then
+			return
+		end
+		local def = (codex :: Codex.Codex).defs.units[selected :: string]
+		local n = Showroom.firingWeapons(def)
+		fireLabel.Text = if n > 0 then "Fire" else "Fire (no weapon)"
+		fireLabel.TextColor3 = if n > 0 then Kit.COLOR.text else Kit.COLOR.dim
+	end
 	local row2 = Ui.frame(bar, "Options", UDim2.new(1, 0, 0, 30))
 	row2.LayoutOrder = 2
 	local r2 = Kit.list(row2, Kit.SPACE.m, true)
@@ -281,6 +308,50 @@ function Units.new(frame: Frame, _router: any): any
 	swatches.LayoutOrder = 3
 	Kit.list(swatches, 3, true)
 	local compareButton: TextButton
+
+	-- full view (L-22): the panels and the top bar hide, the unit fills the screen
+	local gui = frame:FindFirstAncestorOfClass("ScreenGui")
+	local fullView = false
+	local full = Ui.button(stage, "Full view", "ghost", function()
+		setFullView(true)
+	end, 96, 26)
+	full.TextSize = 12
+	full.AnchorPoint = Vector2.new(1, 0)
+	full.Position = UDim2.new(1, 0, 0, 4)
+	local back = Ui.button(gui or frame, "Show panels (H)", "ghost", function()
+		setFullView(false)
+	end, 150, 30)
+	back.Name = "ShowPanels"
+	back.TextSize = 12
+	back.AnchorPoint = Vector2.new(0.5, 1)
+	back.Position = UDim2.new(0.5, 0, 1, -16)
+	back.ZIndex = 20
+	back.Visible = false
+	function setFullView(on: boolean)
+		if on == fullView then
+			return
+		end
+		fullView = on
+		for _, x in { left, right, bar, stageName, stageSub, hint, full } :: { GuiObject } do
+			x.Visible = not on
+		end
+		local top = gui and gui:FindFirstChild("TopBar")
+		if top and top:IsA("GuiObject") then
+			top.Visible = not on
+		end
+		back.Visible = on
+		-- the stage (the showroom's region, where drags turn the camera) takes the page
+		stage.Position = if on then UDim2.new() else UDim2.fromOffset(LIST_W + Kit.SPACE.l, 0)
+		stage.Size = if on then UDim2.fromScale(1, 1) else UDim2.new(1, -(LIST_W + ARTICLE_W + Kit.SPACE.l * 2), 1, 0)
+	end
+	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
+		if processed or input.KeyCode ~= Enum.KeyCode.H then
+			return
+		end
+		if frame.Visible and Showroom.isOpen() then
+			setFullView(not fullView)
+		end
+	end)
 
 	-- showing ------------------------------------------------------------------
 
@@ -324,6 +395,7 @@ function Units.new(frame: Frame, _router: any): any
 		stageName.Text = table.concat(names, "  vs  ")
 		local e = c.entries[selected :: string]
 		stageSub.Text = `{Ui.label2(e.faction)} · {if e.role then e.role.name else "Unit"} · {Codex.tierName(e.def.tier)}`
+		refreshFire()
 	end
 
 	for i = 0, #Config.COLORS do
@@ -639,6 +711,7 @@ function Units.new(frame: Frame, _router: any): any
 			end
 		end,
 		hide = function()
+			setFullView(false)
 			Showroom.leave()
 		end,
 	}

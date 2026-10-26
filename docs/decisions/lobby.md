@@ -145,3 +145,14 @@ The user approved it (queue item 5). "Invite" in the room calls `SocialService:P
 - **Transport:** the match server sends 2xx in the return teleport data (`error`) and, for a match that failed as a whole, in the result's `error`. The lobby cleans both (listed codes only), shows a whole-match error once with the results, and the rest in a panel.
 - **Delivery:** pending errors travel in the player's view (`errors`, three at most) until the player dismisses them (`dismissError`). A push sent at arrival could arrive before the client listens.
 - **Alternatives:** toasts (gone in 5 s, no room for a code and a description); the room's notice alone (only for players in a room, and not per player).
+
+## L-22 (2026-10-26): the Units showroom animates, fires and goes full screen
+
+- **Decision:** the user's ideas for the Units tab: unique unit animations, a weapon preview against dummy targets, and a full-screen view.
+- **Animation:** client-B's own piece scheduler and scripts (`Core/PieceAnim`, `Core/PieceScripts`, `Ambient`), not a lobby copy. Every animation the match has shows the same here, and new piece scripts come for free.
+- **Weapon preview:** the showroom plays the match's effects (`Render/Effects` draws `Core/Effects` records), not the match's network path. `Effects.update` needs a world of replicated units and events, so the showroom makes the records itself: tracers and bursts as `Effects` makes them, projectiles stepped with `Shared/Combat/Ballistics` at the sim's 15 Hz.
+  - **Distances:** targets stand at 15% of the weapon's range (22 to 40 studs), so the shot fits on screen. Shells keep the arc of 70% of the real range and fly slower.
+  - **Not shown:** anti-missile and strategic weapons; nothing would show them faithfully at this scale.
+- **Full view** hides the lobby's own panels and its top bar; the stage takes the page, so drags anywhere turn the camera.
+- **Cost:** 25 more of client-B's modules are mounted read-only, the same rule as the kit: B keeps their APIs stable, and the lobby's build check fails when one changes its requires.
+- **Alternatives:** running a small sim in the lobby (the whole sim on the client for a preview), or the lobby's own simple effects (looks that drift from the match).

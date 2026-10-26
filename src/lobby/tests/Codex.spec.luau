@@ -97,6 +97,23 @@ return function(t: RunAll.Context)
 		t.expect(#Codex.stats(codex, "ord_vehplant").builds > 0)
 	end)
 
+	t.test("the firing range has a target for every weapon but anti-missile and strategic ones", function()
+		local skipped = {}
+		for id, w in defs.weapons do
+			local kind = Codex.rangeTarget(w, false)
+			if kind == nil then
+				t.expect(w.interceptOnly or w.strategic or w.intercepts, `{id} has no target`)
+				table.insert(skipped, id)
+			end
+			if table.find(w.targets, "SUB") then
+				t.equal(Codex.rangeTarget(w, true), "sub", `{id} on water`)
+			end
+		end
+		t.equal(Codex.rangeTarget(defs.weapons.ord_ir_sam, false), "air")
+		t.equal(Codex.rangeTarget(defs.weapons.ord_heavy_cannon, true), "ground")
+		t.expect(#skipped > 0 and #skipped < 12, `{#skipped} skipped`)
+	end)
+
 	t.test("a comparison lists differences of 5% or more, biggest first", function()
 		local d = Codex.compare(codex, "ord_paladin", "chs_juggernaut")
 		for i, x in d do

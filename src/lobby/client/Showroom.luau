@@ -15,7 +15,8 @@
 -- menu's portraits do; submarines and amphibious units go underwater). The camera orbits the unit: it turns by itself
 -- (turntable), the mouse drags it round and the wheel zooms. Compare puts
 -- several units side by side. While the showroom is open the battle
--- behind the menu is away (Scene.setAway).
+-- behind the menu is away (Scene.setAway). Units play their own piece
+-- animations, and Fire puts up a firing range for their weapons (Range).
 
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
@@ -25,6 +26,7 @@ local CollectionService = game:GetService("CollectionService")
 local Models = require("@client/Render/Models")
 local MeshModels = require("@client/Render/MeshModels")
 local PortraitStage = require("@client/Core/PortraitStage")
+local Range = require("./Range")
 local Scene = require("./Scene")
 
 local Showroom = {}
@@ -61,7 +63,9 @@ local built: { [string]: boolean } = {}
 local open = false
 local defs: any = nil
 
-type Shown = { def: any, color: Color3, model: Model?, base: CFrame, size: Vector3, kind: string }
+type Shown = { id: number, def: any, color: Color3, model: Model?, base: CFrame, size: Vector3, kind: string }
+local nextId = 0
+local firing = false -- the firing range is up
 local shown: { Shown } = {}
 local place = "auto"
 local placeNow = "pad" -- what "auto" resolved to
@@ -272,9 +276,10 @@ end
 -- units ---------------------------------------------------------------------
 
 local function paint(m: Model, color: Color3)
+	-- anchoring stays the template's (its base; the pieces hang on joints
+	-- the animations turn)
 	for _, d in m:GetDescendants() do
 		if d:IsA("BasePart") then
-			d.Anchored = true
 			d.CanCollide = false
 			d.CanQuery = false
 			d.CanTouch = false
@@ -287,6 +292,7 @@ end
 
 local function clearUnits()
 	for _, s in shown do
+		Range.detach(s.id)
 		if s.model then
 			s.model:Destroy()
 		end
@@ -320,6 +326,21 @@ local function bottomFor(kind: string, size: Vector3, def: any): number
 		end
 	end
 	return FLOOR[placeNow] or 0
+end
+
+-- The place's levels for the firing range.
+local function placeInfo(): Range.Place
+	local c = CENTERS[placeNow]
+	if placeNow == "sky" then
+		return { floor = c.Y + 4, sky = true, underwater = false }
+	elseif placeNow == "water" then
+		return { floor = c.Y, water = c.Y, seabed = c.Y - 24, sky = false, underwater = false }
+	elseif placeNow == "shore" then
+		return { floor = c.Y, water = c.Y, seabed = c.Y - 16, sky = false, underwater = false }
+	elseif placeNow == "underwater" then
+		return { floor = c.Y - DEPTH, water = c.Y, seabed = c.Y - DEPTH, sky = false, underwater = true }
+	end
+	return { floor = c.Y + (FLOOR[placeNow] or 0), sky = false, underwater = false }
 end
 
 local function layout()
@@ -356,6 +377,22 @@ local function layout()
 		radius = math.max(radius, s.size.Magnitude / 2)
 	end
 	local span = math.max(total, radius * 2)
+	-- the firing range: its targets join the view
+	local reach: Vector3? = nil
+	if firing and shown[1] and shown[1].model then
+		local points = Range.setFiring(true, shown[1].base, placeInfo())
+		local far = 0
+		local sum = Vector3.zero
+		for _, p in points do
+			far = math.max(far, (Vector3.new(p.X, center.Y, p.Z) - center).Magnitude)
+			sum += p
+		end
+		if #points > 0 then
+			-- the unit and its targets, from their middle
+			span = math.max(span, far + radius)
+			reach = sum / #points
+		end
+	end
 	fitDistance = math.max(14, span / 2 / math.tan(math.rad(FOV / 2)) * 1.5)
 	-- aircraft: their middle; on the ground a little below the top;
 	-- underwater the middle of what's below the surface
@@ -363,6 +400,10 @@ local function layout()
 		target = center + Vector3.new(0, (low + math.min(high, -2)) / 2, 0)
 	else
 		target = center + Vector3.new(0, if placeNow == "sky" then top - (top - 4) / 2 else math.max(2, top * 0.45), 0)
+	end
+	if reach then
+		-- between the unit and its targets (a drone's height too)
+		target = target:Lerp(Vector3.new(reach.X, math.max(target.Y, reach.Y + 2), reach.Z), 0.5)
 	end
 end
 
@@ -376,9 +417,13 @@ local function spawn(s: Shown)
 	s.size = size
 	m.Parent = unitsFolder
 	if s.model then
+		Range.detach(s.id)
 		s.model:Destroy()
 	end
 	s.model = m
+	nextId += 1
+	s.id = nextId
+	Range.attach(s.id, m, s.def)
 end
 
 -- Shows these units (`list`: { { def, color } }), side by side.
@@ -395,7 +440,7 @@ function Showroom.show(list: { { def: any, color: Color3 } })
 	end
 	for _, item in list do
 		MeshModels.want(item.def.id, 1000)
-		local s: Shown = { def = item.def, color = item.color, model = nil, base = CFrame.new(), size = Vector3.one * 8, kind = PortraitStage.kind(item.def) }
+		local s: Shown = { id = 0, def = item.def, color = item.color, model = nil, base = CFrame.new(), size = Vector3.one * 8, kind = PortraitStage.kind(item.def) }
 		table.insert(shown, s)
 		spawn(s)
 	end
@@ -410,6 +455,20 @@ function Showroom.setPlace(name: string)
 		table.insert(list, { def = s.def, color = s.color })
 	end
 	Showroom.show(list)
+end
+
+-- The firing range on or off: targets for the shown units' weapons.
+function Showroom.setFiring(on: boolean)
+	firing = on
+	if not on then
+		Range.setFiring(false)
+	end
+	layout()
+end
+
+-- How many of a unit's weapons the firing range shows (0: Fire is off).
+function Showroom.firingWeapons(def: any): number
+	return Range.shownWeapons(def, placeNow == "water" or placeNow == "shore" or placeNow == "underwater")
 end
 
 function Showroom.setTurntable(on: boolean)
@@ -507,6 +566,7 @@ local function step(dt: number)
 			m:PivotTo(s.base * CFrame.new(0, math.sin(now * 1.3 + i) * amp, 0) * CFrame.Angles(math.sin(now * 0.9 + i) * 0.015, 0, math.sin(now * 1.1 + i) * 0.02))
 		end
 	end
+	Range.step(dt)
 end
 
 -- open / close -----------------------------------------------------------------
@@ -526,6 +586,16 @@ function Showroom.enter(allDefs: any)
 			end
 		end)
 		RunService.RenderStepped:Connect(step)
+		Range.init(allDefs, folder)
+		Range.setGround(function(p: Vector3): number
+			local c = CENTERS[placeNow]
+			if placeNow == "sky" then
+				return c.Y - 139 -- the runway's field far below
+			elseif placeNow == "pad" or placeNow == "field" then
+				return c.Y + (FLOOR[placeNow] or 0)
+			end
+			return c.Y -- the water's surface
+		end)
 	end
 	open = true
 	folder.Parent = workspace
@@ -538,6 +608,8 @@ function Showroom.leave()
 		return
 	end
 	open = false
+	firing = false
+	Range.stop()
 	folder.Parent = nil
 	Scene.setAway(false)
 	Scene.relight()
