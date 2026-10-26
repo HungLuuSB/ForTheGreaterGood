@@ -53,11 +53,11 @@ STYLES = {
     # 512 cells (S-189): heights every 8 studs (`coarsen`), a quarter of the triangles: 4x the
     # area of the 256-cell maps at the same cost; its gentle hills lose nothing visible
     "lakelands": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock"), "coarsen": 2},
-    # 320 cells (S-195): two sandy seas, rock mountains, craters and mesas. At 4 studs the
-    # tiles alone were 835k triangles (1.3M with the crag); heights every 8 studs, but the
-    # crag skin on the rock still at 2-stud steps (`crag_sub` 4), so cliffs and rims stay rough
-    "supreme_strait": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock"),
-                       "coarsen": 2, "crag_sub": 4},
+    # S-196: rebuilt the BAR way, so dressed in its BAR texture's colours (`palette`); the full
+    # 4-stud sampling (the reef islets are 12-16 studs across), crag only on slopes
+    "supreme_strait": {"crag": "strait_rock", "boulders": True, "rock": "strait_rock", "aim": ("material", "strait_rock"),
+                       "crag_slope": 0.3,
+                       "palette": {"sand": "strait_sand", "grass": "strait_grass", "rock": "strait_rock"}},
     "crossroads": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
     # the bocage: hedgerow foliage on the banks, crag on the bluffs
     "normandy": {"crag": "rock", "hedges": "leafy", "keep_cells": True, "boulders": True, "rock": "rock", "aim": ("feature", "hedge")},
@@ -85,6 +85,11 @@ class Field:
         self.per_cell = self.cell // self.step
         gz, gx = np.gradient(self.h, self.step)
         self.gx, self.gz = gx, gz
+
+    def restyle(self, style):
+        """`palette` renames ground types to per-map material variants (textures.py VARIANTS):
+        a BAR-pipeline map in its own BAR texture's colours (docs/design/maps.md)."""
+        self.mat_pal = [style.get("palette", {}).get(m, m) for m in self.mat_pal]
 
     def coarsen(self, k):
         """Keeps every k-th height sample (a big map's flatter ground at a fraction of the
@@ -787,6 +792,10 @@ def crag(f, rng, records, style, names, w):
     k = names.index(key)
     others = np.delete(w, k, axis=0)
     dom = w[k] - (others.max(0) if len(others) else 0)  # > 0 where rock wins, per sample
+    if style.get("crag_slope"):
+        # only on slopes steeper than this (rise / run): flat rock (mesa tops) stays clean, so
+        # the play areas read calm and the cliffs dark (BAR's environment design guide)
+        dom = np.minimum(dom, (np.hypot(f.gx, f.gz) - style["crag_slope"]) * 2.0)
     ridge = Periodic(rng, 64.0, 2.6, lo=2, hi=40)
     ridge2 = Periodic(rng, 23.0, 2.2, lo=2, hi=30)
     sub = style.get("crag_sub", 2)  # vertices per sample step (2 studs at the usual 4-stud sampling)
@@ -1013,6 +1022,42 @@ def preview_material(key):
     return mat
 
 
+def water_preview(g):
+    """The water the client draws (B's mesh water), for the previews only: a flat quad over
+    each cell with water, at its ground plus its depth (the seas at the water level, the crater
+    lakes at theirs). Dark and glossy, so the ground under it reads as a sea floor."""
+    cw, cd = g["cells"]
+    depth = g.get("water") or []
+    if not any(depth):
+        return None
+    nx = g["vertices"][0]
+    pc = g["cellSize"] // g["step"]
+    verts, faces = [], []
+    for cz in range(cd):
+        for cx in range(cw):
+            d = depth[cz * cw + cx]
+            if d <= 0:
+                continue
+            y = g["heights"][(cz * pc + pc // 2) * nx + cx * pc + pc // 2] + d
+            x0, z0 = g["origin"][0] + cx * g["cellSize"], g["origin"][1] + cz * g["cellSize"]
+            base = len(verts)
+            for x, z in ((x0, z0), (x0 + g["cellSize"], z0), (x0 + g["cellSize"], z0 + g["cellSize"]), (x0, z0 + g["cellSize"])):
+                verts.append(tuple(R(x, y, z)))
+            faces.append((base, base + 1, base + 2, base + 3))
+    me = bpy.data.meshes.new("water")
+    me.from_pydata(verts, [], faces)
+    ob = bpy.data.objects.new("water", me)
+    bpy.context.scene.collection.objects.link(ob)
+    mat = bpy.data.materials.new("water")
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = (0.01, 0.03, 0.07, 1)
+    bsdf.inputs["Roughness"].default_value = 0.08
+    bsdf.inputs["Alpha"].default_value = 0.82
+    me.materials.append(mat)
+    return ob
+
+
 def previews(name, records, out, f, shots):
     scene = bpy.context.scene
     mats = {}
@@ -1063,6 +1108,7 @@ def main():
     lib.reset_scene()
     f = Field(g)
     style = STYLES.get(name, {})
+    f.restyle(style)
     if style.get("coarsen"):
         f.coarsen(style["coarsen"])
     rng = np.random.default_rng(sum(map(ord, name)) * 104729)
@@ -1117,7 +1163,10 @@ def main():
         look = (look[0], f.at(look[0], look[2]), look[2])
         shots = [("55_close", *shot(look, 90), 50), ("55_220", *shot(look, 220), 50),
                  ("side", (look[0] - 45, look[1] + 8, look[2] + 95), (look[0] + 5, look[1] + 10, look[2] - 10), 35),
-                 ("55_far", *shot((f.ox + f.sx / 2, 20, f.oz + f.sz / 2), max(900, 0.9 * max(f.sx, f.sz))), 35)]  # the whole of a big map
+                 ("55_far", *shot((f.ox + f.sx / 2, 20, f.oz + f.sz / 2), max(900, 0.9 * max(f.sx, f.sz))), 35),  # the whole of a big map
+                 # straight down, as the game's camera at yaw 0 sees it (-Z at the top)
+                 ("top", *shot((f.ox + f.sx / 2, 0, f.oz + f.sz / 2), 2.6 * max(f.sx, f.sz), pitch=89.9), 50)]
+        water_preview(g)
         previews(name, records, out, f, shots)
 
 
