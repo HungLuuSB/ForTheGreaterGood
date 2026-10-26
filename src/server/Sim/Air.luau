@@ -8,6 +8,11 @@
 -- with a move order they fly to the goal and start circling it.
 -- Helicopters use the ordinary steering (they can hover) at their own band.
 --
+-- Retreat (S-194, the user's G17: no more ammo for aircraft): an aircraft
+-- whose health falls below its retreat setting (Schema.RetreatAt: 30 / 40 /
+-- 50% or never; RETREAT_DEFAULT) flies to a rearm pad and heals there, free,
+-- in HEAL_SECONDS from nothing to full (faster on an advanced pad), then goes
+-- back to where it was going. A def may still carry ammo (none do since S-194):
 -- An aircraft whose ammo runs out flies to the nearest friendly rearm pad,
 -- lands when within reach and a pad slot is free, rearms round by round
 -- (paying ammoCost per round at the team's stall ratio, guide 8.6), then
@@ -16,6 +21,7 @@
 -- so they cost supply without lengthening the rearm (guide 11.6).
 
 local AirState = require("./AirState")
+local Schema = require("@shared/Net/Schema")
 local Combat = require("./Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
@@ -45,6 +51,8 @@ Air.LAND_RADIUS = table.freeze({ JET = 60, HELI = 12 })
 -- protocol 38): jets turn back once over the edge, and no aircraft goes
 -- further than OVERFLY past it (the widest jet turn, the Liche's, is 372).
 Air.OVERFLY = Grid.OVERFLY -- 512 studs
+Air.RETREAT_DEFAULT = Schema.RetreatAt.AT_30 -- (S-194)
+Air.HEAL_SECONDS = 10 -- a rearm pad heals an aircraft from nothing to full in this long (S-194)
 
 local sqrt, atan2 = math.sqrt, math.atan2
 local PI, TAU = math.pi, 2 * math.pi
@@ -143,6 +151,7 @@ function Air.onSpawn(sim: Types.Sim, id: number)
 	w.alt[id] = cruiseAltitude(sim, d)
 	a.phase[id] = "fly"
 	a.ammo[id] = d.ammo
+	a.retreat[id] = Air.RETREAT_DEFAULT
 	a.pad[id] = 0
 	a.padGen[id] = 0
 	a.progress[id] = 0
@@ -187,8 +196,21 @@ local function headTo(sim: Types.Sim, id: number, x: number, z: number)
 	end
 end
 
--- Out of ammo: remember where we were going, head for a pad: its home base
--- if it has one (S-36), else the nearest.
+-- Aircraft `id`'s retreat setting (Schema.RetreatAt; S-194).
+function Air.setRetreat(sim: Types.Sim, id: number, value: number)
+	if sim.air.phase[id] ~= nil then
+		sim.air.retreat[id] = value
+	end
+end
+
+-- Is aircraft `id` below its retreat health (S-194)?
+function Air.hurt(sim: Types.Sim, id: number): boolean
+	local share = Schema.RETREAT_SHARE[sim.air.retreat[id] or 0] or 0
+	return share > 0 and sim.world.health[id] < share * def(sim, id).health
+end
+
+-- Out of ammo, or hurt (S-194): remember where we were going, head for a
+-- pad: its home base if it has one (S-36), else the nearest.
 function Air.onEmpty(sim: Types.Sim, id: number)
 	local a = sim.air
 	if a.phase[id] ~= "fly" then
@@ -257,7 +279,7 @@ function Air.release(sim: Types.Sim, id: number)
 	a.hold[id] = nil
 	local d = def(sim, id)
 	local empty = d.ammo ~= nil and (a.ammo[id] or 0) <= 0
-	if a.phase[id] == "docked" or (a.phase[id] == "return" and not empty) then
+	if a.phase[id] == "docked" or (a.phase[id] == "return" and not empty and not Air.hurt(sim, id)) then
 		takeOff(sim, id)
 	end
 end
@@ -547,6 +569,10 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 
 	for _, id in w.ids do
 		local phase = a.phase[id]
+		if phase == "fly" and (sim.tick + id) % 15 == 0 and Air.hurt(sim, id) then
+			Air.onEmpty(sim, id) -- (S-194) hurt: off to a pad to heal; keeps flying if there is none
+			phase = a.phase[id]
+		end
 		if phase == "return" then
 			local pad = a.pad[id]
 			if not World.isRef(w, pad, a.padGen[id]) then
@@ -570,7 +596,7 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 				padLoad[pad] = (padLoad[pad] or 0) + 1
 				a.phase[id] = "rearm"
 				a.progress[id] = 0
-				local rounds = math.max((def(sim, id).ammo or 1) - (a.ammo[id] or 0), 1)
+				local rounds = if def(sim, id).ammo then math.max((def(sim, id).ammo :: number) - (a.ammo[id] or 0), 1) else 1
 				local charges, supply = EW.missingCharges(sim, id)
 				a.cmPerRound[id] = charges / rounds
 				a.cmSupplyPerRound[id] = supply / rounds
@@ -608,7 +634,12 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 			local cost = d.ammoCost or NO_COST
 			local cs, cp = (cost.supply or 0) + (a.cmSupplyPerRound[id] or 0), cost.power or 0
 			-- rounds per second at full economy; an advanced pad rearms faster (S-166)
-			local rate = (def(sim, pad).rearmSpeed or 1) / (d.rearmTime :: number)
+			local padSpeed = def(sim, pad).rearmSpeed or 1
+			local rate = padSpeed / (d.rearmTime or 2)
+			-- healing (S-194): free, HEAL_SECONDS from nothing to full
+			if w.health[id] < d.health then
+				World.setHealth(w, id, math.min(d.health, w.health[id] + d.health * padSpeed * Air.DT / Air.HEAL_SECONDS))
+			end
 			local team = w.team[id]
 			local acc = eco.accounts[team]
 			demandS[team] += cs * rate
@@ -629,9 +660,11 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 				acc.supply.spent += cs * step
 				acc.power.spent += cp * step
 				local progress = a.progress[id] + step
-				while progress >= 1 - 1e-9 and a.ammo[id] < (d.ammo :: number) do
-					a.ammo[id] += 1
-					progress -= 1
+				if d.ammo ~= nil then
+					while progress >= 1 - 1e-9 and a.ammo[id] < (d.ammo :: number) do
+						a.ammo[id] += 1
+						progress -= 1
+					end
 				end
 				a.progress[id] = math.max(progress, 0)
 				local perRound = a.cmPerRound[id] or 0
@@ -647,7 +680,8 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 				World.setPosition(w, id, w.posX[pad], w.posZ[pad]) -- a carrier carries it along (S-36)
 				w.goalX[id], w.goalZ[id] = w.posX[pad], w.posZ[pad]
 			end
-			if d.ammo == nil or a.ammo[id] >= (d.ammo :: number) then
+			local stocked = if d.ammo == nil then a.progress[id] >= 1 - 1e-9 else a.ammo[id] >= (d.ammo :: number)
+			if stocked and w.health[id] >= d.health then
 				-- full. The last fraction of a charge is already paid, so top the
 				-- countermeasures up.
 				EW.refill(sim, id)

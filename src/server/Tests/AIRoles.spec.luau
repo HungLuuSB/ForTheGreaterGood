@@ -65,7 +65,7 @@ return function(t: RunAll.Context)
 	t.slow("in a 3v3 the air AI builds an airfield early, the defence AI twice the turrets, and bot labs come into play", function()
 		local sim = teamMatch({ "hard", "hard", "hard", "hard_aggressive", "hard_aggressive", "hard_aggressive" })
 		local brains = Skirmish.forMatch(sim)
-		run(sim, brains, 15 * 60 * 10)
+		run(sim, brains, 15 * 60 * 14) -- (14 min: S-193 slowed units and the bot lab waits for an established base)
 		t.expect(owned(sim, 2, "airfield") + owned(sim, 5, "airfield") >= 1, "an air role built an airfield")
 		local airUnits = 0
 		for _, id in sim.world.ids do

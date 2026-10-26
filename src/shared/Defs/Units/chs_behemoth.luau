@@ -20,8 +20,6 @@ return Templates.extend(Templates.Unit, {
 	weapons = { { def = "chs_heavy_bomb", muzzle = "muzzle" } },
 	pieces = { "base", "bay", "pylon", "muzzle" },
 	icon = "bomber_heavy",
-	ammo = 3,
-	ammoCost = { supply = 35, power = 260 },
 	rearmTime = 3.5,
 	countermeasures = { chaff = { charges = 8, chance = 0.5, refillSupply = 3 } },
 	model = "chs_behemoth",

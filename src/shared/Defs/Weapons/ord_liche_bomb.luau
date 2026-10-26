@@ -5,7 +5,7 @@ return {
 	type = "BOMB",
 	range = 800, -- acquisition radius; release is computed (D91)
 	canTargetRadar = true,
-	reload = 1,
+	reload = 21, -- 1 + the 20 s rearm per round it no longer flies home for (S-194, G17: no ammo)
 	gravity = 60,
 	accuracy = 2,
 	damage = { LIGHT = 3000, ARMORED = 2800, STRUCTURE = 4000, SHIP = 3000, AIR = 0, SUB = 0 },

@@ -134,6 +134,11 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 	local o = sim.orders
 	local batch = o.nextBatch
 	o.nextBatch += 1
+	if not queued then
+		for _, id in ids do
+			o.dgunX[id], o.dgunZ[id], o.dgunWalk[id] = nil, nil, nil -- a new order drops a D-Gun shot not fired yet (S-194)
+		end
+	end
 	-- a group move (ctrl, S-137): every ground unit goes at the slowest one's
 	-- top speed, so the group keeps together (aircraft fly as usual)
 	local speedCap: number? = nil

@@ -234,6 +234,8 @@ return {
 		chs_spike_cannon = require("./Weapons/chs_spike_cannon"),
 		chs_talos_shell = require("./Weapons/chs_talos_shell"),
 		chs_thug_cannon = require("./Weapons/chs_thug_cannon"),
+		chs_warlord_dgun = require("./Weapons/chs_warlord_dgun"),
+		chs_warlord_laser = require("./Weapons/chs_warlord_laser"),
 		chs_torpedo = require("./Weapons/chs_torpedo"),
 		chs_twin_laser = require("./Weapons/chs_twin_laser"),
 		chs_tzar_cannon = require("./Weapons/chs_tzar_cannon"),
@@ -275,6 +277,8 @@ return {
 		ord_sanction_missile = require("./Weapons/ord_sanction_missile"), -- (S-106)
 		ord_sentry_gun = require("./Weapons/ord_sentry_gun"),
 		ord_sentry_laser = require("./Weapons/ord_sentry_laser"),
+		ord_sovereign_dgun = require("./Weapons/ord_sovereign_dgun"),
+		ord_sovereign_laser = require("./Weapons/ord_sovereign_laser"),
 		ord_torpedo = require("./Weapons/ord_torpedo"),
 		ord_undertow_torpedo = require("./Weapons/ord_undertow_torpedo"),
 		ord_warden_gun = require("./Weapons/ord_warden_gun"),

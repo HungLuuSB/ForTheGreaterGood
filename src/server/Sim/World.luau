@@ -77,6 +77,7 @@ export type World = {
 	deploy: { [number]: number }, -- deployable units only: 0 packed .. 1 deployed (Deploy, S-64)
 	deployIds: { number }, -- deployable units, in the order they entered
 	wYaw: { [number]: number }, -- turret yaw relative to the hull, radians
+	wHull: { [number]: number }, -- the hull heading wYaw was last set against: an aiming turret counter-turns with the hull (S-194, G9)
 	wPitch: { [number]: number }, -- radians, up positive
 	wReload: { [number]: number }, -- seconds until ready (<= 0 = ready)
 	wTarget: { [number]: number }, -- target unit ID, 0 = none
@@ -134,6 +135,7 @@ function World.new(): World
 		deploy = {},
 		deployIds = {},
 		wYaw = {},
+		wHull = {},
 		wPitch = {},
 		wReload = {},
 		wTarget = {},
@@ -259,6 +261,7 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 		local key = id * 8 + slot - 1
 		local rest = info.weaponRest and info.weaponRest[slot]
 		w.wYaw[key] = if rest then rest[1] else 0
+		w.wHull[key] = w.heading[id]
 		w.wPitch[key] = if rest then rest[2] else 0
 		w.wHold[key] = 0
 		w.wOverkill[key] = 0
@@ -350,6 +353,7 @@ function World.despawn(w: World, tick: number, id: number)
 	for slot = 1, w.weaponCount[id] do
 		local key = id * 8 + slot - 1
 		w.wYaw[key] = nil
+		w.wHull[key] = nil
 		w.wPitch[key] = nil
 		w.wReload[key] = nil
 		w.wTarget[key] = nil
@@ -469,6 +473,7 @@ function World.hash(w: World, h: number?): number
 		for slot = 1, w.weaponCount[id] do
 			local key = id * 8 + slot - 1
 			hv = Hash.number(hv, w.wYaw[key])
+			hv = Hash.number(hv, w.wHull[key])
 			hv = Hash.number(hv, w.wPitch[key])
 			hv = Hash.number(hv, w.wReload[key])
 			hv = Hash.u32(hv, w.wTarget[key])

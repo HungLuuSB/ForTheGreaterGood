@@ -18,8 +18,6 @@ return Templates.extend(Templates.Unit, {
 	movement = { maxSpeed = 42, accel = 30, brake = 40, turnRate = 180 },
 	sensors = { sight = 200, airSight = 260 },
 	weapons = { { def = "ord_rockets", turretPiece = "pylon", muzzle = "muzzle" } },
-	ammo = 12,
-	ammoCost = { supply = 6, power = 60 },
 	rearmTime = 0.6,
 	countermeasures = { dircm = { chance = 0.7, cooldown = 3, powerDrain = 15 } },
 	pieces = { "base", "pylon", "muzzle" },

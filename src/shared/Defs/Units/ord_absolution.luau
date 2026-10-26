@@ -20,8 +20,6 @@ return Templates.extend(Templates.Unit, {
 	weapons = { { def = "ord_bomb", muzzle = "muzzle" } },
 	pieces = { "base", "bay", "pylon", "muzzle" },
 	icon = "bomber",
-	ammo = 4,
-	ammoCost = { supply = 15, power = 120 },
 	rearmTime = 2,
 	countermeasures = { chaff = { charges = 2, chance = 0.5, refillSupply = 3 } },
 	model = "ord_absolution",

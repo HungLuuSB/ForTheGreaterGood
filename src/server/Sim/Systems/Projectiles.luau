@@ -213,6 +213,65 @@ return function(sim: Types.Sim)
 			Combat.removeProjectile(c, id)
 			continue
 		end
+		if weapon.bolt then
+			-- the D-Gun's bolt (S-194, G5): rides the ground in a straight line
+			-- and destroys every unit it passes through, once each
+			local hit = c.pHit[id]
+			if hit == nil then
+				hit = {}
+				c.pHit[id] = hit
+				-- its range along the ground, flown level from here on
+				local hs = sqrt(pvx * pvx + pvz * pvz)
+				local speed = sqrt(hs * hs + pvy * pvy)
+				if hs > 1e-6 then
+					vx, vz = pvx / hs * speed, pvz / hs * speed
+					x1, z1 = x0 + vx * DT, z0 + vz * DT
+				end
+				c.pTtl[id] = weapon.range / math.max(speed, 1)
+			end
+			y1, vy = Combat.groundHeight(c, x1, z1) + Combat.BOLT_HEIGHT, 0
+			local owner = c.pOwner[id]
+			local reach = weapon.bolt :: number
+			local n = ContactGrid.query(c.contacts, w, (x0 + x1) / 2, (z0 + z1) / 2, reach + c.maxRadius + sqrt((x1 - x0) ^ 2 + (z1 - z0) ^ 2) / 2, 0, candidates)
+			local passed = table.move(candidates, 1, n, 1, table.create(n))
+			table.sort(passed) -- (in ID order: deterministic)
+			local dx, dz = x1 - x0, z1 - z0
+			local len2 = dx * dx + dz * dz
+			for _, u in passed do
+				if u == owner or hit[u] or w.slot[u] == nil then
+					continue
+				end
+				local p = profiles[w.defIndex[u]]
+				local ud = sim.defs.unitByIndex[w.defIndex[u]]
+				if ud.domain == "air" and bit32.band(w.state[u], World.State.LANDED) == 0 then
+					continue -- over the bolt's head
+				end
+				local t = if len2 > 0 then math.clamp(((w.posX[u] - x0) * dx + (w.posZ[u] - z0) * dz) / len2, 0, 1) else 0
+				local ex, ez = x0 + dx * t - w.posX[u], z0 + dz * t - w.posZ[u]
+				if ex * ex + ez * ez <= (reach + p.radius) ^ 2 then
+					hit[u] = true
+					local commander = bit32.band(p.categoryMask, Combat.COMMANDER_BIT) ~= 0
+					local amount = if commander then ud.health * Combat.BOLT_COMMANDER else w.health[u] * 100 + 1
+					if not commander then
+						c.noWreck[u] = true
+						sim.cheats.killing[u] = true -- (through god mode)
+					end
+					Combat.queueDamage(c, u, amount, if World.isRef(w, owner, c.pOwnerGen[id]) then owner else 0, c.pPlayer[id])
+					Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = u, other = id, x = w.posX[u], y = y1, z = w.posZ[u] })
+					c.stats.hits += 1
+				end
+			end
+			local ttl = c.pTtl[id] - DT
+			if ttl <= 0 then
+				Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = 0, other = id, x = x1, y = y1, z = z1 })
+				Combat.removeProjectile(c, id)
+			else
+				c.px[id], c.py[id], c.pz[id] = x1, y1, z1
+				c.pvx[id], c.pvy[id], c.pvz[id] = vx, vy, vz
+				c.pTtl[id] = ttl
+			end
+			continue
+		end
 		if weapon.type == "TORPEDO" then
 			-- torpedoes run in water only (guide 12.3): gone at the shore,
 			-- otherwise held between the sea floor and just under the surface

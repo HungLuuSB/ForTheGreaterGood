@@ -4,7 +4,7 @@ return {
 	id = "chs_heavy_aam",
 	type = "HOMING",
 	range = 350, -- faction pass, tuned (S-62)
-	reload = 0.9, -- faction pass (S-62)
+	reload = 2.3, -- 0.9 + the 1.4 s rearm per round it no longer flies home for (S-194, G17: no ammo)
 	projectileSpeed = 460,
 	accuracy = 1,
 	turnRate = 180,

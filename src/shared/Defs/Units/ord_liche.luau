@@ -19,8 +19,6 @@ return Templates.extend(Templates.Unit, {
 	sensors = { sight = 220 },
 	weapons = { { def = "ord_liche_bomb", muzzle = "muzzle" } },
 	pieces = { "base", "bay", "muzzle" },
-	ammo = 1,
-	ammoCost = { supply = 120, power = 1500 },
 	rearmTime = 20,
 	countermeasures = { chaff = { charges = 3, chance = 0.5, refillSupply = 4 } },
 	icon = "bomber_heavy",
