@@ -2069,3 +2069,22 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Studio: three Lancers at the ridge's foot (x −972 to −956, z −1580) sit on the drawn grass and slope; screenshot `debug_out/screens/2026-10-26-lakelands-ridge-foot.jpg`. The ground's 402 pieces took about 160 s to load on the first run of a session and about 55 s once cached. The first figure is past the loading screen's 115 s hold.
 
 **Why:** models-C's note with the bake: on coarsened maps the mesh and Core/Terrain's heights differ on slopes.
+
+### C-236 — Mesh water; mesh ground for unbaked maps (2026-10-26, S-192)
+
+**Water as mesh planes.** `Ground.WATER = "mesh"` is the default; Studio's `Invoke("water", "terrain")` brings back terrain water to compare.
+- `Core/Terrain.waterRects(layers)` merges the water cells of each surface level into rectangles that never overlap. Two see-through planes over one cell would show a darker seam.
+- Dry cells next to water join at their highest water neighbour's level: a shore band one cell wide. The ground crosses the surface inside that band, so the plane runs on under the shore and the ground draws the waterline. Rectangles: Coastline 17, The Lakelands 118, Normandy 261 (its river steps down in 14 levels).
+- `Render/Ground` draws each rectangle as a thin Glass plane, transparency 0.32, which catches the sun. Under it go two darker planes, 2.5 and 7 studs down. The ground hides them where the water is shallower, so deep water reads darker, as terrain water did.
+- Ripples: a tileable pattern of bright crests drawn once into a 256² EditableImage, which is small next to the editable budget. It's laid twice on every surface, aligned to world coordinates so planes meet without seams. The two layers scroll two ways on endless tweens; each loop moves whole tiles, so it never jumps, and nothing runs per frame. Without EditableImage (C-214) the water stays plain.
+- Voxel terrain gets no water when mesh water is on. `RenderTerrain.build` gained a 4th parameter, `noWater`; its other parameters are unchanged, so lobby-D's mount still works.
+- Studio, Coastline at 14:00: `debug_out/screens/2026-10-26-water-*.jpg` (terrain, plain mesh, mesh with ripples, the RTS view). Terrain water still has real waves and foam. Mesh water has no LOD and no voxels, and its ripples are a repeating pattern. Not yet looked at on a baked map's shore.
+
+**Mesh ground for maps without a bake: not built.** Options looked at:
+- An EditableMesh at load: over budget. The device's editable memory ran out at about 7,600 vertices (C-213's note). A 128-cell map at 8 studs needs 16,600 vertices, a 256-cell map 66,000, and The Canyon at full detail 160,000.
+- One uploaded grid-patch mesh with a bone per vertex, tiled over the map, with the bones moved to the layers' heights at load. Feasible without editable memory. But a 256-cell map at 8 studs means 66,000 Bone instances (16,000 at 16 studs), plus one upload with the user's approval.
+- Wedge parts per triangle: hundreds of thousands of parts.
+- Keep the voxels for maps without a bake. **Chosen for now.** Players only reach the named maps through the lobby. Random `mapgen:` and `flat:`/`start:` maps are for development. So what players see in voxels is the named maps whose bakes aren't approved yet: The Plains (no bake), and Ridgeline, Coastline, Twin Lakes, Crossroads, Normandy and The Canyon (bakes in review). Approving those bakes, and models-C baking The Plains, moves every player-facing map to mesh ground with no client work.
+- If random maps ever reach players, the bone grid is the way to go.
+
+**Why:** S-192, the user: "From now on, maybe switch to mesh terrain instead of Roblox terrain."

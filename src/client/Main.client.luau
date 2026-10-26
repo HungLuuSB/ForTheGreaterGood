@@ -951,6 +951,16 @@ if RunService:IsStudio() then
 				lods[u.lod] += 1
 			end
 			return { lods = lods, stats = anim.stats }
+		elseif query == "water" then
+			-- Invoke("water", "mesh" | "terrain"): draw the water that way and rebuild the ground (C-236)
+			local mode = ...
+			if mode == "mesh" or mode == "terrain" then
+				Ground.WATER = mode
+				if world.layers then
+					Ground.build(world.layers, nil, mapFeature(world.mapId), world.mapId)
+				end
+			end
+			return Ground.last
 		elseif query == "ground" then
 			-- Invoke("ground", "terrain" | "parts"?): rebuild the ground that way; Invoke("ground") the last build's stats
 			local mode = ...
