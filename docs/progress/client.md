@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Trees and rocks textured (C-247):** the approved tree and rock models draw with their textures on Supreme Strait. Two of models-C's textures don't load yet; C is told.
+- Ready to merge: `efda9c36` (C-247; main 4f875faa merged in; test_client 326 / 326, build passed; Studio: 568 features textured)
 - **Nukes aimed at a unit (C-246):** with a nuke silo selected, Attack and a click on an enemy unit now launches at that spot. Before, nothing launched.
 - Ready to merge: `c8c27416` (C-246; main 2c36d0da merged in; test_client 326 / 326, build passed; Studio: a launch from A + a click on a Ravager)
 - **Protocol 40 (C-245):**
