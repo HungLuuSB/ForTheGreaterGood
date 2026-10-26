@@ -7,8 +7,10 @@
 -- says how long. Invite sends a Roblox game invite carrying the room code
 -- (L-17). The host's controls show only for the host; the server checks
 -- every request anyway. A click on a seat opens its editor: your own
--- faction, team and color; the host's AI (level, faction, team, color,
--- remove) and kick.
+-- faction and team; the host's AI (level, faction, team, remove) and kick.
+-- Colours are automatic (S-172), as the match shows them to you: you and
+-- your allies cold, enemies warm (MatchConfig.colors). In Teams the map
+-- shows each team's spawn box; the host drags them (F26, BoxEditor).
 
 local Players = game:GetService("Players")
 local SocialService = game:GetService("SocialService")
@@ -16,6 +18,9 @@ local TextChatService = game:GetService("TextChatService")
 
 local Config = require("../../shared/Config")
 local Listing = require("../../shared/Listing")
+local MatchConfig = require("../../shared/MatchConfig")
+local SpawnBoxes = require("../../shared/SpawnBoxes")
+local BoxEditor = require("../BoxEditor")
 local MapImage = require("../MapImage")
 local Net = require("../Net")
 local Ui = require("../Ui")
@@ -78,7 +83,7 @@ local function editSeat(gui: Instance, index: number)
 	end
 	local m = memberOf(room, s.user)
 	local title = if s.kind == "ai" then "AI player" elseif mine then "Your seat" else (if m then m.name else "Player")
-	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 430 else 360))
+	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 260 else 240))
 	Kit.list(p.content, Kit.SPACE.s)
 	local function send(fields: any)
 		local msg = table.clone(fields)
@@ -94,6 +99,12 @@ local function editSeat(gui: Instance, index: number)
 		Kit.segmented(Kit.row(p.content, "Faction", 1), options(Config.FACTIONS), s.faction, function(v)
 			send({ faction = v })
 		end, 90)
+		if mine then
+			-- F35: the match's pre-game has the last word on factions
+			local note = Kit.text(p.content, "A first choice: you can change it in the match before it starts.", "small", Kit.COLOR.dim)
+			note.Size = UDim2.new(1, 0, 0, 16)
+			note.LayoutOrder = 1
+		end
 		if room.settings.mode == "TEAM" then
 			local teams = {}
 			local sides = sidesFor(room)
@@ -108,40 +119,6 @@ local function editSeat(gui: Instance, index: number)
 			Kit.segmented(Kit.row(p.content, "Difficulty", 3), options(Config.LEVELS), s.level, function(v)
 				send({ level = v })
 			end, 80)
-		end
-		local colorRows = math.ceil(#Config.COLORS / 6)
-		local colorRow = Kit.row(p.content, "Color", 4, colorRows * 30 + 4)
-		local wrap = Ui.frame(colorRow, "Colors", UDim2.fromOffset(6 * 30, colorRows * 30))
-		local gl = Instance.new("UIGridLayout")
-		gl.CellSize = UDim2.fromOffset(24, 24)
-		gl.CellPadding = UDim2.fromOffset(6, 6)
-		gl.Parent = wrap
-		local taken: { [number]: boolean } = {}
-		for j, other in room.slots do
-			if j ~= index then
-				taken[other.color] = true
-			end
-		end
-		for c = 1, #Config.COLORS do
-			local b = Instance.new("TextButton")
-			b.Text = if taken[c] then "×" else ""
-			b.TextColor3 = Color3.new(0, 0, 0)
-			b.TextSize = 16
-			b.BackgroundColor3 = Ui.color(c)
-			b.BackgroundTransparency = if taken[c] then 0.7 else 0
-			b.LayoutOrder = c
-			b.AutoButtonColor = not taken[c]
-			b.Parent = wrap
-			Ui.corner(b, 4)
-			if c == s.color then
-				Ui.stroke(b, 0, Color3.new(1, 1, 1))
-			end
-			b.MouseButton1Click:Connect(function()
-				if not taken[c] then
-					send({ color = c })
-					close()
-				end
-			end)
 		end
 	end
 	local buttons = Ui.frame(p.content, "Buttons", UDim2.new(1, 0, 0, 34))
@@ -265,6 +242,18 @@ function Room.new(frame: Frame, _router: any): any
 	local rightCol = Ui.frame(frame, "Setup", UDim2.new(0.36, 0, 1, 0), UDim2.new(0.64, 0, 0, 0))
 	local mapHolder = Ui.frame(rightCol, "MapHolder", UDim2.new(1, 0, 1, -(rulesH + 44 + Kit.SPACE.s * 2)))
 	local mapImage = MapImage.new(mapHolder)
+	local boxEditor = BoxEditor.new(mapImage.image, function(team: number, box: { number })
+		Net.send({ op = "box", team = team, box = box })
+	end)
+	-- at the column's corner, beside the map (not over a box to drag)
+	local resetBoxes = Ui.button(mapHolder, "Reset boxes", "ghost", function()
+		Net.send({ op = "resetBoxes" })
+	end, 100, 26)
+	resetBoxes.TextSize = 12
+	resetBoxes.AnchorPoint = Vector2.new(0, 1)
+	resetBoxes.Position = UDim2.new(0, 0, 1, 0)
+	resetBoxes.ZIndex = 9
+	resetBoxes.Visible = false
 	local rules = Ui.card(rightCol, "Rules", UDim2.new(1, 0, 0, rulesH), UDim2.new(0, 0, 1, -(rulesH + 44 + Kit.SPACE.s)), 0.12)
 	Kit.pad(rules, Kit.SPACE.s, Kit.SPACE.s)
 	Kit.list(rules, RULE_GAP)
@@ -371,6 +360,7 @@ function Room.new(frame: Frame, _router: any): any
 		end
 	end)
 
+	local colors: { [number]: any } = {} -- by slot index, from your view
 	local function seatChip(parent: Instance, room: any, index: number?, member: any?, order: number)
 		local s = if index then room.slots[index] else nil
 		local chip = Instance.new("TextButton")
@@ -390,7 +380,7 @@ function Room.new(frame: Frame, _router: any): any
 		local l = Kit.list(chip, 6, true)
 		l.VerticalAlignment = Enum.VerticalAlignment.Center
 		if s then
-			Ui.swatch(chip, Ui.color(s.color), 12).LayoutOrder = 1
+			Ui.swatch(chip, Ui.rgb(colors[index :: number]), 12).LayoutOrder = 1
 		end
 		local who
 		if s and s.kind == "ai" then
@@ -474,6 +464,7 @@ function Room.new(frame: Frame, _router: any): any
 		local host = room.host == me
 		local setup = room.phase == "setup"
 		local mySlot = slotOf(room, me)
+		colors = MatchConfig.colors(room, me)
 		local hostMember = memberOf(room, room.host)
 		name.Text = room.name
 		sub.Text = `Hosted by {if hostMember then hostMember.name else "?"}   ·   Code <b>{room.id}</b>   ·   {Ui.label2(room.privacy)}{if room.locked then " · password" else ""}   ·   {#room.members}/{room.maxPlayers}`
@@ -493,15 +484,7 @@ function Room.new(frame: Frame, _router: any): any
 		local order = 0
 		local function addAiButton(team: number?): { any }
 			return { "Add AI", function()
-				Net.send({ op = "addAi" })
-				if team then
-					task.delay(0.3, function()
-						local r = Net.view and Net.view.room
-						if r then
-							Net.send({ op = "ai", index = #r.slots, team = team })
-						end
-					end)
-				end
+				Net.send({ op = "addAi", team = team })
 			end }
 		end
 		if room.settings.mode == "TEAM" then
@@ -525,10 +508,7 @@ function Room.new(frame: Frame, _router: any): any
 						if mySlot then
 							Net.send({ op = "mine", team = team })
 						else
-							Net.send({ op = "play" })
-							task.delay(0.3, function()
-								Net.send({ op = "mine", team = team })
-							end)
+							Net.send({ op = "play", team = team })
 						end
 					end, 60 })
 				end
@@ -576,6 +556,28 @@ function Room.new(frame: Frame, _router: any): any
 		local map = Net.map(room.settings.mapId)
 		mapImage.set(map) -- the starts are hints: players pick theirs in the match
 
+		-- spawn boxes (Teams): each team's, in the colour of its first seat as
+		-- you see it (yours for your own team)
+		local shownBoxes: { BoxEditor.Team } = {}
+		local teamMode = room.settings.mode == "TEAM"
+		if teamMode then
+			local teams = SpawnBoxes.teams(room.slots)
+			local boxes = SpawnBoxes.forTeams(map and map.geo, teams, room.settings.boxes)
+			for _, team in teams do
+				local seatOf: number? = if mySlot and room.slots[mySlot].team == team then mySlot else nil
+				for i, s in room.slots do
+					if seatOf == nil and s.team == team then
+						seatOf = i
+					end
+				end
+				if boxes[team] and seatOf then
+					table.insert(shownBoxes, { team = team, box = boxes[team], color = Ui.rgb(colors[seatOf]) })
+				end
+			end
+		end
+		boxEditor.set(shownBoxes, host and setup and teamMode)
+		resetBoxes.Visible = host and setup and teamMode and SpawnBoxes.touched(SpawnBoxes.teams(room.slots), room.settings.boxes)
+
 		-- rules: BAR's rows, editable for the host while the room is open
 		Ui.clear(rules)
 		local canEdit = host and setup
@@ -609,7 +611,7 @@ function Room.new(frame: Frame, _router: any): any
 			Kit.pad(you, Kit.SPACE.m, 0, Kit.SPACE.m, 0)
 			local yl = Kit.list(you, Kit.SPACE.s, true)
 			yl.VerticalAlignment = Enum.VerticalAlignment.Center
-			Ui.swatch(you, Ui.color(s.color), 14).LayoutOrder = 1
+			Ui.swatch(you, Ui.rgb(colors[mySlot]), 14).LayoutOrder = 1
 			Ui.label(you, `{Ui.label2(s.faction)}{if room.settings.mode == "TEAM" then ` · Team {s.team}` else ""}`, "label", nil, 2)
 			if setup then
 				Ui.chevron(cell)

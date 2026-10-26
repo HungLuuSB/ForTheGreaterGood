@@ -53,6 +53,8 @@ Codex.ROLES = {
 	r("command", "Advanced air worker", 2, { "ord_zenith" }, { "chs_condor" }),
 	r("command", "Naval worker", 1, { "ord_tidewright" }, { "chs_wrecker" }),
 	r("command", "Advanced naval worker", 2, { "ord_harbormaster" }, { "chs_reaver" }),
+	r("command", "Bot constructor", 1, { "ord_artisan" }, { "chs_tinker" }),
+	r("command", "Field engineer (repair, resurrect, reclaim)", 1, { "ord_lazarus" }, { "chs_graverobber" }),
 
 	r("ground", "Scout", 1, { "ord_herald" }, { "chs_jackal" }),
 	r("ground", "Light tank", 1, { "ord_lancer" }, { "chs_ravager" }),
@@ -71,6 +73,12 @@ Codex.ROLES = {
 	r("ground", "Deployable gun", 2, { "ord_warden" }, {}),
 	r("ground", "Siege ram", 2, {}, { "chs_minotaur" }),
 	r("ground", "Siege mortar", 2, {}, { "chs_cyclops" }),
+	-- bots (S-181): ground units that climb steep terrain and turn in place
+	r("ground", "Scout bot", 1, { "ord_glint" }, { "chs_skitter" }),
+	r("ground", "Light combat bot", 1, { "ord_mace" }, { "chs_thug" }),
+	r("ground", "AA bot", 1, { "ord_kestrel" }, { "chs_needle" }),
+	r("ground", "Heavy plasma", 2, { "ord_fatboy" }, { "chs_tzar" }),
+	r("ground", "Heavy laser bot", 2, {}, { "chs_centurion" }),
 
 	r("air", "Fighter", 1, { "ord_falcon" }, { "chs_harpy" }),
 	r("air", "Attack helicopter", 1, { "ord_guardian" }, { "chs_wasp" }),
@@ -80,6 +88,8 @@ Codex.ROLES = {
 	r("air", "ASW helicopter", 2, { "ord_tidewatch" }, { "chs_leech" }),
 	r("air", "Support aircraft", 2, { "ord_archangel" }, { "chs_banshee" }),
 	r("air", "Decoy drone", 2, {}, { "chs_wraith" }),
+	r("air", "Heavy bomber", 2, { "ord_liche" }, {}),
+	r("air", "Flying fortress", 2, {}, { "chs_dragon" }),
 
 	r("naval", "Corvette", 1, { "ord_sentry" }, { "chs_barracuda" }),
 	r("naval", "Submarine", 1, { "ord_silence" }, { "chs_lamprey" }),
@@ -134,10 +144,12 @@ Codex.ROLES = {
 	r("factory", "Airfield", 1, { "ord_airfield" }, { "chs_airfield" }),
 	r("factory", "Shipyard", 1, { "ord_shipyard" }, { "chs_shipyard" }),
 	r("factory", "Rearm pad", 1, { "ord_airpad" }, { "chs_airpad" }),
+	r("factory", "Bot lab", 1, { "ord_botlab" }, { "chs_botlab" }),
 	r("factory", "Advanced vehicle plant", 2, { "ord_advvehplant" }, { "chs_advvehplant" }),
 	r("factory", "Advanced airfield", 2, { "ord_advairfield" }, { "chs_advairfield" }),
 	r("factory", "Advanced shipyard", 2, { "ord_advshipyard" }, { "chs_advshipyard" }),
 	r("factory", "Advanced rearm pad", 2, { "ord_empyrean" }, { "chs_rookery" }),
+	r("factory", "Advanced bot lab", 2, { "ord_advbotlab" }, { "chs_advbotlab" }),
 }
 
 export type Entry = {

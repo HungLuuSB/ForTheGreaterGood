@@ -1,0 +1,84 @@
+{
+  "id": "ord_tribunal_wreck",
+  "wreckOf": "ord_tribunal",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0083,
+        3.378,
+        0.0097
+      ],
+      "size": [
+        15.8285,
+        6.8705,
+        15.6646
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        -0.0468,
+        9.4989,
+        -0.0157
+      ],
+      "size": [
+        6.7984,
+        6.0834,
+        2.0717
+      ],
+      "pivot": [
+        0.0,
+        6.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1720,
+    "radar": 740,
+    "total": 2460
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

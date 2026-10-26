@@ -1,0 +1,127 @@
+{
+  "id": "ord_witness",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.8,
+        0.0
+      ],
+      "size": [
+        15.5618,
+        5.6,
+        15.5618
+      ]
+    },
+    "dish": {
+      "parent": "base",
+      "center": [
+        0.0,
+        6.9226,
+        -0.9076
+      ],
+      "size": [
+        9.5,
+        3.8453,
+        1.8733
+      ],
+      "pivot": [
+        0.0,
+        5.0,
+        -1.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "dish"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "dish": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.165,
+        -0.1275
+      ],
+      "size": [
+        13.6,
+        5.11,
+        13.855
+      ]
+    },
+    {
+      "name": "dish_glow_running",
+      "piece": "dish",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        7.0855,
+        -1.2349
+      ],
+      "size": [
+        9.26,
+        3.1454,
+        1.1611
+      ]
+    }
+  ],
+  "glowShare": 0.0251,
+  "triangles": {
+    "base": 1672,
+    "dish": 820,
+    "total": 2492
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

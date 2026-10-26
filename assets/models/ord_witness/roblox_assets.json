@@ -1,0 +1,51 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "T2 structure at the S-104 size (queue item 5): 2492 triangles, glow share 2.5%",
+  "bar": {
+    "model": "rbxassetid://71359362834255",
+    "meshes": {
+      "base": "rbxassetid://85018842721463",
+      "base_glow_running": "rbxassetid://122282610818910",
+      "dish": "rbxassetid://97785928864388",
+      "dish_glow_running": "rbxassetid://135722376968631"
+    },
+    "decals": {
+      "ALB": "rbxassetid://131704795207361",
+      "RGH": "rbxassetid://119043017501748",
+      "NOR": "rbxassetid://128261172464260",
+      "MTL": "rbxassetid://92289176794665",
+      "EMI": "rbxassetid://84695784668169"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://93042982863781",
+      "NOR": "rbxassetid://87389728953019",
+      "RGH": "rbxassetid://86342667803163",
+      "MTL": "rbxassetid://98885173191713",
+      "EMI": "rbxassetid://73593639860634"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_witness_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://130760498991993",
+    "meshes": {
+      "base": "rbxassetid://81729618712091",
+      "dish": "rbxassetid://72869813609500"
+    },
+    "decals": {
+      "ALB": "rbxassetid://120405380146918",
+      "RGH": "rbxassetid://110852571578380",
+      "NOR": "rbxassetid://78866625838633",
+      "MTL": "rbxassetid://104145693492913",
+      "EMI": "rbxassetid://85371054647690"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://91375326438222",
+      "NOR": "rbxassetid://136859918144723",
+      "RGH": "rbxassetid://71133522653218",
+      "MTL": "rbxassetid://130528973193223",
+      "EMI": "rbxassetid://133561097412127"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_witness_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 2288 triangles"
+  }
+}

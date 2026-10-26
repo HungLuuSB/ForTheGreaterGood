@@ -29,5 +29,31 @@
       "EMI": "rbxassetid://110729999790858"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_leech_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://83703169704022",
+    "meshes": {
+      "base": "rbxassetid://112146465332653",
+      "rack": "rbxassetid://117865157866751",
+      "rotor": "rbxassetid://98447911841416",
+      "sonar": "rbxassetid://113298414665243",
+      "tailRotor": "rbxassetid://72497758701530"
+    },
+    "decals": {
+      "ALB": "rbxassetid://108045973574030",
+      "RGH": "rbxassetid://104401730908078",
+      "NOR": "rbxassetid://134008962884694",
+      "MTL": "rbxassetid://79799532036344",
+      "EMI": "rbxassetid://117408683257055"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://137047506292976",
+      "NOR": "rbxassetid://110443148761735",
+      "RGH": "rbxassetid://128093110985294",
+      "MTL": "rbxassetid://122618369692665",
+      "EMI": "rbxassetid://79253898059498"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_leech_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1032 triangles"
   }
 }

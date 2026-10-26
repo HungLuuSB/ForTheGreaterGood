@@ -1,0 +1,82 @@
+{
+  "id": "ord_rampart_wreck",
+  "wreckOf": "ord_rampart",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0964,
+        2.0615,
+        -0.0113
+      ],
+      "size": [
+        23.4316,
+        4.2951,
+        23.3529
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.1064,
+        5.8601,
+        -4.3952
+      ],
+      "size": [
+        12.0048,
+        4.9185,
+        19.5921
+      ],
+      "pivot": [
+        0.0,
+        3.5,
+        1.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        -1.6,
+        4.8,
+        -14.1
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1750,
+    "turret": 1176,
+    "total": 2926
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "id": "ord_advvehplant_wreck",
+  "wreckOf": "ord_advvehplant",
+  "footprintStuds": 48,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0948,
+        8.3076,
+        -0.0048
+      ],
+      "size": [
+        47.717,
+        18.2596,
+        47.6008
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        11.2316,
+        17.0535,
+        10.7385
+      ],
+      "size": [
+        3.4696,
+        2.3476,
+        1.1284
+      ],
+      "pivot": [
+        11.2,
+        16.4,
+        10.6
+      ]
+    },
+    "gantry": {
+      "parent": "base",
+      "center": [
+        0.1504,
+        12.9403,
+        -6.1605
+      ],
+      "size": [
+        17.8391,
+        4.4876,
+        2.3423
+      ],
+      "pivot": [
+        0.0,
+        14.5,
+        -6.0
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.9,
+        -4.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -4.9,
+        7.4,
+        -9.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        -4.9,
+        7.4,
+        -4.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        -4.9,
+        7.4,
+        1.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        4.9,
+        7.4,
+        -9.0
+      ]
+    },
+    "nano5": {
+      "parent": "base",
+      "at": [
+        4.9,
+        7.4,
+        -4.0
+      ]
+    },
+    "nano6": {
+      "parent": "base",
+      "at": [
+        4.9,
+        7.4,
+        1.0
+      ]
+    },
+    "nano7": {
+      "parent": "gantry",
+      "at": [
+        3.0,
+        13.63,
+        -6.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar",
+    "gantry"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "gantry": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 8.0
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 4352,
+    "radar": 80,
+    "gantry": 288,
+    "total": 4720
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

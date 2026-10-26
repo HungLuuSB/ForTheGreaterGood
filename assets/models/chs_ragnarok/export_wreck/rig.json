@@ -1,0 +1,92 @@
+{
+  "id": "chs_ragnarok_wreck",
+  "wreckOf": "chs_ragnarok",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0673,
+        5.658,
+        -0.0231
+      ],
+      "size": [
+        20.1669,
+        11.5995,
+        20.0905
+      ]
+    },
+    "hatch": {
+      "parent": "base",
+      "center": [
+        0.037,
+        3.2406,
+        0.2911
+      ],
+      "size": [
+        7.5645,
+        1.1232,
+        8.0066
+      ],
+      "pivot": [
+        0.0,
+        3.25,
+        3.8
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "base",
+      "at": [
+        0,
+        3.0,
+        0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "hatch": {
+      "motion": "open",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": 110
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1104,
+    "hatch": 196,
+    "total": 1300
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

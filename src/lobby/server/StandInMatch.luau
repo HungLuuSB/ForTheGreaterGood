@@ -13,10 +13,16 @@
 --   die      the server "crashes": heartbeats stop, no result, players are
 --            sent back; the lobby's timeout ends the match as abandoned
 --   leave    this player goes back early; the match runs on
+-- Match-side errors (F38): refusals send players back with their code in the
+-- teleport data (201 no config, 202 a bad one, 205 not listed); the
+-- attribute `StandInFail = "match:<code>"` on ServerScriptService.Lobby
+-- stages any 2xx at arrival (a whole-match code also writes the abandoned
+-- result with it: 201-203, 208-210).
 
 local Config = require("../shared/Config")
 local Ctx = require("./Ctx")
 local MatchConfig = require("../shared/MatchConfig")
+local MatchErrors = require("../shared/MatchErrors")
 local Prng = require("@shared/Util/Prng")
 local Returns = require("./Returns")
 
@@ -32,6 +38,21 @@ type Match = {
 }
 
 local matches: { [string]: Match } = {} -- by private server ID
+local flags: Instance? = nil -- ServerScriptService.Lobby (its StandInFail attribute)
+
+function StandInMatch.init(attributes: Instance)
+	flags = attributes
+end
+
+-- a match server sending players back with an error (F38)
+local function refuse(players: { Player }, matchId: string?, err: MatchErrors.Error)
+	warn(`[Lobby] stand-in match: sending back {#players} player(s), {MatchErrors.line(err)}`)
+	for _, p in players do
+		task.spawn(Returns.arrive, p, matchId, err)
+	end
+end
+
+local WHOLE = { [201] = true, [202] = true, [203] = true, [208] = true, [209] = true, [210] = true }
 local playing: { [number]: string } = {} -- user -> private server ID
 
 function StandInMatch.has(user: number): boolean
@@ -122,12 +143,41 @@ function StandInMatch.start(serverId: string, players: { Player }, data: any)
 		-- what a real match server does first: its match from its own ID
 		local ok, matchId = Ctx.store.get(`server/{serverId}`)
 		local _, c = Ctx.store.get(`config/{matchId}`)
-		local bad = if ok and c then MatchConfig.validate(c) else "no config"
-		if bad or type(data) ~= "table" or data.matchId ~= matchId then
-			warn(`[Lobby] stand-in match on {serverId}: refused ({bad or "teleport data doesn't match"})`)
-			for _, p in players do
-				task.spawn(Returns.arrive, p, nil)
+		if not ok or c == nil then
+			refuse(players, nil, { code = 201 })
+			return
+		end
+		local bad = MatchConfig.validate(c)
+		if bad then
+			refuse(players, matchId, { code = if c.version ~= Config.CONFIG_VERSION then 203 else 202, detail = bad })
+			return
+		end
+		if type(data) ~= "table" or data.matchId ~= matchId then
+			warn(`[Lobby] stand-in match on {serverId}: teleport data doesn't match; trusting the store`)
+		end
+		local staged = flags and flags:GetAttribute("StandInFail")
+		local code = if type(staged) == "string" then tonumber(string.match(staged, "^match:(%d+)$")) else nil
+		local err = if code then MatchErrors.clean({ code = code, detail = "staged in Studio" }) else nil
+		if err then
+			if WHOLE[err.code] then
+				Ctx.store.set(`result/{matchId}`, {
+					version = Config.CONFIG_VERSION,
+					matchId = matchId,
+					outcome = "abandoned",
+					seconds = 0,
+					endedAt = os.time(),
+					cheatsUsed = false,
+					error = err,
+					players = (function()
+						local out = {}
+						for i in c.players do
+							out[i] = { id = i, won = false }
+						end
+						return out
+					end)(),
+				}, Config.RESULT_TTL)
 			end
+			refuse(players, matchId, err)
 			return
 		end
 		m = {
@@ -155,7 +205,7 @@ function StandInMatch.start(serverId: string, players: { Player }, data: any)
 				seconds = math.max(0, math.floor(match.endsAt - os.clock())),
 			})
 		else
-			task.spawn(Returns.arrive, p, nil) -- not on the list: back to the lobby
+			refuse({ p }, match.matchId, { code = 205 }) -- not on the list: back to the lobby
 		end
 	end
 end

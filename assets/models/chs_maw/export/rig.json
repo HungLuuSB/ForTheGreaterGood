@@ -1,0 +1,190 @@
+{
+  "id": "chs_maw",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.7548,
+        0.0
+      ],
+      "size": [
+        23.355,
+        7.5096,
+        23.355
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        1.1629,
+        11.35,
+        -3.9668
+      ],
+      "size": [
+        15.4542,
+        7.7,
+        21.3663
+      ],
+      "pivot": [
+        0.0,
+        7.509599999999999,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        10.728,
+        -14.751
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.5231,
+        -2.3026
+      ],
+      "size": [
+        20.5,
+        2.2461,
+        15.8949
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        -5.6,
+        6.25,
+        -5.07
+      ],
+      "size": [
+        0.42,
+        0.24,
+        0.04
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        7.2596,
+        0.0
+      ],
+      "size": [
+        11.0,
+        0.16,
+        11.0
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.7925,
+        11.79,
+        -0.876
+      ],
+      "size": [
+        8.785,
+        7.14,
+        9.9121
+      ]
+    },
+    {
+      "name": "turret_glow_weapon",
+      "piece": "turret",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        10.728,
+        -14.58
+      ],
+      "size": [
+        3.0,
+        3.0,
+        0.06
+      ]
+    }
+  ],
+  "glowShare": 0.0479,
+  "triangles": {
+    "base": 2216,
+    "turret": 1888,
+    "total": 4104
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

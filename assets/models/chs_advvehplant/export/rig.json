@@ -1,0 +1,285 @@
+{
+  "id": "chs_advvehplant",
+  "footprintStuds": 48,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        7.7,
+        0.0
+      ],
+      "size": [
+        47.1356,
+        15.4,
+        47.1356
+      ]
+    },
+    "trolley1": {
+      "parent": "base",
+      "center": [
+        -1.0,
+        12.2475,
+        1.0
+      ],
+      "size": [
+        2.2,
+        4.895,
+        27.8
+      ],
+      "pivot": [
+        -1.0,
+        14.1,
+        -1.0
+      ]
+    },
+    "trolley2": {
+      "parent": "base",
+      "center": [
+        14.0,
+        12.2475,
+        1.0
+      ],
+      "size": [
+        2.2,
+        4.895,
+        27.8
+      ],
+      "pivot": [
+        14.0,
+        14.1,
+        -1.0
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        6.5,
+        0.76,
+        -1.0
+      ]
+    },
+    "nano1": {
+      "parent": "trolley1",
+      "at": [
+        -1.0,
+        9.72,
+        -1.0
+      ]
+    },
+    "nano2": {
+      "parent": "trolley2",
+      "at": [
+        14.0,
+        9.72,
+        -1.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        0.4,
+        6.69,
+        -6.2
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        12.6,
+        6.69,
+        -6.2
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "trolley1",
+    "trolley2"
+  ],
+  "visualPieces": [
+    "trolley1",
+    "trolley2"
+  ],
+  "anim": {
+    "trolley1": {
+      "motion": "slide",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": 4.0
+    },
+    "trolley2": {
+      "motion": "slide",
+      "axis": [
+        -1,
+        0,
+        0
+      ],
+      "range": 4.0
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        7.405,
+        0.0
+      ],
+      "size": [
+        46.3,
+        13.65,
+        46.3
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -1.8625,
+        8.055,
+        0.5448
+      ],
+      "size": [
+        37.915,
+        14.91,
+        41.3104
+      ]
+    },
+    {
+      "name": "trolley1_glow_running",
+      "piece": "trolley1",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.0,
+        14.2,
+        -12.95
+      ],
+      "size": [
+        0.5,
+        0.3,
+        0.06
+      ]
+    },
+    {
+      "name": "trolley1_glow_power",
+      "piece": "trolley1",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -1.0,
+        9.75,
+        -1.0
+      ],
+      "size": [
+        0.76,
+        0.06,
+        0.76
+      ]
+    },
+    {
+      "name": "trolley2_glow_running",
+      "piece": "trolley2",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        14.0,
+        14.2,
+        -12.95
+      ],
+      "size": [
+        0.5,
+        0.3,
+        0.06
+      ]
+    },
+    {
+      "name": "trolley2_glow_power",
+      "piece": "trolley2",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        14.0,
+        9.75,
+        -1.0
+      ],
+      "size": [
+        0.76,
+        0.06,
+        0.76
+      ]
+    }
+  ],
+  "glowShare": 0.0222,
+  "triangles": {
+    "base": 7144,
+    "trolley1": 328,
+    "trolley2": 328,
+    "total": 7800
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

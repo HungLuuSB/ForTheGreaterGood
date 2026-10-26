@@ -1,0 +1,82 @@
+{
+  "id": "ord_bastion_wreck",
+  "wreckOf": "ord_bastion",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0208,
+        3.9215,
+        -0.0562
+      ],
+      "size": [
+        23.3639,
+        8.0601,
+        23.5907
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0058,
+        11.0151,
+        -5.3135
+      ],
+      "size": [
+        10.2454,
+        6.9375,
+        20.3754
+      ],
+      "pivot": [
+        0.0,
+        7.536,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        -1.319,
+        9.42,
+        -15.543
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1616,
+    "turret": 1416,
+    "total": 3032
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

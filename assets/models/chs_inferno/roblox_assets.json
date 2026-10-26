@@ -34,5 +34,32 @@
       "EMI": "rbxassetid://77947168076756"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_inferno_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://108141198792256",
+    "meshes": {
+      "barrel": "rbxassetid://123812789168802",
+      "base": "rbxassetid://130102667700083",
+      "shell": "rbxassetid://122094452326152",
+      "shellL": "rbxassetid://102510998640566",
+      "shellR": "rbxassetid://106268104990198",
+      "turret": "rbxassetid://94004219499019"
+    },
+    "decals": {
+      "ALB": "rbxassetid://138147277951806",
+      "RGH": "rbxassetid://88873883366842",
+      "NOR": "rbxassetid://89692677077194",
+      "MTL": "rbxassetid://118442253943475",
+      "EMI": "rbxassetid://80503954584496"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://121312551228016",
+      "NOR": "rbxassetid://90981408055607",
+      "RGH": "rbxassetid://133914078839444",
+      "MTL": "rbxassetid://119641988890517",
+      "EMI": "rbxassetid://136190019642670"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_inferno_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 2868 triangles"
   }
 }

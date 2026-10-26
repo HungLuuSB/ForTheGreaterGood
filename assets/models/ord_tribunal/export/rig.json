@@ -1,0 +1,129 @@
+{
+  "id": "ord_tribunal",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.3,
+        0.0
+      ],
+      "size": [
+        15.5544,
+        6.6,
+        15.5544
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        0.0,
+        9.53,
+        0.0
+      ],
+      "size": [
+        6.74,
+        5.86,
+        2.0
+      ],
+      "pivot": [
+        0.0,
+        6.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "radar"
+  ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.63,
+        -0.185
+      ],
+      "size": [
+        14.35,
+        6.26,
+        14.72
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        9.875,
+        0.0
+      ],
+      "size": [
+        6.68,
+        5.45,
+        1.38
+      ]
+    }
+  ],
+  "glowShare": 0.0215,
+  "triangles": {
+    "base": 1836,
+    "radar": 764,
+    "total": 2600
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "T2 structure at the S-104 size (queue item 5): 5672 triangles, glow share 2.6%",
+  "bar": {
+    "model": "rbxassetid://83120617342547",
+    "meshes": {
+      "base": "rbxassetid://126263098431951",
+      "base_glow_power": "rbxassetid://117605964074736",
+      "base_glow_running": "rbxassetid://116971802214809",
+      "gantry": "rbxassetid://130961353626580",
+      "gantry_glow_power": "rbxassetid://73830040380126",
+      "gantry_glow_running": "rbxassetid://103518267687367"
+    },
+    "decals": {
+      "ALB": "rbxassetid://107830413343165",
+      "RGH": "rbxassetid://101232952289255",
+      "NOR": "rbxassetid://74117201172182",
+      "MTL": "rbxassetid://78083214472045",
+      "EMI": "rbxassetid://110800277357354"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://107859801903300",
+      "NOR": "rbxassetid://105088567703945",
+      "RGH": "rbxassetid://82211848346234",
+      "MTL": "rbxassetid://131017584111800",
+      "EMI": "rbxassetid://84846667430790"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advshipyard_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://121306541789814",
+    "meshes": {
+      "base": "rbxassetid://105403340171140",
+      "gantry": "rbxassetid://77304740931216"
+    },
+    "decals": {
+      "ALB": "rbxassetid://77255723259287",
+      "RGH": "rbxassetid://82580513742445",
+      "NOR": "rbxassetid://93415486618648",
+      "MTL": "rbxassetid://83154904615621",
+      "EMI": "rbxassetid://94983658874725"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://100734647553412",
+      "NOR": "rbxassetid://72270808361600",
+      "RGH": "rbxassetid://136652709893410",
+      "MTL": "rbxassetid://100051112070595",
+      "EMI": "rbxassetid://121650626512864"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advshipyard_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 4388 triangles"
+  }
+}

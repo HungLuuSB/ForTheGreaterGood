@@ -1,0 +1,55 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "T2 structure at the S-104 size (queue item 5): 7352 triangles, glow share 1.8%",
+  "bar": {
+    "model": "rbxassetid://132030963643729",
+    "meshes": {
+      "base": "rbxassetid://95940965854289",
+      "base_glow_power": "rbxassetid://85638930201910",
+      "base_glow_running": "rbxassetid://98086052849369",
+      "radarPanel": "rbxassetid://101902532663236",
+      "radarPanel_glow_running": "rbxassetid://89979479266958",
+      "trolley": "rbxassetid://116405596351746",
+      "trolley_glow_power": "rbxassetid://85429746932378"
+    },
+    "decals": {
+      "ALB": "rbxassetid://121749857946342",
+      "RGH": "rbxassetid://87455263846438",
+      "NOR": "rbxassetid://123040794418373",
+      "MTL": "rbxassetid://97804731691881",
+      "EMI": "rbxassetid://128797261136827"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://138305379831921",
+      "NOR": "rbxassetid://74798190434204",
+      "RGH": "rbxassetid://109425561653646",
+      "MTL": "rbxassetid://76464190023928",
+      "EMI": "rbxassetid://86792709479272"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advairfield_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://72727844285461",
+    "meshes": {
+      "base": "rbxassetid://136323499403613",
+      "radarPanel": "rbxassetid://128135600843746",
+      "trolley": "rbxassetid://91155375386147"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73304639347197",
+      "RGH": "rbxassetid://125396316795561",
+      "NOR": "rbxassetid://108395436136116",
+      "MTL": "rbxassetid://135562638737180",
+      "EMI": "rbxassetid://72906934958310"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://131939246987052",
+      "NOR": "rbxassetid://89971571737863",
+      "RGH": "rbxassetid://80550346219934",
+      "MTL": "rbxassetid://78776638092855",
+      "EMI": "rbxassetid://117308281047559"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advairfield_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 5096 triangles"
+  }
+}

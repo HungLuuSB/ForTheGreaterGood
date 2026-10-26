@@ -1,0 +1,91 @@
+{
+  "id": "chs_carapace_wreck",
+  "wreckOf": "chs_carapace",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0036,
+        4.1055,
+        -0.0281
+      ],
+      "size": [
+        13.0917,
+        8.3909,
+        13.0385
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        0.0925,
+        6.2973,
+        0.051
+      ],
+      "size": [
+        2.2754,
+        2.3404,
+        2.2366
+      ],
+      "pivot": [
+        0.0,
+        5.3,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "beam": {
+      "parent": "core",
+      "at": [
+        0,
+        7.6,
+        0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 884,
+    "core": 108,
+    "total": 992
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

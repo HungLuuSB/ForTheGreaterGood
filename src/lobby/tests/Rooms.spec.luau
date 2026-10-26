@@ -211,6 +211,26 @@ return function(t: RunAll.Context)
 		t.equal(Rooms.checkStart(r, MAPS, HOST, true), "Free for all on Quad is up to 4 players")
 	end)
 
+	t.test("Add AI and Join take the team in the same request (F25)", function()
+		local r = room({ name = "Teams", privacy = "public", maxPlayers = 16 })
+		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:big" })
+		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mode", value = "TEAM" })
+		for _, team in { 7, 2, 7, 8 } do
+			t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi", team = team }), nil)
+			t.equal(r.slots[#r.slots].team, team)
+		end
+		t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi", team = 9 }), "Bad team", "8 sides at most")
+		t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi", team = 2.5 }), "Bad team")
+		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:quad" })
+		t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi", team = 5 }), "Bad team", "Quad has 4 starts")
+		t.equal(#r.slots, 5)
+		-- a spectator joins a team in one request
+		Rooms.join(r, MAPS, B, "Bee", nil)
+		Rooms.apply(r, MAPS, B, { op = "spectate" })
+		t.equal(Rooms.apply(r, MAPS, B, { op = "play", team = 3 }), nil)
+		t.equal(r.slots[Rooms.slotOf(r, B) :: number].team, 3)
+	end)
+
 	t.test("free for all seats one player per start, up to 16", function()
 		local r = room()
 		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:big" })

@@ -1,0 +1,159 @@
+{
+  "id": "chs_cyclops_wreck",
+  "wreckOf": "chs_cyclops",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.005,
+        1.4909,
+        0.3858
+      ],
+      "size": [
+        6.4358,
+        2.6579,
+        11.0
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -2.5835,
+        0.4636,
+        0.069
+      ],
+      "size": [
+        0.8597,
+        1.0418,
+        9.9313
+      ],
+      "pivot": [
+        -2.6,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        2.6331,
+        0.5154,
+        0.0164
+      ],
+      "size": [
+        0.8767,
+        1.1306,
+        9.8805
+      ],
+      "pivot": [
+        2.6,
+        0.46,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0856,
+        6.6571,
+        0.891
+      ],
+      "size": [
+        5.169,
+        8.2312,
+        5.0664
+      ],
+      "pivot": [
+        0.0,
+        2.6,
+        1.0
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        -0.0817,
+        4.256,
+        1.068
+      ],
+      "size": [
+        3.3442,
+        1.1284,
+        1.707
+      ],
+      "pivot": [
+        0.0,
+        4.3,
+        1.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0,
+        10.45,
+        -0.85
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 472,
+    "trackL": 236,
+    "trackR": 308,
+    "turret": 440,
+    "barrel": 116,
+    "total": 1572
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

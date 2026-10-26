@@ -1,0 +1,84 @@
+{
+  "id": "chs_seekerspire_wreck",
+  "wreckOf": "chs_seekerspire",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.1146,
+        5.8921,
+        -0.0487
+      ],
+      "size": [
+        16.0382,
+        11.8705,
+        15.5636
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        -0.3764,
+        13.6581,
+        0.093
+      ],
+      "size": [
+        6.4479,
+        4.6446,
+        1.664
+      ],
+      "pivot": [
+        0.0,
+        11.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1864,
+    "radar": 336,
+    "total": 2200
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

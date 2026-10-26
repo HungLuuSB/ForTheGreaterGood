@@ -27,5 +27,30 @@
       "EMI": "rbxassetid://140089702130179"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_zenith_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://84631558931259",
+    "meshes": {
+      "base": "rbxassetid://127502636750735",
+      "nano": "rbxassetid://70827685215946",
+      "rotor": "rbxassetid://80471952401622",
+      "tailRotor": "rbxassetid://117641750947282"
+    },
+    "decals": {
+      "ALB": "rbxassetid://103739999646280",
+      "RGH": "rbxassetid://86070343052439",
+      "NOR": "rbxassetid://128021201877908",
+      "MTL": "rbxassetid://85478676488166",
+      "EMI": "rbxassetid://137689313687146"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://93597116926319",
+      "NOR": "rbxassetid://122264303003300",
+      "RGH": "rbxassetid://96914919117227",
+      "MTL": "rbxassetid://85704429121075",
+      "EMI": "rbxassetid://120497224501914"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_zenith_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1412 triangles"
   }
 }
