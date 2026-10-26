@@ -1410,6 +1410,42 @@
       }
     },
     {
+      "Name": "ground_strait_grass",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://110813594487406",
+        "NormalMapContent": "rbxassetid://119921198497320",
+        "RoughnessMapContent": "rbxassetid://118649485198159",
+        "MetalnessMapContent": "rbxassetid://75390419515225",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ground_strait_rock",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://119753603622621",
+        "NormalMapContent": "rbxassetid://123640577049774",
+        "RoughnessMapContent": "rbxassetid://122726978006718",
+        "MetalnessMapContent": "rbxassetid://131128228811014",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ground_strait_sand",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://134026709848342",
+        "NormalMapContent": "rbxassetid://71970403197792",
+        "RoughnessMapContent": "rbxassetid://112642487434646",
+        "MetalnessMapContent": "rbxassetid://103202965251052",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_absolution",
       "ClassName": "SurfaceAppearance",
       "Properties": {
