@@ -2,6 +2,42 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: anti-air with the game's missiles)
+
+- **The user:** anti-air missiles must use the game's missile system (vertical launch), and the target must be far away so the missile shows in action.
+- **Missiles fly the game's guidance** (`Shared/Combat/Guidance`, as the server's Projectiles):
+  - **Vertical launchers** (radar SAMs, missile batteries) fire straight up, climb their `climbHeight`, pitch over (`Guidance.vertical`), then navigate by proportional navigation. Their turret stays at rest (S-42).
+  - **Other missiles** leave along the launcher's aim and navigate (`Guidance.pn`), against the drone's real velocity.
+  - **Hits** are judged on each tick's path: a 9-stud fuse for the drone.
+- **The drone** flies far out, a fifth of the weapon's range (70 to 220 studs), 25 to 60 studs up, making passes across the view. It is three times bigger, with a blinking red beacon. The haze thins while the range is up.
+- **The camera** frames a box round the unit, its targets and the top of the climb (1.8 × climbHeight, which the pitch-over overshoots).
+- Fire now stays on across page changes, as the switch shows.
+- **Studio:** Seraph: the missile climbs to about 190 studs over the launcher, pitches over and bursts on the drone 230 studs out (`lobby_range_seraph_pitchover`, `lobby_range_seraph_intercept`). Halo: the IR missile flies straight out to the drone 80 studs away.
+- Lobby specs 64 / 64; the build check passes.
+
+## Summary (2026-10-26: the Units showroom comes alive, L-22)
+
+The user's three ideas for the Units tab:
+- **Unit animations.** The match's piece scheduler (`Core/PieceAnim`) runs each shown unit's own piece script and the ambient pieces (`Ambient`), as if powered and producing. Radars and dishes sweep, rotors and drills turn, gantries run, aircraft fly, deployable units are deployed. Joints move through `Motor6D.Transform` as in a match; models keep their template's anchoring (the base) instead of every part.
+- **Weapon preview: Fire.** A switch at the end of the place row.
+  - **Targets**, one per kind the weapons take: a board on the ground (a barge on water), a drone circling for anti-air, a hulk under the water for anti-submarine weapons. They stand closer than the real range (15% of it, 22 to 40 studs); the camera frames the unit and its targets. Each target flashes on a hit.
+  - **Firing:** each weapon aims (its piece script turns the turret and barrel) and fires at its reload (at most 4 s), salvos included. The shots are the match's own effect records (`Core/Effects`: shells, missiles, tracers, beams, lasers, bursts), drawn by `Render/Effects`.
+  - **Shots:** shells keep their real arc shape (the pitch at 70% of the weapon's range, launched slower to land on the nearer target), missiles steer at their turn rate, bombs fall, torpedoes run at depth.
+  - **Not shown:** anti-missile and strategic weapons. The switch reads "Fire (no weapon)" then; `Codex.rangeTarget` decides, and a Codex spec checks every weapon.
+- **Full view:** a button (or H) hides the list, the article, the toolbar and the top bar; the unit fills the screen, and "Show panels (H)" or H brings them back.
+- **Read-only client modules added to `lobby.project.json`:** 25 of client-B's: Core Deaths, Effects, GroundMeshes, Interp, Nanoframe, PieceAnim, PieceMotion, Terrain, World and PieceScripts; Render BeamShots, Crater, Effects, Ground, Lasers, MeshGround, Terrain and Vfx. The build check fails if their requires change.
+- **Studio** (`debug_out/screens/`):
+  - `lobby_anim_watchtower`: the radar sweeps, about 60° a second.
+  - `lobby_range_paladin_hit`: the shell bursts on the board.
+  - `lobby_range_halo_drone`: the missile hits the drone.
+  - `lobby_range_radiance_beam`, `lobby_range_bulwark`: beam and laser.
+  - `lobby_range_sub_target`: the torpedo runs at depth into the hulk.
+  - Bombs from the Absolution land on the board 145 studs below.
+  - `lobby_units_full_view`: H brings the panels back.
+  - No errors.
+- Lobby specs 64 / 64; the build check passes (564 scripts, 938 requires).
+- Ready to merge: `dbf1c000` (Units showroom animations, firing range, full view; `lobby.project.json` mounts 25 more client modules read-only; touches only `src/lobby`, `lobby.project.json` and the lobby docs)
+
 ## Summary (2026-10-26: four AI levels and team roles, F41)
 
 - Merged sim-A's `8713c298` (S-187): `LEVELS` = easy, normal, hard, hard_aggressive. Names: Easy, Normal, **Hard - Balanced** (the id stays `hard`), **Hard - Aggressive**.
@@ -9,6 +45,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Role badges:** two or more non-easy AIs on one side split the work. The AI chips show each one's role (Balanced, Air, Defense, Spam, Tech) with the sim's rule (`MatchConfig.aiRoles`; `AiLevels.spec` checks it against `Skirmish.roleOf` on the same match and keeps `Config.AI_ROLES` equal to `Skirmish.ROLES`).
 - Studio (`debug_out/screens/`): `lobby_room_ai_roles` (team 2: Balanced, Air, Defense, the easy AI without a badge), `lobby_room_ai_levels` (the AI editor), `lobby_skirmish_ai_levels`.
 - Lobby specs 63 / 63; the build check passes.
+- Ready to merge: `51243401` (four AI levels and role badges; includes the merge of sim-A's `8713c298`; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-26: The Plains' side splits, S-186)
 

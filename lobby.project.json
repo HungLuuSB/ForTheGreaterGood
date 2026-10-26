@@ -34,6 +34,36 @@
           },
           "OptionTree": {
             "$path": "build/lobby/src/client/Core/OptionTree.luau"
+          },
+          "Deaths": {
+            "$path": "build/lobby/src/client/Core/Deaths.luau"
+          },
+          "Effects": {
+            "$path": "build/lobby/src/client/Core/Effects.luau"
+          },
+          "GroundMeshes": {
+            "$path": "build/lobby/src/client/Core/GroundMeshes.luau"
+          },
+          "Interp": {
+            "$path": "build/lobby/src/client/Core/Interp.luau"
+          },
+          "Nanoframe": {
+            "$path": "build/lobby/src/client/Core/Nanoframe.luau"
+          },
+          "PieceAnim": {
+            "$path": "build/lobby/src/client/Core/PieceAnim.luau"
+          },
+          "PieceMotion": {
+            "$path": "build/lobby/src/client/Core/PieceMotion.luau"
+          },
+          "Terrain": {
+            "$path": "build/lobby/src/client/Core/Terrain.luau"
+          },
+          "World": {
+            "$path": "build/lobby/src/client/Core/World.luau"
+          },
+          "PieceScripts": {
+            "$path": "build/lobby/src/client/Core/PieceScripts"
           }
         },
         "Render": {
@@ -46,6 +76,30 @@
           },
           "BlockoutBuilder": {
             "$path": "build/lobby/src/client/Render/BlockoutBuilder.luau"
+          },
+          "BeamShots": {
+            "$path": "build/lobby/src/client/Render/BeamShots.luau"
+          },
+          "Crater": {
+            "$path": "build/lobby/src/client/Render/Crater.luau"
+          },
+          "Effects": {
+            "$path": "build/lobby/src/client/Render/Effects.luau"
+          },
+          "Ground": {
+            "$path": "build/lobby/src/client/Render/Ground.luau"
+          },
+          "Lasers": {
+            "$path": "build/lobby/src/client/Render/Lasers.luau"
+          },
+          "MeshGround": {
+            "$path": "build/lobby/src/client/Render/MeshGround.luau"
+          },
+          "Terrain": {
+            "$path": "build/lobby/src/client/Render/Terrain.luau"
+          },
+          "Vfx": {
+            "$path": "build/lobby/src/client/Render/Vfx.luau"
           }
         }
       },

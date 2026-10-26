@@ -478,4 +478,27 @@ function Codex.tierName(tier: number?): string
 	return `T{tier}`
 end
 
+-- What the Units showroom's firing range (L-22) points a weapon at: "air",
+-- "sub" (on a place with water) or "ground" (a board, or a barge on
+-- water); nil when it isn't shown (anti-missile and strategic weapons).
+function Codex.rangeTarget(weapon: any, water: boolean): string?
+	if weapon == nil or weapon.interceptOnly or weapon.strategic or weapon.intercepts then
+		return nil
+	end
+	local list = weapon.targets or {}
+	if table.find(list, "AIR") and #list == 1 then
+		return "air"
+	end
+	if table.find(list, "SUB") and water then
+		return "sub"
+	end
+	if table.find(list, "GROUND") or table.find(list, "STRUCTURE") or table.find(list, "NAVAL") then
+		return "ground"
+	end
+	if table.find(list, "SUB") then
+		return "ground" -- a torpedo on a land place: at the board
+	end
+	return nil
+end
+
 return Codex
