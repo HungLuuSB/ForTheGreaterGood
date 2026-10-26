@@ -1020,7 +1020,7 @@ Move states (S-34, `Orders.autoStep`): every 15 ticks an idle armed unit on Fire
 
 - Runs **staggered**: each unit re-evaluates every 4–8 ticks, offset by a mixed hash of its ID (`Hash.mix32(id) % N`; with `id % N` the offset followed the ID's parity, and Sensors runs on even ticks, so even IDs reacted sooner: a start bias in mirrored matches, S-23). Keep the current target while it stays valid (hysteresis).
 - **Candidate search:** query cells within weapon range from the per-team **contact grid** (a coarse 64-stud bucket grid of enemies this team can see or detect), not from all units.
-- **Filter:** `bit32.band(target.categories, weapon.targetMask) ~= 0`, target known to the team (visible, or radar contact if `canTargetRadar`), within arc and range.
+- **Filter:** `bit32.band(target.categories, weapon.targetMask) ~= 0`, target known to the team (visible, or a radar contact: every weapon takes blips unless its `canTargetRadar` is false, S-202), within arc and range. A structure ghost (seen once, out of sight) is picked by the search only while the team's radar covers the live structure; otherwise only on an attack order (S-127).
 - **Untracked contacts** reveal only their domain (D107): weapons filter them by domain, and type priorities apply only to visible, remembered or tracked targets. The AI follows the same rule.
 - **Team knowledge, never server truth** (D100, audit D101): every targeting, AI and auto-behavior decision uses what the deciding ally team knows; only physics (hits, collisions, seekers, the frame-start placement check) uses true positions. The AI plans build sites with its team's knowledge. A structure ghost stays a target for `canTargetRadar` weapons even if the structure died unseen (the shots hit empty ground), until the team sees the spot again.
 - **Score:** priority category weight ÷ distance, bonus for units already being shot by allies (focus fire, optional, not built).
@@ -1194,7 +1194,7 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
 - **Point defence** (S-149): Sanctum and Basilisk (T2 structures) and Shepherd and Griffin (T2 vehicles) launch interceptors at enemy missiles and rockets flying within their reach that their team detects, one each; a burst destroys it with the interceptor's hit chance. They never fire at units, and a salvo bigger than their stock gets through. Nukes are the anti-nukes' job.
 - **Lost radar missiles** (S-146): a RADAR-guided missile whose target is gone (killed, lock broken, decoy spent) corkscrews about its path, noses over and falls, until it hits the ground or its fuel runs out. If the target died while the missile was still launching (a vertical launch before pitch-over, or its first half second), it flies to the target's last known position and bursts there.
-- **Radar targeting:** weapons with `canTargetRadar = true` (mostly artillery and long-range missiles) can fire at radar blips. They aim at the hidden aim point, not the drawn blip, so they miss more — that's intended.
+- **Radar targeting:** every weapon fires at radar blips it can reach (S-202, the user; until then only weapons with `canTargetRadar = true`, mostly artillery and long-range missiles). A def can still opt out with `canTargetRadar = false`. They aim at the hidden aim point, not the drawn blip, so they miss more — that's intended, and Pinpointers and tracking radar sharpen it. Guided missiles still need a lock (IR seekers can't lock a blip).
 - **Fire-control (tracking) radar** (D104):
   - A short-range radar that turns early-warning contacts inside it into TRACKED contacts.
   - Their wobble is the team's best `trackError` (Order 4–6 studs, Chaos 10–12) instead of `radarError` (15–45).
@@ -1206,7 +1206,7 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
   - Measured: a Verdict on a radar-only Ravager scores 4 of 15 direct hits untracked and 11 of 15 tracked. An Absolution hits a moving radar-only tank 0 of 9 times untracked and 6 of 10 tracked.
 - Implementation (DECISIONS D67):
   - The aim point orbits: offset = radius × (cos θ, sin θ), θ = phase0 + dir × 2π × tick / 90 (one turn every 6 s). phase0 and dir (±1) are a stateless hash of (unit, observer), so every player of a team gets the same orbit. The radius is the observer's best `sensors.radarError` (or `trackError` when tracked), scaled by Pinpointers. The sent cell is within half a cell (~5.7 studs) of the unit.
-  - Every weapon targets only what its team knows: VISIBLE, plus RADAR contacts and ghosts for `canTargetRadar` weapons.
+  - Every weapon targets only what its team knows: VISIBLE and RADAR contacts, plus ghosts under radar (S-202) or on an attack order.
   - Measured: howitzer direct hits 87% with a spotter versus 20% on radar.
 
 ### 11.5 Missile guidance & electronic warfare
