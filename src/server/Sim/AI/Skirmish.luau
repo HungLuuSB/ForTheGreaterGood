@@ -222,6 +222,16 @@ export type Level = {
 	citadel: boolean?, -- the T2 builder adds a Citadel when rich (Order hard, S-101)
 	barriers: number?, -- Barrier segments its T1 builders wall the front with (Order hard, S-101)
 	jammer: boolean?, -- a mobile jammer guards each wave (Chaos)
+	-- S-187 (the user's F41): roles in a team, the aggressive hard level, teamwork
+	role: string?, -- Skirmish.ROLES: what this AI does for its side
+	botLab: boolean?, -- a Bot Lab / Bot Pit (and its advanced lab once teched): bots in the mix
+	earlyAir: boolean?, -- an airfield as soon as a plant and two extractors stand (air role)
+	airShare: number?, -- army production share that comes from the airfield (air role)
+	advAir: boolean?, -- an advanced airfield when rich: Liche / Dragon and T2 aircraft (air role)
+	advPlantSupply: number?, -- supply stored before the advanced plant (default ADV_PLANT_SUPPLY; tech role earlier)
+	attackMargin: number?, -- a wave leaves worth this times the known defence (default ATTACK_MARGIN)
+	raid: boolean?, -- small fast raids on enemy extractors between waves (aggressive)
+	teamwork: boolean?, -- joins an ally's wave, answers an ally's call for help
 }
 
 Skirmish.LEVELS = table.freeze({
@@ -321,6 +331,110 @@ Skirmish.LEVELS = table.freeze({
 	},
 } :: { [string]: Level })
 
+-- Hard - Aggressive (S-187, the user): hard's economy and tech, but it
+-- attacks early and often with smaller waves, doesn't wait to outweigh the
+-- known defence, never falls back, raids extractors between waves and
+-- builds no turrets at home.
+do
+	local s = table.clone(Skirmish.LEVELS.hard) :: any
+	s.firstWave = 6
+	s.waveGrowth = 2
+	s.defenses = 0
+	s.escorts = 0
+	s.safeExpansion = false
+	s.outweigh = false
+	s.retreat = false
+	s.recall = false
+	s.attackMargin = 0.8
+	s.raid = true
+	s.botLab = true
+	local levels = table.clone(Skirmish.LEVELS) :: any
+	levels.hard_aggressive = table.freeze(s)
+	Skirmish.LEVELS = table.freeze(levels)
+end
+Skirmish.LEVEL_NAMES = table.freeze({ "easy", "normal", "hard", "hard_aggressive" })
+
+-- Roles (S-187, the user: "some cover air, some fund tech, some spam cheap
+-- units to overrun defences, some specialise in layered defence, guarding
+-- chokepoints with jammers and turrets"). Two or more AIs on one side
+-- share them out in player order; a lone AI plays balanced.
+Skirmish.ROLES = table.freeze({ "balanced", "air", "defense", "spam", "tech" })
+Skirmish.RAID_EVERY = 900 -- ticks between raids (aggressive)
+Skirmish.RAID_UNITS = 4
+Skirmish.TEAM_JOIN_TICKS = 150 -- an ally's wave left this recently: join it
+Skirmish.TEAM_HELP_TICKS = 90 -- an ally's call for help stays this long
+
+-- The role of AI `player` on its side: the side's AIs in player order take
+-- ROLES in turn (alone: balanced). Easy plays balanced.
+function Skirmish.roleOf(sim: Types.Sim, player: number, level: string): string
+	if level == "easy" then
+		return "balanced"
+	end
+	local ally = sim.players[player].allyTeam
+	local mine = {}
+	for _, pid in sim.playerOrder do
+		if sim.match.ai[pid] ~= nil and sim.match.ai[pid] ~= "easy" and sim.players[pid].allyTeam == ally then
+			table.insert(mine, pid)
+		end
+	end
+	if #mine < 2 then
+		return "balanced"
+	end
+	local k = table.find(mine, player) or 1
+	return Skirmish.ROLES[(k - 1) % #Skirmish.ROLES + 1]
+end
+
+-- The level's settings for a role (S-187).
+function Skirmish.withRole(cfg: Level, role: string, levelName: string): Level
+	local s = table.clone(cfg) :: any
+	s.role = role
+	if levelName ~= "easy" then
+		s.teamwork = true
+		s.lanes = math.max(cfg.lanes or 1, 2) -- (F19: waves split so they don't swarm one spot)
+	end
+	if role == "air" then
+		s.air = true
+		s.earlyAir = true
+		s.airShare = 0.6
+		s.advAir = true
+		s.antiAir = true
+	elseif role == "defense" then
+		s.defenses = cfg.defenses + 4
+		s.barriers = Skirmish.BARRIERS
+		s.firstWave = math.ceil(cfg.firstWave * 1.5)
+		s.radar = true
+	elseif role == "spam" then
+		s.botLab = true
+		s.queue = cfg.queue + 1
+		s.firstWave = math.max(4, math.floor(cfg.firstWave * 0.6))
+		s.waveGrowth = 1
+		s.artyChance = 0.1
+	elseif role == "tech" then
+		s.advPlantSupply = 400
+		s.firstWave = math.ceil(cfg.firstWave * 1.3)
+		s.botLab = true
+	end
+	return table.freeze(s) :: Level
+end
+
+-- Per simulation, per side: the last wave an AI sent and the last call for
+-- help (S-187 teamwork). Keyed by the sim (weak), so it never leaks between
+-- matches.
+local teamStates: { [any]: { [number]: { waveTick: number, waveFrom: number, helpX: number, helpZ: number, helpTick: number, helpFrom: number } } } = setmetatable({}, { __mode = "k" }) :: any
+local function teamOf(brain: any): { waveTick: number, waveFrom: number, helpX: number, helpZ: number, helpTick: number, helpFrom: number }
+	local bySide = teamStates[brain.sim]
+	if bySide == nil then
+		bySide = {}
+		teamStates[brain.sim] = bySide
+	end
+	local t = bySide[brain.ally]
+	if t == nil then
+		t = { waveTick = -math.huge, waveFrom = 0, helpX = 0, helpZ = 0, helpTick = -math.huge, helpFrom = 0 }
+		bySide[brain.ally] = t
+	end
+	return t
+end
+
 local CT = Schema.CmdType
 local BIT = Categories.Bit
 
@@ -410,6 +524,7 @@ export type Brain = {
 	powerLowAt: number, -- last tick power ran below ARMY_FIRST_RATIO (S-94)
 	airNearAt: number, -- last tick enemy aircraft were known near home (S-57)
 	lastWaveAt: number, -- tick the last wave left (S-57)
+	raidAt: number, -- tick the last raid left (S-187)
 	recallUntil: number, -- no new wave before this tick (S-57)
 	recallRadius: number, -- RECALL_RADIUS, or less on a small map: never the enemy's own rally point
 	tanksFirst: number, -- tanks before its third generator this match: tanksBeforeGen3 or one more, by its Prng (S-57)
@@ -440,6 +555,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 	assert(base, `Skirmish.new: unknown level {levelName}`)
 	local p = sim.players[player]
 	local cfg = Skirmish.styled(base, if p.faction == "order" then "ord_" else "chs_", levelName) -- S-76
+	cfg = Skirmish.withRole(cfg, Skirmish.roleOf(sim, player, levelName), levelName) -- S-187
 	local map = sim.map :: Passability.PassMap
 	local layers = map.layers
 	local w = sim.world
@@ -555,6 +671,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		powerLowAt = -math.huge,
 		airNearAt = -math.huge,
 		lastWaveAt = -math.huge,
+		raidAt = -math.huge, -- (S-187)
 		recallUntil = -math.huge,
 		recallRadius = math.min(Skirmish.RECALL_RADIUS, dl * 0.45),
 		tanksFirst = 0,
@@ -765,6 +882,36 @@ end
 -- (contested ones without an escort, S-97).
 -- With `builder`, only deposits it can reach (S-161: on Twin Lakes builders
 -- stood still for 20 s before deposits their move class can't get to).
+-- Generators in a tidy block behind the base (S-187, the playtest's F20:
+-- "AI place generators randomly: a messy base"): rows of GEN_ROW along the
+-- front line's direction, GEN_GAP studs apart (a lane between every two),
+-- filling from the base outward. The first free slot from the k-th on; nil
+-- when the block has no room (spotNear then).
+Skirmish.GEN_ROW = 4
+Skirmish.GEN_GAP = 24 -- studs between generator centres (16 wide: an 8-stud lane)
+function Skirmish.blockSpot(brain: Brain, defId: string, k: number, builder: number): (number?, number?)
+	local sim = brain.sim
+	local def = sim.defs.units[defId]
+	local ax, az = brain.homeX - brain.dirX * 70, brain.homeZ - brain.dirZ * 70 -- behind the base
+	-- along the front, in world terms (+z first, as the two-lane flank): a
+	-- mirrored player fills its block in the mirrored order (S-31)
+	local px, pz = -brain.dirZ, brain.dirX
+	if pz < 0 or (pz == 0 and px < 0) then
+		px, pz = -px, -pz
+	end
+	for slot = k, k + 15 do
+		local row, col = slot // Skirmish.GEN_ROW, slot % Skirmish.GEN_ROW
+		local off = (col - (Skirmish.GEN_ROW - 1) / 2) * Skirmish.GEN_GAP
+		local x = ax + px * off - brain.dirX * row * Skirmish.GEN_GAP
+		local z = az + pz * off - brain.dirZ * row * Skirmish.GEN_GAP
+		local ok = Placement.check(sim, def, x, z, nil, brain.ally)
+		if ok then
+			return x, z
+		end
+	end
+	return nil, nil
+end
+
 -- The centre of the deposit patch whose min-corner cell is `cell` (S-184).
 function Skirmish.depositPoint(g: any, cell: number): (number, number)
 	local x, z = g:cellCenter(g:coords(cell))
@@ -972,6 +1119,17 @@ type Census = {
 	silos: { number }, -- own finished nuke silos (S-110)
 	mobileAntiNukes: { number }, -- (S-111)
 	enemySilo: boolean, -- the team knows an enemy nuke silo (S-110)
+	-- S-187
+	botLabs: { number }, -- complete Bot Labs / Pits
+	botFrames: number,
+	advBotLabs: { number },
+	advBotFrames: number,
+	advAirfields: { number },
+	advAirFrames: number,
+	enemyTurrets: number, -- known enemy armed structures (counters: artillery against them)
+	enemyArty: number, -- known enemy artillery (counters: fast raiders)
+	enemyLight: number, -- known enemy light ground units (counters: heavy, beams)
+	enemyExtractors: { { number } }, -- known enemy extractors' { x, z } (raids)
 }
 
 local function census(brain: Brain): Census
@@ -1018,6 +1176,16 @@ local function census(brain: Brain): Census
 		silos = {},
 		mobileAntiNukes = {},
 		enemySilo = false,
+		botLabs = {},
+		botFrames = 0,
+		advBotLabs = {},
+		advBotFrames = 0,
+		advAirfields = {},
+		advAirFrames = 0,
+		enemyTurrets = 0,
+		enemyArty = 0,
+		enemyLight = 0,
+		enemyExtractors = {},
 	}
 	local advPlant = faction(brain, "advvehplant", "advvehplant")
 	local generator = faction(brain, "generator", "generator")
@@ -1032,6 +1200,18 @@ local function census(brain: Brain): Census
 					local ed = sim.defs.unitByIndex[defIndex :: number]
 					if ed.id == "ord_reckoning" or ed.id == "chs_ragnarok" then
 						c.enemySilo = true -- (S-110) a second umbrella site
+					end
+					-- what the enemy fields (S-187: counters)
+					if ed.domain == "structure" then
+						if #ed.weapons > 0 then
+							c.enemyTurrets += 1
+						elseif ed.extractor then
+							table.insert(c.enemyExtractors, { kx :: number, kz :: number })
+						end
+					elseif bit32.band(ed.categoryMask, BIT.ARTILLERY) ~= 0 then
+						c.enemyArty += 1
+					elseif bit32.band(ed.categoryMask, BIT.LIGHT) ~= 0 and ed.domain == "ground" then
+						c.enemyLight += 1
 					end
 				end
 				if kx and kz and bit32.band(Sensors.knownCategories(sim, brain.ally, id, level, defIndex :: number), BIT.AIR) ~= 0 then
@@ -1068,7 +1248,20 @@ local function census(brain: Brain): Census
 			c.commander = id
 		elseif d.domain == "structure" then
 			if d.buildOptions then
-				if d.id == airfield or d.id == shipyard then
+				if d.id == brain.prefix .. "botlab" or d.id == brain.prefix .. "advbotlab" or d.id == brain.prefix .. "advairfield" then
+					-- (S-187) bot labs and the advanced airfield: their own lists
+					local adv = d.id == brain.prefix .. "advbotlab"
+					local air = d.id == brain.prefix .. "advairfield"
+					if done then
+						table.insert(if air then c.advAirfields elseif adv then c.advBotLabs else c.botLabs, id)
+					elseif air then
+						c.advAirFrames += 1
+					elseif adv then
+						c.advBotFrames += 1
+					else
+						c.botFrames += 1
+					end
+				elseif d.id == airfield or d.id == shipyard then
 					if done then
 						table.insert(if d.id == airfield then c.airfields else c.shipyards, id)
 					elseif d.id == airfield then
@@ -1228,7 +1421,7 @@ local function think(brain: Brain)
 	local turretsWanted = if cfg.defenses > 0 then math.min(cfg.defenses + c.farExtractors // 2, Skirmish.MAX_TURRETS) else 0
 	-- hard: builders only assisting a factory leave it for these (the
 	-- airfield and shipyard are the Command Vehicle's to build)
-	local wantAir = cfg.air and #c.factories > 0 and established and #c.airfields + c.airFrames == 0
+	local wantAir = cfg.air and #c.factories > 0 and (established or (cfg.earlyAir and c.extractors >= 2)) and #c.airfields + c.airFrames == 0
 	local wantNaval = cfg.naval and brain.seaX ~= nil and #c.factories > 0 and established and #c.shipyards + c.shipFrames == 0
 	local wantTurret = c.turrets < turretsWanted and #c.factories > 0 and c.extractors >= 5 and #c.army >= 4
 	-- normal: once two generators stand, an army before anything else
@@ -1343,7 +1536,37 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if cfg.techUp and not isCommander and #c.factories > 0 and #c.advFactories + #c.advFrames == 0 and acc.supply.stored > Skirmish.ADV_PLANT_SUPPLY then
+		if cfg.botLab and not isCommander and #c.factories > 0 and c.extractors >= 3 and #c.botLabs + c.botFrames == 0 then
+			-- (S-187) a Bot Lab / Pit beside the plant: bots in the mix
+			local lab = brain.prefix .. "botlab"
+			local x, z = spotNear(brain, lab, brain.homeX + brain.toward * 60, brain.homeZ - 110, id)
+			if x and z then
+				build(brain, id, lab, x, z, Skirmish.enemyFacing(brain))
+				c.botFrames += 1
+				continue
+			end
+		end
+		if cfg.botLab and not isCommander and #c.botLabs > 0 and #c.advFactories > 0 and #c.advBotLabs + c.advBotFrames == 0 and acc.supply.stored > (cfg.advPlantSupply or Skirmish.ADV_PLANT_SUPPLY) then
+			-- (S-187) the advanced lab: Fatboys / Centurions
+			local lab = brain.prefix .. "advbotlab"
+			local x, z = spotNear(brain, lab, brain.homeX - brain.toward * 40, brain.homeZ - 130, id)
+			if x and z then
+				build(brain, id, lab, x, z, Skirmish.enemyFacing(brain))
+				c.advBotFrames += 1
+				continue
+			end
+		end
+		if cfg.advAir and not isCommander and #c.airfields > 0 and #c.advFactories > 0 and #c.advAirfields + c.advAirFrames == 0 and acc.supply.stored > Skirmish.ADV_PLANT_SUPPLY then
+			-- (S-187, air role) the advanced airfield: Liche / Dragon
+			local field = brain.prefix .. "advairfield"
+			local x, z = spotNear(brain, field, brain.homeX - brain.dirX * 140, brain.homeZ - brain.dirZ * 140, id)
+			if x and z then
+				build(brain, id, field, x, z, 0)
+				c.advAirFrames += 1
+				continue
+			end
+		end
+		if cfg.techUp and not isCommander and #c.factories > 0 and #c.advFactories + #c.advFrames == 0 and acc.supply.stored > (cfg.advPlantSupply or Skirmish.ADV_PLANT_SUPPLY) then
 			-- tech up: the Advanced Vehicle Plant (fire-control radar, MLRS; S-7)
 			local adv = faction(brain, "advvehplant", "advvehplant")
 			local x, z = spotNear(brain, adv, brain.homeX - brain.toward * 40, brain.homeZ + 120, id)
@@ -1389,7 +1612,10 @@ local function think(brain: Brain)
 		local wantGen = c.generators < Skirmish.MIN_GENERATORS or (not extractorFirst and c.generators < genCap)
 		if genAllowed and wantGen then
 			local gen = faction(brain, "generator", "generator")
-			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ, id)
+			local x, z = Skirmish.blockSpot(brain, gen, c.generators, id)
+			if x == nil then
+				x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ, id)
+			end
 			if x and z then
 				build(brain, id, gen, x, z, 0)
 				c.generators += 1
@@ -1583,8 +1809,16 @@ local function think(brain: Brain)
 				break
 			elseif #c.army >= cfg.maxArmy then
 				break -- easy: a small army (S-57)
+			elseif cfg.airShare and #c.airfields > 0 and brain.rng:chance(cfg.airShare) then
+				break -- (S-187, air role) the airfield takes this share of the power
 			else
-				item = if brain.rng:chance(cfg.artyChance) then arty else tank
+				-- counters (S-187): artillery against known turrets, fast units
+				-- against known artillery
+				local artyChance = cfg.artyChance + (if c.enemyTurrets >= 3 then 0.2 else 0)
+				item = if brain.rng:chance(artyChance) then arty else tank
+				if item == tank and c.enemyArty >= 3 and brain.rng:chance(0.3) then
+					item = scoutUnit -- raiders against artillery
+				end
 				if item == tank and cfg.locustShare and brain.rng:chance(cfg.locustShare) then
 					item = "chs_locust" -- Chaos numbers (S-76)
 				end
@@ -1617,12 +1851,58 @@ local function think(brain: Brain)
 				jammerPlanned += 1
 			else
 				item = if brain.rng:chance(0.5) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "juggernaut")
-				if cfg.wardenShare and brain.rng:chance(cfg.wardenShare) then
+				if brain.prefix == "chs_" and brain.rng:chance(if c.enemyTurrets >= 3 then 0.35 else 0.15) then
+					item = "chs_tzar" -- (S-187) heavy plasma, more against defences
+				elseif cfg.wardenShare and brain.rng:chance(cfg.wardenShare) then
 					item = "ord_warden" -- Order's deployable guns (S-76)
 				elseif cfg.minotaurShare and brain.rng:chance(cfg.minotaurShare) then
 					item = "chs_minotaur" -- Chaos siege (S-76)
 				end
 			end
+			queueItem(f, item)
+		end
+	end
+
+	-- bot labs (S-187): scouts and the light combat bot, AA bots against
+	-- aircraft, a helper or two; the advanced lab its heavy bot
+	local botScout, botLine, botAA, botHelp = faction(brain, "glint", "skitter"), faction(brain, "mace", "thug"), faction(brain, "kestrel", "needle"), faction(brain, "lazarus", "graverobber")
+	local helpers = queued(sim, c.botLabs, botHelp) + (c.built[botHelp] or 0)
+	for _, id in w.ids do
+		if w.owner[id] == brain.player and sim.defs.unitByIndex[w.defIndex[id]].id == botHelp then
+			helpers += 1
+		end
+	end
+	for _, f in c.botLabs do
+		local q = sim.build.queue[f] or {}
+		for _ = #q + 1, cfg.queue do
+			if holdArmy or #c.army >= cfg.maxArmy then
+				break
+			end
+			local item
+			if c.enemyAir > 2 and brain.rng:chance(0.3) then
+				item = botAA
+			elseif helpers < 2 then
+				item = botHelp
+				helpers += 1
+			elseif cfg.role == "spam" or c.enemyArty >= 3 then
+				item = if brain.rng:chance(0.5) then botScout else botLine
+			else
+				item = if brain.rng:chance(0.25) then botScout else botLine
+			end
+			queueItem(f, item)
+		end
+	end
+	for _, f in c.advBotLabs do
+		local q = sim.build.queue[f] or {}
+		for _ = #q + 1, cfg.queue do
+			queueItem(f, faction(brain, "fatboy", "centurion"))
+		end
+	end
+	for _, f in c.advAirfields do
+		local q = sim.build.queue[f] or {}
+		for _ = #q + 1, cfg.queue do
+			-- (S-187, air role) Liche / Dragon, and T2 aircraft
+			local item = if brain.rng:chance(0.4) then faction(brain, "liche", "dragon") elseif brain.rng:chance(0.5) then faction(brain, "archon", "manticore") else faction(brain, "phantom", "behemoth")
 			queueItem(f, item)
 		end
 	end
@@ -1876,16 +2156,34 @@ local function think(brain: Brain)
 		local defense = Skirmish.enemyValueNear(brain, targetX or brain.enemyX, targetZ or brain.enemyZ, Skirmish.DEFENSE_RADIUS)
 		local cap = sim.match.unitCap
 		local massed = #home >= (if cap > 0 then math.min(Skirmish.MASS_UNITS, cap * Skirmish.MASS_SHARE) else Skirmish.MASS_UNITS)
-		outweighs = homeValue >= defense * Skirmish.ATTACK_MARGIN or massed
+		outweighs = homeValue >= defense * (cfg.attackMargin or Skirmish.ATTACK_MARGIN) or massed
 		if not outweighs then
 			brain.held += 1
 		end
+	end
+	-- teamwork (S-187): a wave an ally just sent is joined by an army worth
+	-- half a wave; an ally's call for help draws half the army at home
+	local team = if cfg.teamwork then teamOf(brain) else nil
+	local join = team ~= nil and team.waveFrom ~= brain.player and sim.tick - team.waveTick <= Skirmish.TEAM_JOIN_TICKS
+		and homeValue >= brain.waveValue * 0.5 and sim.tick >= cfg.firstAttack and sim.tick >= brain.recallUntil
+	local helpAlly = team ~= nil and team.helpFrom ~= brain.player and sim.tick - team.helpTick <= Skirmish.TEAM_HELP_TICKS
+	if team and threatX and threatZ then
+		team.helpX, team.helpZ, team.helpTick, team.helpFrom = threatX, threatZ, sim.tick, brain.player
 	end
 	if recalled then
 		-- defending: nothing else this think
 	elseif threatX and threatZ then
 		fight(home, threatX, threatZ) -- defend
-	elseif homeValue >= brain.waveValue and mayAttack and outweighs then
+	elseif helpAlly and team and #home >= 4 then
+		-- an ally's base is under attack: half the army goes
+		local half = {}
+		for i, id in home do
+			if i % 2 == 0 and not guardHome[id] then
+				table.insert(half, id)
+			end
+		end
+		fight(half, team.helpX, team.helpZ)
+	elseif (homeValue >= brain.waveValue and mayAttack and outweighs) or join then
 		-- easy (a wave interval) sends only the wave's value; the others wait
 		local cap = if cfg.waveInterval > 0 then brain.waveValue else math.huge
 		local stay = {}
@@ -1901,6 +2199,9 @@ local function think(brain: Brain)
 		end
 		home = stay
 		brain.lastWaveAt = sim.tick
+		if team and not join then
+			team.waveTick, team.waveFrom = sim.tick, brain.player -- (S-187) the allies may join
+		end
 		newWave = true
 		brain.waves += 1
 		brain.waveSize += cfg.waveGrowth
@@ -1922,6 +2223,33 @@ local function think(brain: Brain)
 		end
 		if #far > 0 then
 			submit(sim, brain.player, { cmdType = CT.MOVE, flags = 0, unitIds = far, cell = cell, offX = ox, offZ = oz })
+		end
+	end
+	-- raids (S-187, aggressive): a few fast units at the nearest known enemy
+	-- extractor, every RAID_EVERY ticks, between waves
+	if cfg.raid and #c.enemyExtractors > 0 and sim.tick - brain.raidAt >= Skirmish.RAID_EVERY then
+		local raiders = {}
+		for _, id in home do
+			local d = unitDef(sim, id)
+			if #raiders < Skirmish.RAID_UNITS and not guardHome[id] and d.movement and d.movement.maxSpeed >= 40 and bit32.band(d.categoryMask, BIT.ANTIAIR) == 0 then
+				table.insert(raiders, id)
+			end
+		end
+		if #raiders >= 2 then
+			local best, bestD = nil, math.huge
+			for _, e in c.enemyExtractors do
+				local d = (e[1] - brain.homeX) ^ 2 + (e[2] - brain.homeZ) ^ 2
+				if d < bestD then
+					best, bestD = e, d
+				end
+			end
+			if best then
+				for _, id in raiders do
+					brain.attacking[id] = true
+				end
+				fight(raiders, best[1], best[2])
+				brain.raidAt = sim.tick
+			end
 		end
 	end
 	-- the wave re-targets every 5 s. Its tanks attack-move; its artillery
