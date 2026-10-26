@@ -1,8 +1,13 @@
 """Breaker (Chaos coastal battery, T2 structure, footprint 3): mesh, textures,
 rig data. blender -b --factory-startup --python-exit-code 1 -P assets/models/chs_breaker/build.py
 
-From its blockout, at the size scale (S-104: footprint 3, 24 x 24 studs,
-about 6 tall): bigger and more elaborate than the T1 turrets, not a
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved turret stands LIFT studs higher
+on a lattice gun tower over the platform: four splayed legs, two tiers of
+X bracing on every face, an ammo hoist trunk, a railed top deck with team
+plates and amber corner lamps, a ladder (top ~24 studs, the F18
+blockout). First built from its blockout, at the size scale (S-104:
+footprint 3): bigger and more elaborate than the T1 turrets, not a
 rescale. Big shapes first: a dark pad, an open gun platform (a thin deck on
 visible legs and girders, the gaps showing) round a concrete pedestal,
 five reactive blocks hung on its sea face with amber strips, two big team
@@ -22,15 +27,68 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools"))
 
+import lib  # noqa: E402
 import unit  # noqa: E402
 from towers import antenna, band_round, clamped_cable, louver  # noqa: E402
 from mech import cable, hazard, octagon, rivets  # noqa: E402
 from unit import UP, ring  # noqa: E402
 
-TURRET_PIVOT = (0.0, 2.0, 1.0)
-GY = 3.6  # gun axis height
-MUZZLE = (0.0, GY, -15.1)
+LIFT = 20.0 - 3.6  # F18: the gun at the blockout's 20.0
+RING = 2.0 + LIFT  # 18.4, the turret ring on the tower's top deck
+TURRET_PIVOT = (0.0, RING, 1.0)
+GY = 3.6  # gun axis height before the lift (the turret is built there, then lifted)
+MUZZLE = (0.0, GY + LIFT, -15.1)
+LEG0, LEG1 = 5.8, 4.4  # the tower legs' offset from the ring's axis at the deck and at the top
 D0, D1 = 1.5, 2.0  # deck plate bottom and top
+
+
+def beam(p, a, b, w, kind):
+    a, b = lib.vec(a), lib.vec(b)
+    n = (b - a).normalized()
+    u = lib.vec((0, 1, 0)) if abs(n.y) < 0.9 else lib.vec((1, 0, 0))
+    u = (u - n * u.dot(n)).normalized()
+    p.obox(tuple((a + b) / 2), tuple(u), tuple(n), w, w, (b - a).length, kind)
+
+
+def build_tower(p):
+    """F18: the lattice gun tower from the platform deck up to the ring."""
+    top = RING - 0.6
+    def corner(sx, sz, y):
+        f = LEG0 + (LEG1 - LEG0) * (y - D1) / (top - D1)
+        return (sx * f, y, 1.0 + sz * f)
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            beam(p, corner(sx, sz, D1), corner(sx, sz, top), 1.1, "dark")
+            p.box(corner(sx, sz, D1 + 0.3), (1.8, 0.6, 1.8), "trim", bevel=0.05)  # foot plates
+    faces = [((-1, -1), (1, -1)), ((1, -1), (1, 1)), ((1, 1), (-1, 1)), ((-1, 1), (-1, -1))]
+    for y0, y1 in ((D1 + 0.6, 10.2), (10.2, top - 0.2)):
+        for a, b in faces:
+            beam(p, corner(*a, y0), corner(*b, y1), 0.32, "steel")
+            beam(p, corner(*b, y0), corner(*a, y1), 0.32, "steel")
+            beam(p, corner(*a, y1), corner(*b, y1), 0.4, "dark")
+    # the ammo hoist trunk, its lit band and hatch
+    p.cylinder("y", (0, (D1 + top) / 2, 1.0), 2.1, top - D1, 16, "paint", bevel=0.05)
+    p.cylinder("y", (0, 10.2, 1.0), 2.25, 0.5, 16, "trim")
+    p.box((0, 6.0, -1.12), (1.2, 1.6, 0.05), "dark")
+    p.box((0, 6.9, -1.13), (1.2, 0.12, 0.05), "power")
+    # the top deck: a plate, team plates on its sides, rails, amber corner lamps
+    p.box((0, top + 0.3, 1.0), (13.6, 0.6, 13.6), "paint", bevel=0.06)
+    for sx in (-1, 1):
+        p.box((sx * 6.83, top + 0.3, 1.0), (0.06, 0.45, 5.0), "team", bevel=0.01)
+        p.box((sx * 6.6, RING + 0.65, 1.0), (0.12, 0.12, 13.0), "steel")
+    p.box((0, RING + 0.65, 7.6), (13.0, 0.12, 0.12), "steel")
+    for x in (-6.6, -2.2, 2.2, 6.6):
+        p.box((x, RING + 0.32, 7.6), (0.1, 0.65, 0.1), "steel")
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            p.box((sx * 6.6, RING + 0.3, 1.0 + sz * 6.6), (0.5, 0.6, 0.5), "light")
+    # a ladder up the back of the trunk
+    for x in (-0.35, 0.35):
+        p.box((x, (D1 + top) / 2, 3.25), (0.08, top - D1, 0.08), "steel")
+    for k in range(int((top - D1) / 0.6)):
+        p.box((0, D1 + 0.4 + k * 0.6, 3.25), (0.7, 0.06, 0.06), "steel")
+    p.cylinder("y", (0, RING - 0.15, 1.0), 4.3, 0.3, 24, "dark")
+    p.cylinder("y", (0, RING - 0.32, 1.0), 4.45, 0.06, 24, "power")
 
 
 def build_base(p):
@@ -73,6 +131,7 @@ def build_base(p):
     # side vents into the pedestal room
     for sx in (-1, 1):
         louver(p, (sx * 10.02, 1.75, 2.0), (0, 0, 1), (sx, 0, 0), 4.0, 0.4, slats=2)
+    build_tower(p)
 
 
 def details_base(p):
@@ -130,9 +189,9 @@ def details_turret(p):
 
 unit.run(__file__, "chs_breaker", "chaos", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
-                 unit.PieceSpec("turret", "base", TURRET_PIVOT, build_turret, details_turret)],
+                 unit.PieceSpec("turret", "base", TURRET_PIVOT, unit.lifted(build_turret, LIFT), unit.lifted(details_turret, LIFT))],
          attachments={"muzzle": {"parent": "turret", "at": list(MUZZLE)}},
          budget=6000,
-         previews=[("35", (-34, 26, -40), (0, 3.0, -2.0), 50),
-                   ("80", (0, 58, 9), (0, 2, -2.0), 50),
-                   ("close", (-17, 13, -20), (0, 4.0, -3.0), 38)])
+         previews=[("35", (-44, 40, -54), (0, 12.0, -3.0), 50),
+                   ("80", (0, 66, 9), (0, 8, -3.0), 50),
+                   ("close", (-18, 26, -22), (0, 17.0, -4.0), 38)])

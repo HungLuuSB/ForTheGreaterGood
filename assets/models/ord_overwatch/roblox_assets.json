@@ -1,7 +1,36 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 3256 triangles, glow share 10.0%",
+  "revision": "F18 rebuild 2026-10-26 (towers stand high; advanced extractor at the T1's size), rigged in FTGG Art, review: 3256 triangles, glow share 10.0%",
   "bar": {
+    "model": "rbxassetid://123455560858959",
+    "meshes": {
+      "barrel1": "rbxassetid://96710678710834",
+      "barrel1_glow_weapon": "rbxassetid://125293828954837",
+      "barrel2": "rbxassetid://139182453252145",
+      "barrel2_glow_weapon": "rbxassetid://111430603739162",
+      "base": "rbxassetid://83698874986754",
+      "base_glow_running": "rbxassetid://86419812624108",
+      "mount": "rbxassetid://139501073344249",
+      "turret": "rbxassetid://93645414858559",
+      "turret_glow_running": "rbxassetid://101698347658424"
+    },
+    "decals": {
+      "ALB": "rbxassetid://119654336667681",
+      "RGH": "rbxassetid://78429581475459",
+      "NOR": "rbxassetid://116052592340403",
+      "MTL": "rbxassetid://90556331220758",
+      "EMI": "rbxassetid://121874775558256"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://133649706368927",
+      "NOR": "rbxassetid://92769420632539",
+      "RGH": "rbxassetid://83721902554803",
+      "MTL": "rbxassetid://122243185429210",
+      "EMI": "rbxassetid://86742786295626"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_overwatch_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://88382636197025",
     "meshes": {
       "barrel1": "rbxassetid://130787472402302",
@@ -28,9 +57,35 @@
       "MTL": "rbxassetid://138823479135792",
       "EMI": "rbxassetid://80578662710260"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_overwatch_bar in FTGG Art"
+    "note": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 3256 triangles, glow share 10.0%"
   },
   "wreck": {
+    "model": "rbxassetid://126654217225121",
+    "meshes": {
+      "barrel1": "rbxassetid://108715288290602",
+      "barrel2": "rbxassetid://122281942887064",
+      "base": "rbxassetid://78201878602102",
+      "mount": "rbxassetid://124572654929776",
+      "turret": "rbxassetid://135385814012949"
+    },
+    "decals": {
+      "ALB": "rbxassetid://124849116014245",
+      "RGH": "rbxassetid://90055039371728",
+      "NOR": "rbxassetid://83337539247627",
+      "MTL": "rbxassetid://123905851512827",
+      "EMI": "rbxassetid://104836913683079"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://114216683296292",
+      "NOR": "rbxassetid://87373548692961",
+      "RGH": "rbxassetid://77440510240875",
+      "MTL": "rbxassetid://121414010747734",
+      "EMI": "rbxassetid://103041075861272"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_overwatch_wreck_bar in FTGG Art",
+    "revision": "F18 wreck rebuild 2026-10-26, rigged in FTGG Art, review: 2892 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://97931615849338",
     "meshes": {
       "barrel1": "rbxassetid://113471664267082",

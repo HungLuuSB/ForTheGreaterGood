@@ -8,6 +8,11 @@ carrying two Guard laser shrouds, each its own client piece (`barrel1`
 left, `barrel2` right; recoil along +Z) with `muzzle1` / `muzzle2` at their
 lenses. Chaos reads rugged and improvised (M-14). Writes export/ through
 tools/unit.py.
+
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved mesh scaled x1.259 (the
+`scale` below), so it stands as tall as its approved F18 blockout
+(~17.5 studs) and reads heavier; same shapes, pieces and anchors.
 """
 
 import math
@@ -90,11 +95,14 @@ def details_mount(p):
         rivets(p, (sx * 2.26, 10.9, -0.9), (sx * 2.26, 10.9, -2.9), 4, (sx, 0, 0))
 
 
+F18 = 1.259  # the F18 scale (old top 13.9 -> 17.5 studs)
+
 unit.run(__file__, "chs_twin_guard", "chaos", footprint=2,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("turret", "base", TURRET, build_turret, details_turret),
                  unit.PieceSpec("mount", "turret", MOUNT, build_mount, details_mount)],
          attachments={k: {"parent": "barrel1" if k == "muzzle1" else "barrel2", "at": list(v)} for k, v in MUZZLES.items()},
          budget=4000,
-         previews=[("35", (-20, 16, -24), (0, 6.5, 0), 40),
-                   ("close", (-9, 14, -10), (0, 10.6, -1.0), 36)])
+         scale=(F18, F18, F18),
+         previews=[("35", (-25.2, 20.1, -30.2), (0.0, 8.2, 0.0), 40),
+                   ("close", (-11.3, 17.6, -12.6), (0.0, 13.3, -1.3), 36)])

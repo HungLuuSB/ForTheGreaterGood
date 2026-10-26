@@ -1,0 +1,131 @@
+{
+  "id": "ord_botlab",
+  "footprintStuds": 32,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        8.7,
+        0.0
+      ],
+      "size": [
+        31.1194,
+        17.4,
+        31.1194
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.8,
+        -6.5
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -4.5,
+        12.7,
+        -6.5
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        4.5,
+        12.7,
+        -6.5
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        0.0,
+        12.7,
+        -6.5
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        9.135,
+        0.0
+      ],
+      "size": [
+        29.8,
+        17.03,
+        29.8
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        6.8,
+        -5.4675
+      ],
+      "size": [
+        10.7,
+        12.4,
+        10.065
+      ]
+    }
+  ],
+  "glowShare": 0.0233,
+  "triangles": {
+    "base": 2060,
+    "total": 2060
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-181 mesh, rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar where needed), review: 2960 triangles, glow share 0.6%",
+  "bar": {
+    "model": "rbxassetid://105364506128901",
+    "meshes": {
+      "base": "rbxassetid://127078898462960",
+      "footL": "rbxassetid://133005509611397",
+      "footR": "rbxassetid://129864604468556",
+      "shinL": "rbxassetid://135760965585615",
+      "shinL_glow_running": "rbxassetid://90030901055729",
+      "shinR": "rbxassetid://109856164961064",
+      "shinR_glow_running": "rbxassetid://86245043483287",
+      "thighL": "rbxassetid://101204351441987",
+      "thighR": "rbxassetid://73652724128219",
+      "torso": "rbxassetid://102671775025730",
+      "torso_glow_power": "rbxassetid://123880400991333",
+      "torso_glow_weapon": "rbxassetid://107593608437118"
+    },
+    "decals": {
+      "ALB": "rbxassetid://128114778293164",
+      "RGH": "rbxassetid://89472696794568",
+      "NOR": "rbxassetid://75685809969347",
+      "MTL": "rbxassetid://110005070118779",
+      "EMI": "rbxassetid://86645544199359"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://98020985596964",
+      "NOR": "rbxassetid://134457579978218",
+      "RGH": "rbxassetid://137147859224951",
+      "MTL": "rbxassetid://78205446472996",
+      "EMI": "rbxassetid://130295492322528"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_centurion_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://120349457992786",
+    "meshes": {
+      "base": "rbxassetid://73290976884556",
+      "footL": "rbxassetid://113915197142954",
+      "footR": "rbxassetid://103794253814974",
+      "shinL": "rbxassetid://85777408037380",
+      "shinR": "rbxassetid://108938639668552",
+      "thighL": "rbxassetid://126634995338068",
+      "thighR": "rbxassetid://87108512269000",
+      "torso": "rbxassetid://119025284175821"
+    },
+    "decals": {
+      "ALB": "rbxassetid://84199497691777",
+      "RGH": "rbxassetid://92286342038289",
+      "NOR": "rbxassetid://98314554500743",
+      "MTL": "rbxassetid://133548438312817",
+      "EMI": "rbxassetid://78409850003265"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://136907331930930",
+      "NOR": "rbxassetid://110832821959176",
+      "RGH": "rbxassetid://104719504783211",
+      "MTL": "rbxassetid://108967196188713",
+      "EMI": "rbxassetid://116174136350458"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_centurion_wreck_bar in FTGG Art",
+    "revision": "S-181 wreck, rigged in FTGG Art 2026-10-26, review: 2380 triangles"
+  }
+}

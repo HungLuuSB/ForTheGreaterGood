@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 2060 triangles, glow share 2.3%",
+  "bar": {
+    "model": "rbxassetid://89319933652088",
+    "meshes": {
+      "base": "rbxassetid://121918621095118",
+      "base_glow_power": "rbxassetid://77739975778047",
+      "base_glow_running": "rbxassetid://79781558655573"
+    },
+    "decals": {
+      "ALB": "rbxassetid://81736643759460",
+      "RGH": "rbxassetid://115033345316423",
+      "NOR": "rbxassetid://94751031336171",
+      "MTL": "rbxassetid://106044513915480",
+      "EMI": "rbxassetid://128946303450593"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://98243749737822",
+      "NOR": "rbxassetid://131576458518719",
+      "RGH": "rbxassetid://72736178578232",
+      "MTL": "rbxassetid://126693123684580",
+      "EMI": "rbxassetid://112624259050911"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_botlab_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://109350128989769",
+    "meshes": {
+      "base": "rbxassetid://99008282035183"
+    },
+    "decals": {
+      "ALB": "rbxassetid://97042000893627",
+      "RGH": "rbxassetid://98793719367069",
+      "NOR": "rbxassetid://80378369411604",
+      "MTL": "rbxassetid://91402626973228",
+      "EMI": "rbxassetid://102787718054246"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://105320312077242",
+      "NOR": "rbxassetid://131017035539198",
+      "RGH": "rbxassetid://84671536630345",
+      "MTL": "rbxassetid://136527557315906",
+      "EMI": "rbxassetid://119251588088575"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_botlab_wreck_bar in FTGG Art",
+    "revision": "S-181 wreck, rigged in FTGG Art 2026-10-26, review: 1780 triangles"
+  }
+}

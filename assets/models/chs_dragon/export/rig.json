@@ -1,0 +1,399 @@
+{
+  "id": "chs_dragon",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.9,
+        2.1576
+      ],
+      "size": [
+        31.8,
+        6.2,
+        32.7151
+      ]
+    },
+    "fanL": {
+      "parent": "base",
+      "center": [
+        -8.6,
+        4.1,
+        1.6
+      ],
+      "size": [
+        5.8,
+        0.18,
+        5.473
+      ],
+      "pivot": [
+        -8.6,
+        4.1,
+        1.6
+      ]
+    },
+    "fanR": {
+      "parent": "base",
+      "center": [
+        8.6,
+        4.1,
+        1.6
+      ],
+      "size": [
+        5.8,
+        0.18,
+        5.473
+      ],
+      "pivot": [
+        8.6,
+        4.1,
+        1.6
+      ]
+    },
+    "belly": {
+      "parent": "base",
+      "center": [
+        0.0,
+        0.4,
+        -2.0
+      ],
+      "size": [
+        3.7766,
+        1.4,
+        3.7766
+      ],
+      "pivot": [
+        0.0,
+        1.0,
+        -2.0
+      ]
+    },
+    "flame": {
+      "parent": "belly",
+      "center": [
+        0.0,
+        -1.0,
+        -2.0
+      ],
+      "size": [
+        1.96,
+        1.6,
+        1.96
+      ],
+      "pivot": [
+        0.0,
+        -0.3,
+        -2.0
+      ]
+    },
+    "laser_l": {
+      "parent": "base",
+      "center": [
+        -15.2,
+        3.6,
+        -2.75
+      ],
+      "size": [
+        1.8,
+        1.6,
+        5.3
+      ],
+      "pivot": [
+        -15.2,
+        3.6,
+        -0.6
+      ]
+    },
+    "laser_r": {
+      "parent": "base",
+      "center": [
+        15.2,
+        3.6,
+        -2.75
+      ],
+      "size": [
+        1.8,
+        1.6,
+        5.3
+      ],
+      "pivot": [
+        15.2,
+        3.6,
+        -0.6
+      ]
+    }
+  },
+  "attachments": {
+    "laser_l_muzzle": {
+      "parent": "laser_l",
+      "at": [
+        -15.2,
+        3.6,
+        -5.6000000000000005
+      ]
+    },
+    "laser_r_muzzle": {
+      "parent": "laser_r",
+      "at": [
+        15.2,
+        3.6,
+        -5.6000000000000005
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "fanL",
+    "fanR",
+    "belly",
+    "flame",
+    "laser_l",
+    "laser_r"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "fanL": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fanR": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.635,
+        -4.825
+      ],
+      "size": [
+        31.69,
+        2.07,
+        16.65
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.84,
+        1.6
+      ],
+      "size": [
+        23.3848,
+        0.06,
+        6.1848
+      ]
+    },
+    {
+      "name": "base_glow_weapon",
+      "piece": "base",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        4.3,
+        -10.6
+      ],
+      "size": [
+        3.6202,
+        0.4,
+        0.9214
+      ]
+    },
+    {
+      "name": "fanL_glow_power",
+      "piece": "fanL",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -8.6,
+        4.2,
+        1.6
+      ],
+      "size": [
+        1.2,
+        0.5,
+        1.2
+      ]
+    },
+    {
+      "name": "fanR_glow_power",
+      "piece": "fanR",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        8.6,
+        4.2,
+        1.6
+      ],
+      "size": [
+        1.2,
+        0.5,
+        1.2
+      ]
+    },
+    {
+      "name": "belly_glow_running",
+      "piece": "belly",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        0.4,
+        -3.95
+      ],
+      "size": [
+        1.2,
+        0.5,
+        0.05
+      ]
+    },
+    {
+      "name": "flame_glow_weapon",
+      "piece": "flame",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        -1.83,
+        -2.0
+      ],
+      "size": [
+        1.2,
+        0.04,
+        1.2
+      ]
+    },
+    {
+      "name": "laser_l_glow_weapon",
+      "piece": "laser_l",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        -15.2,
+        3.6,
+        -5.425
+      ],
+      "size": [
+        0.56,
+        0.5326,
+        0.05
+      ]
+    },
+    {
+      "name": "laser_r_glow_weapon",
+      "piece": "laser_r",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        15.2,
+        3.6,
+        -5.425
+      ],
+      "size": [
+        0.56,
+        0.5326,
+        0.05
+      ]
+    }
+  ],
+  "glowShare": 0.0119,
+  "triangles": {
+    "base": 2460,
+    "fanL": 80,
+    "fanR": 80,
+    "belly": 200,
+    "flame": 176,
+    "laser_l": 188,
+    "laser_r": 188,
+    "total": 3372
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

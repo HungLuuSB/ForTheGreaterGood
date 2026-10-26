@@ -1,7 +1,32 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "T2 structure at the S-104 size (queue item 5): 4584 triangles, glow share 1.8%",
+  "revision": "rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 3188 triangles, glow share 3.2%",
   "bar": {
+    "model": "rbxassetid://113126877150402",
+    "meshes": {
+      "base": "rbxassetid://105958835196035",
+      "base_glow_power": "rbxassetid://104839334515681",
+      "base_glow_running": "rbxassetid://78509572865755",
+      "drill": "rbxassetid://129731492823256",
+      "drill_glow_power": "rbxassetid://82424779088564"
+    },
+    "decals": {
+      "ALB": "rbxassetid://121026187313490",
+      "RGH": "rbxassetid://73605172687014",
+      "NOR": "rbxassetid://125445061034391",
+      "MTL": "rbxassetid://94544444917372",
+      "EMI": "rbxassetid://138157984475226"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://93702525788792",
+      "NOR": "rbxassetid://121830638793000",
+      "RGH": "rbxassetid://138890362436822",
+      "MTL": "rbxassetid://136077849662925",
+      "EMI": "rbxassetid://109515410005788"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advextractor_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://101692315021191",
     "meshes": {
       "base": "rbxassetid://133735199428809",
@@ -24,9 +49,32 @@
       "MTL": "rbxassetid://84146054368736",
       "EMI": "rbxassetid://77704295860148"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_advextractor_bar in FTGG Art"
+    "note": "T2 structure at the S-104 size (queue item 5): 4584 triangles, glow share 1.8%"
   },
   "wreck": {
+    "model": "rbxassetid://86178369142665",
+    "meshes": {
+      "base": "rbxassetid://127170099570206",
+      "drill": "rbxassetid://103602642687956"
+    },
+    "decals": {
+      "ALB": "rbxassetid://124865037560970",
+      "RGH": "rbxassetid://105638905781071",
+      "NOR": "rbxassetid://73248282140436",
+      "MTL": "rbxassetid://136494547425022",
+      "EMI": "rbxassetid://127359378668493"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://87194417988776",
+      "NOR": "rbxassetid://71634491318131",
+      "RGH": "rbxassetid://86194745175988",
+      "MTL": "rbxassetid://70851361345449",
+      "EMI": "rbxassetid://83255642056596"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advextractor_wreck_bar in FTGG Art",
+    "revision": "F18 wreck rebuild 2026-10-26, rigged in FTGG Art, review: 2952 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://105801253502477",
     "meshes": {
       "base": "rbxassetid://108725462644069",

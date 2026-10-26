@@ -11,6 +11,11 @@ triangle about its forward axis; only the top barrel fires and the client
 turns the drum 120 degrees per shot (`muzzle1` on top at rest). Each barrel
 is its own client piece (`barrel1..3`, recoil along +Z). Chaos reads rugged
 and improvised (M-14). Writes export/ through tools/unit.py.
+
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved mesh scaled x1.225 (the
+`scale` below), so it stands as tall as its approved F18 blockout
+(~19.6 studs) and reads heavier; same shapes, pieces and anchors.
 """
 
 import math
@@ -99,6 +104,8 @@ def details_drum(p):
     ring(p, (0, CY, CZ - 0.61), (0, 0, -1), 0.5)
 
 
+F18 = 1.225  # the F18 scale (old top 16 -> 19.6 studs)
+
 unit.run(__file__, "chs_geryon", "chaos", footprint=2,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("turret", "base", TURRET, build_turret, details_turret),
@@ -106,5 +113,6 @@ unit.run(__file__, "chs_geryon", "chaos", footprint=2,
                  unit.PieceSpec("drum", "mount", DRUM, build_drum, details_drum)],
          attachments={f"muzzle{k}": {"parent": f"barrel{k}", "at": [round(v, 3) for v in at(k, CZ - 5.8)]} for k in (1, 2, 3)},
          budget=4000,
-         previews=[("35", (-20, 18, -24), (0, 7.5, 0), 40),
-                   ("close", (-10, 16, -11), (0, 12.4, -2.0), 38)])
+         scale=(F18, F18, F18),
+         previews=[("35", (-24.5, 22.1, -29.4), (0.0, 9.2, 0.0), 40),
+                   ("close", (-12.2, 19.6, -13.5), (0.0, 15.2, -2.5), 38)])
