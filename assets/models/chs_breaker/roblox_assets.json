@@ -1,0 +1,54 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "T2 structure at the S-104 size (queue item 5): 3388 triangles, glow share 3.3%",
+  "bar": {
+    "model": "rbxassetid://128302359359763",
+    "meshes": {
+      "base": "rbxassetid://105783540439793",
+      "base_glow_power": "rbxassetid://119087625984548",
+      "base_glow_running": "rbxassetid://130580181500213",
+      "turret": "rbxassetid://75687382358571",
+      "turret_glow_power": "rbxassetid://80792029559944",
+      "turret_glow_running": "rbxassetid://110223349538024",
+      "turret_glow_weapon": "rbxassetid://101459489886253"
+    },
+    "decals": {
+      "ALB": "rbxassetid://122489018901311",
+      "RGH": "rbxassetid://139509278776997",
+      "NOR": "rbxassetid://114314292755457",
+      "MTL": "rbxassetid://108480918662633",
+      "EMI": "rbxassetid://134706366270990"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://89919125761301",
+      "NOR": "rbxassetid://81539035111385",
+      "RGH": "rbxassetid://113970884358476",
+      "MTL": "rbxassetid://70958575765204",
+      "EMI": "rbxassetid://138231139281939"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_breaker_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://102518166356604",
+    "meshes": {
+      "base": "rbxassetid://117369955302164",
+      "turret": "rbxassetid://81506475453736"
+    },
+    "decals": {
+      "ALB": "rbxassetid://93801059574413",
+      "RGH": "rbxassetid://74444096678423",
+      "NOR": "rbxassetid://97061828335441",
+      "MTL": "rbxassetid://102775968046990",
+      "EMI": "rbxassetid://95638590950949"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://117685673254000",
+      "NOR": "rbxassetid://101198620778846",
+      "RGH": "rbxassetid://110965651880286",
+      "MTL": "rbxassetid://136673615183926",
+      "EMI": "rbxassetid://81418266454440"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_breaker_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 2904 triangles"
+  }
+}

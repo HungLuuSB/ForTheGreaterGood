@@ -1,0 +1,84 @@
+{
+  "id": "ord_choir_wreck",
+  "wreckOf": "ord_choir",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0987,
+        5.7194,
+        0.0178
+      ],
+      "size": [
+        23.3271,
+        17.2274,
+        22.7138
+      ]
+    },
+    "ring": {
+      "parent": "base",
+      "center": [
+        -0.1255,
+        2.1672,
+        0.0573
+      ],
+      "size": [
+        10.1505,
+        0.7394,
+        9.6736
+      ],
+      "pivot": [
+        0.0,
+        2.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "ring"
+  ],
+  "anim": {
+    "ring": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2606,
+    "ring": 428,
+    "total": 3034
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

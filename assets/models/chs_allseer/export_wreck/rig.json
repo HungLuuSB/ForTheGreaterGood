@@ -1,0 +1,84 @@
+{
+  "id": "chs_allseer_wreck",
+  "wreckOf": "chs_allseer",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0907,
+        7.9409,
+        -0.0238
+      ],
+      "size": [
+        23.9335,
+        16.18,
+        23.8607
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        0.0154,
+        17.8764,
+        0.1888
+      ],
+      "size": [
+        12.3211,
+        4.9874,
+        2.2313
+      ],
+      "pivot": [
+        0.0,
+        15.4,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2296,
+    "radar": 316,
+    "total": 2612
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

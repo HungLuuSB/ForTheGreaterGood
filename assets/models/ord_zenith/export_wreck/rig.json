@@ -1,0 +1,147 @@
+{
+  "id": "ord_zenith_wreck",
+  "wreckOf": "ord_zenith",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0002,
+        1.8304,
+        1.4527
+      ],
+      "size": [
+        3.5814,
+        3.7709,
+        12.3804
+      ]
+    },
+    "tailRotor": {
+      "parent": "base",
+      "center": [
+        0.0612,
+        2.1067,
+        6.7241
+      ],
+      "size": [
+        0.4216,
+        1.0863,
+        1.0897
+      ],
+      "pivot": [
+        0,
+        2.1,
+        6.75
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        0.4281,
+        3.4547,
+        0.3199
+      ],
+      "size": [
+        9.738,
+        0.497,
+        10.1595
+      ],
+      "pivot": [
+        0.0,
+        3.35,
+        0.3
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        -0.0073,
+        0.0393,
+        -0.2521
+      ],
+      "size": [
+        1.4044,
+        1.1681,
+        4.4644
+      ],
+      "pivot": [
+        0.0,
+        0.4,
+        -0.2
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.0,
+        -0.5,
+        -2.1
+      ]
+    },
+    "nano2": {
+      "parent": "nano",
+      "at": [
+        0.0,
+        -0.5,
+        1.6
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "tailRotor"
+  ],
+  "anim": {
+    "tailRotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 908,
+    "tailRotor": 52,
+    "rotor": 192,
+    "nano": 260,
+    "total": 1412
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

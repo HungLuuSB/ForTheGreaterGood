@@ -1,0 +1,140 @@
+{
+  "id": "ord_paladin_wreck",
+  "wreckOf": "ord_paladin",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0045,
+        1.3972,
+        -0.0875
+      ],
+      "size": [
+        6.5795,
+        2.0432,
+        8.8063
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -2.5915,
+        0.5252,
+        -0.009
+      ],
+      "size": [
+        0.85,
+        1.0319,
+        8.4851
+      ],
+      "pivot": [
+        -2.6,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        2.6182,
+        0.4884,
+        0.0027
+      ],
+      "size": [
+        0.8645,
+        1.1181,
+        8.5251
+      ],
+      "pivot": [
+        2.6,
+        0.46,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0135,
+        3.2032,
+        -4.0007
+      ],
+      "size": [
+        4.9082,
+        2.1934,
+        14.2228
+      ],
+      "pivot": [
+        0.0,
+        2.2,
+        0.3
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0,
+        2.95,
+        -11.05
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 508,
+    "trackL": 344,
+    "trackR": 344,
+    "turret": 640,
+    "total": 1836
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

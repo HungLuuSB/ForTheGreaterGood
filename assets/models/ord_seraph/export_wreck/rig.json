@@ -1,0 +1,271 @@
+{
+  "id": "ord_seraph_wreck",
+  "wreckOf": "ord_seraph",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.026,
+        1.9689,
+        -0.1592
+      ],
+      "size": [
+        4.828,
+        2.4094,
+        8.0186
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -2.2024,
+        0.7223,
+        -2.4222
+      ],
+      "size": [
+        0.7469,
+        1.4772,
+        1.435
+      ],
+      "pivot": [
+        -2.1999999999999997,
+        0.75,
+        -2.4
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -2.1587,
+        0.7849,
+        0.0704
+      ],
+      "size": [
+        0.7335,
+        1.509,
+        1.4963
+      ],
+      "pivot": [
+        -2.1999999999999997,
+        0.75,
+        0.10000000000000009
+      ]
+    },
+    "wheelL3": {
+      "parent": "base",
+      "center": [
+        -2.1359,
+        0.7434,
+        2.5631
+      ],
+      "size": [
+        0.7412,
+        1.5927,
+        1.4783
+      ],
+      "pivot": [
+        -2.1999999999999997,
+        0.75,
+        2.6
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        2.2016,
+        0.7782,
+        -2.3828
+      ],
+      "size": [
+        0.7277,
+        1.5467,
+        1.3959
+      ],
+      "pivot": [
+        2.1999999999999997,
+        0.75,
+        -2.4
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        2.1628,
+        0.747,
+        0.103
+      ],
+      "size": [
+        0.7514,
+        1.4661,
+        1.4718
+      ],
+      "pivot": [
+        2.1999999999999997,
+        0.75,
+        0.10000000000000009
+      ]
+    },
+    "wheelR3": {
+      "parent": "base",
+      "center": [
+        2.1886,
+        0.7291,
+        2.5899
+      ],
+      "size": [
+        0.6772,
+        1.4814,
+        1.4296
+      ],
+      "pivot": [
+        2.1999999999999997,
+        0.75,
+        2.6
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.004,
+        4.0261,
+        -0.8382
+      ],
+      "size": [
+        3.0445,
+        3.4474,
+        0.8212
+      ],
+      "pivot": [
+        0.0,
+        2.4,
+        -0.8
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -0.0564,
+        3.8966,
+        1.7768
+      ],
+      "size": [
+        3.5981,
+        3.0778,
+        4.1313
+      ],
+      "pivot": [
+        0.0,
+        2.4,
+        2.3
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        0,
+        5.2,
+        0.3
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 408,
+    "wheelL1": 56,
+    "wheelL2": 36,
+    "wheelL3": 36,
+    "wheelR1": 36,
+    "wheelR2": 56,
+    "wheelR3": 56,
+    "turret": 168,
+    "launcher": 376,
+    "total": 1228
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

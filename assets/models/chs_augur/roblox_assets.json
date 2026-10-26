@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "T2 structure at the S-104 size (queue item 5): 2536 triangles, glow share 2.2%",
+  "bar": {
+    "model": "rbxassetid://104291469796263",
+    "meshes": {
+      "base": "rbxassetid://102808381071598",
+      "base_glow_power": "rbxassetid://101800546861764",
+      "base_glow_running": "rbxassetid://77423720619496",
+      "dish": "rbxassetid://128184318961457",
+      "dish_glow_running": "rbxassetid://129022490627963"
+    },
+    "decals": {
+      "ALB": "rbxassetid://99831963151277",
+      "RGH": "rbxassetid://139070985452801",
+      "NOR": "rbxassetid://130733035828830",
+      "MTL": "rbxassetid://94732551022780",
+      "EMI": "rbxassetid://87881617306766"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://80194244386734",
+      "NOR": "rbxassetid://105260326786414",
+      "RGH": "rbxassetid://87238225872222",
+      "MTL": "rbxassetid://76266052732342",
+      "EMI": "rbxassetid://128755125829676"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_augur_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://70915914782214",
+    "meshes": {
+      "base": "rbxassetid://109507919767996",
+      "dish": "rbxassetid://81102322254751"
+    },
+    "decals": {
+      "ALB": "rbxassetid://85696409067508",
+      "RGH": "rbxassetid://95807154633015",
+      "NOR": "rbxassetid://120606226126768",
+      "MTL": "rbxassetid://96914248069844",
+      "EMI": "rbxassetid://117058628896908"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://115524358125275",
+      "NOR": "rbxassetid://99536665700974",
+      "RGH": "rbxassetid://119307662696928",
+      "MTL": "rbxassetid://139315066096514",
+      "EMI": "rbxassetid://101372467158559"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_augur_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 2308 triangles"
+  }
+}

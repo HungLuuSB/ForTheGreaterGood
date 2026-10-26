@@ -1,0 +1,77 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "re-upload: the first normal map failed to load (HTTP 502): 4736 triangles, glow share 4.1%",
+  "bar": {
+    "model": "rbxassetid://122317901865163",
+    "meshes": {
+      "base": "rbxassetid://74280118891642",
+      "base_glow_power": "rbxassetid://85334333437141",
+      "base_glow_running": "rbxassetid://138082174345270",
+      "core": "rbxassetid://73085156872995",
+      "core_glow_power": "rbxassetid://93984182430937"
+    },
+    "decals": {
+      "ALB": "rbxassetid://77425718221671",
+      "RGH": "rbxassetid://103344246372178",
+      "NOR": "rbxassetid://138972777311443",
+      "MTL": "rbxassetid://93228380802440",
+      "EMI": "rbxassetid://86349885149425"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://87867850715503",
+      "NOR": "rbxassetid://112025789802121",
+      "RGH": "rbxassetid://136061480802259",
+      "MTL": "rbxassetid://100125962222026",
+      "EMI": "rbxassetid://123726647330071"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_fusion_bar in FTGG Art"
+  },
+  "bar_1": {
+    "model": "rbxassetid://98135151246830",
+    "meshes": {
+      "base": "rbxassetid://74280118891642",
+      "base_glow_power": "rbxassetid://85334333437141",
+      "base_glow_running": "rbxassetid://138082174345270",
+      "core": "rbxassetid://73085156872995",
+      "core_glow_power": "rbxassetid://93984182430937"
+    },
+    "decals": {
+      "ALB": "rbxassetid://100750484448318",
+      "RGH": "rbxassetid://74008408905119",
+      "NOR": "rbxassetid://87073878181949",
+      "MTL": "rbxassetid://89736890870271",
+      "EMI": "rbxassetid://137326465682137"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://86501614187659",
+      "NOR": "rbxassetid://100758083872191",
+      "RGH": "rbxassetid://108496604453959",
+      "MTL": "rbxassetid://132203170635260",
+      "EMI": "rbxassetid://106785148715963"
+    },
+    "note": "T2 structure at the S-104 size (queue item 5): 4736 triangles, glow share 4.1%"
+  },
+  "wreck": {
+    "model": "rbxassetid://92339020231043",
+    "meshes": {
+      "base": "rbxassetid://82955340539864",
+      "core": "rbxassetid://116555439371127"
+    },
+    "decals": {
+      "ALB": "rbxassetid://115653124847452",
+      "RGH": "rbxassetid://113470545240607",
+      "NOR": "rbxassetid://98873120073035",
+      "MTL": "rbxassetid://106969097430210",
+      "EMI": "rbxassetid://108667376406220"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://92053258889127",
+      "NOR": "rbxassetid://140305865024219",
+      "RGH": "rbxassetid://104309101185577",
+      "MTL": "rbxassetid://87044448553751",
+      "EMI": "rbxassetid://123476935592331"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_fusion_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 3896 triangles"
+  }
+}

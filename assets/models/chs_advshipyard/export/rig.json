@@ -1,0 +1,346 @@
+{
+  "id": "chs_advshipyard",
+  "footprintStuds": 48,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        11.45,
+        0.45
+      ],
+      "size": [
+        47.2,
+        25.5,
+        46.3
+      ]
+    },
+    "jib1": {
+      "parent": "base",
+      "center": [
+        -10.25,
+        15.8,
+        4.0625
+      ],
+      "size": [
+        23.7,
+        4.1,
+        3.4149
+      ],
+      "pivot": [
+        -19.2,
+        15.999999999999998,
+        4.6
+      ]
+    },
+    "jib2": {
+      "parent": "base",
+      "center": [
+        10.25,
+        15.8,
+        -7.5375
+      ],
+      "size": [
+        23.7,
+        4.1,
+        3.4149
+      ],
+      "pivot": [
+        19.2,
+        15.999999999999998,
+        -7.0
+      ]
+    },
+    "jib": {
+      "parent": "base",
+      "center": [
+        8.65,
+        23.0,
+        3.65
+      ],
+      "size": [
+        4.3,
+        8.4,
+        39.5
+      ],
+      "pivot": [
+        8.0,
+        24.400000000000002,
+        18.4
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.0,
+        -1.0
+      ]
+    },
+    "nano1": {
+      "parent": "jib1",
+      "at": [
+        -1.8,
+        13.73,
+        4.6
+      ]
+    },
+    "nano2": {
+      "parent": "jib2",
+      "at": [
+        1.8,
+        13.73,
+        -7.0
+      ]
+    },
+    "nano3": {
+      "parent": "jib",
+      "at": [
+        8.0,
+        18.77,
+        -1.0
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "jib1",
+    "jib2",
+    "jib"
+  ],
+  "visualPieces": [
+    "jib1",
+    "jib2",
+    "jib"
+  ],
+  "anim": {
+    "jib1": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "jib2": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "jib": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        7.075,
+        0.275
+      ],
+      "size": [
+        46.5,
+        12.55,
+        45.95
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.4275,
+        6.04,
+        18.2803
+      ],
+      "size": [
+        40.055,
+        10.48,
+        6.5806
+      ]
+    },
+    {
+      "name": "jib1_glow_running",
+      "piece": "jib1",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        1.4,
+        17.2,
+        4.6
+      ],
+      "size": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "jib1_glow_power",
+      "piece": "jib1",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -1.8,
+        13.73,
+        4.6
+      ],
+      "size": [
+        0.7,
+        0.05,
+        0.7
+      ]
+    },
+    {
+      "name": "jib2_glow_running",
+      "piece": "jib2",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.4,
+        17.2,
+        -7.0
+      ],
+      "size": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "jib2_glow_power",
+      "piece": "jib2",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        1.8,
+        13.73,
+        -7.0
+      ],
+      "size": [
+        0.7,
+        0.05,
+        0.7
+      ]
+    },
+    {
+      "name": "jib_glow_running",
+      "piece": "jib",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        9.15,
+        25.8,
+        0.0925
+      ],
+      "size": [
+        2.9,
+        1.7,
+        32.385
+      ]
+    },
+    {
+      "name": "jib_glow_power",
+      "piece": "jib",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        8.0,
+        18.77,
+        -1.0
+      ],
+      "size": [
+        1.0,
+        0.05,
+        1.0
+      ]
+    }
+  ],
+  "glowShare": 0.0187,
+  "triangles": {
+    "base": 5802,
+    "jib1": 616,
+    "jib2": 616,
+    "jib": 832,
+    "total": 7866
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

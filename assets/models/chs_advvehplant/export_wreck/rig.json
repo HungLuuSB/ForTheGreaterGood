@@ -1,0 +1,155 @@
+{
+  "id": "chs_advvehplant_wreck",
+  "wreckOf": "chs_advvehplant",
+  "footprintStuds": 48,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0088,
+        7.0652,
+        -0.011
+      ],
+      "size": [
+        47.665,
+        16.2803,
+        47.5491
+      ]
+    },
+    "trolley1": {
+      "parent": "base",
+      "center": [
+        -1.0102,
+        12.2827,
+        0.8198
+      ],
+      "size": [
+        2.3408,
+        4.6597,
+        27.7116
+      ],
+      "pivot": [
+        -1.0,
+        14.1,
+        -1.0
+      ]
+    },
+    "trolley2": {
+      "parent": "base",
+      "center": [
+        14.0198,
+        12.0516,
+        1.2779
+      ],
+      "size": [
+        2.7845,
+        5.5048,
+        28.1114
+      ],
+      "pivot": [
+        14.0,
+        14.1,
+        -1.0
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        6.5,
+        0.76,
+        -1.0
+      ]
+    },
+    "nano1": {
+      "parent": "trolley1",
+      "at": [
+        -1.0,
+        9.72,
+        -1.0
+      ]
+    },
+    "nano2": {
+      "parent": "trolley2",
+      "at": [
+        14.0,
+        9.72,
+        -1.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        0.4,
+        6.69,
+        -6.2
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        12.6,
+        6.69,
+        -6.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "trolley1",
+    "trolley2"
+  ],
+  "anim": {
+    "trolley1": {
+      "motion": "slide",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": 4.0
+    },
+    "trolley2": {
+      "motion": "slide",
+      "axis": [
+        -1,
+        0,
+        0
+      ],
+      "range": 4.0
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 5268,
+    "trolley1": 152,
+    "trolley2": 272,
+    "total": 5692
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

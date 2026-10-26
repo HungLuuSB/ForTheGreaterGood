@@ -1,0 +1,142 @@
+{
+  "id": "ord_advshipyard_wreck",
+  "wreckOf": "ord_advshipyard",
+  "footprintStuds": 48,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.2061,
+        8.3678,
+        0.2675
+      ],
+      "size": [
+        47.209,
+        19.56,
+        47.4824
+      ]
+    },
+    "gantry": {
+      "parent": "base",
+      "center": [
+        0.0364,
+        10.0661,
+        -17.3387
+      ],
+      "size": [
+        43.2038,
+        15.9412,
+        4.3417
+      ],
+      "pivot": [
+        0.0,
+        16.6,
+        -17.4
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -5.3,
+        13.05,
+        -4.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        -5.3,
+        13.05,
+        6.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        5.3,
+        13.05,
+        -4.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        5.3,
+        13.05,
+        6.0
+      ]
+    },
+    "nano5": {
+      "parent": "gantry",
+      "at": [
+        -7.0,
+        15.4,
+        -17.4
+      ]
+    },
+    "nano6": {
+      "parent": "gantry",
+      "at": [
+        7.0,
+        15.4,
+        -17.4
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "gantry"
+  ],
+  "anim": {
+    "gantry": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 5.0
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 3584,
+    "gantry": 804,
+    "total": 4388
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

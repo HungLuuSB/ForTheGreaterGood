@@ -1,0 +1,84 @@
+{
+  "id": "ord_veilspire_wreck",
+  "wreckOf": "ord_veilspire",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0008,
+        11.8093,
+        0.0522
+      ],
+      "size": [
+        15.5958,
+        23.7509,
+        15.6991
+      ]
+    },
+    "band": {
+      "parent": "base",
+      "center": [
+        -0.0551,
+        7.9223,
+        -0.0533
+      ],
+      "size": [
+        6.459,
+        2.1445,
+        6.4983
+      ],
+      "pivot": [
+        0.0,
+        8.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "band"
+  ],
+  "anim": {
+    "band": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2202,
+    "band": 364,
+    "total": 2566
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

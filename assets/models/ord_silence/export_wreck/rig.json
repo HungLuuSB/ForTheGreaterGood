@@ -1,0 +1,109 @@
+{
+  "id": "ord_silence_wreck",
+  "wreckOf": "ord_silence",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0123,
+        0.472,
+        0.4276
+      ],
+      "size": [
+        3.2931,
+        4.4143,
+        11.4205
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        0.0241,
+        0.362,
+        -3.3927
+      ],
+      "size": [
+        1.0824,
+        0.4686,
+        0.9447
+      ],
+      "pivot": [
+        0.0,
+        0.2,
+        -3.4
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        0.0091,
+        0.3938,
+        3.0027
+      ],
+      "size": [
+        0.8693,
+        0.3742,
+        0.7125
+      ],
+      "pivot": [
+        0.0,
+        0.2,
+        3.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        0,
+        0.4,
+        -3.9
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        0,
+        0.4,
+        2.6
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 340,
+    "turret1": 56,
+    "turret2": 56,
+    "total": 452
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

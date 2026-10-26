@@ -1,0 +1,171 @@
+{
+  "id": "chs_blackout",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        6.05,
+        0.0
+      ],
+      "size": [
+        15.5814,
+        12.1,
+        15.5814
+      ]
+    },
+    "spine": {
+      "parent": "base",
+      "center": [
+        0.0,
+        17.22,
+        0.0
+      ],
+      "size": [
+        5.4,
+        11.64,
+        5.4
+      ],
+      "pivot": [
+        0.0,
+        11.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "spine"
+  ],
+  "visualPieces": [
+    "spine"
+  ],
+  "anim": {
+    "spine": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        6.315,
+        0.0
+      ],
+      "size": [
+        15.69,
+        11.79,
+        5.0
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        4.9,
+        3.175,
+        -2.7229
+      ],
+      "size": [
+        1.8,
+        2.85,
+        2.0642
+      ]
+    },
+    {
+      "name": "spine_glow_running",
+      "piece": "spine",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        23.2,
+        0.0
+      ],
+      "size": [
+        0.36,
+        0.32,
+        0.36
+      ]
+    },
+    {
+      "name": "spine_glow_power",
+      "piece": "spine",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        17.0,
+        0.0
+      ],
+      "size": [
+        5.24,
+        9.0,
+        5.24
+      ]
+    }
+  ],
+  "glowShare": 0.0395,
+  "triangles": {
+    "base": 1856,
+    "spine": 1100,
+    "total": 2956
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

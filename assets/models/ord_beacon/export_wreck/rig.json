@@ -1,0 +1,84 @@
+{
+  "id": "ord_beacon_wreck",
+  "wreckOf": "ord_beacon",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0126,
+        7.9888,
+        -0.0128
+      ],
+      "size": [
+        23.7588,
+        16.4083,
+        23.7391
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        0.0273,
+        18.6982,
+        0.2538
+      ],
+      "size": [
+        12.5302,
+        6.3711,
+        2.5109
+      ],
+      "pivot": [
+        0.0,
+        15.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2240,
+    "radar": 816,
+    "total": 3056
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
