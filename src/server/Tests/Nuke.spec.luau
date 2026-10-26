@@ -66,7 +66,8 @@ return function(t: RunAll.Context)
 		local sim, silo, units = range(1)
 		local w = sim.world
 		local key = World.slotKey(silo, 1)
-		t.equal(w.wStock[key], 2, "a placed silo starts with its 2 warheads")
+		local full = w.wStock[key]
+		t.equal(full, 10, "a placed silo starts with its 10 warheads (S-200)")
 		for _ = 1, 150 do
 			Sim.step(sim)
 			t.equal(#eventsOf(sim, "LAUNCH"), 0, "never fires on its own")
@@ -95,7 +96,7 @@ return function(t: RunAll.Context)
 		end
 		assert(launchedAt and impact, "launched and landed")
 		t.expect(launchedAt <= 2 + 151, `launched at once (tick {launchedAt})`)
-		t.equal(w.wStock[key], 1, "it spent a warhead")
+		t.equal(w.wStock[key], full - 1, "it spent a warhead")
 		t.equal(sim.air.groundX[silo], nil, "the order is done")
 		local flight = (impact[1] - launchedAt) / 15
 		print(string.format("    nuke: flight %.1f s, apex %.0f studs, landed %.1f studs from the target", flight, apex, math.sqrt((impact[2] - TARGET_X) ^ 2 + (impact[3] - TARGET_Z) ^ 2)))

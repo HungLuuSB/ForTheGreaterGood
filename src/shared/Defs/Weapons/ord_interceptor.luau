@@ -12,7 +12,7 @@ return {
 	turnRate = 160,
 	launch = "vertical",
 	climbHeight = 40,
-	stockpile = { capacity = 3, buildTime = 60, cost = { supply = 400, power = 10000 } },
+	stockpile = { capacity = 20, buildTime = 60, cost = { supply = 400, power = 10000 } }, -- (20, the user, 2026-10-27)
 	guidance = "RADAR", -- (steers at the missile; units are never its targets)
 	lockRange = 1100,
 	intercepts = { chance = 1 },

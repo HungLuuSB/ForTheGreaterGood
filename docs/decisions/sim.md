@@ -2853,3 +2853,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Factories: FRONT puts an order first on the list for new units. A factory's BUILD still appends to production.
   - DGUN out of range: the walk goes first. When the bolt fires, the walk ends and the queue goes on (`Orders.endWalk`); without FRONT the Commander stops there, as before.
 - **Tests:** Orders.spec: a FRONT move goes first, then the interrupted move, then the queued one; a FRONT BUILD mid-build finishes first, then the builder finishes the same frame; a FRONT D-Gun walks, fires and goes on to its queued move. Schema.spec: the reserved-bit case moved to 16.
+
+## S-200 — Bigger strategic stockpiles: nukes 10, anti-nukes 20 (the user) (2026-10-27)
+
+- **Asked:** "increase anti nuke stockpile to 20, nuke stockpile to 10".
+- **Changed:** the nuke silos' warhead stockpile (`ord_nuke`, `chs_nuke`) holds 10 instead of 2. The anti-nuke structures' interceptor stockpile (`ord_interceptor`, `chs_interceptor`) holds 20 instead of 3. Build time and cost per missile are unchanged (warheads 120 s for 1,500 supply + 40,000 power; interceptors 60 / 50 s). Mobile anti-nukes still carry 1.
+- **Wire:** none. The STOCK owner field's count is a u8.

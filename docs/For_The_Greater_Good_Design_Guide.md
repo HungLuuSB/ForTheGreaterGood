@@ -917,7 +917,7 @@ Route these through the same team account so shortages affect them naturally:
   | Radar SAM (`chs_radar_sam`, `ord_radar_sam`) | 6 s, 40 supply + 900 power (S-52) | Wyvern, Aegis 15 (S-52); Gorgon, Seraph 3 |
 
   The owner sees each unit's stock and the next missile's build progress (State `stock` field, protocols 15 and 17, section 7). Naval SAMs (Corsair, Crusader) stay unlimited (the user, 2026-10-22).
-- **Nuke silos** (S-48) build warheads the same way: capacity 2, 120 s, 1,500 supply + 40,000 power each (about 12.5 supply and 333 power per second while building, a T3 economy's worth).
+- **Nuke silos** (S-48) build warheads the same way: capacity 10 (2 until S-200), 120 s, 1,500 supply + 40,000 power each (about 12.5 supply and 333 power per second while building, a T3 economy's worth).
 - **Sensor upkeep:** radars, jammers and DIRCM drain power continuously. If power stalls, they lose range or switch off.
 
 ### 8.7 Reclaim
@@ -1069,7 +1069,7 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
   - **One interceptor per missile:** an anti-nuke doesn't fire at a missile its team already chases.
   - **The burst always destroys the missile** (`intercepts.chance` 1); a destroyed missile doesn't detonate.
   - **Stock and delay:**
-    - interceptors come from a stockpile (8.6; structures 3, mobiles 1);
+    - interceptors come from a stockpile (8.6; structures 20 (3 until S-200), mobiles 1);
     - after each shot the launcher waits its `reload`, longer than a missile's flight, so **several missiles at one spot overwhelm one anti-nuke**;
     - empty stockpiles stop nothing.
   - **Mobiles intercept only while standing still** (`stationary`: the launcher has to raise).
