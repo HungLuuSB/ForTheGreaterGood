@@ -78,10 +78,17 @@ local HOLD_FIRE, RETURN_FIRE = World.FireState.HOLD_FIRE, World.FireState.RETURN
 local candidates: { number } = {}
 local INTERCEPT_HYSTERESIS = 1.1
 local INTERCEPT_REACH = 1.5 -- anti-nukes: engage a missile aimed inside the cover this far out, × the radius (S-111)
+-- missiles a loaded interceptor of the ally team took this tick (S-201):
+-- ally → { [proj] = true }, cleared each tick
+local claims: { [number]: { [number]: boolean } } = {}
 
 -- An interceptor's strategic missile (S-48): the current one while it stays
 -- an enemy missile the team detects within range (+10%), else the nearest
--- such missile in range, else 0.
+-- such missile in range, else 0. Interceptors take turns (S-201, the user):
+-- a missile that an interceptor already flies at, or that another
+-- interceptor of the team ready to fire took this tick, is left to it; the others take
+-- the next missile, and with none left they wait (if that interceptor
+-- misses or is shot down, the missile is free again).
 local function interceptTarget(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, key: number): number
 	local c = sim.combat
 	local w = sim.world
@@ -129,16 +136,32 @@ local function interceptTarget(sim: Types.Sim, id: number, weapon: Defs.WeaponDe
 			chased[tp] = true
 		end
 	end
+	local taken = claims[ally]
+	if taken == nil then
+		taken = {}
+		claims[ally] = taken
+	end
+	-- only an interceptor ready to fire (loaded, reloaded) claims its
+	-- missile: an empty or reloading one tracks it without keeping the
+	-- others off (one that just fired must not take the next missile from
+	-- a site that can shoot it now)
+	local loaded = (w.wStock[key] or 1) > 0 and w.wReload[key] <= 0
 	local cur = w.wTargetProj[key]
-	if cur ~= 0 and not chased[cur] and Combat.isProjRef(c, cur, w.wTargetProjSerial[key]) and valid(cur, weapon.range * INTERCEPT_HYSTERESIS) then
+	if cur ~= 0 and not chased[cur] and not taken[cur] and Combat.isProjRef(c, cur, w.wTargetProjSerial[key]) and valid(cur, weapon.range * INTERCEPT_HYSTERESIS) then
+		if loaded then
+			taken[cur] = true
+		end
 		return cur
 	end
 	local best, bestD2 = 0, math.huge
 	for _, p in (if tactical then c.proj else c.strategic) do
-		local d2 = if chased[p] then nil else valid(p, weapon.range)
+		local d2 = if chased[p] or taken[p] then nil else valid(p, weapon.range)
 		if d2 and d2 < bestD2 then
 			best, bestD2 = p, d2
 		end
+	end
+	if best ~= 0 and loaded then
+		taken[best] = true
 	end
 	return best
 end
@@ -370,6 +393,7 @@ return function(sim: Types.Sim)
 	ContactGrid.rebuild(c.contacts, w)
 	local tick = sim.tick
 	local profiles = c.profiles
+	table.clear(claims)
 
 	for _, id in w.ids do
 		local count = w.weaponCount[id]

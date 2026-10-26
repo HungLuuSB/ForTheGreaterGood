@@ -1066,7 +1066,7 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
     - mobile: Order's Custodian, Chaos's Chimera (T2 vehicles from the advanced vehicle plant, light armour, no other weapon).
   - **Cover:** an anti-nuke engages an enemy strategic missile whose **aim point** is inside its cover radius (its interceptor's `range`), from when the missile comes within 1.5× that radius.
   - **It spots strategic missiles anywhere** (the user): it needs no radar or sight of the missile, and anti-nukes carry no radar.
-  - **One interceptor per missile:** an anti-nuke doesn't fire at a missile its team already chases.
+  - **One interceptor per missile, taking turns** (S-201, the user): an anti-nuke doesn't fire at a missile its team already chases, or at one another of the team's anti-nukes, ready to fire, took the same tick. It takes the next missile instead; with none left it waits, and if the first interceptor fails, the missile is free again.
   - **The burst always destroys the missile** (`intercepts.chance` 1); a destroyed missile doesn't detonate.
   - **Stock and delay:**
     - interceptors come from a stockpile (8.6; structures 20 (3 until S-200), mobiles 1);
