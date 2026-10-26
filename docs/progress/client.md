@@ -6,6 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- Ready to merge: `2b62f0d0` (main 9d7da230 merged in: S-191, D's map picker and firing range; test_client 315 / 315, test 573 / 573, build passed. Studio: The Lakelands' empty preview at 0.23 ms per tick, was 6.60, with only the join tick over budget)
 - **Bigger maps (C-233, protocol 38):** the client reads the new wire positions. The Lakelands (512 cells) plays in Studio. Aircraft that swing past the map's edge are drawn there, and the minimap keeps them on its edge.
 - **Plasma like tank shells (C-234, S-190):** the Thug's and Mace's plasma is as thick as a tank shell and bursts like its small hit.
 - Ready to merge: `c6e78e52` (main's 592af90a (S-189) and m-sim-2's 16b5cb75 (S-190) merged in; C-233, C-234; test_client 315 / 315, test 572 / 572, build passed)
