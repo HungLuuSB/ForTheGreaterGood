@@ -68,8 +68,11 @@ export type Unit = {
 	productionShown: number?, -- the item's progress as drawn (eased between the server's steps, Render/FactoryFrames, C-168)
 	fireState: number?, -- Schema.FireState
 	moveState: number?, -- Schema.MoveState
-	ammo: number?, -- aircraft with an ammo count: rounds left
-	maxAmmo: number?,
+	retreat: number?, -- aircraft: Schema.RetreatAt (protocol 39, S-194); nil until sent
+	selfDestruct: number?, -- seconds left of a self-destruct countdown (protocol 39); nil or 0 = none
+	selfDestructAt: number?, -- the render tick that count was set at (the countdown runs on between records)
+	workKind: number?, -- builders (protocol 39, S-194): Schema.WorkKind of what it works on now; nil until sent
+	workTarget: number?, -- its unit (BUILD, REPAIR, ASSIST) or wreck (RECLAIM, RESURRECT)
 	flares: number?, -- countermeasure charges left (protocol 21, S-63); nil until sent
 	chaff: number?,
 	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn

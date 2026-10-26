@@ -21,6 +21,23 @@ Models.DETAILED = true
 Models.version = 0 -- bumps when the setting flips (the renderer redraws every unit)
 local standIns: { [string]: Model } = {} -- blockouts drawn while the mesh model builds
 
+-- The def's blockout, or its generic one when the hand-made blockout no
+-- longer fits the def (a def piece added on one side, its blockout not yet
+-- updated): one warning, and the unit still draws. Before, the error
+-- stopped the whole render step every frame (the Commanders after S-194).
+local warned: { [string]: boolean } = {}
+local function blockout(def: any): Model
+	local ok, model = pcall(BlockoutBuilder.build, Blockout.forDef(def), def)
+	if ok then
+		return model
+	end
+	if not warned[def.id] then
+		warned[def.id] = true
+		warn(`[Models] {def.id}: {model}; drawing its generic blockout`)
+	end
+	return BlockoutBuilder.build(Blockout.generic(def), def)
+end
+
 function Models.template(def: any): Model
 	local cached = templates[def.id]
 	if cached then
@@ -44,13 +61,12 @@ function Models.template(def: any): Model
 	elseif Models.DETAILED and MeshModels.pending(def.id) then
 		local standIn = standIns[def.id]
 		if standIn == nil then
-			standIn = BlockoutBuilder.build(Blockout.forDef(def), def)
+			standIn = blockout(def)
 			standIns[def.id] = standIn
 		end
 		return standIn :: Model
 	else
-		local bp = Blockout.forDef(def)
-		template = BlockoutBuilder.build(bp, def)
+		template = blockout(def)
 	end
 	templates[def.id] = template
 	return template

@@ -18,6 +18,7 @@ local Defs = require("@shared/Defs/Defs")
 local Schema = require("@shared/Net/Schema")
 local Normandy = require("@shared/Grid/Normandy")
 local Canyon = require("@shared/Grid/Canyon")
+local SupremeStrait = require("@shared/Grid/SupremeStrait")
 local MapLook = require("./Core/MapLook")
 local Atmosphere = require("./Render/Atmosphere")
 local Idle = require("./Core/Idle")
@@ -143,7 +144,7 @@ end
 Camera.bind(camState)
 -- A hand-made map's cell features, for its drawn materials and houses (C-66).
 local function mapFeature(mapId: string?): ((number, number) -> string)?
-	return if mapId == "map:normandy" then Normandy.feature elseif mapId == "map:canyon" then Canyon.feature else nil
+	return if mapId == "map:normandy" then Normandy.feature elseif mapId == "map:canyon" then Canyon.feature elseif mapId == "map:supreme_strait" then SupremeStrait.feature else nil
 end
 
 local controls = Controls.bind(api)
@@ -261,7 +262,7 @@ local healthBars = HealthBars.new()
 local sensorFx = SensorFxRender.new()
 local wreckInfo = WreckInfo.new()
 local fog = FogBlanket.new()
-local workOf: { [number]: number } = {} -- builder → what it works on (the nano spray's targets; the Commander's torso, G4)
+local workOf: { [number]: { number } } = {} -- builder → where its work stands (the nano spray's targets; the Commander's torso, G4)
 local fogGround: any = nil -- the Ground.last whose finished mesh ground the blanket was rebuilt over (C-213)
 local radarCircles: { RadarFill.Circle }? = nil -- the radar layer's circles, nil while hidden (C-207)
 local radarAt = 0
@@ -1195,7 +1196,10 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	if not strategic then
 		table.clear(workOf)
 		for _, sp in buildSpray.list do
-			workOf[sp.builder] = sp.target
+			local t = if sp.wreck then world.wrecks[sp.target] else world.units[sp.target]
+			if t then
+				workOf[sp.builder] = { t.x, t.z }
+			end
 		end
 		PieceAnim.drive(anim, world, fx.shots, workOf)
 		PieceAnim.step(anim, simDt)
@@ -1293,6 +1297,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	IdleStrip.step(idleStrip, #idle.builders, #idle.factories, SettingsMenu.binds.idle or "")
 	IdleMarks.step(idleMarks, world, idle.builders, strategic, workspace.CurrentCamera)
+	IdleMarks.countdowns(idleMarks, world, world.shownTick or world.latestTick, strategic, workspace.CurrentCamera)
 	CommanderNames.step(commanderNames, world, strategic, workspace.CurrentCamera)
 	TeamPanel.step(teamPanel, api, now)
 	PregameMarks.step(pregameMarks, world, Pregame.areas(world), if pg.active then Controls.hover() else nil, workspace.CurrentCamera)

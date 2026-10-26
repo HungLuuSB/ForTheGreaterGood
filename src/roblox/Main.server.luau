@@ -1026,6 +1026,11 @@ if RunService:IsStudio() then
 				table.insert(ids, Spawn.unit(sim, defId, playerId, sx, z, heading or 0))
 			end
 			return ids
+		elseif query == "orders" then
+			-- Invoke("orders", id): a unit's pending D-Gun point and orders (S-194 checks)
+			local id = ...
+			local q = sim.orders.queue[id]
+			return { dgunX = sim.orders.dgunX[id], dgunZ = sim.orders.dgunZ[id], walk = sim.orders.dgunWalk[id], orders = q and #q or 0, head = q and q[1] and q[1].kind, x = sim.world.posX[id], z = sim.world.posZ[id] }
 		elseif query == "hold" then
 			for _, id in (...) :: { number } do
 				if sim.world.slot[id] then

@@ -5,7 +5,8 @@
 -- What a player may know (guide 9: fog is the server's; the client shows no
 -- more than it was sent):
 --   own      own team's units: everything, with the owner-only fields
---            (queue, fire / move state, ammo; S-61)
+--            (queue, fire / move state, an aircraft's retreat setting, a
+--            self-destruct countdown; S-61, S-194)
 --   full     an enemy in sight (tactical, or a strategic record that isn't a
 --            contact) or tracked by fire-control radar (TRACKED): its type's
 --            stats and its health
@@ -66,8 +67,8 @@ export type Sheet = {
 	storage: { supply: number, power: number }?,
 	fireState: number?,
 	moveState: number?,
-	ammo: number?,
-	maxAmmo: number?,
+	retreat: number?, -- own aircraft: Schema.RetreatAt (S-194; aircraft have no ammo since)
+	selfDestruct: number?, -- seconds left of a self-destruct countdown
 	countermeasures: { string }, -- "Flares 4/6", "Chaff 1/2" (own units: the server's charges left, S-63), "Chaff max 2" for others, "DIRCM"
 }
 
@@ -215,7 +216,12 @@ function UnitStats.of(world: World.World, u: World.Unit): Sheet
 	end
 	if access == "own" then
 		sheet.fireState, sheet.moveState = u.fireState, u.moveState
-		sheet.ammo, sheet.maxAmmo = u.ammo, u.maxAmmo or def.ammo
+		if def.domain == "air" then
+			sheet.retreat = u.retreat or Schema.RetreatAt.AT_30 -- the server's default
+		end
+		if (u.selfDestruct or 0) > 0 then
+			sheet.selfDestruct = u.selfDestruct
+		end
 	end
 	local cm = def.countermeasures or {}
 	local live = access == "own"
@@ -344,8 +350,12 @@ function UnitStats.lines(sheet: Sheet): { string }
 	if sheet.moveState then
 		table.insert(state, MOVE[sheet.moveState] or "?")
 	end
-	if sheet.ammo then
-		table.insert(state, `Ammo {sheet.ammo}/{sheet.maxAmmo or sheet.ammo}`)
+	if sheet.retreat then
+		local share = Schema.RETREAT_SHARE[sheet.retreat] or 0
+		table.insert(state, if share > 0 then `Retreat at {math.floor(share * 100 + 0.5)}%` else "Never retreat")
+	end
+	if sheet.selfDestruct then
+		table.insert(out, 1, `Self-destruct in {sheet.selfDestruct} s`)
 	end
 	for _, c in sheet.countermeasures do
 		table.insert(state, c)

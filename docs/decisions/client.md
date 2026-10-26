@@ -2122,3 +2122,23 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - `PieceAnim.drive` takes builder → work target (the nano spray's, `Core/BuildTargets`). A script with a `Work` hook gets the target's bearing from the hull, in degrees, or nil, whenever it changes; while a weapon is engaged, `AimWeapon` has the torso instead. `Commander.Work` turns the torso there at 120°/s, and back to the front after.
 - Studio: building a vehicle plant behind it, the torso turned 106° off the hull to face it (`debug_out/screens/2026-10-26-g4-commander-torso.jpg`).
 - The work target is the client's guess from the order queue: the server doesn't send it. The same guess gives G7's stale nano spray, so the wire target is asked of sim-A.
+
+### C-242 — Protocol 39 on the client: D-Gun, self-destruct, retreat, builders' work (2026-10-26, S-194, S-195; playtest G5, G7, G13, G17)
+
+- **Owner fields:** `retreat` (from the STATES byte), `selfDestruct` (seconds left, with the render tick it came at), `workKind` and `workTarget`. Ammo is gone from World, NetIn and UnitStats: aircraft have none since S-194.
+- **G7, nano spray:** `BuildTargets.list` takes the server's WORK when it's there. BUILD, REPAIR and ASSIST name a unit (an assist follows its builder's work); RECLAIM and RESURRECT name a wreck, and BuildSpray now sprays at a wreck too. The order-queue guess stays for recordings without WORK.
+- **G4, Commander body:** it takes target positions, so wrecks count.
+- **G5, D-Gun:**
+  - `CommandSet` gives `dgun` to defs with a weapon whose `fx.trail` is "dgun". D, the resurrect key, means D-Gun when a Commander is selected; it's one rebindable key, because Commanders can't resurrect and workers have no D-Gun. A click then sends DGUN at the point.
+  - The bolt draws as a ball as wide as its `bolt` (7 studs) in its colour, with a trail as wide. It rides `World.simGroundY` + 5, as the server steps it.
+  - The server sends an IMPACT for each unit it burns through (IMPACT doesn't say which unit). An IMPACT well short of the bolt's range (measured from its spawn tick, kept when the server re-announces the bolt) is a pass-through: a burst there, and the bolt flies on.
+- **G13, self-destruct:** `selfdestruct` on every unit's card, and Ctrl plus the D key (BAR's Ctrl+D). Pressing again stops it. The seconds left show in red over the unit (`IdleMarks.countdowns`, running on from the server's count), and "Self-destruct in N s" in the unit panel.
+- **G17, retreat:** own aircraft get a retreat button cycling 30%, 40%, 50% and never, with segments lit 30 red to 50 green. "Retreat at N%" shows in the unit panel.
+- **S-195, Supreme Strait:** its cells' kinds get materials: mountain → rock, crater → ground, pond → sand; sea, beach and mesa as before.
+- **A model that no longer fits its def no longer stops the renderer:** `Models` builds the generic blockout instead, with one warning. The Commanders' hand-made blockouts list `torso` as a visual piece, but S-194 made it a def piece. That threw in the render step every frame, so nothing drew.
+- Specs: OwnerFields (retreat, self-destruct to the end, WORK feeding the spray); `Dgun.spec` (one bolt through three Ravagers, drawn 34 ticks within 0.04 studs of the server's, at exactly its riding height, gone at the end).
+- Studio, Supreme Strait:
+  - the Commander's laser; the D-Gun bolt firing (power 1.0k → 506);
+  - a Lancer's countdown and blast; the new card buttons;
+  - the mesas in red rock (`debug_out/screens/2026-10-26-dgun-bolt.jpg`, `…-supreme-strait-laser-card.jpg`).
+- A D-Gun point up a mesa's slope was never fired, and the order stayed pending (sent to sim-A).
