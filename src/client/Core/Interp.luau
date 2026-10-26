@@ -92,10 +92,25 @@ end
 -- snapshot's own height, ground(snapshot) + alt with the sim's ground
 -- (`ground`, World.simGroundY), is what the sim flew; interpolating those
 -- is smooth (the sim climbs at most 2.67 studs a tick).
-local function heightOf(s: World.Snap, ground: (number, number) -> number): number
+-- A wire position is within 1/8 stud of the sim's (quarter studs): near a
+-- cell's edge the sim's ground may be the next cell's. Of the grounds that
+-- close, the one that keeps the height nearest the previous snapshot's is
+-- the sim's (it climbs at most 2.67 studs a tick; cells step much more).
+local NEAR = { { 0, 0 }, { 0.125, 0.125 }, { -0.125, 0.125 }, { 0.125, -0.125 }, { -0.125, -0.125 } }
+local function heightOf(s: World.Snap, ground: (number, number) -> number, prev: World.Snap?): number
 	local y = s.y
 	if y == nil then
-		y = ground(s.x, s.z) + s.alt
+		local best = ground(s.x, s.z) + s.alt
+		local py = if prev then prev.y else nil
+		if py then
+			for i = 2, #NEAR do
+				local c = ground(s.x + NEAR[i][1], s.z + NEAR[i][2]) + s.alt
+				if math.abs(c - py) < math.abs(best - py) then
+					best = c
+				end
+			end
+		end
+		y = best
 		s.y = y
 	end
 	return y :: number
@@ -106,9 +121,15 @@ function Interp.height(unit: World.Unit, t: number, ground: (number, number) -> 
 	if n == 0 then
 		return ground(unit.x, unit.z) + unit.alt
 	end
+	-- heights in snapshot order, each from the one before (see heightOf)
+	for i = 1, n do
+		if snaps[i].y == nil then
+			heightOf(snaps[i], ground, snaps[i - 1])
+		end
+	end
 	local first = snaps[1]
 	if t <= first.tick then
-		return heightOf(first, ground)
+		return first.y :: number
 	end
 	local last = snaps[n]
 	if t < last.tick then
@@ -117,17 +138,17 @@ function Interp.height(unit: World.Unit, t: number, ground: (number, number) -> 
 			if a.tick <= t then
 				local b = snaps[i + 1]
 				local k = (t - a.tick) / (b.tick - a.tick)
-				local ya = heightOf(a, ground)
-				return ya + (heightOf(b, ground) - ya) * k
+				local ya = a.y :: number
+				return ya + ((b.y :: number) - ya) * k
 			end
 		end
 	end
 	local over = t - last.tick
-	local yl = heightOf(last, ground)
+	local yl = last.y :: number
 	if n >= 2 and over > 0 and bit32.band(unit.state, World.State.MOVING) ~= 0 then
 		local prev = snaps[n - 1]
 		local k = math.min(over, Interp.MAX_EXTRAPOLATE) / (last.tick - prev.tick)
-		return yl + (yl - heightOf(prev, ground)) * k
+		return yl + (yl - (prev.y :: number)) * k
 	end
 	return yl
 end

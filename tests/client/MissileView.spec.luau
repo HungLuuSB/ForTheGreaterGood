@@ -156,8 +156,10 @@ return function(t: any)
 		-- 165 studs every 5-tick prediction ends in the turning end game
 		-- (missiles fly 28 studs a tick), so the median spreads too (6.7 since
 		-- S-62, from under 3 at 206 studs); the HIT / miss call stays right
-		t.expect(median < 10, `predicted {AHEAD} ticks ahead: median {median} studs off`)
-		t.expect(p90 < 20, `predicted {AHEAD} ticks ahead: 90th percentile {p90} studs off`)
+		-- (about 18 since S-193: jets 40% slower at the same turn rate circle
+		-- 40% tighter, so the straight-on guess ends further off)
+		t.expect(median < 22, `predicted {AHEAD} ticks ahead: median {median} studs off`)
+		t.expect(p90 < 26, `predicted {AHEAD} ticks ahead: 90th percentile {p90} studs off`)
 		t.expect(agree > 10 and disagree <= agree * 0.2, `close in, the HIT / miss call matches the outcome ({agree} right, {disagree} wrong)`)
 	end)
 

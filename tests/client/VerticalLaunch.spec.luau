@@ -77,8 +77,9 @@ return function(t: any)
 		t.expect(launched >= 3, "the Wyverns fired")
 		t.expect(upward == launched, "every missile leaves going up")
 		-- since S-62 some targets die (or are taken by another missile) before
-		-- a missile pitches over: most still do
-		t.expect(turnedSeen >= launched * 0.6, "they pitch over onto their targets")
+		-- a missile pitches over: about half still do (S-193's slower jets
+		-- draw more missiles, and more of those lose their target)
+		t.expect(turnedSeen >= launched * 0.5, "they pitch over onto their targets")
 		t.expect(median < 0.5 and p90 < 3, `the client's missiles stay with the server's (median {median}, p90 {p90})`)
 		-- the straight climb (S-44): no sideways turn below climbHeight (less
 		-- one tick's climb, as the turn starts on the tick it gets there)
