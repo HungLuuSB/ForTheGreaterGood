@@ -2,6 +2,14 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: playtest 2, G11 and G12)
+
+- **G11 (L-25):** the create dialog's players/spectators slider is gone. Every room holds 16 people, AIs included: `Rooms.headcount` (members plus AI seats) caps join and Add AI, and the browser's Full status counts the AIs. Only someone with authority sees and sends another cap: the owner, a group rank of 254 and up, `Config.ADMINS`, or Studio (`server/Authority`). The skirmish room now uses the same cap; it was 2, which an AI would now fill.
+- **G12 (L-26):** the room's Map row opens a map panel: maps grouped small to large, a big preview, and an information column (size and cells, starts and how many teams). Wind, tides and features show there once sim-A's MapRegistry info is on main; the panel reads `map.info` (`windMin`, `windMax`, `tidal`, `features`), and the server will pass it on. The host chooses there; everyone else can look. The room's map and the Skirmish preview drop the start markers.
+- **Studio:** a new room reads 1/16 and its map has no markers. The panel shows Coastline, then The Plains (256 × 256 cells, 16 starts, up to 8 teams). Choose map switched the room to The Plains.
+- New Rooms spec: 16 people, AIs included, and a smaller cap from authority caps AIs too. Lobby specs 67 / 67; the build check passes.
+- Ready to merge: `5e97726d` (G11 room cap with authority, G12 map panel and no start markers; touches only `src/lobby` and the lobby docs)
+
 ## Summary (2026-10-26: joining screen, wiki-style stats, all meshes)
 
 - Merged main `08c20e4b` and `679a89a7`: C's approvals. Every unit mesh is approved except Pharos, Scylla, Empyrean and Rookery, and the showroom draws them all.
