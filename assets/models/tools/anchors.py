@@ -8,6 +8,8 @@ in final model space (after any `scale` in build.py), by unit ID.
   no rotation.
 - `nano1`, `nano2`, ...: where nano-spray starts, at the factory's emitters /
   build lights, or at a constructor's emitter (under its `nano` piece).
+- `emitter` (the Commanders): the def piece their laser fires from (S-194),
+  at the build lens like `nano1`.
 
 tools/unit.py merges these into rig.json `attachments`; tools/anchors.py
 --patch writes them into the existing export/rig.json files without a
@@ -69,8 +71,9 @@ ANCHORS = {
     "chs_reaver": {"nano1": (N, (-0.5, 3.72, 1.2)), "nano2": (N, (0.5, 3.32, 5.8))},
     "ord_architect": {"nano1": (N, (-0.8, 5.4, -1.4)), "nano2": (N, (0.8, 5.4, -1.4))},
     "chs_forgemaster": {"nano1": (N, (1.1, 5.7, -3.0)), "nano2": (N, (0.2, 3.9, 1.9))},
-    "ord_sovereign": {"nano1": (N, (-3.35, 3.55, -1.64))},  # the heroic mech's emitter (M-32)
-    "chs_warlord": {"nano1": (N, (-3.5, 3.25, -2.45))},
+    # the Commanders' `emitter` (S-194): the left arm's laser fires from the build lens
+    "ord_sovereign": {"nano1": (N, (-3.35, 3.55, -1.64)), "emitter": (N, (-3.35, 3.55, -1.64))},  # the heroic mech's emitter (M-32)
+    "chs_warlord": {"nano1": (N, (-3.5, 3.25, -2.45)), "emitter": (N, (-3.5, 3.25, -2.45))},
     "ord_zenith": {"nano1": (N, (0.0, -0.5, -2.1)), "nano2": (N, (0.0, -0.5, 1.6))},
     "chs_condor": {"nano1": (N, (0.0, 0.1, -1.9)), "nano2": (N, (0.0, 0.2, 2.1))},
     # S-181 bot factories: the pad under the gantry / in the pit, the emitter heads
