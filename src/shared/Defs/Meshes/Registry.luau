@@ -499,7 +499,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			glow = {  },
 			glowShare = 0,
 			maps = {
-				ALB = "rbxassetid://111245066781069",
+				ALB = "rbxassetid://99722448323266",
 				EMI = "rbxassetid://115878236063767",
 				MTL = "rbxassetid://89896451516123",
 				NOR = "rbxassetid://116761933036249",
@@ -524,7 +524,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					glow = {  },
 					glowShare = 0,
 					maps = {
-						ALB = "rbxassetid://111245066781069",
+						ALB = "rbxassetid://99722448323266",
 						EMI = "rbxassetid://115878236063767",
 						MTL = "rbxassetid://89896451516123",
 						NOR = "rbxassetid://116761933036249",
@@ -651,7 +651,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					glow = {  },
 					glowShare = 0,
 					maps = {
-						ALB = "rbxassetid://71786331211211",
+						ALB = "rbxassetid://126716227022565",
 						EMI = "rbxassetid://114286859739913",
 						MTL = "rbxassetid://91236532697756",
 						NOR = "rbxassetid://101486926188661",
