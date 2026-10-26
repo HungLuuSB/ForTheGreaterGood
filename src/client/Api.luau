@@ -293,7 +293,22 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		local ok, why
 		if kind == "attack" then
 			if u and u.team ~= world.me.team then
-				ok, why = actions.order("attack", unitId, queue)
+				-- a nuke silo launches at a point only: at the ground clicked,
+				-- whatever stands there (the user: "when you select a target
+				-- with nuke, it does not launch"); the rest attack the unit
+				local silos, others = {}, {}
+				for _, id in sel.ids do
+					local su = world.units[id]
+					local d = su and World.def(world, su)
+					table.insert(if d and CommandSet.isSilo(d, world.defs) then silos else others, id)
+				end
+				if #silos > 0 then
+					ok, why = issue({ cmdType = CT.ATTACK_GROUND, queue = queue == true, x = x, z = z }, silos)
+				end
+				if #others > 0 then
+					local ok2, why2 = issue({ cmdType = CT.ATTACK, queue = queue == true, targetId = unitId }, others)
+					ok, why = ok or ok2, if ok then why else why2
+				end
 			else
 				ok, why = actions.order("attackGround", { x = x, z = z }, queue)
 			end

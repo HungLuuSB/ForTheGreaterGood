@@ -158,4 +158,49 @@ return function(t: any)
 		t.equal(maxTracks, 0)
 		t.expect(lockFrames > 0 and lockedFrames == lockFrames, "interceptors show locked on the nuke")
 	end)
+	t.test("attack mode on an enemy unit: the silo launches at that spot (the user: it didn't launch)", function()
+		local Api = require("../../src/client/Api")
+		local sim = Sim.new({ seed = 3, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:256", scenario = "empty" })
+		local silo = Spawn.unit(sim, "ord_reckoning", 1, -800, 0, 0)
+		local lancer = Spawn.unit(sim, "ord_lancer", 1, -760, 0, 0)
+		local tank = Spawn.unit(sim, "chs_ravager", 2, TARGET_X, 0, 0)
+		Spawn.unit(sim, "ord_lancer", 1, TARGET_X - 120, 0, 0) -- (sight on the tank)
+		local world = World.new(sim.defs)
+		local api = Api.new(world, function(p: buffer)
+			assert(Sim.submit(sim, 1, p))
+		end)
+		NetOut.join(sim, 1)
+		local g = sim.map.layers.grid
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
+		local tick = 0
+		local function step(n: number)
+			for _ = 1, n do
+				tick += 1
+				Sim.step(sim)
+				NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+				Api.frame(api, tick * DT)
+			end
+		end
+		step(3)
+		t.expect(world.units[tank] ~= nil, "the tank is seen")
+		-- the silo and a tank selected: A, then a click on the enemy tank
+		api.actions.select({ silo, lancer })
+		t.expect(api.actions.setCommandMode("attack"))
+		t.expect(api.actions.commandAt(TARGET_X + 3, 2, tank, false, false), "the attack went out")
+		local launched = false
+		for _ = 1, 15 * 4 do
+			step(1)
+			for _, e in sim.combat.events do
+				if (e.kind == "SPAWN_STRATEGIC" or e.kind == "SPAWN_PROJ") and e.unit == silo then
+					launched = true
+				end
+			end
+			if launched then
+				break
+			end
+		end
+		t.expect(launched, "the silo launched at the clicked spot")
+		local q = sim.orders.queue[lancer]
+		t.expect(q ~= nil and q[1] ~= nil and q[1].kind == "attack", `the tank attacks the unit ({q and q[1] and q[1].kind})`)
+	end)
 end

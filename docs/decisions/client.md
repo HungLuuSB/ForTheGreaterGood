@@ -2177,3 +2177,9 @@ The watchdog's WARN / INFO lines (S-140) stay on.
   - The resource bar has markers you drag along the fill: white share levels on both bars, an orange converter level on the power bar. Releasing one sends ECO_LEVEL (`actions.setEcoLevel`). The markers then sit at the Eco record's `supplyShare` / `powerShare` / `convertAt`, and hovering one says what it does.
   - Studio: the API's levels came back as 40% supply share and 70% converter (`…-eco-levels.jpg`). The mouse drag itself can't be driven from the test harness (GUI events don't fire there), so it's unchecked.
 - **Upkeep (S-198):** `UnitFlow` charges an extractor's power upkeep (T1 3/s, T2 15/s), with extraction and upkeep scaled by the team's power ratio. UnitStats lists it with the other upkeep.
+
+### C-246 — A nuke aimed at a unit launches at its spot (2026-10-27)
+
+- The user: "when targeting with nuke, ignore unit selection (when you select a target with nuke, it does not launch)".
+- Attack mode on an enemy unit sent ATTACK on that unit. A silo launches only on ATTACK_GROUND (manual fire at a point, S-48), so nothing happened. Now `commandAt` splits the selection: silos (`CommandSet.isSilo`: strategic weapons only) get ATTACK_GROUND at the clicked ground point, and the rest attack the unit. A right-click on an enemy still never launches a silo.
+- Spec (`Nuke.spec`): a silo and a tank, attack mode, a click on an enemy tank. The silo launches, and the tank's order is the attack. Studio, with real A and a click on a Ravager: the launch, "Nuclear launch detected", stock 1/2 (`debug_out/screens/2026-10-27-nuke-on-unit.jpg`).
