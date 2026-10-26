@@ -2,6 +2,20 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: firing range fixes)
+
+The user's four quirks in the Units tab's firing range:
+1. **Shots from behind.** Models don't all face the same way: the Paladin's barrel rests along its +Z, the Dominion's guns along its -Z. The match sorts this out with each model's `RootOffset`. The range now does the same: the unit's frame is its root part times the inverse of `RootOffset`, and the unit faces that frame's LookVector. Targets stand ahead of every model, and turret yaw is measured the sim's way. Forward mounts (arc under 360°) turn only within their arc and fire only at what's inside it.
+2. **Missiles.** Measured on the Seraph's radar SAM: straight up to about 100 studs, a pitch-over arc up to about 190, then a dive onto the drone. That is `Guidance.vertical`, the server's path, unchanged. Only radar SAMs launch vertically in the game. IR SAMs and air-to-air missiles leave along their aim, and the range does the same.
+3. **Amphibious scene.** Under water, the camera framed the whole column from the surface to the seabed and stood 100 studs out, which the murky water hides. It now frames the units' own depth and stays within 46 studs; underwater targets stand 14 to 22 studs out.
+4. **Flak lines stayed.** In a match, `Effects.update` drops spent bursts and tracers. The range now drops them each frame. Over water, bursts leave no scorch on the surface, and shells that land on the water splash.
+- **Studio:**
+  - Dominion: both turrets aim at targets ahead of the bow, and no flak lines pile up.
+  - Paladin: still aims at its board.
+  - Tideguard: in view with its board under water.
+- Lobby specs 65 / 65; the build check passes.
+- Ready to merge: `704f5eba` (firing range: model facing, spent effects, underwater framing; touches only `src/lobby` and the lobby progress)
+
 ## Summary (2026-10-26: maps by size, F4)
 
 - Merged sim-A's `592af90a` (S-189: maps bigger than 256 cells, `MapRegistry.sizeClass`, The Lakelands at 512 cells, protocol 38).
