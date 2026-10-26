@@ -8,465 +8,726 @@
     {
       "fbx": "ground_1.fbx",
       "meshes": [
-        "t0_0_strait_rock",
         "t0_0_strait_sand",
         "t0_0_strait_grass",
-        "t1_0_strait_rock",
+        "t0_0_strait_rock",
         "t1_0_strait_sand",
-        "t1_0_strait_grass",
+        "t1_0_strait_rock",
+        "t2_0_strait_sand",
         "t2_0_strait_rock",
-        "t2_0_strait_grass",
-        "t3_0_strait_rock",
         "t3_0_strait_sand",
-        "t3_0_strait_grass",
-        "t4_0_strait_rock",
         "t4_0_strait_sand",
-        "t4_0_strait_grass",
         "t5_0_strait_sand",
+        "t5_0_strait_grass",
+        "t5_0_strait_rock",
         "t6_0_strait_sand",
-        "t7_0_strait_rock",
+        "t6_0_strait_grass",
+        "t6_0_strait_rock",
         "t7_0_strait_sand",
-        "t8_0_strait_rock",
+        "t7_0_strait_grass",
+        "t7_0_strait_rock",
         "t8_0_strait_sand",
-        "t9_0_strait_rock",
+        "t8_0_strait_grass",
+        "t8_0_strait_rock",
         "t9_0_strait_sand",
+        "t9_0_strait_rock",
+        "t0_1_strait_sand",
         "t0_1_strait_rock",
-        "t0_1_strait_grass",
-        "t1_1_strait_rock",
-        "t1_1_strait_grass",
-        "t2_1_strait_rock",
+        "t1_1_strait_sand",
         "t2_1_strait_sand",
-        "t2_1_strait_grass",
-        "t3_1_strait_rock",
         "t3_1_strait_sand"
       ],
-      "triangles": 114395
+      "triangles": 118443
     },
     {
       "fbx": "ground_2.fbx",
       "meshes": [
-        "t3_1_strait_grass",
         "t4_1_strait_sand",
-        "t4_1_strait_grass",
         "t5_1_strait_sand",
+        "t5_1_strait_grass",
         "t6_1_strait_sand",
-        "t7_1_strait_rock",
+        "t6_1_strait_grass",
         "t7_1_strait_sand",
+        "t7_1_strait_grass",
+        "t7_1_strait_rock",
         "t8_1_strait_sand",
-        "t9_1_strait_rock",
+        "t8_1_strait_grass",
+        "t8_1_strait_rock",
         "t9_1_strait_sand",
-        "t0_2_strait_rock",
+        "t9_1_strait_grass",
+        "t9_1_strait_rock",
         "t0_2_strait_sand",
-        "t0_2_strait_grass",
-        "t1_2_strait_rock",
+        "t0_2_strait_rock",
         "t1_2_strait_sand",
-        "t1_2_strait_grass",
-        "t2_2_strait_rock",
+        "t1_2_strait_rock",
         "t2_2_strait_sand",
-        "t2_2_strait_grass",
+        "t2_2_strait_rock",
         "t3_2_strait_sand",
-        "t3_2_strait_grass",
+        "t3_2_strait_rock",
         "t4_2_strait_sand",
         "t4_2_strait_grass",
         "t5_2_strait_sand",
-        "t6_2_strait_rock",
+        "t5_2_strait_grass",
         "t6_2_strait_sand",
+        "t6_2_strait_grass",
+        "t7_2_strait_sand",
+        "t7_2_strait_grass",
         "t7_2_strait_rock"
       ],
-      "triangles": 117302
+      "triangles": 119156
     },
     {
       "fbx": "ground_3.fbx",
       "meshes": [
-        "t7_2_strait_sand",
-        "t8_2_strait_rock",
         "t8_2_strait_sand",
-        "t9_2_strait_rock",
+        "t8_2_strait_grass",
+        "t8_2_strait_rock",
         "t9_2_strait_sand",
-        "t0_3_strait_rock",
+        "t9_2_strait_grass",
+        "t9_2_strait_rock",
         "t0_3_strait_sand",
         "t0_3_strait_grass",
         "t1_3_strait_sand",
-        "t1_3_strait_grass",
+        "t1_3_strait_rock",
         "t2_3_strait_sand",
-        "t2_3_strait_grass",
-        "t3_3_strait_rock",
         "t3_3_strait_sand",
-        "t3_3_strait_grass",
-        "t4_3_strait_rock",
+        "t3_3_strait_rock",
         "t4_3_strait_sand",
         "t4_3_strait_grass",
         "t5_3_strait_sand",
         "t5_3_strait_grass",
+        "t5_3_strait_rock",
         "t6_3_strait_sand",
-        "t7_3_strait_rock",
+        "t6_3_strait_grass",
+        "t6_3_strait_rock",
         "t7_3_strait_sand",
-        "t8_3_strait_rock",
+        "t7_3_strait_grass",
         "t8_3_strait_sand",
+        "t8_3_strait_grass",
         "t9_3_strait_sand",
         "t9_3_strait_grass",
-        "t0_4_strait_rock",
+        "t9_3_strait_rock",
         "t0_4_strait_sand",
-        "t0_4_strait_grass"
+        "t0_4_strait_grass",
+        "t1_4_strait_sand",
+        "t1_4_strait_grass"
       ],
-      "triangles": 118187
+      "triangles": 114438
     },
     {
       "fbx": "ground_4.fbx",
       "meshes": [
         "t1_4_strait_rock",
-        "t1_4_strait_sand",
-        "t1_4_strait_grass",
-        "t2_4_strait_rock",
         "t2_4_strait_sand",
-        "t2_4_strait_grass",
-        "t3_4_strait_rock",
+        "t2_4_strait_rock",
         "t3_4_strait_sand",
-        "t3_4_strait_grass",
-        "t4_4_strait_rock",
         "t4_4_strait_sand",
-        "t4_4_strait_grass",
         "t5_4_strait_sand",
         "t5_4_strait_grass",
-        "t6_4_strait_rock",
         "t6_4_strait_sand",
-        "t7_4_strait_rock",
+        "t6_4_strait_grass",
+        "t6_4_strait_rock",
         "t7_4_strait_sand",
-        "t8_4_strait_rock",
+        "t7_4_strait_grass",
+        "t7_4_strait_rock",
         "t8_4_strait_sand",
         "t8_4_strait_grass",
+        "t8_4_strait_rock",
         "t9_4_strait_sand",
         "t9_4_strait_grass",
+        "t9_4_strait_rock",
         "t0_5_strait_sand",
         "t0_5_strait_grass",
-        "t1_5_strait_rock",
+        "t0_5_strait_rock",
         "t1_5_strait_sand",
         "t1_5_strait_grass",
-        "t2_5_strait_rock",
+        "t1_5_strait_rock",
         "t2_5_strait_sand",
-        "t3_5_strait_rock",
+        "t2_5_strait_grass",
+        "t2_5_strait_rock",
         "t3_5_strait_sand",
+        "t3_5_strait_grass",
+        "t3_5_strait_rock",
         "t4_5_strait_sand",
-        "t4_5_strait_grass",
-        "t5_5_strait_rock"
+        "t4_5_strait_grass"
       ],
-      "triangles": 118985
+      "triangles": 117040
     },
     {
       "fbx": "ground_5.fbx",
       "meshes": [
         "t5_5_strait_sand",
-        "t5_5_strait_grass",
-        "t6_5_strait_rock",
         "t6_5_strait_sand",
-        "t6_5_strait_grass",
-        "t7_5_strait_rock",
+        "t6_5_strait_rock",
         "t7_5_strait_sand",
-        "t7_5_strait_grass",
-        "t8_5_strait_rock",
+        "t7_5_strait_rock",
         "t8_5_strait_sand",
         "t8_5_strait_grass",
-        "t9_5_strait_rock",
+        "t8_5_strait_rock",
         "t9_5_strait_sand",
         "t9_5_strait_grass",
         "t0_6_strait_sand",
         "t0_6_strait_grass",
-        "t1_6_strait_rock",
+        "t0_6_strait_rock",
         "t1_6_strait_sand",
+        "t1_6_strait_grass",
         "t2_6_strait_sand",
+        "t2_6_strait_grass",
         "t3_6_strait_sand",
+        "t3_6_strait_grass",
+        "t3_6_strait_rock",
         "t4_6_strait_sand",
         "t4_6_strait_grass",
-        "t5_6_strait_rock",
+        "t4_6_strait_rock",
         "t5_6_strait_sand",
         "t5_6_strait_grass",
-        "t6_6_strait_rock",
         "t6_6_strait_sand",
-        "t6_6_strait_grass",
+        "t6_6_strait_rock",
         "t7_6_strait_sand",
-        "t7_6_strait_grass",
         "t8_6_strait_sand",
-        "t8_6_strait_grass"
+        "t8_6_strait_rock"
       ],
-      "triangles": 118710
+      "triangles": 118447
     },
     {
       "fbx": "ground_6.fbx",
       "meshes": [
-        "t9_6_strait_rock",
         "t9_6_strait_sand",
         "t9_6_strait_grass",
-        "t0_7_strait_rock",
         "t0_7_strait_sand",
-        "t1_7_strait_rock",
+        "t0_7_strait_grass",
+        "t0_7_strait_rock",
         "t1_7_strait_sand",
-        "t2_7_strait_rock",
+        "t1_7_strait_grass",
+        "t1_7_strait_rock",
         "t2_7_strait_sand",
-        "t3_7_strait_rock",
+        "t2_7_strait_grass",
+        "t2_7_strait_rock",
         "t3_7_strait_sand",
+        "t3_7_strait_grass",
         "t4_7_strait_sand",
+        "t4_7_strait_grass",
         "t5_7_strait_sand",
         "t5_7_strait_grass",
         "t6_7_strait_sand",
-        "t6_7_strait_grass",
-        "t7_7_strait_rock",
+        "t6_7_strait_rock",
         "t7_7_strait_sand",
-        "t7_7_strait_grass",
-        "t8_7_strait_rock",
+        "t7_7_strait_rock",
         "t8_7_strait_sand",
-        "t8_7_strait_grass",
-        "t9_7_strait_rock",
+        "t8_7_strait_rock",
         "t9_7_strait_sand",
-        "t9_7_strait_grass",
+        "t9_7_strait_rock",
+        "t0_8_strait_grass",
         "t0_8_strait_rock",
-        "t0_8_strait_sand",
-        "t1_8_strait_sand",
-        "t2_8_strait_rock",
+        "t1_8_strait_grass",
+        "t1_8_strait_rock",
         "t2_8_strait_sand",
-        "t3_8_strait_rock"
+        "t2_8_strait_grass"
       ],
-      "triangles": 119408
+      "triangles": 117154
     },
     {
       "fbx": "ground_7.fbx",
       "meshes": [
+        "t2_8_strait_rock",
         "t3_8_strait_sand",
+        "t3_8_strait_grass",
         "t4_8_strait_sand",
+        "t4_8_strait_grass",
         "t5_8_strait_sand",
-        "t5_8_strait_grass",
-        "t6_8_strait_rock",
         "t6_8_strait_sand",
-        "t6_8_strait_grass",
-        "t7_8_strait_rock",
         "t7_8_strait_sand",
-        "t7_8_strait_grass",
-        "t8_8_strait_rock",
-        "t8_8_strait_grass",
-        "t9_8_strait_rock",
+        "t7_8_strait_rock",
+        "t8_8_strait_sand",
         "t9_8_strait_sand",
-        "t9_8_strait_grass",
-        "t0_9_strait_rock",
+        "t9_8_strait_rock",
         "t0_9_strait_sand",
-        "t1_9_strait_rock",
+        "t0_9_strait_rock",
         "t1_9_strait_sand",
-        "t2_9_strait_rock",
+        "t1_9_strait_grass",
+        "t1_9_strait_rock",
         "t2_9_strait_sand",
+        "t2_9_strait_grass",
+        "t2_9_strait_rock",
         "t3_9_strait_sand",
+        "t3_9_strait_grass",
+        "t3_9_strait_rock",
         "t4_9_strait_sand",
-        "t5_9_strait_rock",
-        "t5_9_strait_sand",
-        "t5_9_strait_grass",
-        "t6_9_strait_rock",
-        "t6_9_strait_sand",
-        "t6_9_strait_grass"
+        "t4_9_strait_grass",
+        "t4_9_strait_rock",
+        "t5_9_strait_sand"
       ],
-      "triangles": 119414
+      "triangles": 114132
     },
     {
       "fbx": "ground_8.fbx",
       "meshes": [
+        "t6_9_strait_sand",
+        "t7_9_strait_sand",
         "t7_9_strait_rock",
-        "t7_9_strait_grass",
-        "t8_9_strait_rock",
         "t8_9_strait_sand",
-        "t8_9_strait_grass",
-        "t9_9_strait_rock",
+        "t8_9_strait_rock",
         "t9_9_strait_sand",
-        "t9_9_strait_grass",
+        "t9_9_strait_rock",
         "d_crag0_0_0_strait_rock",
         "d_crag0_1_0_strait_rock",
-        "d_crag0_3_0_strait_rock",
-        "d_crag0_4_0_strait_rock",
-        "d_crag0_7_0_strait_rock",
+        "d_crag0_2_0_strait_rock",
+        "d_crag0_5_0_strait_rock",
+        "d_crag0_6_0_strait_rock",
         "d_crag0_8_0_strait_rock",
         "d_crag0_9_0_strait_rock",
         "d_crag1_0_0_strait_rock",
-        "d_crag1_1_0_strait_rock",
         "d_crag1_2_0_strait_rock",
+        "d_crag1_3_0_strait_rock",
         "d_crag1_4_0_strait_rock",
         "d_crag1_5_0_strait_rock",
-        "d_crag1_6_0_strait_rock",
         "d_crag1_7_0_strait_rock",
+        "d_crag1_8_0_strait_rock",
         "d_crag1_9_0_strait_rock",
         "d_crag2_0_0_strait_rock",
-        "d_crag2_1_0_strait_rock",
         "d_crag2_2_0_strait_rock",
         "d_crag2_4_0_strait_rock",
         "d_crag2_5_0_strait_rock",
         "d_crag2_7_0_strait_rock",
         "d_crag2_8_0_strait_rock",
         "d_crag2_9_0_strait_rock",
-        "d_crag3_0_0_strait_rock"
+        "d_crag3_2_0_strait_rock",
+        "d_crag3_3_0_strait_rock",
+        "d_crag3_5_0_strait_rock"
       ],
-      "triangles": 119076
+      "triangles": 117154
     },
     {
       "fbx": "ground_9.fbx",
       "meshes": [
-        "d_crag3_3_0_strait_rock",
-        "d_crag3_4_0_strait_rock",
-        "d_crag3_7_0_strait_rock",
-        "d_crag3_8_0_strait_rock",
-        "d_crag4_0_0_strait_rock",
-        "d_crag4_3_0_strait_rock",
-        "d_crag4_4_0_strait_rock",
-        "d_crag5_5_0_strait_rock",
-        "d_crag5_6_0_strait_rock",
-        "d_crag5_9_0_strait_rock",
-        "d_crag6_2_0_strait_rock",
+        "d_crag3_6_0_strait_rock",
+        "d_crag3_9_0_strait_rock",
+        "d_crag4_6_0_strait_rock",
+        "d_crag4_9_0_strait_rock",
+        "d_crag5_0_0_strait_rock",
+        "d_crag5_3_0_strait_rock",
+        "d_crag6_0_0_strait_rock",
+        "d_crag6_3_0_strait_rock",
+        "d_crag6_4_0_strait_rock",
         "d_crag6_5_0_strait_rock",
         "d_crag6_6_0_strait_rock",
-        "d_crag6_9_0_strait_rock",
+        "d_crag6_7_0_strait_rock",
         "d_crag7_0_0_strait_rock",
         "d_crag7_1_0_strait_rock",
         "d_crag7_2_0_strait_rock",
-        "d_crag7_3_0_strait_rock",
         "d_crag7_4_0_strait_rock",
         "d_crag7_5_0_strait_rock",
         "d_crag7_7_0_strait_rock",
         "d_crag7_8_0_strait_rock",
         "d_crag7_9_0_strait_rock",
         "d_crag8_0_0_strait_rock",
+        "d_crag8_1_0_strait_rock",
         "d_crag8_2_0_strait_rock",
-        "d_crag8_3_0_strait_rock",
         "d_crag8_4_0_strait_rock",
         "d_crag8_5_0_strait_rock",
+        "d_crag8_6_0_strait_rock",
         "d_crag8_7_0_strait_rock",
-        "d_crag8_8_0_strait_rock",
         "d_crag8_9_0_strait_rock",
         "d_crag9_0_0_strait_rock",
         "d_crag9_1_0_strait_rock",
-        "d_crag9_2_0_strait_rock",
-        "d_crag9_5_0_strait_rock",
-        "d_crag9_6_0_strait_rock",
-        "d_crag9_8_0_strait_rock",
-        "d_crag9_9_0_strait_rock",
-        "d_rocks0_0_strait_rock",
-        "d_rocks0_1_strait_rock",
-        "d_rocks0_3_strait_rock",
-        "d_rocks0_4_strait_rock",
-        "d_rocks0_7_strait_rock",
-        "d_rocks0_8_strait_rock",
-        "d_rocks0_9_strait_rock",
-        "d_rocks1_0_strait_rock",
-        "d_rocks1_1_strait_rock"
+        "d_crag9_3_0_strait_rock",
+        "d_crag9_4_0_strait_rock",
+        "d_crag9_7_0_strait_rock",
+        "d_crag9_8_0_strait_rock"
       ],
-      "triangles": 119599
+      "triangles": 118511
     },
     {
       "fbx": "ground_10.fbx",
       "meshes": [
+        "d_crag9_9_0_strait_rock",
+        "d_rocks0_0_strait_rock",
+        "d_rocks0_1_strait_rock",
+        "d_rocks0_2_strait_rock",
+        "d_rocks0_5_strait_rock",
+        "d_rocks0_6_strait_rock",
+        "d_rocks0_8_strait_rock",
+        "d_rocks0_9_strait_rock",
+        "d_rocks1_0_strait_rock",
         "d_rocks1_2_strait_rock",
+        "d_rocks1_3_strait_rock",
         "d_rocks1_4_strait_rock",
         "d_rocks1_5_strait_rock",
-        "d_rocks1_6_strait_rock",
         "d_rocks1_7_strait_rock",
+        "d_rocks1_8_strait_rock",
         "d_rocks1_9_strait_rock",
         "d_rocks2_0_strait_rock",
-        "d_rocks2_1_strait_rock",
         "d_rocks2_2_strait_rock",
         "d_rocks2_4_strait_rock",
         "d_rocks2_5_strait_rock",
         "d_rocks2_7_strait_rock",
         "d_rocks2_8_strait_rock",
         "d_rocks2_9_strait_rock",
-        "d_rocks3_0_strait_rock",
-        "d_rocks3_3_strait_rock",
-        "d_rocks3_4_strait_rock",
-        "d_rocks3_8_strait_rock",
-        "d_rocks4_0_strait_rock",
-        "d_rocks4_3_strait_rock",
-        "d_rocks4_4_strait_rock",
-        "d_rocks5_5_strait_rock",
-        "d_rocks5_6_strait_rock",
-        "d_rocks5_9_strait_rock",
-        "d_rocks6_2_strait_rock",
-        "d_rocks6_5_strait_rock",
-        "d_rocks6_6_strait_rock",
-        "d_rocks6_9_strait_rock",
+        "d_rocks3_2_strait_rock",
+        "d_rocks3_5_strait_rock",
+        "d_rocks3_6_strait_rock",
+        "d_rocks3_9_strait_rock",
+        "d_rocks4_6_strait_rock",
+        "d_rocks4_9_strait_rock",
+        "d_rocks5_0_strait_rock",
+        "d_rocks5_3_strait_rock",
+        "d_rocks6_0_strait_rock",
+        "d_rocks6_3_strait_rock",
+        "d_rocks6_4_strait_rock",
+        "d_rocks6_7_strait_rock",
         "d_rocks7_0_strait_rock",
         "d_rocks7_1_strait_rock",
         "d_rocks7_2_strait_rock",
-        "d_rocks7_3_strait_rock",
         "d_rocks7_4_strait_rock",
         "d_rocks7_5_strait_rock",
         "d_rocks7_7_strait_rock",
         "d_rocks7_8_strait_rock",
         "d_rocks7_9_strait_rock",
         "d_rocks8_0_strait_rock",
+        "d_rocks8_1_strait_rock",
         "d_rocks8_2_strait_rock",
-        "d_rocks8_3_strait_rock",
         "d_rocks8_4_strait_rock",
         "d_rocks8_5_strait_rock",
+        "d_rocks8_6_strait_rock",
         "d_rocks8_7_strait_rock",
-        "d_rocks8_8_strait_rock",
         "d_rocks8_9_strait_rock",
         "d_rocks9_0_strait_rock",
         "d_rocks9_1_strait_rock",
-        "d_rocks9_2_strait_rock",
-        "d_rocks9_5_strait_rock",
-        "d_rocks9_6_strait_rock",
+        "d_rocks9_3_strait_rock",
+        "d_rocks9_7_strait_rock",
         "d_rocks9_8_strait_rock",
         "d_rocks9_9_strait_rock"
       ],
-      "triangles": 19660
+      "triangles": 26694
     }
   ],
   "meshes": [
-    {
-      "name": "t0_0_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -1152.0,
-        59.8125,
-        -1152.0
-      ],
-      "size": [
-        256.0,
-        41.375,
-        256.0
-      ],
-      "triangles": 8199
-    },
     {
       "name": "t0_0_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
         -1152.0,
-        70.1857,
-        -1157.6761
+        9.9285,
+        -1152.0
       ],
       "size": [
         256.0,
-        14.5024,
-        244.6478
+        18.3569,
+        256.0
       ],
-      "triangles": 370
+      "triangles": 7533
     },
     {
       "name": "t0_0_strait_grass",
       "kind": "tiles",
       "material": "strait_grass",
       "center": [
-        -1024.4887,
-        39.2629,
-        -1145.523
+        -1276.2974,
+        0.75,
+        -1276.5026
       ],
       "size": [
-        0.9773,
-        0.2758,
-        20.2708
+        7.4051,
+        0.01,
+        6.9949
       ],
-      "triangles": 15
+      "triangles": 10
+    },
+    {
+      "name": "t0_0_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -1231.104,
+        39.4849,
+        -1068.5046
+      ],
+      "size": [
+        97.792,
+        66.0301,
+        89.0092
+      ],
+      "triangles": 787
+    },
+    {
+      "name": "t1_0_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -896.0,
+        7.875,
+        -1152.0
+      ],
+      "size": [
+        256.0,
+        14.25,
+        256.0
+      ],
+      "triangles": 8200
     },
     {
       "name": "t1_0_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -896.0,
+        -985.4674,
+        9.0374,
+        -1232.3697
+      ],
+      "size": [
+        7.8777,
+        3.2395,
+        8.9562
+      ],
+      "triangles": 20
+    },
+    {
+      "name": "t2_0_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -640.0,
+        7.5,
+        -1152.0
+      ],
+      "size": [
+        256.0,
+        14.5,
+        256.0
+      ],
+      "triangles": 8196
+    },
+    {
+      "name": "t2_0_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -650.2904,
+        10.9979,
+        -1154.9366
+      ],
+      "size": [
+        14.1218,
+        4.514,
+        12.6806
+      ],
+      "triangles": 40
+    },
+    {
+      "name": "t3_0_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -384.0,
+        1.8125,
+        -1152.0
+      ],
+      "size": [
+        256.0,
+        2.125,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t4_0_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -128.0,
+        7.75,
+        -1152.0
+      ],
+      "size": [
+        256.0,
+        11.5,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t5_0_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        128.0,
+        18.0549,
+        -1152.0
+      ],
+      "size": [
+        256.0,
+        27.3598,
+        256.0
+      ],
+      "triangles": 4418
+    },
+    {
+      "name": "t5_0_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        155.5389,
+        15.6616,
+        -1152.0
+      ],
+      "size": [
+        200.9222,
+        3.8232,
+        256.0
+      ],
+      "triangles": 3825
+    },
+    {
+      "name": "t5_0_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        211.0521,
+        43.4013,
+        -1250.9696
+      ],
+      "size": [
+        89.8957,
+        53.9473,
+        58.0608
+      ],
+      "triangles": 501
+    },
+    {
+      "name": "t6_0_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        384.0,
+        47.3813,
+        -1152.0
+      ],
+      "size": [
+        256.0,
+        62.3566,
+        256.0
+      ],
+      "triangles": 1731
+    },
+    {
+      "name": "t6_0_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        358.4754,
+        20.5594,
+        -1122.5189
+      ],
+      "size": [
+        204.9508,
+        9.6189,
+        197.0378
+      ],
+      "triangles": 4633
+    },
+    {
+      "name": "t6_0_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        384.0,
+        50.0757,
+        -1157.3195
+      ],
+      "size": [
+        256.0,
+        60.3487,
+        245.361
+      ],
+      "triangles": 2695
+    },
+    {
+      "name": "t7_0_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        522.3675,
+        54.625,
+        -1152.0
+      ],
+      "size": [
+        20.735,
+        48.25,
+        256.0
+      ],
+      "triangles": 10
+    },
+    {
+      "name": "t7_0_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        668.4605,
+        38.4905,
+        -1152.0
+      ],
+      "size": [
+        199.079,
+        2.5189,
+        256.0
+      ],
+      "triangles": 2092
+    },
+    {
+      "name": "t7_0_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        640.0,
+        56.0258,
+        -1152.0
+      ],
+      "size": [
+        256.0,
+        50.4485,
+        256.0
+      ],
+      "triangles": 6564
+    },
+    {
+      "name": "t8_0_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        1011.0147,
+        62.4303,
+        -1047.5334
+      ],
+      "size": [
+        10.2604,
+        0.7041,
+        8.9966
+      ],
+      "triangles": 27
+    },
+    {
+      "name": "t8_0_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        892.908,
+        39.0426,
+        -1152.0
+      ],
+      "size": [
+        249.8161,
+        1.0852,
+        256.0
+      ],
+      "triangles": 4054
+    },
+    {
+      "name": "t8_0_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        896.0,
         59.625,
         -1152.0
       ],
@@ -475,542 +736,94 @@
         41.75,
         256.0
       ],
-      "triangles": 5058
-    },
-    {
-      "name": "t1_0_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -1018.4456,
-        63.0968,
-        -1043.0397
-      ],
-      "size": [
-        11.1089,
-        0.8065,
-        15.3788
-      ],
-      "triangles": 33
-    },
-    {
-      "name": "t1_0_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -896.0,
-        39.17,
-        -1152.0
-      ],
-      "size": [
-        256.0,
-        1.3401,
-        256.0
-      ],
-      "triangles": 4349
-    },
-    {
-      "name": "t2_0_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -640.0,
-        55.875,
-        -1152.0
-      ],
-      "size": [
-        256.0,
-        50.75,
-        256.0
-      ],
-      "triangles": 6600
-    },
-    {
-      "name": "t2_0_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -642.631,
-        36.3672,
-        -1152.0
-      ],
-      "size": [
-        250.7381,
-        6.6789,
-        256.0
-      ],
-      "triangles": 2534
-    },
-    {
-      "name": "t3_0_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -384.0,
-        49.4468,
-        -1152.0
-      ],
-      "size": [
-        256.0,
-        61.6064,
-        256.0
-      ],
-      "triangles": 2748
-    },
-    {
-      "name": "t3_0_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -381.7442,
-        26.2789,
-        -1123.0662
-      ],
-      "size": [
-        243.4883,
-        17.5543,
-        198.1323
-      ],
-      "triangles": 1634
-    },
-    {
-      "name": "t3_0_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -354.3926,
-        19.8602,
-        -1122.0
-      ],
-      "size": [
-        196.7851,
-        8.2204,
-        196.0
-      ],
-      "triangles": 4583
-    },
-    {
-      "name": "t4_0_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -210.2744,
-        43.288,
-        -1246.8541
-      ],
-      "size": [
-        91.4512,
-        54.1739,
-        66.2919
-      ],
-      "triangles": 478
-    },
-    {
-      "name": "t4_0_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -116.0,
-        17.6375,
-        -1152.0
-      ],
-      "size": [
-        232.0,
-        26.5249,
-        256.0
-      ],
-      "triangles": 3733
-    },
-    {
-      "name": "t4_0_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -148.3457,
-        16.1507,
-        -1152.0
-      ],
-      "size": [
-        215.3085,
-        5.0081,
-        256.0
-      ],
-      "triangles": 4583
-    },
-    {
-      "name": "t5_0_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        128.0,
-        7.75,
-        -1152.0
-      ],
-      "size": [
-        256.0,
-        11.5,
-        256.0
-      ],
-      "triangles": 8192
-    },
-    {
-      "name": "t6_0_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        384.0,
-        1.8125,
-        -1152.0
-      ],
-      "size": [
-        256.0,
-        2.125,
-        256.0
-      ],
-      "triangles": 8192
-    },
-    {
-      "name": "t7_0_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        586.2353,
-        11.7378,
-        -1075.9352
-      ],
-      "size": [
-        21.0867,
-        4.0244,
-        18.508
-      ],
-      "triangles": 70
-    },
-    {
-      "name": "t7_0_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        640.0,
-        7.5,
-        -1152.0
-      ],
-      "size": [
-        256.0,
-        14.5,
-        256.0
-      ],
-      "triangles": 8186
-    },
-    {
-      "name": "t8_0_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        800.1854,
-        11.583,
-        -1077.0548
-      ],
-      "size": [
-        23.888,
-        6.834,
-        22.2686
-      ],
-      "triangles": 68
-    },
-    {
-      "name": "t8_0_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        896.0,
-        7.8409,
-        -1152.0
-      ],
-      "size": [
-        256.0,
-        14.1819,
-        256.0
-      ],
-      "triangles": 8200
-    },
-    {
-      "name": "t9_0_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        1231.2033,
-        36.625,
-        -1152.0
-      ],
-      "size": [
-        97.5934,
-        71.75,
-        256.0
-      ],
-      "triangles": 792
+      "triangles": 5171
     },
     {
       "name": "t9_0_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        1187.3305,
+        70.0784,
+        -1219.0626
+      ],
+      "size": [
+        185.3389,
+        11.6567,
+        121.8749
+      ],
+      "triangles": 195
+    },
+    {
+      "name": "t9_0_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
         1152.0,
-        10.7657,
+        59.8125,
         -1152.0
       ],
       "size": [
         256.0,
-        20.0314,
+        41.375,
         256.0
       ],
-      "triangles": 7532
+      "triangles": 8201
+    },
+    {
+      "name": "t0_1_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -1103.2733,
+        19.7532,
+        -896.0
+      ],
+      "size": [
+        158.5465,
+        37.1303,
+        256.0
+      ],
+      "triangles": 3967
     },
     {
       "name": "t0_1_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -1152.0,
-        58.25,
+        -1190.5408,
+        29.3843,
         -896.0
       ],
       "size": [
-        256.0,
-        40.5,
+        178.9183,
+        44.2314,
         256.0
       ],
-      "triangles": 4436
+      "triangles": 4613
     },
     {
-      "name": "t0_1_strait_grass",
+      "name": "t1_1_strait_sand",
       "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -1152.0,
-        38.7162,
-        -875.0785
-      ],
-      "size": [
-        256.0,
-        1.4323,
-        214.1569
-      ],
-      "triangles": 4494
-    },
-    {
-      "name": "t1_1_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
+      "material": "strait_sand",
       "center": [
         -896.0,
-        54.375,
+        4.969,
         -896.0
       ],
       "size": [
         256.0,
-        32.75,
+        8.938,
         256.0
       ],
-      "triangles": 2894
-    },
-    {
-      "name": "t1_1_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -896.0,
-        38.6846,
-        -896.0
-      ],
-      "size": [
-        256.0,
-        1.3692,
-        256.0
-      ],
-      "triangles": 6172
-    },
-    {
-      "name": "t2_1_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -640.0,
-        49.4118,
-        -896.0
-      ],
-      "size": [
-        256.0,
-        41.9265,
-        256.0
-      ],
-      "triangles": 3654
+      "triangles": 8192
     },
     {
       "name": "t2_1_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        -607.6773,
-        44.8763,
-        -868.3866
-      ],
-      "size": [
-        191.3546,
-        50.2474,
-        200.7733
-      ],
-      "triangles": 1015
-    },
-    {
-      "name": "t2_1_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
         -640.0,
-        29.4615,
-        -896.0
-      ],
-      "size": [
-        256.0,
-        20.1731,
-        256.0
-      ],
-      "triangles": 4271
-    },
-    {
-      "name": "t3_1_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -507.0857,
-        29.2605,
-        -996.3866
-      ],
-      "size": [
-        9.8286,
-        2.479,
-        55.2267
-      ],
-      "triangles": 84
-    },
-    {
-      "name": "t3_1_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -478.1283,
-        24.3803,
-        -900.8372
-      ],
-      "size": [
-        67.7435,
-        9.5323,
-        246.3257
-      ],
-      "triangles": 1226
-    },
-    {
-      "name": "t3_1_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -384.0,
-        18.8321,
-        -896.0
-      ],
-      "size": [
-        256.0,
-        6.9142,
-        256.0
-      ],
-      "triangles": 7196
-    },
-    {
-      "name": "t4_1_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -104.4097,
-        8.5753,
-        -896.0
-      ],
-      "size": [
-        208.8194,
-        11.6506,
-        256.0
-      ],
-      "triangles": 6119
-    },
-    {
-      "name": "t4_1_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -202.1691,
-        14.8318,
-        -896.0
-      ],
-      "size": [
-        107.6618,
-        2.3363,
-        256.0
-      ],
-      "triangles": 2339
-    },
-    {
-      "name": "t5_1_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        128.0,
-        2.9375,
-        -896.0
-      ],
-      "size": [
-        256.0,
-        2.875,
-        256.0
-      ],
-      "triangles": 8192
-    },
-    {
-      "name": "t6_1_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        384.0,
-        7.5,
-        -896.0
-      ],
-      "size": [
-        256.0,
-        13.5,
-        256.0
-      ],
-      "triangles": 8192
-    },
-    {
-      "name": "t7_1_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        682.9988,
-        11.5302,
-        -774.9461
-      ],
-      "size": [
-        20.4555,
-        8.3768,
-        13.8922
-      ],
-      "triangles": 47
-    },
-    {
-      "name": "t7_1_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        640.0,
         8.5625,
         -896.0
       ],
@@ -1019,119 +832,279 @@
         15.625,
         256.0
       ],
-      "triangles": 8191
+      "triangles": 8192
+    },
+    {
+      "name": "t3_1_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -384.0,
+        7.5,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        13.5,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t4_1_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -128.0,
+        2.9375,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        2.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t5_1_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        97.3514,
+        8.5963,
+        -896.0
+      ],
+      "size": [
+        194.7028,
+        11.6925,
+        256.0
+      ],
+      "triangles": 5970
+    },
+    {
+      "name": "t5_1_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        201.0788,
+        14.875,
+        -896.0
+      ],
+      "size": [
+        109.8424,
+        2.25,
+        256.0
+      ],
+      "triangles": 2494
+    },
+    {
+      "name": "t6_1_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        457.4009,
+        23.645,
+        -906.6052
+      ],
+      "size": [
+        109.1982,
+        13.71,
+        234.7897
+      ],
+      "triangles": 658
+    },
+    {
+      "name": "t6_1_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        384.0,
+        20.0679,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        9.3858,
+        256.0
+      ],
+      "triangles": 7720
+    },
+    {
+      "name": "t7_1_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        640.0,
+        45.78,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        49.19,
+        256.0
+      ],
+      "triangles": 1418
+    },
+    {
+      "name": "t7_1_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        640.0,
+        29.4549,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        20.1599,
+        256.0
+      ],
+      "triangles": 3909
+    },
+    {
+      "name": "t7_1_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        641.4956,
+        50.186,
+        -896.0
+      ],
+      "size": [
+        253.0087,
+        40.3762,
+        256.0
+      ],
+      "triangles": 3667
     },
     {
       "name": "t8_1_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        768.9613,
+        70.1435,
+        -775.7633
+      ],
+      "size": [
+        1.9226,
+        0.4851,
+        7.6441
+      ],
+      "triangles": 7
+    },
+    {
+      "name": "t8_1_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
         896.0,
-        4.969,
+        39.0106,
         -896.0
       ],
       "size": [
         256.0,
-        8.938,
+        2.0212,
         256.0
       ],
-      "triangles": 8192
+      "triangles": 4340
     },
     {
-      "name": "t9_1_strait_rock",
+      "name": "t8_1_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        1191.8532,
-        29.1405,
+        896.0,
+        54.5,
         -896.0
       ],
       "size": [
-        176.2936,
-        44.719,
+        256.0,
+        32.5,
         256.0
       ],
-      "triangles": 5059
+      "triangles": 4691
     },
     {
       "name": "t9_1_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        1103.2033,
-        19.2278,
-        -896.0
+        1178.1638,
+        63.588,
+        -1013.2518
       ],
       "size": [
-        158.4066,
-        36.0795,
-        256.0
+        13.755,
+        0.3569,
+        5.7906
       ],
-      "triangles": 3461
+      "triangles": 24
     },
     {
-      "name": "t0_2_strait_rock",
+      "name": "t9_1_strait_grass",
       "kind": "tiles",
-      "material": "strait_rock",
+      "material": "strait_grass",
       "center": [
-        -1152.0,
-        33.6753,
-        -640.0
+        1152.0,
+        38.6302,
+        -876.9431
       ],
       "size": [
         256.0,
-        11.1493,
+        1.2603,
+        217.8863
+      ],
+      "triangles": 3144
+    },
+    {
+      "name": "t9_1_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        1152.0,
+        58.25,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        40.5,
         256.0
       ],
-      "triangles": 3248
+      "triangles": 5712
     },
     {
       "name": "t0_2_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        -1063.7286,
-        25.7203,
-        -545.7186
-      ],
-      "size": [
-        79.4573,
-        7.0647,
-        67.4371
-      ],
-      "triangles": 349
-    },
-    {
-      "name": "t0_2_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
         -1152.0,
-        33.483,
+        18.442,
         -640.0
       ],
       "size": [
         256.0,
-        11.5339,
+        35.3839,
         256.0
       ],
-      "triangles": 5742
+      "triangles": 6709
     },
     {
-      "name": "t1_2_strait_rock",
+      "name": "t0_2_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -896.0,
-        38.1108,
-        -673.7186
+        -1182.3864,
+        36.1355,
+        -699.3649
       ],
       "size": [
-        256.0,
-        65.0283,
-        188.5629
+        195.2271,
+        64.7291,
+        137.2703
       ],
-      "triangles": 2563
+      "triangles": 1811
     },
     {
       "name": "t1_2_strait_sand",
@@ -1139,102 +1112,182 @@
       "material": "strait_sand",
       "center": [
         -896.0,
-        16.2085,
-        -609.3059
-      ],
-      "size": [
-        256.0,
-        28.917,
-        194.6117
-      ],
-      "triangles": 4842
-    },
-    {
-      "name": "t1_2_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -932.6726,
-        26.6947,
+        9.5947,
         -640.0
       ],
       "size": [
-        182.6548,
-        24.9419,
+        256.0,
+        17.6894,
         256.0
       ],
-      "triangles": 1465
+      "triangles": 8170
     },
     {
-      "name": "t2_2_strait_rock",
+      "name": "t1_2_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -664.5274,
-        37.8607,
-        -694.282
+        -835.0302,
+        13.4021,
+        -614.9535
       ],
       "size": [
-        206.9452,
-        64.9045,
-        147.4359
+        64.4681,
+        12.6958,
+        58.8494
       ],
-      "triangles": 2606
+      "triangles": 158
     },
     {
       "name": "t2_2_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        -642.9842,
-        17.856,
+        -640.0,
+        9.875,
         -640.0
       ],
       "size": [
-        250.0316,
-        32.2121,
+        256.0,
+        18.25,
         256.0
       ],
-      "triangles": 4536
+      "triangles": 8203
     },
     {
-      "name": "t2_2_strait_grass",
+      "name": "t2_2_strait_rock",
       "kind": "tiles",
-      "material": "strait_grass",
+      "material": "strait_rock",
       "center": [
-        -579.5479,
-        17.069,
-        -640.0
+        -708.7202,
+        8.3868,
+        -700.3043
       ],
       "size": [
-        135.0958,
-        7.0606,
-        256.0
+        38.076,
+        8.3444,
+        52.8417
       ],
-      "triangles": 1700
+      "triangles": 83
     },
     {
       "name": "t3_2_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        -349.1659,
-        16.875,
-        -717.6527
+        -384.0,
+        10.125,
+        -640.0
       ],
       "size": [
-        23.3128,
-        0.25,
-        24.454
+        256.0,
+        18.75,
+        256.0
       ],
-      "triangles": 101
+      "triangles": 8181
     },
     {
-      "name": "t3_2_strait_grass",
+      "name": "t3_2_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -493.2844,
+        12.8416,
+        -520.3477
+      ],
+      "size": [
+        23.6267,
+        12.0664,
+        16.6954
+      ],
+      "triangles": 63
+    },
+    {
+      "name": "t4_2_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -128.0,
+        7.3647,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        11.7295,
+        256.0
+      ],
+      "triangles": 8191
+    },
+    {
+      "name": "t4_2_strait_grass",
       "kind": "tiles",
       "material": "strait_grass",
       "center": [
-        -384.0,
+        -4.8322,
+        13.3855,
+        -520.3288
+      ],
+      "size": [
+        9.6643,
+        0.729,
+        16.6576
+      ],
+      "triangles": 19
+    },
+    {
+      "name": "t5_2_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        73.0788,
+        9.3249,
+        -648.3288
+      ],
+      "size": [
+        146.1576,
+        10.0238,
+        239.3424
+      ],
+      "triangles": 2336
+    },
+    {
+      "name": "t5_2_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        128.0,
+        14.9451,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        3.6099,
+        256.0
+      ],
+      "triangles": 6094
+    },
+    {
+      "name": "t6_2_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        350.0617,
+        16.875,
+        -718.2477
+      ],
+      "size": [
+        27.3502,
+        0.25,
+        29.9162
+      ],
+      "triangles": 120
+    },
+    {
+      "name": "t6_2_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        384.0,
         17.375,
         -640.0
       ],
@@ -1243,135 +1296,55 @@
         4.0,
         256.0
       ],
-      "triangles": 8177
-    },
-    {
-      "name": "t4_2_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -74.1691,
-        9.7149,
-        -640.0
-      ],
-      "size": [
-        148.3382,
-        10.8038,
-        256.0
-      ],
-      "triangles": 2822
-    },
-    {
-      "name": "t4_2_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -139.2426,
-        15.3535,
-        -640.0
-      ],
-      "size": [
-        233.5149,
-        2.7929,
-        256.0
-      ],
-      "triangles": 5630
-    },
-    {
-      "name": "t5_2_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        128.0,
-        7.625,
-        -640.0
-      ],
-      "size": [
-        256.0,
-        12.25,
-        256.0
-      ],
-      "triangles": 8192
-    },
-    {
-      "name": "t6_2_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        501.8415,
-        16.0229,
-        -530.3771
-      ],
-      "size": [
-        19.5782,
-        6.9542,
-        13.4961
-      ],
-      "triangles": 47
-    },
-    {
-      "name": "t6_2_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        384.0,
-        9.9536,
-        -640.0
-      ],
-      "size": [
-        256.0,
-        18.4073,
-        256.0
-      ],
-      "triangles": 8195
-    },
-    {
-      "name": "t7_2_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        610.9949,
-        13.3514,
-        -686.6176
-      ],
-      "size": [
-        189.2091,
-        11.2971,
-        162.7648
-      ],
-      "triangles": 99
+      "triangles": 8164
     },
     {
       "name": "t7_2_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        640.0,
-        9.022,
+        647.6884,
+        16.0805,
         -640.0
       ],
       "size": [
-        256.0,
-        16.5441,
+        240.6232,
+        28.6611,
         256.0
       ],
-      "triangles": 8203
+      "triangles": 4759
     },
     {
-      "name": "t8_2_strait_rock",
+      "name": "t7_2_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        565.7073,
+        17.5966,
+        -640.0
+      ],
+      "size": [
+        107.4146,
+        7.1768,
+        256.0
+      ],
+      "triangles": 1545
+    },
+    {
+      "name": "t7_2_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        893.4335,
-        15.1392,
-        -589.4315
+        657.2171,
+        41.5375,
+        -697.0806
       ],
       "size": [
-        177.4979,
-        7.4352,
-        27.768
+        221.5657,
+        57.551,
+        141.8388
       ],
-      "triangles": 90
+      "triangles": 2604
     },
     {
       "name": "t8_2_strait_sand",
@@ -1379,63 +1352,95 @@
       "material": "strait_sand",
       "center": [
         896.0,
-        10.25,
-        -640.0
+        30.6828,
+        -635.7935
       ],
       "size": [
         256.0,
-        19.0,
-        256.0
+        57.8655,
+        247.587
       ],
-      "triangles": 8202
+      "triangles": 4699
     },
     {
-      "name": "t9_2_strait_rock",
+      "name": "t8_2_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        936.8332,
+        26.6883,
+        -640.0
+      ],
+      "size": [
+        174.3337,
+        25.3237,
+        256.0
+      ],
+      "triangles": 1544
+    },
+    {
+      "name": "t8_2_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        1184.5693,
-        37.6619,
-        -701.2144
+        896.0,
+        40.1126,
+        -681.3174
       ],
       "size": [
-        190.8615,
-        61.6761,
-        133.5713
+        256.0,
+        61.0248,
+        173.3652
       ],
-      "triangles": 1825
+      "triangles": 2737
     },
     {
       "name": "t9_2_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        1090.6325,
+        28.3658,
+        -553.3174
+      ],
+      "size": [
+        133.265,
+        7.7056,
+        82.6348
+      ],
+      "triangles": 711
+    },
+    {
+      "name": "t9_2_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
         1152.0,
-        15.585,
+        30.719,
         -640.0
       ],
       "size": [
         256.0,
-        29.6699,
+        17.062,
         256.0
       ],
-      "triangles": 6637
+      "triangles": 4677
     },
     {
-      "name": "t0_3_strait_rock",
+      "name": "t9_2_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -1193.3879,
-        46.7401,
-        -384.0
+        1152.0,
+        34.9879,
+        -640.0
       ],
       "size": [
-        173.2241,
-        58.0199,
+        256.0,
+        8.5241,
         256.0
       ],
-      "triangles": 2671
+      "triangles": 4252
     },
     {
       "name": "t0_3_strait_sand",
@@ -1443,31 +1448,31 @@
       "material": "strait_sand",
       "center": [
         -1152.0,
-        28.2114,
+        7.7699,
         -384.0
       ],
       "size": [
         256.0,
-        22.9228,
+        14.0398,
         256.0
       ],
-      "triangles": 1980
+      "triangles": 7357
     },
     {
       "name": "t0_3_strait_grass",
       "kind": "tiles",
       "material": "strait_grass",
       "center": [
-        -1152.0,
-        27.125,
-        -384.0
+        -1172.1403,
+        14.723,
+        -283.669
       ],
       "size": [
-        256.0,
-        21.0,
-        256.0
+        215.7194,
+        2.054,
+        55.3381
       ],
-      "triangles": 4480
+      "triangles": 1057
     },
     {
       "name": "t1_3_strait_sand",
@@ -1475,230 +1480,38 @@
       "material": "strait_sand",
       "center": [
         -896.0,
-        17.094,
-        -498.7068
-      ],
-      "size": [
-        256.0,
-        10.188,
-        26.5864
-      ],
-      "triangles": 170
-    },
-    {
-      "name": "t1_3_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -896.0,
-        17.5233,
+        9.9333,
         -384.0
       ],
       "size": [
         256.0,
-        7.6535,
+        18.3667,
         256.0
       ],
-      "triangles": 8134
+      "triangles": 8135
+    },
+    {
+      "name": "t1_3_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -977.9082,
+        24.8476,
+        -262.8023
+      ],
+      "size": [
+        86.9409,
+        21.3048,
+        13.6047
+      ],
+      "triangles": 157
     },
     {
       "name": "t2_3_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        -704.3618,
-        15.125,
-        -397.5116
-      ],
-      "size": [
-        127.2763,
-        6.75,
-        228.9768
-      ],
-      "triangles": 261
-    },
-    {
-      "name": "t2_3_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
         -640.0,
-        15.9407,
-        -384.0
-      ],
-      "size": [
-        256.0,
-        5.3685,
-        256.0
-      ],
-      "triangles": 8065
-    },
-    {
-      "name": "t3_3_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -307.943,
-        37.5297,
-        -359.1108
-      ],
-      "size": [
-        103.886,
-        42.4405,
-        121.5209
-      ],
-      "triangles": 1243
-    },
-    {
-      "name": "t3_3_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -311.4859,
-        27.1137,
-        -362.0331
-      ],
-      "size": [
-        86.0275,
-        21.8234,
-        123.4387
-      ],
-      "triangles": 134
-    },
-    {
-      "name": "t3_3_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -384.0,
-        25.3788,
-        -384.0
-      ],
-      "size": [
-        256.0,
-        20.2576,
-        256.0
-      ],
-      "triangles": 7207
-    },
-    {
-      "name": "t4_3_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -198.5159,
-        37.5645,
-        -335.9612
-      ],
-      "size": [
-        114.9681,
-        42.371,
-        159.9225
-      ],
-      "triangles": 1854
-    },
-    {
-      "name": "t4_3_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -111.3262,
-        35.067,
-        -384.0
-      ],
-      "size": [
-        222.6523,
-        42.634,
-        256.0
-      ],
-      "triangles": 1378
-    },
-    {
-      "name": "t4_3_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -128.0,
-        24.9584,
-        -384.0
-      ],
-      "size": [
-        256.0,
-        21.7909,
-        256.0
-      ],
-      "triangles": 5863
-    },
-    {
-      "name": "t5_3_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        128.0,
-        8.1875,
-        -384.0
-      ],
-      "size": [
-        256.0,
-        12.875,
-        256.0
-      ],
-      "triangles": 8058
-    },
-    {
-      "name": "t5_3_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        9.762,
-        13.9449,
-        -311.2367
-      ],
-      "size": [
-        19.5241,
-        0.8601,
-        110.4734
-      ],
-      "triangles": 248
-    },
-    {
-      "name": "t6_3_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        384.0,
-        7.625,
-        -384.0
-      ],
-      "size": [
-        256.0,
-        13.75,
-        256.0
-      ],
-      "triangles": 8192
-    },
-    {
-      "name": "t7_3_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        631.5969,
-        9.306,
-        -472.3199
-      ],
-      "size": [
-        13.838,
-        3.388,
-        14.4032
-      ],
-      "triangles": 37
-    },
-    {
-      "name": "t7_3_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        640.0,
         6.375,
         -384.0
       ],
@@ -1707,103 +1520,295 @@
         11.25,
         256.0
       ],
-      "triangles": 8197
+      "triangles": 8192
     },
     {
-      "name": "t8_3_strait_rock",
+      "name": "t3_3_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -384.0,
+        7.1268,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        12.7535,
+        256.0
+      ],
+      "triangles": 8191
+    },
+    {
+      "name": "t3_3_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        954.9093,
-        23.7578,
-        -263.0275
+        -494.0929,
+        10.991,
+        -508.3634
       ],
       "size": [
-        73.4343,
-        23.4844,
-        14.0551
+        20.3213,
+        7.018,
+        7.2733
       ],
-      "triangles": 95
+      "triangles": 25
+    },
+    {
+      "name": "t4_3_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -128.0,
+        8.0625,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        12.625,
+        256.0
+      ],
+      "triangles": 7858
+    },
+    {
+      "name": "t4_3_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -12.9242,
+        13.7188,
+        -406.907
+      ],
+      "size": [
+        25.8485,
+        1.8124,
+        210.1859
+      ],
+      "triangles": 550
+    },
+    {
+      "name": "t5_3_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        126.3939,
+        28.1805,
+        -361.708
+      ],
+      "size": [
+        252.7877,
+        28.235,
+        211.4159
+      ],
+      "triangles": 559
+    },
+    {
+      "name": "t5_3_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        128.0,
+        25.2191,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        22.9383,
+        256.0
+      ],
+      "triangles": 6822
+    },
+    {
+      "name": "t5_3_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        217.7375,
+        37.1303,
+        -357.6715
+      ],
+      "size": [
+        76.5249,
+        43.2394,
+        192.6783
+      ],
+      "triangles": 1457
+    },
+    {
+      "name": "t6_3_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        321.6838,
+        36.9552,
+        -380.2843
+      ],
+      "size": [
+        126.1848,
+        42.4103,
+        135.6385
+      ],
+      "triangles": 462
+    },
+    {
+      "name": "t6_3_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        384.0,
+        19.4817,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        8.4634,
+        256.0
+      ],
+      "triangles": 6670
+    },
+    {
+      "name": "t6_3_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        323.9994,
+        37.2112,
+        -372.1546
+      ],
+      "size": [
+        135.9989,
+        43.0776,
+        154.1754
+      ],
+      "triangles": 1694
+    },
+    {
+      "name": "t7_3_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        693.7073,
+        13.625,
+        -491.1665
+      ],
+      "size": [
+        148.5854,
+        3.75,
+        41.667
+      ],
+      "triangles": 605
+    },
+    {
+      "name": "t7_3_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        640.0,
+        16.4296,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        4.3908,
+        256.0
+      ],
+      "triangles": 7773
     },
     {
       "name": "t8_3_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        808.8332,
+        14.0,
+        -483.432
+      ],
+      "size": [
+        81.6663,
+        4.0,
+        57.136
+      ],
+      "triangles": 212
+    },
+    {
+      "name": "t8_3_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
         896.0,
-        15.7666,
+        18.2368,
         -384.0
       ],
       "size": [
         256.0,
-        30.0333,
+        7.9025,
         256.0
       ],
-      "triangles": 8181
+      "triangles": 8106
     },
     {
       "name": "t9_3_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        1152.0,
-        7.6875,
+        1169.9511,
+        27.4185,
         -384.0
       ],
       "size": [
-        256.0,
-        13.875,
+        220.0979,
+        19.6599,
         256.0
       ],
-      "triangles": 7219
+      "triangles": 1409
     },
     {
       "name": "t9_3_strait_grass",
       "kind": "tiles",
       "material": "strait_grass",
       "center": [
-        1159.0426,
-        14.661,
-        -280.4667
+        1152.0,
+        27.125,
+        -384.0
       ],
       "size": [
-        241.9148,
-        2.178,
-        48.9334
+        256.0,
+        21.0,
+        256.0
       ],
-      "triangles": 1231
+      "triangles": 4747
     },
     {
-      "name": "t0_4_strait_rock",
+      "name": "t9_3_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -1209.3486,
-        26.1456,
-        -248.4215
+        1218.6325,
+        46.9251,
+        -384.0
       ],
       "size": [
-        55.5697,
-        15.7088,
-        15.157
+        122.735,
+        57.6498,
+        256.0
       ],
-      "triangles": 70
+      "triangles": 2826
     },
     {
       "name": "t0_4_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        -1152.0,
-        21.4804,
-        -128.0
+        -1044.1403,
+        15.125,
+        -230.3621
       ],
       "size": [
-        256.0,
-        9.8105,
-        256.0
+        40.2806,
+        2.5,
+        51.2758
       ],
-      "triangles": 80
+      "triangles": 106
     },
     {
       "name": "t0_4_strait_grass",
@@ -1811,31 +1816,15 @@
       "material": "strait_grass",
       "center": [
         -1152.0,
-        20.6165,
+        15.8534,
         -128.0
       ],
       "size": [
         256.0,
-        9.7331,
+        3.0432,
         256.0
       ],
-      "triangles": 8182
-    },
-    {
-      "name": "t1_4_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -874.4617,
-        30.0884,
-        -59.643
-      ],
-      "size": [
-        212.9234,
-        29.0731,
-        119.2859
-      ],
-      "triangles": 2642
+      "triangles": 8162
     },
     {
       "name": "t1_4_strait_sand",
@@ -1843,47 +1832,47 @@
       "material": "strait_sand",
       "center": [
         -896.0,
-        25.0865,
-        -92.1677
+        23.7166,
+        -128.0
       ],
       "size": [
         256.0,
-        27.2971,
-        184.3355
+        41.1832,
+        256.0
       ],
-      "triangles": 2797
+      "triangles": 2314
     },
     {
       "name": "t1_4_strait_grass",
       "kind": "tiles",
       "material": "strait_grass",
       "center": [
-        -896.0,
-        19.0102,
-        -132.2654
+        -1008.5647,
+        16.3739,
+        -102.3621
       ],
       "size": [
-        256.0,
-        5.5204,
-        247.4693
+        30.8705,
+        2.2703,
+        204.7242
       ],
-      "triangles": 3415
+      "triangles": 372
     },
     {
-      "name": "t2_4_strait_rock",
+      "name": "t1_4_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -646.0,
-        20.3919,
-        -120.2172
+        -894.6893,
+        32.7778,
+        -128.0
       ],
       "size": [
-        244.0,
-        21.4663,
-        193.6855
+        253.3786,
+        45.9444,
+        256.0
       ],
-      "triangles": 314
+      "triangles": 6393
     },
     {
       "name": "t2_4_strait_sand",
@@ -1891,47 +1880,31 @@
       "material": "strait_sand",
       "center": [
         -640.0,
-        14.5111,
-        -108.194
+        10.9557,
+        -128.0
       ],
       "size": [
         256.0,
-        31.5222,
-        216.388
+        19.9113,
+        256.0
       ],
-      "triangles": 6188
+      "triangles": 8193
     },
     {
-      "name": "t2_4_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -640.0,
-        18.2464,
-        -201.3327
-      ],
-      "size": [
-        256.0,
-        7.1245,
-        109.3346
-      ],
-      "triangles": 2179
-    },
-    {
-      "name": "t3_4_strait_rock",
+      "name": "t2_4_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -474.11,
-        11.2248,
-        -109.028
+        -764.969,
+        19.3418,
+        -58.8163
       ],
       "size": [
-        35.3592,
-        14.7176,
-        211.2933
+        6.0621,
+        10.8164,
+        17.2539
       ],
-      "triangles": 127
+      "triangles": 19
     },
     {
       "name": "t3_4_strait_sand",
@@ -1939,47 +1912,15 @@
       "material": "strait_sand",
       "center": [
         -384.0,
-        9.125,
-        -108.274
+        7.125,
+        -128.0
       ],
       "size": [
         256.0,
-        18.75,
-        216.5481
+        12.25,
+        256.0
       ],
-      "triangles": 5949
-    },
-    {
-      "name": "t3_4_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -384.0,
-        16.1826,
-        -184.1348
-      ],
-      "size": [
-        256.0,
-        5.6349,
-        143.7303
-      ],
-      "triangles": 2475
-    },
-    {
-      "name": "t4_4_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -196.3524,
-        23.0608,
-        -248.1797
-      ],
-      "size": [
-        49.1656,
-        13.6285,
-        15.6406
-      ],
-      "triangles": 84
+      "triangles": 8192
     },
     {
       "name": "t4_4_strait_sand",
@@ -1987,31 +1928,15 @@
       "material": "strait_sand",
       "center": [
         -128.0,
-        14.928,
+        8.094,
         -128.0
       ],
       "size": [
         256.0,
-        20.356,
+        11.938,
         256.0
       ],
-      "triangles": 4822
-    },
-    {
-      "name": "t4_4_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -128.0,
-        15.3834,
-        -175.7632
-      ],
-      "size": [
-        256.0,
-        3.7331,
-        160.4736
-      ],
-      "triangles": 3729
+      "triangles": 8192
     },
     {
       "name": "t5_4_strait_sand",
@@ -2019,47 +1944,31 @@
       "material": "strait_sand",
       "center": [
         128.0,
-        7.9541,
+        9.6601,
         -128.0
       ],
       "size": [
         256.0,
-        11.6581,
+        9.8202,
         256.0
       ],
-      "triangles": 8172
+      "triangles": 4364
     },
     {
       "name": "t5_4_strait_grass",
       "kind": "tiles",
       "material": "strait_grass",
       "center": [
-        8.7448,
-        13.739,
-        -242.422
+        135.0065,
+        21.7649,
+        -176.2218
       ],
       "size": [
-        17.4896,
-        0.6481,
-        27.156
+        241.9869,
+        16.2202,
+        159.5564
       ],
-      "triangles": 56
-    },
-    {
-      "name": "t6_4_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        511.7363,
-        7.5012,
-        -221.0919
-      ],
-      "size": [
-        0.5275,
-        0.8144,
-        3.4318
-      ],
-      "triangles": 3
+      "triangles": 4150
     },
     {
       "name": "t6_4_strait_sand",
@@ -2067,8 +1976,440 @@
       "material": "strait_sand",
       "center": [
         384.0,
-        7.125,
+        9.3403,
+        -111.8536
+      ],
+      "size": [
+        256.0,
+        19.1807,
+        223.7072
+      ],
+      "triangles": 6064
+    },
+    {
+      "name": "t6_4_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        384.0,
+        16.5168,
+        -189.2578
+      ],
+      "size": [
+        256.0,
+        4.9665,
+        133.4845
+      ],
+      "triangles": 2398
+    },
+    {
+      "name": "t6_4_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        451.7289,
+        9.9515,
+        -102.1446
+      ],
+      "size": [
+        44.9433,
+        14.6266,
+        204.2893
+      ],
+      "triangles": 87
+    },
+    {
+      "name": "t7_4_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        640.0,
+        14.5074,
+        -111.9516
+      ],
+      "size": [
+        256.0,
+        31.5148,
+        223.9033
+      ],
+      "triangles": 6337
+    },
+    {
+      "name": "t7_4_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        640.0,
+        17.7732,
+        -201.84
+      ],
+      "size": [
+        256.0,
+        6.4687,
+        108.32
+      ],
+      "triangles": 2067
+    },
+    {
+      "name": "t7_4_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        675.0061,
+        17.9634,
+        -117.1214
+      ],
+      "size": [
+        185.9878,
+        26.3232,
+        192.9719
+      ],
+      "triangles": 232
+    },
+    {
+      "name": "t8_4_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        895.5654,
+        25.9582,
+        -91.1179
+      ],
+      "size": [
+        255.1307,
+        29.0404,
+        182.2359
+      ],
+      "triangles": 3306
+    },
+    {
+      "name": "t8_4_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        896.0,
+        18.4644,
         -128.0
+      ],
+      "size": [
+        256.0,
+        4.4288,
+        256.0
+      ],
+      "triangles": 3360
+    },
+    {
+      "name": "t8_4_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        850.1531,
+        29.1718,
+        -59.4519
+      ],
+      "size": [
+        164.3062,
+        30.9063,
+        118.9038
+      ],
+      "triangles": 2270
+    },
+    {
+      "name": "t9_4_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        1211.3476,
+        25.6612,
+        -247.9073
+      ],
+      "size": [
+        64.6296,
+        16.6777,
+        16.1853
+      ],
+      "triangles": 128
+    },
+    {
+      "name": "t9_4_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        1152.0,
+        18.0677,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        4.6354,
+        256.0
+      ],
+      "triangles": 8148
+    },
+    {
+      "name": "t9_4_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        1189.7083,
+        25.5464,
+        -254.3516
+      ],
+      "size": [
+        23.9866,
+        14.7524,
+        3.2967
+      ],
+      "triangles": 19
+    },
+    {
+      "name": "t0_5_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -1213.0564,
+        22.9878,
+        249.5384
+      ],
+      "size": [
+        66.2562,
+        11.1352,
+        12.9231
+      ],
+      "triangles": 90
+    },
+    {
+      "name": "t0_5_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -1152.0,
+        18.6898,
+        128.0
+      ],
+      "size": [
+        256.0,
+        5.8796,
+        256.0
+      ],
+      "triangles": 8160
+    },
+    {
+      "name": "t0_5_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -1205.9483,
+        27.2528,
+        250.6883
+      ],
+      "size": [
+        42.331,
+        13.4944,
+        10.6234
+      ],
+      "triangles": 47
+    },
+    {
+      "name": "t1_5_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -895.7199,
+        25.7122,
+        91.4171
+      ],
+      "size": [
+        255.4399,
+        28.5484,
+        182.8341
+      ],
+      "triangles": 3264
+    },
+    {
+      "name": "t1_5_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -896.0,
+        18.4064,
+        128.0
+      ],
+      "size": [
+        256.0,
+        4.3129,
+        256.0
+      ],
+      "triangles": 3319
+    },
+    {
+      "name": "t1_5_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -870.2862,
+        28.6634,
+        61.0145
+      ],
+      "size": [
+        204.5723,
+        31.9233,
+        122.0291
+      ],
+      "triangles": 2393
+    },
+    {
+      "name": "t2_5_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -640.0,
+        14.4705,
+        112.9195
+      ],
+      "size": [
+        256.0,
+        31.441,
+        225.8391
+      ],
+      "triangles": 6341
+    },
+    {
+      "name": "t2_5_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -640.0,
+        17.9281,
+        201.0688
+      ],
+      "size": [
+        256.0,
+        6.3027,
+        109.8623
+      ],
+      "triangles": 2084
+    },
+    {
+      "name": "t2_5_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -640.0,
+        17.9459,
+        123.3656
+      ],
+      "size": [
+        256.0,
+        26.3582,
+        194.8519
+      ],
+      "triangles": 348
+    },
+    {
+      "name": "t3_5_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -384.0,
+        9.2626,
+        112.5428
+      ],
+      "size": [
+        256.0,
+        19.0253,
+        225.0857
+      ],
+      "triangles": 6113
+    },
+    {
+      "name": "t3_5_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -384.0,
+        16.5274,
+        189.6106
+      ],
+      "size": [
+        256.0,
+        4.9451,
+        132.7789
+      ],
+      "triangles": 2370
+    },
+    {
+      "name": "t3_5_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -485.7314,
+        10.4752,
+        109.8248
+      ],
+      "size": [
+        52.5372,
+        15.0341,
+        216.468
+      ],
+      "triangles": 70
+    },
+    {
+      "name": "t4_5_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -128.0,
+        9.6319,
+        128.0
+      ],
+      "size": [
+        256.0,
+        9.7639,
+        256.0
+      ],
+      "triangles": 4338
+    },
+    {
+      "name": "t4_5_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -134.1789,
+        21.7191,
+        175.5095
+      ],
+      "size": [
+        243.6423,
+        16.3117,
+        160.9811
+      ],
+      "triangles": 4184
+    },
+    {
+      "name": "t5_5_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        128.0,
+        8.094,
+        128.0
+      ],
+      "size": [
+        256.0,
+        11.938,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t6_5_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        384.0,
+        7.125,
+        128.0
       ],
       "size": [
         256.0,
@@ -2078,404 +2419,20 @@
       "triangles": 8195
     },
     {
-      "name": "t7_4_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        640.0,
-        13.9437,
-        -137.7117
-      ],
-      "size": [
-        256.0,
-        21.6126,
-        194.0049
-      ],
-      "triangles": 116
-    },
-    {
-      "name": "t7_4_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        640.0,
-        12.4848,
-        -128.0
-      ],
-      "size": [
-        256.0,
-        22.9697,
-        256.0
-      ],
-      "triangles": 8196
-    },
-    {
-      "name": "t8_4_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        886.2218,
-        33.3146,
-        -128.0
-      ],
-      "size": [
-        236.4437,
-        44.8707,
-        256.0
-      ],
-      "triangles": 6001
-    },
-    {
-      "name": "t8_4_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        896.0,
-        22.4022,
-        -128.0
-      ],
-      "size": [
-        256.0,
-        38.5544,
-        256.0
-      ],
-      "triangles": 2588
-    },
-    {
-      "name": "t8_4_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        1004.7928,
-        17.878,
-        -112.171
-      ],
-      "size": [
-        38.4144,
-        5.506,
-        221.2332
-      ],
-      "triangles": 536
-    },
-    {
-      "name": "t9_4_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        1031.0426,
-        15.625,
-        -128.0
-      ],
-      "size": [
-        14.0852,
-        3.5,
-        256.0
-      ],
-      "triangles": 36
-    },
-    {
-      "name": "t9_4_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        1152.0,
-        15.6419,
-        -128.0
-      ],
-      "size": [
-        256.0,
-        3.4663,
-        256.0
-      ],
-      "triangles": 8202
-    },
-    {
-      "name": "t0_5_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -1028.9635,
-        15.6413,
-        128.0
-      ],
-      "size": [
-        9.927,
-        3.4674,
-        256.0
-      ],
-      "triangles": 39
-    },
-    {
-      "name": "t0_5_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -1152.0,
-        15.5604,
-        128.0
-      ],
-      "size": [
-        256.0,
-        3.3707,
-        256.0
-      ],
-      "triangles": 8207
-    },
-    {
-      "name": "t1_5_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -886.4851,
-        33.1282,
-        128.0
-      ],
-      "size": [
-        236.9701,
-        45.2435,
-        256.0
-      ],
-      "triangles": 6035
-    },
-    {
-      "name": "t1_5_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -896.0,
-        22.7111,
-        128.0
-      ],
-      "size": [
-        256.0,
-        39.1721,
-        256.0
-      ],
-      "triangles": 2539
-    },
-    {
-      "name": "t1_5_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -1005.9675,
-        16.8125,
-        142.3469
-      ],
-      "size": [
-        36.065,
-        3.3749,
-        211.4391
-      ],
-      "triangles": 510
-    },
-    {
-      "name": "t2_5_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -640.0,
-        13.9896,
-        131.8116
-      ],
-      "size": [
-        256.0,
-        21.5207,
-        241.2064
-      ],
-      "triangles": 172
-    },
-    {
-      "name": "t2_5_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -640.0,
-        11.9575,
-        128.0
-      ],
-      "size": [
-        256.0,
-        21.9151,
-        256.0
-      ],
-      "triangles": 8160
-    },
-    {
-      "name": "t3_5_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -509.5925,
-        8.6909,
-        235.9822
-      ],
-      "size": [
-        4.815,
-        2.6181,
-        30.8399
-      ],
-      "triangles": 26
-    },
-    {
-      "name": "t3_5_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -384.0,
-        7.125,
-        128.0
-      ],
-      "size": [
-        256.0,
-        12.25,
-        256.0
-      ],
-      "triangles": 8198
-    },
-    {
-      "name": "t4_5_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -128.0,
-        7.9671,
-        128.0
-      ],
-      "size": [
-        256.0,
-        11.6841,
-        256.0
-      ],
-      "triangles": 8177
-    },
-    {
-      "name": "t4_5_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -8.0294,
-        13.7595,
-        243.7523
-      ],
-      "size": [
-        16.0589,
-        0.6069,
-        24.4953
-      ],
-      "triangles": 53
-    },
-    {
-      "name": "t5_5_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        197.2874,
-        23.144,
-        252.956
-      ],
-      "size": [
-        45.9513,
-        13.462,
-        6.088
-      ],
-      "triangles": 47
-    },
-    {
-      "name": "t5_5_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        128.0,
-        16.1532,
-        128.0
-      ],
-      "size": [
-        256.0,
-        22.8063,
-        256.0
-      ],
-      "triangles": 4866
-    },
-    {
-      "name": "t5_5_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        128.0,
-        15.3444,
-        175.803
-      ],
-      "size": [
-        256.0,
-        3.8111,
-        160.3941
-      ],
-      "triangles": 3722
-    },
-    {
       "name": "t6_5_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        482.7339,
-        13.0768,
-        206.506
+        463.5728,
+        5.1775,
+        0.1427
       ],
       "size": [
-        38.5837,
-        8.7344,
-        13.0487
+        3.1356,
+        1.9109,
+        0.2854
       ],
-      "triangles": 56
-    },
-    {
-      "name": "t6_5_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        384.0,
-        9.1795,
-        107.7447
-      ],
-      "size": [
-        256.0,
-        18.859,
-        215.4893
-      ],
-      "triangles": 5964
-    },
-    {
-      "name": "t6_5_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        384.0,
-        16.1423,
-        183.5108
-      ],
-      "size": [
-        256.0,
-        5.7153,
-        144.9783
-      ],
-      "triangles": 2496
-    },
-    {
-      "name": "t7_5_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        642.2877,
-        20.0277,
-        130.8584
-      ],
-      "size": [
-        251.4247,
-        22.1946,
-        167.252
-      ],
-      "triangles": 258
+      "triangles": 3
     },
     {
       "name": "t7_5_strait_sand",
@@ -2483,47 +2440,31 @@
       "material": "strait_sand",
       "center": [
         640.0,
-        14.814,
-        106.9897
+        10.2613,
+        128.0
       ],
       "size": [
         256.0,
-        32.128,
-        213.9794
+        18.5225,
+        256.0
       ],
-      "triangles": 6164
+      "triangles": 8194
     },
     {
-      "name": "t7_5_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        640.0,
-        16.2022,
-        200.0829
-      ],
-      "size": [
-        256.0,
-        11.1792,
-        111.8342
-      ],
-      "triangles": 2237
-    },
-    {
-      "name": "t8_5_strait_rock",
+      "name": "t7_5_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        876.821,
-        31.9126,
-        60.6409
+        765.5924,
+        19.6124,
+        59.0533
       ],
       "size": [
-        217.642,
-        25.4248,
-        121.2818
+        4.8153,
+        10.2752,
+        20.4631
       ],
-      "triangles": 2593
+      "triangles": 18
     },
     {
       "name": "t8_5_strait_sand",
@@ -2531,63 +2472,63 @@
       "material": "strait_sand",
       "center": [
         896.0,
-        22.765,
-        91.6126
+        23.6875,
+        128.0
       ],
       "size": [
         256.0,
-        22.6541,
-        183.2251
+        41.125,
+        256.0
       ],
-      "triangles": 2869
+      "triangles": 2316
     },
     {
       "name": "t8_5_strait_grass",
       "kind": "tiles",
       "material": "strait_grass",
       "center": [
-        896.0,
-        18.7974,
-        140.6246
+        1006.1597,
+        17.2522,
+        110.0698
       ],
       "size": [
-        256.0,
-        5.0947,
-        230.7508
+        35.6806,
+        4.2544,
+        220.1395
       ],
-      "triangles": 3386
+      "triangles": 468
     },
     {
-      "name": "t9_5_strait_rock",
+      "name": "t8_5_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        1209.3699,
-        26.3524,
-        248.9817
+        893.9587,
+        32.8586,
+        128.0
       ],
       "size": [
-        35.7126,
-        15.2952,
-        14.0366
+        251.9174,
+        45.7827,
+        256.0
       ],
-      "triangles": 56
+      "triangles": 6363
     },
     {
       "name": "t9_5_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        1143.0336,
-        21.9124,
-        128.0
+        1044.1561,
+        15.2722,
+        149.2912
       ],
       "size": [
-        238.0672,
-        10.2118,
-        256.0
+        40.3122,
+        2.7943,
+        213.4176
       ],
-      "triangles": 145
+      "triangles": 96
     },
     {
       "name": "t9_5_strait_grass",
@@ -2595,86 +2536,294 @@
       "material": "strait_grass",
       "center": [
         1152.0,
-        17.3386,
+        15.85,
         128.0
       ],
       "size": [
         256.0,
-        3.1772,
+        3.0501,
         256.0
       ],
-      "triangles": 8146
+      "triangles": 8160
     },
     {
       "name": "t0_6_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        -1152.0,
-        7.6875,
+        -1162.9382,
+        25.4251,
         384.0
       ],
       "size": [
-        256.0,
-        13.875,
+        201.9561,
+        16.8687,
         256.0
       ],
-      "triangles": 7194
+      "triangles": 1417
     },
     {
       "name": "t0_6_strait_grass",
       "kind": "tiles",
       "material": "strait_grass",
       "center": [
-        -1156.9635,
-        14.6891,
-        281.8412
+        -1152.0,
+        27.125,
+        384.0
       ],
       "size": [
-        246.073,
-        2.1219,
-        51.6824
+        256.0,
+        21.0,
+        256.0
       ],
-      "triangles": 1268
+      "triangles": 4746
     },
     {
-      "name": "t1_6_strait_rock",
+      "name": "t0_6_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -958.3195,
-        24.0878,
-        264.3244
+        -1217.5646,
+        46.7246,
+        384.0
       ],
       "size": [
-        69.3407,
-        22.8244,
-        16.6487
+        124.8707,
+        58.0509,
+        256.0
       ],
-      "triangles": 103
+      "triangles": 2796
     },
     {
       "name": "t1_6_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        -807.3943,
+        14.0,
+        483.328
+      ],
+      "size": [
+        78.7886,
+        4.0,
+        57.344
+      ],
+      "triangles": 195
+    },
+    {
+      "name": "t1_6_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
         -896.0,
-        14.2984,
+        18.2135,
         384.0
       ],
       "size": [
         256.0,
-        27.0968,
+        7.949,
         256.0
       ],
-      "triangles": 8173
+      "triangles": 8107
     },
     {
       "name": "t2_6_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        -692.5495,
+        13.625,
+        489.688
+      ],
+      "size": [
+        150.9011,
+        3.75,
+        44.624
+      ],
+      "triangles": 626
+    },
+    {
+      "name": "t2_6_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
         -640.0,
+        16.4991,
+        384.0
+      ],
+      "size": [
+        256.0,
+        4.2519,
+        256.0
+      ],
+      "triangles": 7754
+    },
+    {
+      "name": "t3_6_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -323.0402,
+        36.9577,
+        378.9578
+      ],
+      "size": [
+        134.0805,
+        42.9154,
+        148.0025
+      ],
+      "triangles": 598
+    },
+    {
+      "name": "t3_6_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -384.0,
+        20.1102,
+        384.0
+      ],
+      "size": [
+        256.0,
+        9.7205,
+        256.0
+      ],
+      "triangles": 6661
+    },
+    {
+      "name": "t3_6_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -324.1531,
+        37.4421,
+        368.4449
+      ],
+      "size": [
+        136.3062,
+        42.6158,
+        145.312
+      ],
+      "triangles": 1592
+    },
+    {
+      "name": "t4_6_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -128.0,
+        29.1928,
+        360.3972
+      ],
+      "size": [
+        256.0,
+        30.2596,
+        208.7943
+      ],
+      "triangles": 594
+    },
+    {
+      "name": "t4_6_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -128.0,
+        24.4216,
+        384.0
+      ],
+      "size": [
+        256.0,
+        21.3432,
+        256.0
+      ],
+      "triangles": 6775
+    },
+    {
+      "name": "t4_6_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -215.1278,
+        37.4177,
+        358.3258
+      ],
+      "size": [
+        81.7444,
+        42.6647,
+        193.5637
+      ],
+      "triangles": 1473
+    },
+    {
+      "name": "t5_6_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        128.0,
+        8.0625,
+        384.0
+      ],
+      "size": [
+        256.0,
+        12.625,
+        256.0
+      ],
+      "triangles": 7893
+    },
+    {
+      "name": "t5_6_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        12.7086,
+        13.7335,
+        404.4109
+      ],
+      "size": [
+        25.4173,
+        1.783,
+        215.1781
+      ],
+      "triangles": 519
+    },
+    {
+      "name": "t6_6_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        384.0,
+        6.8455,
+        384.0
+      ],
+      "size": [
+        256.0,
+        12.191,
+        256.0
+      ],
+      "triangles": 8187
+    },
+    {
+      "name": "t6_6_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        494.5224,
+        10.7866,
+        506.7337
+      ],
+      "size": [
+        24.2601,
+        7.4268,
+        10.5325
+      ],
+      "triangles": 37
+    },
+    {
+      "name": "t7_6_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        640.0,
         6.375,
         384.0
       ],
@@ -2686,308 +2835,116 @@
       "triangles": 8192
     },
     {
-      "name": "t3_6_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -384.0,
-        7.625,
-        384.0
-      ],
-      "size": [
-        256.0,
-        13.75,
-        256.0
-      ],
-      "triangles": 8192
-    },
-    {
-      "name": "t4_6_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -128.0,
-        8.1875,
-        384.0
-      ],
-      "size": [
-        256.0,
-        12.875,
-        256.0
-      ],
-      "triangles": 8095
-    },
-    {
-      "name": "t4_6_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        -8.7925,
-        14.0996,
-        349.9803
-      ],
-      "size": [
-        17.585,
-        1.0483,
-        187.9607
-      ],
-      "triangles": 213
-    },
-    {
-      "name": "t5_6_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        199.7346,
-        37.75,
-        337.2294
-      ],
-      "size": [
-        112.5308,
-        42.0,
-        162.4588
-      ],
-      "triangles": 1928
-    },
-    {
-      "name": "t5_6_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        120.0,
-        24.0061,
-        384.0
-      ],
-      "size": [
-        240.0,
-        20.5123,
-        256.0
-      ],
-      "triangles": 1307
-    },
-    {
-      "name": "t5_6_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        128.0,
-        24.1238,
-        384.0
-      ],
-      "size": [
-        256.0,
-        20.1216,
-        256.0
-      ],
-      "triangles": 5825
-    },
-    {
-      "name": "t6_6_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        308.9604,
-        37.5,
-        357.2145
-      ],
-      "size": [
-        105.9209,
-        42.5,
-        124.7738
-      ],
-      "triangles": 1211
-    },
-    {
-      "name": "t6_6_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        317.2456,
-        28.0299,
-        364.4088
-      ],
-      "size": [
-        94.8447,
-        23.691,
-        112.8175
-      ],
-      "triangles": 209
-    },
-    {
-      "name": "t6_6_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        384.0,
-        25.8965,
-        384.0
-      ],
-      "size": [
-        256.0,
-        21.293,
-        256.0
-      ],
-      "triangles": 7198
-    },
-    {
-      "name": "t7_6_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        704.7622,
-        15.125,
-        397.1795
-      ],
-      "size": [
-        126.4755,
-        6.75,
-        229.6411
-      ],
-      "triangles": 313
-    },
-    {
-      "name": "t7_6_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        640.0,
-        15.9442,
-        384.0
-      ],
-      "size": [
-        256.0,
-        5.3616,
-        256.0
-      ],
-      "triangles": 8031
-    },
-    {
       "name": "t8_6_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
         896.0,
-        17.094,
-        501.9549
-      ],
-      "size": [
-        256.0,
-        10.188,
-        20.0901
-      ],
-      "triangles": 183
-    },
-    {
-      "name": "t8_6_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        896.0,
-        17.6422,
+        11.5707,
         384.0
       ],
       "size": [
         256.0,
-        7.5061,
+        21.6414,
         256.0
       ],
-      "triangles": 8117
+      "triangles": 8127
     },
     {
-      "name": "t9_6_strait_rock",
+      "name": "t8_6_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        1193.3033,
-        46.6185,
-        384.0
+        979.3162,
+        24.5155,
+        264.2438
       ],
       "size": [
-        173.3934,
-        58.2631,
-        256.0
+        81.2023,
+        21.969,
+        16.4877
       ],
-      "triangles": 2600
+      "triangles": 153
     },
     {
       "name": "t9_6_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        1149.3126,
-        26.8804,
+        1152.0,
+        7.7473,
         384.0
       ],
       "size": [
-        250.6252,
-        20.0109,
+        256.0,
+        13.9946,
         256.0
       ],
-      "triangles": 2049
+      "triangles": 7354
     },
     {
       "name": "t9_6_strait_grass",
       "kind": "tiles",
       "material": "strait_grass",
       "center": [
-        1152.0,
-        27.125,
-        384.0
+        1172.1561,
+        14.7851,
+        284.5907
       ],
       "size": [
-        256.0,
-        21.0,
-        256.0
+        215.6878,
+        1.9297,
+        57.1815
       ],
-      "triangles": 4461
-    },
-    {
-      "name": "t0_7_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -1198.4611,
-        35.426,
-        700.3893
-      ],
-      "size": [
-        163.0779,
-        66.1479,
-        135.2214
-      ],
-      "triangles": 1853
+      "triangles": 1056
     },
     {
       "name": "t0_7_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        -1089.5646,
+        28.3069,
+        553.2461
+      ],
+      "size": [
+        131.1293,
+        7.8731,
+        82.4921
+      ],
+      "triangles": 689
+    },
+    {
+      "name": "t0_7_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
         -1152.0,
-        15.5562,
+        30.719,
         640.0
       ],
       "size": [
         256.0,
-        29.6124,
+        17.062,
         256.0
       ],
-      "triangles": 6565
+      "triangles": 4828
     },
     {
-      "name": "t1_7_strait_rock",
+      "name": "t0_7_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -897.7219,
-        14.4849,
-        586.6357
+        -1152.0,
+        34.9801,
+        640.0
       ],
       "size": [
-        170.8238,
-        5.2977,
-        21.9375
+        256.0,
+        8.5397,
+        256.0
       ],
-      "triangles": 56
+      "triangles": 4089
     },
     {
       "name": "t1_7_strait_sand",
@@ -2995,70 +2952,198 @@
       "material": "strait_sand",
       "center": [
         -896.0,
-        10.25,
-        640.0
+        30.5703,
+        635.8245
       ],
       "size": [
         256.0,
-        19.0,
-        256.0
+        57.6406,
+        247.649
       ],
-      "triangles": 8200
+      "triangles": 4641
     },
     {
-      "name": "t2_7_strait_rock",
+      "name": "t1_7_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -935.3943,
+        26.6482,
+        640.0
+      ],
+      "size": [
+        177.2114,
+        25.2695,
+        256.0
+      ],
+      "triangles": 1563
+    },
+    {
+      "name": "t1_7_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -610.8173,
-        13.0838,
-        686.0083
+        -896.0,
+        40.5249,
+        681.2461
       ],
       "size": [
-        188.8654,
-        11.8324,
-        163.9833
+        256.0,
+        60.2002,
+        173.5079
       ],
-      "triangles": 263
+      "triangles": 2760
     },
     {
       "name": "t2_7_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        -640.0,
-        9.0243,
+        -647.9821,
+        16.1861,
         640.0
       ],
       "size": [
-        256.0,
-        16.5487,
+        240.0358,
+        28.8722,
         256.0
       ],
-      "triangles": 8165
+      "triangles": 4693
     },
     {
-      "name": "t3_7_strait_rock",
+      "name": "t2_7_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -564.5495,
+        17.2896,
+        640.0
+      ],
+      "size": [
+        105.0989,
+        7.2867,
+        256.0
+      ],
+      "triangles": 1574
+    },
+    {
+      "name": "t2_7_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -500.3031,
-        19.3209,
-        529.0816
+        -657.118,
+        41.442,
+        698.6285
       ],
       "size": [
-        1.0574,
-        0.2512,
-        2.4087
+        221.7639,
+        57.742,
+        138.743
       ],
-      "triangles": 6
+      "triangles": 2575
     },
     {
       "name": "t3_7_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        -349.1427,
+        16.875,
+        715.3376
+      ],
+      "size": [
+        24.4971,
+        0.25,
+        26.5182
+      ],
+      "triangles": 105
+    },
+    {
+      "name": "t3_7_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
         -384.0,
+        17.375,
+        640.0
+      ],
+      "size": [
+        256.0,
+        4.0,
+        256.0
+      ],
+      "triangles": 8173
+    },
+    {
+      "name": "t4_7_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        -70.5486,
+        9.3662,
+        650.3915
+      ],
+      "size": [
+        141.0971,
+        10.1063,
+        235.217
+      ],
+      "triangles": 2356
+    },
+    {
+      "name": "t4_7_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -128.0,
+        14.8341,
+        640.0
+      ],
+      "size": [
+        256.0,
+        3.8317,
+        256.0
+      ],
+      "triangles": 6086
+    },
+    {
+      "name": "t5_7_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        128.0,
+        7.3003,
+        640.0
+      ],
+      "size": [
+        256.0,
+        11.6005,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t5_7_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        4.2626,
+        13.3789,
+        522.3915
+      ],
+      "size": [
+        8.5252,
+        0.7422,
+        20.783
+      ],
+      "triangles": 22
+    },
+    {
+      "name": "t6_7_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        384.0,
         10.125,
         640.0
       ],
@@ -3067,151 +3152,55 @@
         18.75,
         256.0
       ],
-      "triangles": 8198
+      "triangles": 8185
     },
     {
-      "name": "t4_7_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -128.0,
-        7.625,
-        640.0
-      ],
-      "size": [
-        256.0,
-        12.25,
-        256.0
-      ],
-      "triangles": 8192
-    },
-    {
-      "name": "t5_7_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        73.5458,
-        9.7733,
-        640.0
-      ],
-      "size": [
-        147.0916,
-        10.9206,
-        256.0
-      ],
-      "triangles": 2862
-    },
-    {
-      "name": "t5_7_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        140.4878,
-        15.374,
-        640.0
-      ],
-      "size": [
-        231.0244,
-        2.752,
-        256.0
-      ],
-      "triangles": 5594
-    },
-    {
-      "name": "t6_7_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        350.0042,
-        16.8589,
-        718.5335
-      ],
-      "size": [
-        18.3585,
-        0.2177,
-        22.305
-      ],
-      "triangles": 70
-    },
-    {
-      "name": "t6_7_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        384.0,
-        17.375,
-        640.0
-      ],
-      "size": [
-        256.0,
-        4.0,
-        256.0
-      ],
-      "triangles": 8190
-    },
-    {
-      "name": "t7_7_strait_rock",
+      "name": "t6_7_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        664.2038,
-        37.7742,
-        692.5964
+        496.6495,
+        12.9221,
+        568.3419
       ],
       "size": [
-        207.5924,
-        65.0776,
-        150.8073
+        30.7011,
+        12.0982,
+        112.6839
       ],
-      "triangles": 2658
+      "triangles": 71
     },
     {
       "name": "t7_7_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        644.4116,
-        35.5625,
+        640.0,
+        9.875,
         640.0
-      ],
-      "size": [
-        247.1769,
-        67.625,
-        256.0
-      ],
-      "triangles": 4458
-    },
-    {
-      "name": "t7_7_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        577.0148,
-        16.9553,
-        640.0
-      ],
-      "size": [
-        130.0296,
-        7.2503,
-        256.0
-      ],
-      "triangles": 1722
-    },
-    {
-      "name": "t8_7_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        896.0,
-        38.0448,
-        672.4879
       ],
       "size": [
         256.0,
-        65.1603,
-        191.0241
+        18.25,
+        256.0
       ],
-      "triangles": 2581
+      "triangles": 8211
+    },
+    {
+      "name": "t7_7_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        618.5942,
+        10.7476,
+        690.9388
+      ],
+      "size": [
+        213.1883,
+        10.7414,
+        154.1224
+      ],
+      "triangles": 51
     },
     {
       "name": "t8_7_strait_sand",
@@ -3219,198 +3208,246 @@
       "material": "strait_sand",
       "center": [
         896.0,
-        16.6867,
-        608.984
-      ],
-      "size": [
-        256.0,
-        29.8735,
-        193.968
-      ],
-      "triangles": 4820
-    },
-    {
-      "name": "t8_7_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        934.4043,
-        26.6247,
+        8.75,
         640.0
       ],
       "size": [
-        179.1915,
-        25.0795,
+        256.0,
+        16.0,
         256.0
       ],
-      "triangles": 1471
+      "triangles": 8162
     },
     {
-      "name": "t9_7_strait_rock",
+      "name": "t8_7_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        1152.0,
-        33.5815,
-        640.0
+        834.3383,
+        13.8433,
+        615.4009
       ],
       "size": [
-        256.0,
-        11.3371,
-        256.0
+        63.0507,
+        11.8133,
+        59.6244
       ],
-      "triangles": 3401
+      "triangles": 158
     },
     {
       "name": "t9_7_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        1065.3033,
-        25.6767,
-        544.4879
-      ],
-      "size": [
-        82.6066,
-        6.9774,
-        64.9759
-      ],
-      "triangles": 371
-    },
-    {
-      "name": "t9_7_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
         1152.0,
-        33.5429,
+        18.5109,
         640.0
       ],
       "size": [
         256.0,
-        11.4142,
+        35.5218,
         256.0
       ],
-      "triangles": 5608
+      "triangles": 6692
+    },
+    {
+      "name": "t9_7_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        1182.6503,
+        37.6343,
+        701.1006
+      ],
+      "size": [
+        194.6994,
+        61.7314,
+        133.7988
+      ],
+      "triangles": 1820
+    },
+    {
+      "name": "t0_8_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -1152.0,
+        38.6369,
+        877.7912
+      ],
+      "size": [
+        256.0,
+        1.2737,
+        219.5823
+      ],
+      "triangles": 3138
     },
     {
       "name": "t0_8_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -1190.0715,
-        29.4327,
-        896.0
-      ],
-      "size": [
-        179.857,
-        44.1346,
-        256.0
-      ],
-      "triangles": 5093
-    },
-    {
-      "name": "t0_8_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -1103.6365,
-        19.4458,
-        896.0
-      ],
-      "size": [
-        159.273,
-        36.5155,
-        256.0
-      ],
-      "triangles": 3423
-    },
-    {
-      "name": "t1_8_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        -896.0,
-        4.969,
+        -1152.0,
+        58.25,
         896.0
       ],
       "size": [
         256.0,
-        8.938,
+        40.5,
         256.0
       ],
-      "triangles": 8192
+      "triangles": 5666
     },
     {
-      "name": "t2_8_strait_rock",
+      "name": "t1_8_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -896.0,
+        39.2227,
+        896.0
+      ],
+      "size": [
+        256.0,
+        2.4454,
+        256.0
+      ],
+      "triangles": 4341
+    },
+    {
+      "name": "t1_8_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -686.5333,
-        11.6974,
-        775.3596
+        -896.0,
+        54.5,
+        896.0
       ],
       "size": [
-        29.8153,
-        9.3553,
-        14.7192
+        256.0,
+        32.5,
+        256.0
       ],
-      "triangles": 58
+      "triangles": 4703
     },
     {
       "name": "t2_8_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        -602.849,
+        45.4665,
+        896.0
+      ],
+      "size": [
+        181.698,
+        49.067,
+        256.0
+      ],
+      "triangles": 1350
+    },
+    {
+      "name": "t2_8_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
         -640.0,
-        7.6336,
+        29.349,
         896.0
       ],
       "size": [
         256.0,
-        13.7673,
+        19.9481,
         256.0
       ],
-      "triangles": 8176
+      "triangles": 3850
     },
     {
-      "name": "t3_8_strait_rock",
+      "name": "t2_8_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -465.9328,
-        10.9856,
-        804.1878
+        -641.9818,
+        49.9819,
+        896.0
       ],
       "size": [
-        20.7631,
-        4.9669,
-        14.4717
+        252.0365,
+        40.7862,
+        256.0
       ],
-      "triangles": 52
+      "triangles": 3718
     },
     {
       "name": "t3_8_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        -484.0412,
+        26.3651,
+        944.7404
+      ],
+      "size": [
+        55.9175,
+        8.2698,
+        158.5191
+      ],
+      "triangles": 651
+    },
+    {
+      "name": "t3_8_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
         -384.0,
-        7.5,
+        20.0816,
         896.0
       ],
       "size": [
         256.0,
-        13.5,
+        9.4132,
         256.0
       ],
-      "triangles": 8196
+      "triangles": 7707
     },
     {
       "name": "t4_8_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        -128.0,
+        -97.2466,
+        8.5838,
+        896.0
+      ],
+      "size": [
+        194.4933,
+        11.6675,
+        256.0
+      ],
+      "triangles": 5937
+    },
+    {
+      "name": "t4_8_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -198.5486,
+        14.8468,
+        896.0
+      ],
+      "size": [
+        114.9029,
+        2.3064,
+        256.0
+      ],
+      "triangles": 2535
+    },
+    {
+      "name": "t5_8_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        128.0,
         2.9375,
         896.0
       ],
@@ -3422,308 +3459,228 @@
       "triangles": 8192
     },
     {
-      "name": "t5_8_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        103.15,
-        8.5593,
-        896.0
-      ],
-      "size": [
-        206.3001,
-        11.6186,
-        256.0
-      ],
-      "triangles": 6085
-    },
-    {
-      "name": "t5_8_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        201.5458,
-        14.8537,
-        896.0
-      ],
-      "size": [
-        108.9084,
-        2.2926,
-        256.0
-      ],
-      "triangles": 2373
-    },
-    {
-      "name": "t6_8_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        507.9708,
-        29.1309,
-        985.2484
-      ],
-      "size": [
-        8.0585,
-        2.7383,
-        77.5032
-      ],
-      "triangles": 87
-    },
-    {
       "name": "t6_8_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        475.0999,
-        24.5943,
-        903.2922
-      ],
-      "size": [
-        73.8003,
-        10.2762,
-        241.4156
-      ],
-      "triangles": 1281
-    },
-    {
-      "name": "t6_8_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
         384.0,
-        18.8529,
+        7.5,
         896.0
       ],
       "size": [
         256.0,
-        6.9559,
+        13.5,
         256.0
       ],
-      "triangles": 7174
-    },
-    {
-      "name": "t7_8_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        640.0,
-        49.164,
-        896.0
-      ],
-      "size": [
-        256.0,
-        42.422,
-        256.0
-      ],
-      "triangles": 3700
+      "triangles": 8192
     },
     {
       "name": "t7_8_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        608.7486,
-        44.9779,
-        857.2484
-      ],
-      "size": [
-        193.4972,
-        50.0442,
-        178.4968
-      ],
-      "triangles": 1018
-    },
-    {
-      "name": "t7_8_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
         640.0,
-        29.4736,
+        8.5625,
         896.0
       ],
       "size": [
         256.0,
-        20.1972,
+        15.625,
         256.0
       ],
-      "triangles": 4198
+      "triangles": 8197
     },
     {
-      "name": "t8_8_strait_rock",
+      "name": "t7_8_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        896.0,
-        54.375,
-        896.0
+        688.7159,
+        14.3285,
+        770.4203
       ],
       "size": [
-        256.0,
-        32.75,
-        256.0
+        2.876,
+        1.1987,
+        4.8406
       ],
-      "triangles": 2848
+      "triangles": 9
     },
     {
-      "name": "t8_8_strait_grass",
+      "name": "t8_8_strait_sand",
       "kind": "tiles",
-      "material": "strait_grass",
+      "material": "strait_sand",
       "center": [
         896.0,
-        38.6942,
+        4.969,
         896.0
       ],
       "size": [
         256.0,
-        1.3885,
+        8.938,
         256.0
       ],
-      "triangles": 6188
-    },
-    {
-      "name": "t9_8_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        1152.0,
-        58.25,
-        896.0
-      ],
-      "size": [
-        256.0,
-        40.5,
-        256.0
-      ],
-      "triangles": 4491
+      "triangles": 8192
     },
     {
       "name": "t9_8_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        1274.9066,
-        72.6071,
-        908.0523
+        1103.7936,
+        19.6628,
+        896.0
       ],
       "size": [
-        10.1868,
-        1.9898,
-        19.65
+        159.5873,
+        36.9496,
+        256.0
       ],
-      "triangles": 33
+      "triangles": 3974
     },
     {
-      "name": "t9_8_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        1152.0,
-        38.6839,
-        875.5227
-      ],
-      "size": [
-        256.0,
-        1.3677,
-        215.0455
-      ],
-      "triangles": 4446
-    },
-    {
-      "name": "t0_9_strait_rock",
+      "name": "t9_8_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        -1231.6365,
-        37.7224,
-        1071.8386
+        1192.6479,
+        29.9097,
+        896.0
       ],
       "size": [
-        96.727,
-        69.5551,
-        95.6772
+        174.7042,
+        43.1806,
+        256.0
       ],
-      "triangles": 816
+      "triangles": 4620
     },
     {
       "name": "t0_9_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        -1229.4468,
+        73.2997,
+        1254.0482
+      ],
+      "size": [
+        101.1065,
+        4.5912,
+        51.9035
+      ],
+      "triangles": 89
+    },
+    {
+      "name": "t0_9_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
         -1152.0,
-        10.478,
+        59.8125,
         1152.0
       ],
       "size": [
         256.0,
-        19.4559,
+        41.375,
         256.0
       ],
-      "triangles": 7514
-    },
-    {
-      "name": "t1_9_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -811.1668,
-        11.1938,
-        1092.222
-      ],
-      "size": [
-        50.1975,
-        7.5835,
-        49.9124
-      ],
-      "triangles": 145
+      "triangles": 8219
     },
     {
       "name": "t1_9_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        -1013.839,
+        62.3366,
+        1050.4676
+      ],
+      "size": [
+        17.353,
+        1.1514,
+        16.0626
+      ],
+      "triangles": 51
+    },
+    {
+      "name": "t1_9_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -891.9437,
+        39.0461,
+        1152.0
+      ],
+      "size": [
+        247.8875,
+        1.0922,
+        256.0
+      ],
+      "triangles": 4092
+    },
+    {
+      "name": "t1_9_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
         -896.0,
-        7.875,
+        59.625,
         1152.0
       ],
       "size": [
         256.0,
-        14.25,
+        41.75,
         256.0
       ],
-      "triangles": 8185
-    },
-    {
-      "name": "t2_9_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        -587.0854,
-        12.0983,
-        1074.7587
-      ],
-      "size": [
-        19.4462,
-        3.3034,
-        16.7734
-      ],
-      "triangles": 56
+      "triangles": 5151
     },
     {
       "name": "t2_9_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
+        -513.9818,
+        30.8097,
+        1032.8265
+      ],
+      "size": [
+        3.9635,
+        0.6193,
+        17.653
+      ],
+      "triangles": 13
+    },
+    {
+      "name": "t2_9_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -666.9818,
+        38.4211,
+        1152.0
+      ],
+      "size": [
+        202.0364,
+        2.6577,
+        256.0
+      ],
+      "triangles": 2127
+    },
+    {
+      "name": "t2_9_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
         -640.0,
-        7.5,
+        56.111,
         1152.0
       ],
       "size": [
         256.0,
-        14.5,
+        50.2781,
         256.0
       ],
-      "triangles": 8188
+      "triangles": 6536
     },
     {
       "name": "t3_9_strait_sand",
@@ -3731,15 +3688,47 @@
       "material": "strait_sand",
       "center": [
         -384.0,
-        1.8125,
+        47.6191,
         1152.0
       ],
       "size": [
         256.0,
-        2.125,
+        62.7725,
         256.0
       ],
-      "triangles": 8192
+      "triangles": 1638
+    },
+    {
+      "name": "t3_9_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -360.3923,
+        20.6249,
+        1121.664
+      ],
+      "size": [
+        208.7846,
+        9.7499,
+        195.328
+      ],
+      "triangles": 4699
+    },
+    {
+      "name": "t3_9_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -384.0,
+        50.2308,
+        1160.8265
+      ],
+      "size": [
+        256.0,
+        60.0384,
+        238.347
+      ],
+      "triangles": 2681
     },
     {
       "name": "t4_9_strait_sand",
@@ -3747,6 +3736,54 @@
       "material": "strait_sand",
       "center": [
         -128.0,
+        15.6367,
+        1152.0
+      ],
+      "size": [
+        256.0,
+        22.5233,
+        256.0
+      ],
+      "triangles": 4295
+    },
+    {
+      "name": "t4_9_strait_grass",
+      "kind": "tiles",
+      "material": "strait_grass",
+      "center": [
+        -152.0766,
+        16.3459,
+        1152.0
+      ],
+      "size": [
+        207.8467,
+        5.1917,
+        256.0
+      ],
+      "triangles": 3874
+    },
+    {
+      "name": "t4_9_strait_rock",
+      "kind": "tiles",
+      "material": "strait_rock",
+      "center": [
+        -211.1803,
+        43.2145,
+        1250.7472
+      ],
+      "size": [
+        89.6394,
+        54.321,
+        58.5055
+      ],
+      "triangles": 551
+    },
+    {
+      "name": "t5_9_strait_sand",
+      "kind": "tiles",
+      "material": "strait_sand",
+      "center": [
+        128.0,
         7.75,
         1152.0
       ],
@@ -3758,2200 +3795,1976 @@
       "triangles": 8192
     },
     {
-      "name": "t5_9_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        213.3415,
-        43.3062,
-        1247.74
-      ],
-      "size": [
-        85.3171,
-        54.1376,
-        64.52
-      ],
-      "triangles": 450
-    },
-    {
-      "name": "t5_9_strait_sand",
-      "kind": "tiles",
-      "material": "strait_sand",
-      "center": [
-        128.0,
-        18.4868,
-        1152.0
-      ],
-      "size": [
-        256.0,
-        28.2236,
-        256.0
-      ],
-      "triangles": 3760
-    },
-    {
-      "name": "t5_9_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        148.8485,
-        15.7104,
-        1152.0
-      ],
-      "size": [
-        214.3029,
-        4.1299,
-        256.0
-      ],
-      "triangles": 4615
-    },
-    {
-      "name": "t6_9_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        384.0,
-        49.6206,
-        1152.0
-      ],
-      "size": [
-        256.0,
-        61.2587,
-        256.0
-      ],
-      "triangles": 2704
-    },
-    {
       "name": "t6_9_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        381.5834,
-        25.1592,
-        1124.1471
+        384.0,
+        1.8125,
+        1152.0
       ],
       "size": [
-        251.1669,
-        16.6295,
-        200.2942
+        256.0,
+        2.125,
+        256.0
       ],
-      "triangles": 1690
+      "triangles": 8192
     },
     {
-      "name": "t6_9_strait_grass",
+      "name": "t7_9_strait_sand",
       "kind": "tiles",
-      "material": "strait_grass",
+      "material": "strait_sand",
       "center": [
-        354.7678,
-        20.2208,
-        1122.237
+        640.0,
+        7.5,
+        1152.0
       ],
       "size": [
-        197.5356,
-        8.9416,
-        196.4741
+        256.0,
+        14.5,
+        256.0
       ],
-      "triangles": 4597
+      "triangles": 8190
     },
     {
       "name": "t7_9_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        640.0,
-        55.875,
-        1152.0
+        648.9654,
+        10.1971,
+        1156.8806
       ],
       "size": [
-        256.0,
-        50.75,
-        256.0
+        24.1156,
+        7.9581,
+        18.6584
       ],
-      "triangles": 6635
-    },
-    {
-      "name": "t7_9_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
-        643.8026,
-        36.5033,
-        1152.0
-      ],
-      "size": [
-        248.3948,
-        6.3801,
-        256.0
-      ],
-      "triangles": 2495
-    },
-    {
-      "name": "t8_9_strait_rock",
-      "kind": "tiles",
-      "material": "strait_rock",
-      "center": [
-        896.0,
-        59.6121,
-        1152.0
-      ],
-      "size": [
-        256.0,
-        41.7758,
-        256.0
-      ],
-      "triangles": 4990
+      "triangles": 70
     },
     {
       "name": "t8_9_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        1019.2344,
-        63.1342,
-        1042.3145
-      ],
-      "size": [
-        9.5311,
-        0.7315,
-        13.7407
-      ],
-      "triangles": 30
-    },
-    {
-      "name": "t8_9_strait_grass",
-      "kind": "tiles",
-      "material": "strait_grass",
-      "center": [
         896.0,
-        39.0353,
+        7.875,
         1152.0
       ],
       "size": [
         256.0,
-        1.0706,
+        14.25,
         256.0
       ],
-      "triangles": 4374
+      "triangles": 8211
     },
     {
-      "name": "t9_9_strait_rock",
+      "name": "t8_9_strait_rock",
       "kind": "tiles",
       "material": "strait_rock",
       "center": [
-        1152.0,
-        59.8125,
-        1152.0
+        974.7366,
+        10.0976,
+        1243.2478
       ],
       "size": [
-        256.0,
-        41.375,
-        256.0
+        26.7012,
+        3.3513,
+        27.3973
       ],
-      "triangles": 8186
+      "triangles": 55
     },
     {
       "name": "t9_9_strait_sand",
       "kind": "tiles",
       "material": "strait_sand",
       "center": [
-        1132.9919,
-        70.1764,
-        1157.7221
+        1152.0,
+        9.8265,
+        1152.0
       ],
       "size": [
-        217.9837,
-        14.4319,
-        244.5559
+        256.0,
+        18.1531,
+        256.0
       ],
-      "triangles": 401
+      "triangles": 7528
     },
     {
-      "name": "t9_9_strait_grass",
+      "name": "t9_9_strait_rock",
       "kind": "tiles",
-      "material": "strait_grass",
+      "material": "strait_rock",
       "center": [
-        1024.2039,
-        39.3,
-        1150.2441
+        1231.7936,
+        39.6199,
+        1066.7129
       ],
       "size": [
-        0.4078,
-        0.1754,
-        14.8986
+        96.4127,
+        65.7603,
+        85.4258
       ],
-      "triangles": 13
+      "triangles": 794
     },
     {
       "name": "d_crag0_0_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1150.9534,
-        59.2638,
-        -1149.4052
+        -1230.9812,
+        39.4733,
+        -1067.5097
       ],
       "size": [
-        258.0932,
-        39.078,
-        255.2446
+        98.0377,
+        66.7639,
+        91.0201
       ],
-      "triangles": 7387
+      "triangles": 2712
     },
     {
       "name": "d_crag0_1_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1151.0011,
-        58.1247,
-        -911.0035
+        -1190.541,
+        30.8921,
+        -895.0116
       ],
       "size": [
-        257.9978,
-        39.1169,
-        225.9942
+        178.918,
+        47.703,
+        258.0017
       ],
-      "triangles": 9373
+      "triangles": 2608
     },
     {
-      "name": "d_crag0_3_0_strait_rock",
+      "name": "d_crag0_2_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1224.0328,
-        45.9162,
-        -361.1941
+        -1182.3865,
+        36.3797,
+        -699.3537
       ],
       "size": [
-        111.9343,
-        56.9989,
-        214.217
+        195.227,
+        65.6319,
+        137.2922
       ],
-      "triangles": 7592
+      "triangles": 4263
     },
     {
-      "name": "d_crag0_4_0_strait_rock",
+      "name": "d_crag0_5_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1210.5668,
-        27.1065,
-        -248.4373
+        -1205.9479,
+        29.4462,
+        252.2776
       ],
       "size": [
-        53.1328,
-        17.5421,
-        15.1293
+        42.3299,
+        16.9625,
+        11.1197
       ],
-      "triangles": 184
+      "triangles": 179
     },
     {
-      "name": "d_crag0_7_0_strait_rock",
+      "name": "d_crag0_6_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1198.4609,
-        35.588,
-        700.8955
+        -1222.7583,
+        46.2672,
+        362.1278
       ],
       "size": [
-        163.0782,
-        67.2396,
-        136.2545
+        114.4835,
+        57.0415,
+        212.3539
       ],
-      "triangles": 4425
+      "triangles": 7772
     },
     {
       "name": "d_crag0_8_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1190.0724,
-        30.7552,
-        896.9738
+        -1150.9583,
+        58.1277,
+        912.0034
       ],
       "size": [
-        179.8552,
-        47.2854,
-        257.9482
+        258.0834,
+        39.1187,
+        227.994
       ],
-      "triangles": 3182
+      "triangles": 9248
     },
     {
       "name": "d_crag0_9_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1232.0001,
-        37.8465,
-        1071.8425
+        -1150.9515,
+        59.0968,
+        1150.5062
       ],
       "size": [
-        95.9997,
-        70.1967,
-        95.6876
+        258.0969,
+        38.7453,
+        253.0425
       ],
-      "triangles": 2840
+      "triangles": 7269
     },
     {
       "name": "d_crag1_0_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -948.2552,
-        58.5425,
-        -1151.8989
+        -985.4673,
+        8.6777,
+        -1232.3697
       ],
       "size": [
-        151.4903,
-        38.8535,
-        256.2021
+        7.8777,
+        3.2442,
+        8.9563
       ],
-      "triangles": 5706
-    },
-    {
-      "name": "d_crag1_1_0_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -895.0093,
-        54.0136,
-        -894.9995
-      ],
-      "size": [
-        258.0189,
-        30.2199,
-        258.0003
-      ],
-      "triangles": 3659
+      "triangles": 52
     },
     {
       "name": "d_crag1_2_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -864.7266,
-        37.8085,
-        -718.8652
+        -833.9719,
+        12.5613,
+        -614.9538
       ],
       "size": [
-        197.4515,
-        64.7558,
-        98.3049
+        62.3515,
+        11.7611,
+        58.8484
       ],
-      "triangles": 5501
+      "triangles": 388
+    },
+    {
+      "name": "d_crag1_3_0_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        -977.6888,
+        27.5528,
+        -261.7285
+      ],
+      "size": [
+        87.3838,
+        26.745,
+        15.4514
+      ],
+      "triangles": 618
     },
     {
       "name": "d_crag1_4_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -779.9615,
-        29.2679,
-        -36.5225
+        -893.8561,
+        32.7228,
+        -127.0023
       ],
       "size": [
-        28.1793,
-        27.7444,
-        77.0519
+        255.0492,
+        46.3157,
+        258.006
       ],
-      "triangles": 684
+      "triangles": 10200
     },
     {
       "name": "d_crag1_5_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -886.1485,
-        32.9299,
-        128.8047
+        -779.8783,
+        27.8853,
+        37.9903
       ],
       "size": [
-        237.6411,
-        45.6304,
-        257.6436
+        28.3456,
+        29.8656,
+        76.0177
       ],
-      "triangles": 9735
-    },
-    {
-      "name": "d_crag1_6_0_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -959.495,
-        24.6688,
-        264.3226
-      ],
-      "size": [
-        66.9886,
-        24.6442,
-        16.6505
-      ],
-      "triangles": 313
+      "triangles": 641
     },
     {
       "name": "d_crag1_7_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -896.8803,
-        14.205,
-        586.6483
+        -864.7237,
+        40.3769,
+        720.3047
       ],
       "size": [
-        169.1407,
-        5.3842,
-        21.9127
+        197.4572,
+        59.9982,
+        99.4299
       ],
-      "triangles": 166
+      "triangles": 5413
+    },
+    {
+      "name": "d_crag1_8_0_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        -895.0326,
+        54.0204,
+        896.9998
+      ],
+      "size": [
+        258.0657,
+        30.2379,
+        258.0004
+      ],
+      "triangles": 3493
     },
     {
       "name": "d_crag1_9_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -811.3178,
-        10.806,
-        1092.0145
+        -948.2553,
+        58.5434,
+        1151.9978
       ],
       "size": [
-        49.895,
-        7.2667,
-        49.4961
+        151.4902,
+        38.8501,
+        256.0044
       ],
-      "triangles": 268
+      "triangles": 5623
     },
     {
       "name": "d_crag2_0_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -620.1493,
-        57.282,
-        -1206.5872
+        -650.2912,
+        10.8985,
+        -1154.9653
       ],
       "size": [
-        218.3133,
-        46.8235,
-        146.8255
+        14.1232,
+        4.8471,
+        12.5161
       ],
-      "triangles": 7752
-    },
-    {
-      "name": "d_crag2_1_0_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -675.5023,
-        49.7686,
-        -818.8249
-      ],
-      "size": [
-        185.0573,
-        36.3412,
-        105.6506
-      ],
-      "triangles": 5265
+      "triangles": 102
     },
     {
       "name": "d_crag2_2_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -664.5307,
-        37.4852,
-        -694.3335
+        -708.7106,
+        8.06,
+        -702.2742
       ],
       "size": [
-        206.9699,
-        64.6461,
-        147.3366
+        38.0565,
+        8.2708,
+        48.9014
       ],
-      "triangles": 8656
+      "triangles": 218
     },
     {
       "name": "d_crag2_4_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -647.7367,
-        21.2813,
-        -121.5298
+        -764.9659,
+        20.2816,
+        -58.8181
       ],
       "size": [
-        240.5311,
-        23.9654,
-        191.0591
+        6.0558,
+        13.4121,
+        17.2611
       ],
-      "triangles": 947
+      "triangles": 58
     },
     {
       "name": "d_crag2_5_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -643.9386,
-        14.5621,
-        128.238
+        -640.0002,
+        18.8366,
+        123.0482
       ],
       "size": [
-        248.129,
-        22.793,
-        234.0592
+        256.0009,
+        28.7378,
+        194.2171
       ],
-      "triangles": 343
+      "triangles": 1055
     },
     {
       "name": "d_crag2_7_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -611.7357,
-        12.8022,
-        687.6221
+        -658.6068,
+        40.8554,
+        699.6338
       ],
       "size": [
-        186.4395,
-        11.3405,
-        164.7557
+        218.7864,
+        57.2465,
+        140.7498
       ],
-      "triangles": 683
+      "triangles": 8669
     },
     {
       "name": "d_crag2_8_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -686.997,
-        11.4167,
-        775.3513
+        -676.0024,
+        50.0392,
+        819.8167
       ],
       "size": [
-        28.8895,
-        9.107,
-        14.7357
+        184.0041,
+        36.6174,
+        103.6342
       ],
-      "triangles": 165
+      "triangles": 5248
     },
     {
       "name": "d_crag2_9_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -587.4113,
-        11.3131,
-        1074.5129
+        -619.6531,
+        57.1355,
+        1206.5872
       ],
       "size": [
-        18.7936,
-        2.4664,
-        15.9973
+        219.3056,
+        46.8377,
+        146.8256
       ],
-      "triangles": 110
+      "triangles": 7841
     },
     {
-      "name": "d_crag3_0_0_strait_rock",
+      "name": "d_crag3_2_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -383.5192,
-        49.2536,
-        -1227.0001
+        -493.2846,
+        12.5096,
+        -519.2328
       ],
       "size": [
-        256.9619,
-        60.943,
-        105.9999
+        23.626,
+        11.9899,
+        18.4641
       ],
-      "triangles": 7016
+      "triangles": 206
     },
     {
       "name": "d_crag3_3_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -306.9338,
-        37.3407,
-        -359.1542
+        -494.1268,
+        11.0954,
+        -508.3636
       ],
       "size": [
-        105.9103,
-        42.8417,
-        120.4558
+        20.2535,
+        7.9671,
+        7.2731
       ],
-      "triangles": 3803
+      "triangles": 74
     },
     {
-      "name": "d_crag3_4_0_strait_rock",
+      "name": "d_crag3_5_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -474.1103,
-        11.1999,
-        -108.0851
+        -485.8076,
+        9.9993,
+        109.8249
       ],
       "size": [
-        35.3585,
-        15.375,
-        209.4071
+        52.3848,
+        14.7974,
+        216.4678
       ],
-      "triangles": 340
+      "triangles": 164
     },
     {
-      "name": "d_crag3_7_0_strait_rock",
+      "name": "d_crag3_6_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -499.9253,
-        18.9322,
-        529.0816
+        -323.1526,
+        37.3484,
+        368.3914
       ],
       "size": [
-        0.3017,
-        0.2333,
-        2.4087
+        138.3052,
+        42.7552,
+        145.2048
       ],
-      "triangles": 12
+      "triangles": 5311
     },
     {
-      "name": "d_crag3_8_0_strait_rock",
+      "name": "d_crag3_9_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -465.9064,
-        10.442,
-        804.4894
+        -382.986,
+        49.8115,
+        1226.9105
       ],
       "size": [
-        20.71,
-        4.4143,
-        12.7056
+        258.0284,
+        59.8003,
+        106.179
       ],
-      "triangles": 138
+      "triangles": 6926
     },
     {
-      "name": "d_crag4_0_0_strait_rock",
+      "name": "d_crag4_6_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -210.2697,
-        43.8663,
-        -1247.0934
+        -215.333,
+        36.7185,
+        357.2209
       ],
       "size": [
-        91.4587,
-        55.6919,
-        65.8132
+        81.4252,
+        41.1671,
+        191.3518
       ],
-      "triangles": 1815
+      "triangles": 4369
     },
     {
-      "name": "d_crag4_3_0_strait_rock",
+      "name": "d_crag4_9_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -200.5892,
-        36.9673,
-        -334.7728
+        -211.3634,
+        43.8241,
+        1250.7481
       ],
       "size": [
-        110.8568,
-        40.8131,
-        161.5452
+        89.2763,
+        55.8905,
+        58.5038
       ],
-      "triangles": 5614
+      "triangles": 1958
     },
     {
-      "name": "d_crag4_4_0_strait_rock",
+      "name": "d_crag5_0_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -189.2361,
-        24.3769,
-        -251.3227
+        212.1207,
+        44.4019,
+        -1250.9696
       ],
       "size": [
-        34.4718,
-        14.2952,
-        9.3557
+        91.7501,
+        56.0544,
+        58.0607
       ],
-      "triangles": 153
+      "triangles": 1902
     },
     {
-      "name": "d_crag5_5_0_strait_rock",
+      "name": "d_crag5_3_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        190.3154,
-        24.4303,
-        254.6078
+        218.7543,
+        37.0873,
+        -357.1579
       ],
       "size": [
-        32.0104,
-        14.2361,
-        6.7386
+        78.5575,
+        41.8917,
+        191.4789
       ],
-      "triangles": 118
+      "triangles": 4445
     },
     {
-      "name": "d_crag5_6_0_strait_rock",
+      "name": "d_crag6_0_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        201.4932,
-        37.0279,
-        337.081
+        385.0001,
+        49.7323,
+        -1226.9105
       ],
       "size": [
-        113.088,
-        40.9372,
-        162.2038
+        258.0001,
+        60.2414,
+        106.179
       ],
-      "triangles": 5961
+      "triangles": 6886
     },
     {
-      "name": "d_crag5_9_0_strait_rock",
+      "name": "d_crag6_3_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        214.3207,
-        44.2373,
-        1247.7407
+        323.9879,
+        37.1608,
+        -369.008
       ],
       "size": [
-        87.2792,
-        56.4361,
-        64.5186
+        136.0217,
+        42.3875,
+        146.0143
       ],
-      "triangles": 1764
+      "triangles": 5483
     },
     {
-      "name": "d_crag6_2_0_strait_rock",
+      "name": "d_crag6_4_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        501.8412,
-        16.3248,
-        -530.378
+        451.4451,
+        9.2078,
+        -100.2264
       ],
       "size": [
-        19.5784,
-        8.323,
-        13.4976
+        43.8108,
+        13.025,
+        201.023
       ],
-      "triangles": 136
+      "triangles": 203
     },
     {
       "name": "d_crag6_5_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        482.7135,
-        12.6898,
-        206.4434
+        463.0029,
+        4.4861,
+        0.1423
       ],
       "size": [
-        38.3188,
-        8.4356,
-        12.9235
+        1.9958,
+        1.3276,
+        0.2854
       ],
-      "triangles": 132
+      "triangles": 1
     },
     {
       "name": "d_crag6_6_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        308.6958,
-        37.5372,
-        357.1417
+        494.5212,
+        11.6338,
+        508.041
       ],
       "size": [
-        105.5319,
-        42.5363,
-        124.6422
+        24.2622,
+        9.6103,
+        11.9224
       ],
-      "triangles": 3601
+      "triangles": 132
     },
     {
-      "name": "d_crag6_9_0_strait_rock",
+      "name": "d_crag6_7_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        384.9115,
-        49.4004,
-        1226.9105
+        496.6503,
+        12.6068,
+        568.3407
       ],
       "size": [
-        258.1772,
-        60.5104,
-        106.179
+        30.7017,
+        12.0909,
+        112.6855
       ],
-      "triangles": 7025
+      "triangles": 200
     },
     {
       "name": "d_crag7_0_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        585.9685,
-        10.9628,
-        -1075.8312
+        620.6528,
+        57.4023,
+        -1206.5872
       ],
       "size": [
-        20.5523,
-        3.1326,
-        17.9201
+        217.3062,
+        46.948,
+        146.8257
       ],
-      "triangles": 140
+      "triangles": 7770
     },
     {
       "name": "d_crag7_1_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        683.0038,
-        11.2413,
-        -774.6341
+        675.2572,
+        49.6199,
+        -818.8164
       ],
       "size": [
-        20.4456,
-        8.2613,
-        14.5161
+        189.4873,
+        37.6839,
+        105.6336
       ],
-      "triangles": 134
+      "triangles": 5351
     },
     {
       "name": "d_crag7_2_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        612.1297,
-        12.763,
-        -687.6988
+        659.6067,
+        40.9558,
+        -697.0929
       ],
       "size": [
-        186.7786,
-        10.8957,
-        160.603
+        220.7862,
+        57.1347,
+        141.8663
       ],
-      "triangles": 254
-    },
-    {
-      "name": "d_crag7_3_0_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        631.4724,
-        9.1901,
-        -475.9306
-      ],
-      "size": [
-        3.9961,
-        2.1809,
-        7.024
-      ],
-      "triangles": 22
+      "triangles": 8805
     },
     {
       "name": "d_crag7_4_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        643.9379,
-        13.9455,
-        -136.8954
+        676.0065,
+        19.3539,
+        -116.7902
       ],
       "size": [
-        248.1276,
-        21.5466,
-        192.3723
+        187.9885,
+        29.6852,
+        192.309
       ],
-      "triangles": 245
+      "triangles": 771
     },
     {
       "name": "d_crag7_5_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        643.8323,
-        21.3632,
-        130.8466
+        766.5771,
+        22.6599,
+        59.5125
       ],
       "size": [
-        252.3368,
-        23.8439,
-        167.2281
+        6.7841,
+        17.0682,
+        21.0276
       ],
-      "triangles": 778
+      "triangles": 75
     },
     {
       "name": "d_crag7_7_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        665.1932,
-        37.2662,
-        694.0279
+        618.5643,
+        10.2935,
+        691.9388
       ],
       "size": [
-        209.6136,
-        64.6151,
-        151.9444
+        213.1286,
+        10.6313,
+        156.1224
       ],
-      "triangles": 8966
+      "triangles": 150
     },
     {
       "name": "d_crag7_8_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        676.2466,
-        49.7999,
-        819.8253
+        688.7161,
+        13.9864,
+        770.4202
       ],
       "size": [
-        187.5553,
-        36.8168,
-        103.6514
+        2.8757,
+        1.1546,
+        4.8405
       ],
-      "triangles": 5239
+      "triangles": 16
     },
     {
       "name": "d_crag7_9_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        620.6242,
-        57.373,
-        1206.5871
+        648.9652,
+        9.5603,
+        1156.7989
       ],
       "size": [
-        217.363,
-        46.866,
-        146.8258
+        24.1152,
+        7.3101,
+        18.4945
       ],
-      "triangles": 7681
+      "triangles": 218
     },
     {
       "name": "d_crag8_0_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        800.1855,
-        11.1168,
-        -1077.0549
+        949.2552,
+        58.5421,
+        -1151.8784
       ],
       "size": [
-        23.8877,
-        6.6484,
-        22.2688
+        153.49,
+        38.8493,
+        256.2432
       ],
-      "triangles": 176
+      "triangles": 5746
+    },
+    {
+      "name": "d_crag8_1_0_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        897.006,
+        53.7425,
+        -894.9996
+      ],
+      "size": [
+        258.0122,
+        29.837,
+        258.0005
+      ],
+      "triangles": 3552
     },
     {
       "name": "d_crag8_2_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        893.5001,
-        14.7219,
-        -589.0853
+        865.726,
+        39.7144,
+        -719.7692
       ],
       "size": [
-        175.5698,
-        7.2612,
-        27.0743
+        195.4526,
+        60.95,
+        96.4808
       ],
-      "triangles": 260
-    },
-    {
-      "name": "d_crag8_3_0_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        954.9091,
-        26.1971,
-        -262.084
-      ],
-      "size": [
-        73.4343,
-        29.061,
-        15.9422
-      ],
-      "triangles": 372
+      "triangles": 5233
     },
     {
       "name": "d_crag8_4_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        886.1888,
-        33.1255,
-        -127.8077
+        781.022,
+        28.3754,
+        -36.5242
       ],
       "size": [
-        236.3762,
-        45.0507,
-        256.3907
+        26.0583,
+        30.0653,
+        77.0485
       ],
-      "triangles": 9351
+      "triangles": 614
     },
     {
       "name": "d_crag8_5_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        780.9991,
-        31.2634,
-        37.5242
+        893.9398,
+        32.6141,
+        128.8624
       ],
       "size": [
-        26.0017,
-        24.2894,
-        75.0485
+        251.9564,
+        45.8412,
+        257.7623
       ],
-      "triangles": 540
+      "triangles": 10244
+    },
+    {
+      "name": "d_crag8_6_0_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        979.3137,
+        25.4743,
+        264.2435
+      ],
+      "size": [
+        81.2086,
+        24.3931,
+        16.4861
+      ],
+      "triangles": 542
     },
     {
       "name": "d_crag8_7_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        865.7142,
-        37.8266,
-        720.6561
+        833.5886,
+        13.1993,
+        615.4012
       ],
       "size": [
-        195.4761,
-        65.1575,
-        98.9195
+        61.5553,
+        11.1441,
+        59.6231
       ],
-      "triangles": 5512
-    },
-    {
-      "name": "d_crag8_8_0_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        897.0001,
-        54.0164,
-        896.9998
-      ],
-      "size": [
-        258.0003,
-        30.2333,
-        258.0004
-      ],
-      "triangles": 3595
+      "triangles": 462
     },
     {
       "name": "d_crag8_9_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        949.2547,
-        58.5446,
-        1151.9998
+        983.8829,
+        9.6687,
+        1235.4364
       ],
       "size": [
-        153.489,
-        38.8504,
-        256.0005
+        8.4084,
+        3.1921,
+        11.7743
       ],
-      "triangles": 5773
+      "triangles": 60
     },
     {
       "name": "d_crag9_0_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1231.2008,
-        38.5757,
-        -1068.7907
+        1151.9636,
+        59.032,
+        -1149.4253
       ],
       "size": [
-        97.5983,
-        68.1875,
-        93.5823
+        256.0728,
+        38.6158,
+        255.2044
       ],
-      "triangles": 2794
+      "triangles": 7207
     },
     {
       "name": "d_crag9_1_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1191.8694,
-        30.5093,
-        -895.0537
+        1151.9993,
+        57.9234,
+        -911.0035
       ],
       "size": [
-        176.2612,
-        48.2285,
-        257.9889
+        256.0013,
+        38.7106,
+        225.9943
       ],
-      "triangles": 3098
+      "triangles": 9183
     },
     {
-      "name": "d_crag9_2_0_strait_rock",
+      "name": "d_crag9_3_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1184.5693,
-        37.906,
-        -701.2487
+        1222.7796,
+        46.2613,
+        -361.6463
       ],
       "size": [
-        190.8613,
-        62.7199,
-        133.6447
+        114.4409,
+        56.6779,
+        213.3169
       ],
-      "triangles": 4252
+      "triangles": 7842
     },
     {
-      "name": "d_crag9_5_0_strait_rock",
+      "name": "d_crag9_4_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1209.3701,
-        28.1019,
-        250.1141
+        1189.0854,
+        25.0245,
+        -254.3518
       ],
       "size": [
-        35.7121,
-        18.9996,
-        15.3266
+        21.8306,
+        14.0931,
+        3.2997
       ],
-      "triangles": 198
+      "triangles": 53
     },
     {
-      "name": "d_crag9_6_0_strait_rock",
+      "name": "d_crag9_7_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1224.5287,
-        46.228,
-        362.1348
+        1182.6506,
+        37.6185,
+        702.0992
       ],
       "size": [
-        110.9425,
-        56.6447,
-        212.3355
+        194.6987,
+        62.3655,
+        135.8177
       ],
-      "triangles": 7397
+      "triangles": 4300
     },
     {
       "name": "d_crag9_8_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1151.9559,
-        57.8966,
-        912.0032
+        1193.0211,
+        31.0709,
+        896.9641
       ],
       "size": [
-        256.0882,
-        38.6564,
-        227.9935
+        173.9578,
+        47.6247,
+        257.9289
       ],
-      "triangles": 9371
+      "triangles": 2501
     },
     {
       "name": "d_crag9_9_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1151.9668,
-        59.0489,
-        1150.5049
+        1231.7938,
+        39.7356,
+        1066.7268
       ],
       "size": [
-        256.0664,
-        38.6482,
-        253.0453
+        96.4124,
+        66.6242,
+        85.473
       ],
-      "triangles": 7259
+      "triangles": 2674
     },
     {
       "name": "d_rocks0_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1151.8423,
-        58.3572,
-        -1152.641
+        -1233.1262,
+        39.6812,
+        -1071.7354
       ],
       "size": [
-        251.3663,
-        36.4886,
-        257.0145
+        76.2523,
+        64.4858,
+        80.0988
       ],
-      "triangles": 980
+      "triangles": 240
     },
     {
       "name": "d_rocks0_1_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1154.228,
-        56.8568,
-        -915.6134
+        -1189.2885,
+        27.2018,
+        -948.0683
       ],
       "size": [
-        255.125,
-        39.4128,
-        217.844
+        178.85,
+        36.0275,
+        152.0401
       ],
-      "triangles": 1300
+      "triangles": 380
     },
     {
-      "name": "d_rocks0_3_strait_rock",
+      "name": "d_rocks0_2_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1224.8184,
-        45.7088,
-        -364.1156
+        -1182.1792,
+        36.1974,
+        -703.5428
       ],
       "size": [
-        104.3194,
-        57.1918,
-        210.7741
+        192.7156,
+        65.7922,
+        129.6005
       ],
-      "triangles": 740
+      "triangles": 500
     },
     {
-      "name": "d_rocks0_4_strait_rock",
+      "name": "d_rocks0_5_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1199.3741,
-        22.6426,
-        -251.1111
+        -1200.4991,
+        23.2538,
+        251.8555
       ],
       "size": [
-        25.7909,
-        3.7601,
-        5.9866
+        40.1562,
+        10.1609,
+        6.9622
       ],
-      "triangles": 40
+      "triangles": 60
     },
     {
-      "name": "d_rocks0_7_strait_rock",
+      "name": "d_rocks0_6_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1213.9938,
-        35.8327,
-        690.2468
+        -1223.9991,
+        45.7644,
+        359.6363
       ],
       "size": [
-        133.0897,
-        65.4844,
-        120.524
+        109.2446,
+        58.1782,
+        208.984
       ],
-      "triangles": 640
+      "triangles": 800
     },
     {
       "name": "d_rocks0_8_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1190.0921,
-        27.7089,
-        899.5805
+        -1162.2068,
+        57.1971,
+        911.5012
       ],
       "size": [
-        165.4809,
-        34.068,
-        250.3731
+        239.2458,
+        39.2821,
+        227.6244
       ],
-      "triangles": 420
+      "triangles": 1000
     },
     {
       "name": "d_rocks0_9_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -1226.7993,
-        38.848,
-        1067.679
+        -1152.4494,
+        59.12,
+        1149.3181
       ],
       "size": [
-        90.8682,
-        66.6126,
-        85.5992
+        254.0371,
+        35.7333,
+        249.3513
       ],
-      "triangles": 260
+      "triangles": 1380
     },
     {
       "name": "d_rocks1_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -950.9889,
-        58.694,
-        -1154.8483
+        -985.467,
+        8.0717,
+        -1230.6054
       ],
       "size": [
-        145.1504,
-        40.3515,
-        240.0259
+        6.1786,
+        2.0172,
+        2.3257
       ],
-      "triangles": 840
-    },
-    {
-      "name": "d_rocks1_1_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -882.9473,
-        52.8024,
-        -890.1438
-      ],
-      "size": [
-        218.4709,
-        28.7947,
-        245.1981
-      ],
-      "triangles": 360
+      "triangles": 40
     },
     {
       "name": "d_rocks1_2_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -865.6581,
-        37.5847,
-        -720.2487
+        -828.9651,
+        9.3163,
+        -609.1942
       ],
       "size": [
-        193.7631,
-        61.696,
-        95.3995
+        59.8131,
+        8.3746,
+        56.0976
       ],
-      "triangles": 640
+      "triangles": 80
+    },
+    {
+      "name": "d_rocks1_3_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        -952.5382,
+        16.4348,
+        -267.2832
+      ],
+      "size": [
+        37.885,
+        7.7663,
+        13.6529
+      ],
+      "triangles": 80
     },
     {
       "name": "d_rocks1_4_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -779.6819,
-        28.1445,
-        -41.0369
+        -893.1392,
+        32.4143,
+        -127.928
       ],
       "size": [
-        22.6789,
-        26.421,
-        82.4509
+        250.8348,
+        45.9571,
+        243.8143
       ],
-      "triangles": 80
+      "triangles": 1500
     },
     {
       "name": "d_rocks1_5_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -887.6299,
-        32.5155,
-        138.8127
+        -783.702,
+        31.0492,
+        31.41
       ],
       "size": [
-        240.3421,
-        44.6415,
-        236.6198
+        17.3956,
+        20.2319,
+        59.1786
       ],
-      "triangles": 1500
-    },
-    {
-      "name": "d_rocks1_6_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -970.0293,
-        22.9179,
-        259.5473
-      ],
-      "size": [
-        48.0409,
-        11.3193,
-        9.2451
-      ],
-      "triangles": 60
+      "triangles": 140
     },
     {
       "name": "d_rocks1_7_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -897.5522,
-        15.0475,
-        592.5312
+        -864.6776,
+        37.9071,
+        719.754
       ],
       "size": [
-        166.6169,
-        3.2389,
-        10.558
+        177.6976,
+        63.8804,
+        94.9408
       ],
-      "triangles": 80
+      "triangles": 420
+    },
+    {
+      "name": "d_rocks1_8_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        -892.5277,
+        53.4414,
+        894.4561
+      ],
+      "size": [
+        248.6228,
+        31.5135,
+        254.3955
+      ],
+      "triangles": 420
     },
     {
       "name": "d_rocks1_9_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -812.0023,
-        11.8634,
-        1082.8584
+        -946.8598,
+        58.8907,
+        1149.5815
       ],
       "size": [
-        46.6328,
-        6.5149,
-        33.0802
+        145.2203,
+        39.4662,
+        245.9797
       ],
-      "triangles": 160
+      "triangles": 540
     },
     {
       "name": "d_rocks2_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -625.5054,
-        57.8923,
-        -1210.2191
+        -644.2374,
+        8.9286,
+        -1162.7004
       ],
       "size": [
-        203.9615,
-        44.8798,
-        135.7183
+        1.959,
+        1.4005,
+        2.2881
       ],
-      "triangles": 640
-    },
-    {
-      "name": "d_rocks2_1_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -684.6562,
-        52.4684,
-        -821.4014
-      ],
-      "size": [
-        164.842,
-        31.9892,
-        105.599
-      ],
-      "triangles": 520
+      "triangles": 20
     },
     {
       "name": "d_rocks2_2_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -659.2372,
-        35.7212,
-        -692.2925
+        -725.3466,
+        5.7949,
+        -718.1678
       ],
       "size": [
-        197.2096,
-        63.8309,
-        152.3204
+        12.7635,
+        8.1163,
+        16.1509
       ],
-      "triangles": 740
+      "triangles": 40
     },
     {
       "name": "d_rocks2_4_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -647.1295,
-        17.7914,
-        -125.4038
+        -763.5064,
+        13.6443,
+        -52.3993
       ],
       "size": [
-        234.6842,
-        21.4825,
-        182.2956
+        1.9625,
+        0.6996,
+        4.098
       ],
-      "triangles": 140
+      "triangles": 40
     },
     {
       "name": "d_rocks2_5_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -589.6953,
-        7.3617,
-        137.1854
+        -637.856,
+        17.0981,
+        126.0629
       ],
       "size": [
-        111.7244,
-        8.1391,
-        191.0708
+        248.8718,
+        16.8898,
+        188.0727
       ],
-      "triangles": 100
+      "triangles": 280
     },
     {
       "name": "d_rocks2_7_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -612.2478,
-        13.3806,
-        687.4564
+        -653.7894,
+        40.3287,
+        698.5146
       ],
       "size": [
-        186.4117,
-        10.2851,
-        157.3911
+        219.0318,
+        54.6233,
+        135.4801
       ],
-      "triangles": 200
+      "triangles": 680
     },
     {
       "name": "d_rocks2_8_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -681.6753,
-        10.4596,
-        780.795
+        -687.5091,
+        52.6821,
+        830.1698
       ],
       "size": [
-        7.2303,
-        2.9735,
-        3.2287
+        152.8307,
+        31.1695,
+        90.6949
       ],
-      "triangles": 40
+      "triangles": 480
     },
     {
       "name": "d_rocks2_9_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -581.106,
-        11.5364,
-        1078.0117
+        -631.8572,
+        59.3518,
+        1205.3036
       ],
       "size": [
-        3.1198,
-        2.8472,
-        12.077
+        202.4559,
+        41.6891,
+        150.9064
       ],
-      "triangles": 80
+      "triangles": 820
     },
     {
-      "name": "d_rocks3_0_strait_rock",
+      "name": "d_rocks3_2_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        -385.87,
-        49.6544,
-        -1224.632
+        -489.4344,
+        11.0142,
+        -520.0493
       ],
       "size": [
-        247.962,
-        60.1226,
-        108.6149
-      ],
-      "triangles": 720
-    },
-    {
-      "name": "d_rocks3_3_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -311.8623,
-        36.4723,
-        -360.9399
-      ],
-      "size": [
-        98.8917,
-        41.7507,
-        124.2605
-      ],
-      "triangles": 500
-    },
-    {
-      "name": "d_rocks3_4_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -471.1216,
-        9.0574,
-        -3.6515
-      ],
-      "size": [
-        1.4056,
-        0.6524,
-        1.7416
-      ],
-      "triangles": 20
-    },
-    {
-      "name": "d_rocks3_8_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -467.1595,
-        9.7407,
-        806.9044
-      ],
-      "size": [
-        21.9089,
-        1.6926,
-        6.1605
-      ],
-      "triangles": 100
-    },
-    {
-      "name": "d_rocks4_0_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -205.3061,
-        36.4077,
-        -1252.6526
-      ],
-      "size": [
-        72.2335,
-        40.9437,
-        54.8188
-      ],
-      "triangles": 200
-    },
-    {
-      "name": "d_rocks4_3_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -200.747,
-        36.8831,
-        -336.6978
-      ],
-      "size": [
-        99.9708,
-        40.4292,
-        162.0874
-      ],
-      "triangles": 700
-    },
-    {
-      "name": "d_rocks4_4_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        -184.4529,
-        25.3623,
-        -250.9607
-      ],
-      "size": [
-        1.2125,
-        0.506,
-        1.1286
-      ],
-      "triangles": 20
-    },
-    {
-      "name": "d_rocks5_5_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        174.6302,
-        21.4439,
-        250.9483
-      ],
-      "size": [
-        2.2676,
-        1.3917,
-        2.5761
-      ],
-      "triangles": 20
-    },
-    {
-      "name": "d_rocks5_6_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        198.8851,
-        36.6746,
-        339.3599
-      ],
-      "size": [
-        106.5263,
-        41.5685,
-        167.1713
-      ],
-      "triangles": 960
-    },
-    {
-      "name": "d_rocks5_9_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        225.7768,
-        34.2818,
-        1245.5877
-      ],
-      "size": [
-        35.9543,
-        38.4587,
-        57.7913
-      ],
-      "triangles": 60
-    },
-    {
-      "name": "d_rocks6_2_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        504.4435,
-        18.2027,
-        -529.2705
-      ],
-      "size": [
-        8.752,
-        2.5041,
-        8.0577
-      ],
-      "triangles": 60
-    },
-    {
-      "name": "d_rocks6_5_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        496.4933,
-        14.5441,
-        210.2806
-      ],
-      "size": [
-        10.4593,
-        6.3536,
-        6.5602
+        11.1843,
+        7.3405,
+        17.5386
       ],
       "triangles": 40
     },
     {
-      "name": "d_rocks6_6_strait_rock",
+      "name": "d_rocks3_5_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        305.9712,
-        37.0138,
-        359.2712
+        -485.6304,
+        14.6589,
+        209.067
       ],
       "size": [
-        100.9599,
-        42.0232,
-        108.2384
+        10.5006,
+        7.6797,
+        13.5622
+      ],
+      "triangles": 80
+    },
+    {
+      "name": "d_rocks3_6_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        -325.89,
+        36.1654,
+        373.9457
+      ],
+      "size": [
+        127.0266,
+        42.0473,
+        139.585
+      ],
+      "triangles": 660
+    },
+    {
+      "name": "d_rocks3_9_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        -381.5057,
+        49.7743,
+        1223.7818
+      ],
+      "size": [
+        249.4488,
+        60.868,
+        86.4162
       ],
       "triangles": 440
     },
     {
-      "name": "d_rocks6_9_strait_rock",
+      "name": "d_rocks4_6_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        399.8933,
-        50.1117,
-        1223.8034
+        -218.2912,
+        36.9073,
+        355.1019
       ],
       "size": [
-        218.1295,
-        58.8147,
-        95.5729
+        69.5777,
+        42.4958,
+        199.2311
       ],
-      "triangles": 500
+      "triangles": 720
+    },
+    {
+      "name": "d_rocks4_9_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        -218.9952,
+        36.6516,
+        1250.2611
+      ],
+      "size": [
+        67.6775,
+        43.2748,
+        56.7303
+      ],
+      "triangles": 80
+    },
+    {
+      "name": "d_rocks5_0_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        198.7609,
+        37.2996,
+        -1256.0303
+      ],
+      "size": [
+        50.3968,
+        41.8741,
+        45.7762
+      ],
+      "triangles": 140
+    },
+    {
+      "name": "d_rocks5_3_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        220.5712,
+        36.8564,
+        -357.1567
+      ],
+      "size": [
+        71.6224,
+        42.2891,
+        187.3252
+      ],
+      "triangles": 660
+    },
+    {
+      "name": "d_rocks6_0_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        386.0821,
+        50.6552,
+        -1228.7026
+      ],
+      "size": [
+        247.7805,
+        57.1249,
+        92.8221
+      ],
+      "triangles": 540
+    },
+    {
+      "name": "d_rocks6_3_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        320.4108,
+        36.8766,
+        -364.9071
+      ],
+      "size": [
+        130.8532,
+        42.4416,
+        153.0517
+      ],
+      "triangles": 540
+    },
+    {
+      "name": "d_rocks6_4_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        450.8415,
+        8.9001,
+        -99.163
+      ],
+      "size": [
+        27.8486,
+        11.7577,
+        198.134
+      ],
+      "triangles": 60
+    },
+    {
+      "name": "d_rocks6_7_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        499.058,
+        15.6504,
+        522.3867
+      ],
+      "size": [
+        14.4611,
+        3.9306,
+        5.7933
+      ],
+      "triangles": 60
     },
     {
       "name": "d_rocks7_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        573.3796,
-        8.7923,
-        -1071.895
+        623.5018,
+        56.7731,
+        -1204.7223
       ],
       "size": [
-        4.3117,
-        1.6256,
-        11.1179
+        217.0851,
+        46.4704,
+        152.6963
       ],
-      "triangles": 40
+      "triangles": 900
     },
     {
       "name": "d_rocks7_1_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        686.1316,
-        12.7471,
-        -774.2442
+        663.3301,
+        49.2485,
+        -820.5078
       ],
       "size": [
-        3.7662,
-        2.6839,
-        9.5794
+        167.3635,
+        37.741,
+        106.4054
       ],
-      "triangles": 40
+      "triangles": 700
     },
     {
       "name": "d_rocks7_2_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        691.8145,
-        11.7299,
-        -705.2275
+        643.6342,
+        40.5266,
+        -695.4416
       ],
       "size": [
-        7.5962,
-        6.0728,
-        22.1281
+        197.6491,
+        55.8262,
+        116.1498
       ],
-      "triangles": 60
-    },
-    {
-      "name": "d_rocks7_3_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        624.9759,
-        7.4843,
-        -474.5176
-      ],
-      "size": [
-        1.2404,
-        0.8338,
-        1.3225
-      ],
-      "triangles": 20
+      "triangles": 640
     },
     {
       "name": "d_rocks7_4_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        636.073,
-        9.3702,
-        -51.4124
+        673.9311,
+        17.6637,
+        -111.4219
       ],
       "size": [
-        1.8128,
-        0.789,
-        2.373
+        187.8911,
+        26.6015,
+        187.7251
       ],
-      "triangles": 20
+      "triangles": 220
     },
     {
       "name": "d_rocks7_5_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        648.6803,
-        16.415,
-        128.7379
+        764.7488,
+        14.6841,
+        59.022
       ],
       "size": [
-        241.6602,
-        25.7791,
-        175.5035
+        5.0808,
+        6.3379,
+        29.509
       ],
-      "triangles": 280
+      "triangles": 80
     },
     {
       "name": "d_rocks7_7_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        661.1045,
-        36.3831,
-        687.6687
+        722.2927,
+        8.3343,
+        713.7828
       ],
       "size": [
-        209.1931,
-        61.8772,
-        146.4412
+        4.3724,
+        2.6988,
+        2.4682
       ],
-      "triangles": 520
+      "triangles": 40
     },
     {
       "name": "d_rocks7_8_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        682.1509,
-        51.5367,
-        819.5312
+        685.7052,
+        12.8328,
+        773.1159
       ],
       "size": [
-        157.888,
-        32.7875,
-        102.2172
+        1.2382,
+        0.7613,
+        1.7202
       ],
-      "triangles": 380
+      "triangles": 20
     },
     {
       "name": "d_rocks7_9_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        633.6154,
-        58.6836,
-        1203.9723
+        642.5959,
+        9.9326,
+        1160.0163
       ],
       "size": [
-        195.4936,
-        43.8776,
-        149.6686
+        13.0945,
+        6.8312,
+        15.1161
       ],
-      "triangles": 740
+      "triangles": 100
     },
     {
       "name": "d_rocks8_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        800.744,
-        9.889,
-        -1079.2772
+        946.5009,
+        57.0094,
+        -1153.033
       ],
       "size": [
-        26.0086,
-        4.2842,
-        19.8193
+        143.0769,
+        36.1316,
+        247.3932
       ],
-      "triangles": 80
+      "triangles": 640
+    },
+    {
+      "name": "d_rocks8_1_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        871.436,
+        53.9987,
+        -890.894
+      ],
+      "size": [
+        161.175,
+        30.2979,
+        246.985
+      ],
+      "triangles": 260
     },
     {
       "name": "d_rocks8_2_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        974.515,
-        13.9088,
-        -582.6754
+        872.5199,
+        35.6147,
+        -719.4546
       ],
       "size": [
-        6.4535,
-        4.2498,
-        14.3314
+        177.3147,
+        56.5648,
+        90.3227
       ],
-      "triangles": 60
-    },
-    {
-      "name": "d_rocks8_3_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        958.1337,
-        21.9296,
-        -263.2172
-      ],
-      "size": [
-        71.1443,
-        20.4756,
-        14.0058
-      ],
-      "triangles": 100
+      "triangles": 640
     },
     {
       "name": "d_rocks8_4_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        884.8387,
-        32.163,
-        -137.0273
+        776.7494,
+        27.2995,
+        -29.6174
       ],
       "size": [
-        228.7944,
-        45.7851,
-        233.0269
+        14.2528,
+        20.0553,
+        51.736
       ],
-      "triangles": 1300
+      "triangles": 100
     },
     {
       "name": "d_rocks8_5_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        785.0899,
-        36.6635,
-        29.406
+        894.8518,
+        32.8075,
+        127.7406
       ],
       "size": [
-        19.1986,
-        11.4999,
-        49.8072
+        254.0654,
+        44.0095,
+        256.3901
       ],
-      "triangles": 100
+      "triangles": 1480
+    },
+    {
+      "name": "d_rocks8_6_strait_rock",
+      "kind": "details",
+      "material": "strait_rock",
+      "center": [
+        978.4108,
+        17.1283,
+        266.3162
+      ],
+      "size": [
+        50.8128,
+        7.4486,
+        12.4523
+      ],
+      "triangles": 120
     },
     {
       "name": "d_rocks8_7_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        871.234,
-        33.0424,
-        718.8499
+        814.0469,
+        11.6635,
+        599.0022
       ],
       "size": [
-        162.0737,
-        55.2466,
-        98.7112
+        31.3489,
+        6.5805,
+        29.9023
       ],
-      "triangles": 660
-    },
-    {
-      "name": "d_rocks8_8_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        897.8874,
-        53.8339,
-        896.6713
-      ],
-      "size": [
-        248.3272,
-        31.7399,
-        255.8704
-      ],
-      "triangles": 500
+      "triangles": 160
     },
     {
       "name": "d_rocks8_9_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        947.802,
-        57.9577,
-        1151.4016
+        983.6457,
+        8.6407,
+        1230.0975
       ],
       "size": [
-        144.4205,
-        38.6145,
-        243.9674
+        0.923,
+        0.4019,
+        1.0127
       ],
-      "triangles": 700
+      "triangles": 20
     },
     {
       "name": "d_rocks9_0_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1230.4814,
-        37.5384,
-        -1069.0983
+        1150.8024,
+        58.5578,
+        -1150.9087
       ],
       "size": [
-        92.1567,
-        68.2137,
-        91.5817
+        255.6355,
+        39.2145,
+        247.7129
       ],
-      "triangles": 400
+      "triangles": 1180
     },
     {
       "name": "d_rocks9_1_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1187.9999,
-        25.2983,
-        -899.6483
+        1163.1539,
+        56.9471,
+        -911.8054
       ],
       "size": [
-        175.5162,
-        41.5254,
-        244.8155
+        232.252,
+        38.2192,
+        221.8537
       ],
-      "triangles": 540
+      "triangles": 920
     },
     {
-      "name": "d_rocks9_2_strait_rock",
+      "name": "d_rocks9_3_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1192.8796,
-        35.257,
-        -699.9853
+        1217.9574,
+        45.3428,
+        -359.9343
       ],
       "size": [
-        164.3018,
-        64.4032,
-        123.2404
+        112.5369,
+        57.866,
+        209.6093
       ],
-      "triangles": 580
+      "triangles": 660
     },
     {
-      "name": "d_rocks9_5_strait_rock",
+      "name": "d_rocks9_7_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1202.4147,
-        22.3235,
-        246.0329
+        1199.755,
+        35.2623,
+        698.1733
       ],
       "size": [
-        31.3385,
-        10.6667,
-        17.0444
+        157.9539,
+        52.8854,
+        116.2955
       ],
-      "triangles": 80
-    },
-    {
-      "name": "d_rocks9_6_strait_rock",
-      "kind": "details",
-      "material": "strait_rock",
-      "center": [
-        1224.8433,
-        48.5552,
-        372.3049
-      ],
-      "size": [
-        107.7505,
-        51.7168,
-        199.7836
-      ],
-      "triangles": 720
+      "triangles": 380
     },
     {
       "name": "d_rocks9_8_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1158.5718,
-        57.4531,
-        910.5356
+        1188.0485,
+        26.2116,
+        896.9135
       ],
       "size": [
-        237.8815,
-        39.7933,
-        226.5346
+        168.1312,
+        39.6803,
+        250.2651
       ],
-      "triangles": 1160
+      "triangles": 460
     },
     {
       "name": "d_rocks9_9_strait_rock",
       "kind": "details",
       "material": "strait_rock",
       "center": [
-        1149.6894,
-        57.7149,
-        1149.4421
+        1229.8814,
+        37.378,
+        1066.2622
       ],
       "size": [
-        244.2069,
-        38.5758,
-        250.9552
+        97.199,
+        68.0314,
+        80.6699
       ],
-      "triangles": 1260
+      "triangles": 340
     }
   ],
   "triangles": {
-    "tiles": 853525,
-    "details": 231211
+    "tiles": 851850,
+    "details": 229319
   }
 }
