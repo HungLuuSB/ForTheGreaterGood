@@ -14,7 +14,7 @@ return {
 	accuracy = 0,
 	strategic = true,
 	manualFire = true,
-	stockpile = { capacity = 2, buildTime = 120, cost = { supply = 1500, power = 40000 } },
+	stockpile = { capacity = 10, buildTime = 120, cost = { supply = 1500, power = 40000 } }, -- (10, the user, 2026-10-27)
 	damage = { LIGHT = 8000, ARMORED = 8000, STRUCTURE = 10000, SHIP = 8000, AIR = 4000, SUB = 3000 },
 	aoe = 150,
 	edgeEffectiveness = 0.05, -- the edge counts (S-178, F16): 400 at the rim, 8000 at the centre
