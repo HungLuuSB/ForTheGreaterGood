@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Death explosions from models-C (F27):** units now go up in C's death template (`ReplicatedStorage.Vfx.Death`): a fire burst with a ring on the ground. The client already played the template whenever the place had one, so no client code changed.
+- Ready to merge: `ed345a93` (main 778851e1 merged in: models-C's Vfx.Death, meshes, wrecks; test_client 315 / 315, test 573 / 573, build passed. Studio, The Plains: 4 deaths played the Death template 4 times, screenshot debug_out/screens/2026-10-26-vfx-death.jpg)
 - Ready to merge: `2b62f0d0` (main 9d7da230 merged in: S-191, D's map picker and firing range; test_client 315 / 315, test 573 / 573, build passed. Studio: The Lakelands' empty preview at 0.23 ms per tick, was 6.60, with only the join tick over budget)
 - **Bigger maps (C-233, protocol 38):** the client reads the new wire positions. The Lakelands (512 cells) plays in Studio. Aircraft that swing past the map's edge are drawn there, and the minimap keeps them on its edge.
 - **Plasma like tank shells (C-234, S-190):** the Thug's and Mace's plasma is as thick as a tank shell and bursts like its small hit.
