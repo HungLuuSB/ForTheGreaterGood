@@ -1,0 +1,82 @@
+{
+  "id": "ord_pharos_wreck",
+  "wreckOf": "ord_pharos",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.1225,
+        8.9988,
+        -0.0452
+      ],
+      "size": [
+        23.509,
+        19.5034,
+        23.5229
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        0.1488,
+        19.9438,
+        -0.5411
+      ],
+      "size": [
+        5.5602,
+        2.6063,
+        4.735
+      ],
+      "pivot": [
+        0.0,
+        19.8,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -1.8,
+        20.2,
+        -2.7
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2656,
+    "launcher": 404,
+    "total": 3060
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -786,6 +786,18 @@
       }
     },
     {
+      "Name": "chs_rookery",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://108301965640188",
+        "NormalMapContent": "rbxassetid://126910357359201",
+        "RoughnessMapContent": "rbxassetid://75866292932903",
+        "MetalnessMapContent": "rbxassetid://139264978356937",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_scourge",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -806,6 +818,18 @@
         "NormalMapContent": "rbxassetid://126713890222186",
         "RoughnessMapContent": "rbxassetid://134729249752928",
         "MetalnessMapContent": "rbxassetid://139404351821265",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "chs_scylla",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://76615433256541",
+        "NormalMapContent": "rbxassetid://133918373828915",
+        "RoughnessMapContent": "rbxassetid://133265618972974",
+        "MetalnessMapContent": "rbxassetid://73462035337607",
         "EmissiveStrength": 0
       }
     },
@@ -1746,6 +1770,18 @@
       }
     },
     {
+      "Name": "ord_empyrean",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://136695584765877",
+        "NormalMapContent": "rbxassetid://134242113999111",
+        "RoughnessMapContent": "rbxassetid://116144765897296",
+        "MetalnessMapContent": "rbxassetid://116447903615785",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_extractor",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2042,6 +2078,18 @@
         "NormalMapContent": "rbxassetid://114379632652538",
         "RoughnessMapContent": "rbxassetid://132790695281248",
         "MetalnessMapContent": "rbxassetid://71149997027726",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_pharos",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://92139237299872",
+        "NormalMapContent": "rbxassetid://88621746866192",
+        "RoughnessMapContent": "rbxassetid://103176552643800",
+        "MetalnessMapContent": "rbxassetid://129324402995261",
         "EmissiveStrength": 0
       }
     },
@@ -3198,6 +3246,18 @@
       }
     },
     {
+      "Name": "wreck_chs_rookery",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://95799147292817",
+        "NormalMapContent": "rbxassetid://92257503232622",
+        "RoughnessMapContent": "rbxassetid://78228998411040",
+        "MetalnessMapContent": "rbxassetid://85406740745930",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_scourge",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3218,6 +3278,18 @@
         "NormalMapContent": "rbxassetid://80574127520938",
         "RoughnessMapContent": "rbxassetid://84153864373230",
         "MetalnessMapContent": "rbxassetid://115539919006893",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_chs_scylla",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://136367006781721",
+        "NormalMapContent": "rbxassetid://99369868554203",
+        "RoughnessMapContent": "rbxassetid://115985919048511",
+        "MetalnessMapContent": "rbxassetid://97298434021267",
         "EmissiveStrength": 0
       }
     },
@@ -3882,6 +3954,18 @@
       }
     },
     {
+      "Name": "wreck_ord_empyrean",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://95488930599152",
+        "NormalMapContent": "rbxassetid://103377311731961",
+        "RoughnessMapContent": "rbxassetid://139178247984872",
+        "MetalnessMapContent": "rbxassetid://72898774675305",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_extractor",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -4178,6 +4262,18 @@
         "NormalMapContent": "rbxassetid://133353708515348",
         "RoughnessMapContent": "rbxassetid://134292602277871",
         "MetalnessMapContent": "rbxassetid://104194998176239",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_pharos",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://132027025382205",
+        "NormalMapContent": "rbxassetid://110109528689634",
+        "RoughnessMapContent": "rbxassetid://122830865433783",
+        "MetalnessMapContent": "rbxassetid://113927041446299",
         "EmissiveStrength": 0
       }
     },

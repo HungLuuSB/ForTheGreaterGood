@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-166 mesh from the approved blockout, rigged in FTGG Art 2026-10-26, review: 2332 triangles, glow share 0.5%",
+  "bar": {
+    "model": "rbxassetid://118263607094728",
+    "meshes": {
+      "base": "rbxassetid://94940418798283",
+      "base_glow_head": "rbxassetid://120157113284282",
+      "base_glow_running": "rbxassetid://138583568064896"
+    },
+    "decals": {
+      "ALB": "rbxassetid://138802557579422",
+      "RGH": "rbxassetid://102504654808297",
+      "NOR": "rbxassetid://134820027286040",
+      "MTL": "rbxassetid://74702209272352",
+      "EMI": "rbxassetid://138993143790162"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://108301965640188",
+      "NOR": "rbxassetid://126910357359201",
+      "RGH": "rbxassetid://75866292932903",
+      "MTL": "rbxassetid://139264978356937",
+      "EMI": "rbxassetid://117746220261193"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_rookery_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://119194671722407",
+    "meshes": {
+      "base": "rbxassetid://113515735722293"
+    },
+    "decals": {
+      "ALB": "rbxassetid://129812497122466",
+      "RGH": "rbxassetid://116023280374507",
+      "NOR": "rbxassetid://122072002192090",
+      "MTL": "rbxassetid://102234545009351",
+      "EMI": "rbxassetid://73583545792091"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://95799147292817",
+      "NOR": "rbxassetid://92257503232622",
+      "RGH": "rbxassetid://78228998411040",
+      "MTL": "rbxassetid://85406740745930",
+      "EMI": "rbxassetid://104541595898747"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_rookery_wreck_bar in FTGG Art",
+    "revision": "S-166 wreck, rigged in FTGG Art 2026-10-26, review: 1816 triangles"
+  }
+}
