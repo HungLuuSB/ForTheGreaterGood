@@ -11,10 +11,11 @@ return Templates.extend(Templates.Structure, {
 	tier = 1,
 	categories = { "STRUCTURE" },
 	cost = { supply = 120, power = 900, buildTime = 2400 },
-	health = 1800,
+	-- S-179, the playtest's balance notes: health × 2
+	health = 3600,
 	footprint = 2, -- size shows tech level (S-104)
 	sensors = { sight = 230 },
-	weapons = { { def = "ord_light_cannon", turretPiece = "turret", muzzle = "muzzle" } },
+	weapons = { { def = "ord_bulwark_cannon", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "muzzle" },
 	icon = "turret",
 	model = "ord_bulwark",

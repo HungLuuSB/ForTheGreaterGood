@@ -1,11 +1,13 @@
 --!strict
 -- T1 laser towers, the Beamer, the lobbing guns and Chaos's Bulwark (S-157,
--- the user), and the tier rebalance they came with: T1 towers fall to a few
--- scouts and to a T2 tank, which keeps most of its health.
+-- the user), and the tier rebalance they came with. Since the playtest's
+-- balance notes (S-179) a T1 tower holds against scouts and a pair of T1
+-- tanks and takes three or four; a T2 tank still beats one comfortably.
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
+local Combat = require("../Sim/Combat/Combat")
 local World = require("../Sim/World")
 local RunAll = require("./RunAll")
 
@@ -66,25 +68,32 @@ local function describe(f: Fight): string
 end
 
 return function(t: RunAll.Context)
-	t.test("four scouts beat a lone T1 laser tower; three don't (S-157, the user)", function()
-		for _, case in { { "ord_sentry_tower", "chs_jackal" }, { "chs_guard", "ord_herald" }, { "ord_sentry_tower", "ord_herald" }, { "chs_guard", "chs_jackal" } } do
-			local four = fight(1, case[1], case[2], 4)
-			local three = fight(1, case[1], case[2], 3)
-			print(`    4 {case[2]} vs {case[1]}: {describe(four)}; 3: {describe(three)}`)
-			t.expect(four.towerDead and four.alive >= 1, `4 {case[2]} beat a {case[1]}: {describe(four)}`)
-			t.expect(not three.towerDead, `3 {case[2]} don't: {describe(three)}`)
+	t.test("a lone T1 laser tower holds against six scouts and two T1 tanks; four tanks take it (S-179, the playtest)", function()
+		for _, tower in { "ord_sentry_tower", "chs_guard" } do
+			for _, scout in { "chs_jackal", "ord_herald" } do
+				local f = fight(1, tower, scout, 6)
+				t.expect(not f.towerDead, `6 {scout} don't take a {tower}: {describe(f)}`)
+			end
+			for _, tank in { "ord_lancer", "chs_ravager" } do
+				local two = fight(1, tower, tank, 2)
+				local four = fight(1, tower, tank, 4)
+				print(`    {tower} vs {tank}: 2: {describe(two)}; 4: {describe(four)}`)
+				t.expect(not two.towerDead, `2 {tank} don't take a {tower}: {describe(two)}`)
+				t.expect(four.towerDead, `4 {tank} do: {describe(four)}`)
+			end
 		end
 	end)
 
-	t.test("a T2 tank beats a lone T1 tower comfortably (S-157, the user: a Spike took half a Juggernaut)", function()
+	t.test("a T2 tank beats a lone T1 tower (S-157, the user: a Spike took half a Juggernaut; S-179)", function()
 		for _, case in { { "chs_guard", "ord_paladin" }, { "ord_sentry_tower", "chs_juggernaut" }, { "chs_guard", "chs_juggernaut" }, { "chs_spike", "chs_juggernaut" } } do
 			local f = fight(1, case[1], case[2], 1)
 			print(`    {case[2]} vs {case[1]}: {describe(f)}`)
-			t.expect(f.towerDead and f.health >= 0.75, `{case[2]} beats a {case[1]} with 75% health left: {describe(f)}`)
+			-- (S-179: T1 towers doubled; a T2 tank still wins, with less to spare)
+			t.expect(f.towerDead and f.health >= 0.25, `{case[2]} beats a {case[1]} with a quarter of its health left: {describe(f)}`)
 		end
 	end)
 
-	t.test("the Beamer ramps 10 to 50 a hit over 4 s on one target, and pauses when it switches", function()
+	t.test("the Beamer ramps up a hit over 4 s on one target (1/5 to full), and pauses when it switches", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local beamer = Spawn.unit(sim, "ord_beamer", 1, 0, 0)
@@ -119,18 +128,22 @@ return function(t: RunAll.Context)
 		step(15 * 7)
 		t.expect(#hits >= 25, `it fires about five times a second ({#hits} hits in 7 s)`)
 		local first, target = hits[1], hits[1].target
-		-- ARMORED: 10 .. 50
-		t.expect(first.damage < 14, `the first hit is weak: {first.damage}`)
+		-- ARMORED: ramp.from .. the full damage, a laser's at this distance (S-178)
+		local beam = sim.defs.weapons.ord_beamer_beam
+		local ramp = beam.ramp :: any
+		local full = beam.damage.ARMORED * Combat.nearFactor(beam, math.sqrt(40 * 40 + 150 * 150))
+		local low = full * ramp.from / ramp.to
+		t.expect(first.damage < low * 1.4, `the first hit is weak: {first.damage} (ramp start {low})`)
 		local last = hits[#hits]
 		t.equal(last.target, target, "it stays on one target")
-		t.expect(math.abs(last.damage - 50) < 1e-6, `after 4 s every hit deals 50: {last.damage}`)
+		t.expect(math.abs(last.damage - full) < 1e-3, `after 4 s every hit deals {full}: {last.damage}`)
 		local mid = 0
 		for _, h in hits do
 			if h.tick - first.tick >= 30 and h.tick - first.tick < 33 then
 				mid = h.damage
 			end
 		end
-		t.expect(mid > 25 and mid < 35, `halfway up the ramp after 2 s: {mid}`)
+		t.expect(mid > 0.5 * full and mid < 0.7 * full, `halfway up the ramp after 2 s: {mid}`)
 
 		-- the target dies: it switches, after a pause from full intensity
 		World.setHealth(w, target, 1)
@@ -154,7 +167,7 @@ return function(t: RunAll.Context)
 		t.expect(deadAt > 0 and nextHit ~= nil, "it switched to the other tank")
 		local gap = ((nextHit :: any).tick - deadAt) / 15
 		t.expect(gap >= 0.45, `a pause of about 0.5 s from full intensity: {gap} s`)
-		t.expect((nextHit :: any).damage < 14, `and it starts low again: {(nextHit :: any).damage}`)
+		t.expect((nextHit :: any).damage < low * 1.4, `and it starts low again: {(nextHit :: any).damage}`)
 	end)
 
 	t.test("the lobbing guns fire on the high arc and hit a still target at medium range", function()

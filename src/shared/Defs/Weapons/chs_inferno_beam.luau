@@ -7,6 +7,7 @@ return {
 	id = "chs_inferno_beam",
 	type = "BEAM",
 	range = 480, -- (S-113: was 560)
+	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 7,
 	accuracy = 0,
 	damage = { LIGHT = 1700, ARMORED = 1700, STRUCTURE = 1350, SHIP = 1700, AIR = 0, SUB = 0 }, -- over the whole beam (S-113)

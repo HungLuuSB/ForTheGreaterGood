@@ -40,6 +40,7 @@ export type Resource = {
 	ratio: number, -- 0..1 for the current window
 	spent: number, -- spent so far this window
 	reclaimed: number, -- reclaimed so far this window
+	reclaimRate: number?, -- per second over the last window: reclaim and gifts (S-183: shown with the income)
 	wasted: number, -- total overflow lost to full storage
 	priorityDemand: number?, -- per second, of `demand`: missile refills, served first (S-66)
 	priorityRatio: number?, -- 0..1: their progress ratio this window (S-66)
@@ -59,11 +60,12 @@ export type Economy = {
 	allyOf: { [number]: number }, -- team → ally team (overflow is shared within it)
 	producers: { number }, -- unit IDs with production / extractor / storage / wind / converter
 	producerSlot: { [number]: number },
-	seed: number, -- match seed: the wind sequence
+	seed: number, -- match seed (no longer used by the wind, S-177)
 	wind: number, -- current wind, 0..1 of a turbine's max (guide 8.5)
 }
 
-Economy.WIND_PERIOD = 450 -- ticks between wind changes (30 s)
+Economy.WIND_DEFAULT = table.freeze({ 0.1, 0.9 }) -- a map's wind range when it sets none (fractions of a turbine's max; S-177)
+Economy.WIND_WAVES = table.freeze({ { 0.3, 173, 0 }, { 0.2, 61, 1.3 } }) -- amplitude, period (s), phase: the wind's fixed shape
 Economy.CONVERTER_RESERVE = 0.5 -- converters only burn power above this share of storage
 
 local function newResource(): Resource
@@ -85,11 +87,20 @@ local function newResource(): Resource
 	}
 end
 
--- Wind for a tick: a stateless hash of (seed, tick // WIND_PERIOD) mapped to
--- 0..1, so it never touches sim.rng and replays exactly.
-function Economy.windAt(seed: number, tick: number): number
-	local h = Hash.u32(Hash.u32(Hash.OFFSET_BASIS, seed), tick // Economy.WIND_PERIOD)
-	return (h % 10001) / 10000
+-- Wind for a tick (S-177, the user: "wind should not be RNG"): a fixed,
+-- slow wave between the map's minimum and maximum (`range` = { min, max },
+-- fractions of a turbine's max; nil = WIND_DEFAULT), the same in every
+-- match on the map, so players can read it and plan on it (the top bar
+-- shows min, max and current). Two sine waves (173 s and 61 s) keep it
+-- from looking mechanical; it never leaves [min, max].
+function Economy.windAt(range: { number }?, tick: number): number
+	local r = range or Economy.WIND_DEFAULT
+	local s = tick / 15
+	local f = 0.5
+	for _, wave in Economy.WIND_WAVES do
+		f += wave[1] * math.sin(2 * math.pi * s / wave[2] + wave[3])
+	end
+	return r[1] + (r[2] - r[1]) * f
 end
 
 function Economy.new(teams: { number }, allyOf: { [number]: number }?, seed: number?): Economy
@@ -114,7 +125,7 @@ function Economy.new(teams: { number }, allyOf: { [number]: number }?, seed: num
 		producers = {},
 		producerSlot = {},
 		seed = seed or 0,
-		wind = Economy.windAt(seed or 0, 0),
+		wind = Economy.windAt(nil, 0),
 	}
 end
 
@@ -150,6 +161,7 @@ local function settleStored(r: Resource, window: number): number
 	r.gathered += r.income * window + r.reclaimed
 	r.drawn += r.spent
 	r.spent = 0
+	r.reclaimRate = r.reclaimed / window
 	r.reclaimed = 0
 	local overflow = 0
 	if stored > r.storage then
@@ -268,7 +280,7 @@ end
 -- Recomputes income and storage from the producers, then settles every
 -- team. `world` positions locate extractors on the deposit layer.
 function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: Layers.Layers?, tick: number?)
-	eco.wind = Economy.windAt(eco.seed, tick or 0)
+	eco.wind = Economy.windAt(layers and layers.wind, tick or 0)
 	for _, team in eco.teams do
 		local acc = eco.accounts[team]
 		acc.supply.income, acc.power.income = acc.supply.bonusIncome or 0, acc.power.bonusIncome or 0

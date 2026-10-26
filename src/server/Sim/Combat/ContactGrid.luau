@@ -91,8 +91,9 @@ function ContactGrid.query(
 		for bx = x0, x1 do
 			local id = head[bz * g.width + bx]
 			while id ~= nil and id ~= 0 do
-				if ally[id] ~= excludeAlly then
-					local dx, dz = posX[id] - x, posZ[id] - z
+				local px = posX[id]
+				if px ~= nil and ally[id] ~= excludeAlly then -- (nil: removed this tick, a death blast's query; S-178)
+					local dx, dz = px - x, posZ[id] - z
 					if dx * dx + dz * dz <= r2 then
 						n += 1
 						out[n] = id

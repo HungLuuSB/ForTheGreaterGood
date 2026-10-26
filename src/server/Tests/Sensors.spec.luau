@@ -234,10 +234,11 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local radar = Spawn.unit(sim, "ord_oracle", 1, -400, 0)
-		local enemy = Spawn.unit(sim, "chs_ravager", 2, 200, 0)
+		local d = (sim.defs.units.ord_oracle.sensors.radar :: number) * 0.8 -- beyond its sight
+		local enemy = Spawn.unit(sim, "chs_ravager", 2, -400 + d, 0)
 		World.setFireState(w, enemy, World.FireState.HOLD_FIRE)
 		step(sim, 2)
-		t.equal(Sensors.level(sim, 1, enemy), L.RADAR, "600 studs away: radar contact")
+		t.equal(Sensors.level(sim, 1, enemy), L.RADAR, `{d} studs away: radar contact`)
 		Combat.queueDamage(sim.combat, radar, 1e6, 0)
 		step(sim, 2)
 		t.equal(Sensors.level(sim, 1, enemy), L.HIDDEN, "radar gone")

@@ -41,13 +41,18 @@ return function(t: RunAll.Context)
 	t.test("artillery leads a target driving across its line of fire", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
+		-- the tank crosses the gun's line of fire half its range away (S-179
+		-- halved artillery range), from out of range to out of range: at full
+		-- speed while the gun can reach it, stopping only beyond it
+		local range = sim.defs.weapons.ord_howitzer.range
+		local laneX, half = -250 + range / 2, range * 1.2
 		local gun = Spawn.unit(sim, "ord_verdict", 1, -250, 0, math.pi / 2)
-		local spotter = Spawn.unit(sim, "ord_herald", 1, 100, 0, math.pi / 2) -- keeps the target in sight
+		local spotter = Spawn.unit(sim, "ord_herald", 1, laneX - 50, 0, math.pi / 2) -- keeps the target in sight
 		World.setFireState(w, spotter, World.FireState.HOLD_FIRE)
-		local tank = Spawn.unit(sim, "chs_ravager", 2, 150, -300, 0)
+		local tank = Spawn.unit(sim, "chs_ravager", 2, laneX, -half, 0)
 		World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 		World.setHealth(w, tank, 1e6)
-		local cell, ox, oz = (sim.map :: any).grid:encode(150, 300)
+		local cell, ox, oz = (sim.map :: any).grid:encode(laneX, half)
 		local wr = Packer.Writer.new()
 		Schema.encodeCommand(wr, { cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = { tank }, cell = cell, offX = ox, offZ = oz })
 		assert(Sim.submit(sim, 2, wr:finish()))
@@ -68,6 +73,7 @@ return function(t: RunAll.Context)
 				end
 			end
 		end
+		print(`    a Verdict on a Ravager crossing {range / 2} studs off: {near} of {shells} shells within 14 studs`)
 		t.expect(shells >= 3, `it fired ({shells})`)
 		t.expect(near >= shells - 1, `{near} of {shells} shells burst within 14 studs of the moving tank`)
 	end)

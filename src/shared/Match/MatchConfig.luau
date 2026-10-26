@@ -10,7 +10,7 @@
 
 local MatchConfig = {}
 
-MatchConfig.CONFIG_VERSION = 1 -- every record carries `version`; another one is refused
+MatchConfig.CONFIG_VERSION = 2 -- every record carries `version`; another one is refused (2: host, startBoxes; S-174)
 MatchConfig.MODES = table.freeze({ "FFA", "TEAM" })
 MatchConfig.WINS = table.freeze({ "COMMAND_ENDS", "ANNIHILATION" })
 MatchConfig.LEVELS = table.freeze({ "easy", "normal", "hard" }) -- AI levels
@@ -66,6 +66,11 @@ export type MatchConfig = {
 	players: { Player },
 	spectators: { { user: number, name: string } },
 	lobby: { placeId: number, jobId: string, roomId: string, roomName: string },
+	host: number, -- the room host's UserId (a player or a spectator): starts the match from the pre-game (S-174)
+	-- each side's spawn box as the host drew it: allyTeam → { x0, z0, x1, z1 },
+	-- fractions of the map from its low-X / low-Z corner (0..1, x0 < x1,
+	-- z0 < z1); absent: the map's own boxes (S-174)
+	startBoxes: { [number]: { number } }?,
 }
 
 local function isInt(v: any, lo: number, hi: number): boolean
@@ -163,6 +168,31 @@ function MatchConfig.validate(c: any): string?
 	if type(l) ~= "table" or type(l.placeId) ~= "number" or type(l.jobId) ~= "string" or type(l.roomId) ~= "string" then
 		return "lobby"
 	end
+	if type(c.host) ~= "number" or not users[c.host] then
+		return "host"
+	end
+	if c.startBoxes ~= nil then
+		if type(c.startBoxes) ~= "table" then
+			return "startBoxes"
+		end
+		local sides: { [number]: boolean } = {}
+		for _, p in c.players do
+			sides[p.allyTeam] = true
+		end
+		for ally, b in c.startBoxes do
+			if not sides[ally] or type(b) ~= "table" or #b ~= 4 then
+				return `startBoxes[{tostring(ally)}]`
+			end
+			for k = 1, 4 do
+				if type(b[k]) ~= "number" or b[k] ~= b[k] or b[k] < 0 or b[k] > 1 then
+					return `startBoxes[{ally}]`
+				end
+			end
+			if b[1] >= b[3] or b[2] >= b[4] then
+				return `startBoxes[{ally}]: empty`
+			end
+		end
+	end
 	return nil
 end
 
@@ -178,6 +208,58 @@ function MatchConfig.users(c: MatchConfig): { number }
 		table.insert(out, s.user)
 	end
 	return out
+end
+
+-- Why a player couldn't get into (or stay in) a match (S-180; the user: "any
+-- failed attempt to connect to the game match must be displayed on the
+-- lobby when return with error code + description"; lobby-D's table,
+-- docs/contracts/match.md section 11). 1xx: the lobby's side; 2xx: the
+-- match server's, sent back in the returning player's teleport data
+-- ({ matchId, error = { code, detail? } }) and, for a whole match, in the
+-- result record's `error`.
+export type ErrorEntry = { title: string, description: string }
+export type MatchError = { code: number, detail: string? }
+local function e(title: string, description: string): ErrorEntry
+	return table.freeze({ title = title, description = description })
+end
+MatchConfig.ERRORS = table.freeze({
+	[101] = e("No match place", "The lobby couldn't find the game's match place."),
+	[102] = e("Bad match setup", "The lobby built a match setup that failed its own check."),
+	[103] = e("No match server", "Roblox didn't give the lobby a server for the match."),
+	[104] = e("Match store unavailable", "The lobby couldn't save the match setup (MemoryStore)."),
+	[105] = e("Room changed", "The room changed while the match was starting."),
+	[106] = e("Nobody to send", "None of the room's players were on this lobby server."),
+	[110] = e("Teleport failed", "Roblox couldn't send the players to the match server."),
+	[111] = e("Match server not found", "The teleport couldn't find the match server."),
+	[112] = e("Match server closed", "The match server shut down before you arrived."),
+	[113] = e("Match server full", "The match server had no room for you."),
+	[114] = e("Teleport not allowed", "Roblox refused the teleport to the match."),
+	[115] = e("Too many teleports", "Roblox is limiting teleports right now."),
+	[116] = e("Already teleporting", "Another teleport was still in progress."),
+	[120] = e("Match server stopped answering", "The match server stopped reporting, so the match was ended."),
+	[121] = e("Match not found", "The running match's details have expired; it can't be rejoined."),
+	[201] = e("No match setup", "The match server found no setup for itself."),
+	[202] = e("Bad match setup", "The match server refused the lobby's match setup."),
+	[203] = e("Version mismatch", "The lobby and the match place are on different versions."),
+	[204] = e("Game version mismatch", "Your game client and the match server are on different versions."),
+	[205] = e("Not in this match", "You aren't one of this match's players or spectators."),
+	[206] = e("Match full", "The match had no free seat for you."),
+	[207] = e("Match already over", "The match ended before you arrived."),
+	[208] = e("Players didn't arrive", "Not everyone reached the match in time, so it didn't start."),
+	[209] = e("Everyone left", "Every player left, so the match was abandoned."),
+	[210] = e("Match server error", "The match server hit an error and ended the match."),
+	[299] = e("Match server problem", "The match server sent you back for a reason it didn't name."),
+} :: { [number]: ErrorEntry })
+MatchConfig.ERROR_DETAIL_MAX = 200 -- characters of `detail` kept
+
+-- An error from outside (teleport data, a result record), cleaned: a listed
+-- code and a short string detail; nil when it isn't one.
+function MatchConfig.cleanError(v: any): MatchError?
+	if type(v) ~= "table" or type(v.code) ~= "number" or MatchConfig.ERRORS[v.code] == nil then
+		return nil
+	end
+	local detail = if type(v.detail) == "string" and #v.detail > 0 then string.sub(v.detail, 1, MatchConfig.ERROR_DETAIL_MAX) else nil
+	return { code = v.code, detail = detail }
 end
 
 MatchConfig.OUTCOMES = table.freeze({ "finished", "draw", "abandoned" })
@@ -198,6 +280,7 @@ export type Result = {
 	endedAt: number,
 	cheatsUsed: boolean,
 	players: { ResultPlayer },
+	error: MatchError?, -- why the match failed (S-180): 201-203, 208-210, or the lobby's 120
 }
 
 -- Checks a results record against its config. Returns nil, or what's wrong.
@@ -234,6 +317,9 @@ function MatchConfig.validateResult(r: any, c: MatchConfig): string?
 				end
 			end
 		end
+	end
+	if r.error ~= nil and MatchConfig.cleanError(r.error) == nil then
+		return "error"
 	end
 	return nil
 end

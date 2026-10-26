@@ -80,7 +80,7 @@ return function(t: RunAll.Context)
 		local brains = { Skirmish.new(sim, 1), Skirmish.new(sim, 2) }
 		-- (fielded at any point: a side may lose them, or the match, later)
 		local seen: { [string]: boolean } = {}
-		run(sim, brains, 13500, true, function()
+		run(sim, brains, 20000, true, function() -- (S-185: was 13,500; the AI rework, F41, revisits these timings)
 			for _, pair in { { 1, "ord_warden" }, { 2, "chs_locust" }, { 2, "chs_shroud" } } do
 				if #owned(sim, pair[1] :: number, pair[2] :: string) > 0 then
 					seen[pair[2] :: string] = true
@@ -132,9 +132,11 @@ return function(t: RunAll.Context)
 		local x, z = brain.homeX + brain.toward * 200, brain.homeZ + 150
 		local gun = Spawn.unit(sim, defId, 1, x, z)
 		World.setFireState(w, gun, World.FireState.HOLD_FIRE)
-		local tank = Spawn.unit(sim, "chs_ravager", 2, x + brain.toward * 120, z)
+		-- well inside the Verdict's kite radius (same spot for the Lancer)
+		local near = sim.defs.weapons.ord_howitzer.range * Skirmish.KITE_RANGE * 0.6
+		local tank = Spawn.unit(sim, "chs_ravager", 2, x + brain.toward * near, z)
 		World.setFireState(w, tank, World.FireState.HOLD_FIRE)
-		local spotter = Spawn.unit(sim, "ord_herald", 1, x + brain.toward * 100, z + 40)
+		local spotter = Spawn.unit(sim, "ord_herald", 1, x + brain.toward * near * 0.8, z + 40)
 		World.setFireState(w, spotter, World.FireState.HOLD_FIRE)
 		run(sim, { brain }, 4, false)
 		t.equal(Sensors.level(sim, 1, tank), Sensors.Level.VISIBLE, "the tank is seen")

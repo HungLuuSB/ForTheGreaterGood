@@ -25,6 +25,9 @@ export type Layers = {
 	terrain: buffer, -- u8 × cellCount: Layers.Terrain type (guide 5.2 terrainType, S-37)
 	starts: { { number } }, -- start positions {x, z} in world studs, player order
 	startBoxes: { { number } }?, -- per start, its spawn box { x0, z0, x1, z1 } (studs); nil = derived (Shared/Match/StartAreas, S-171)
+	sideSplits: { [number]: { { number } } }?, -- side count → each side's start indices, where contiguous blocks would split a side across the map (S-186)
+	deposits: { { number } }?, -- every deposit's 2 × 2 patch: { x, z (its centre, a cell corner), value } (S-184; Layers.expandDeposits)
+	wind: { number }?, -- { min, max }: the map's wind range, fractions of a turbine's max (0..1); nil = the default 0.1..0.9 (S-177)
 }
 
 function Layers.new(grid: Grid.Grid): Layers
@@ -90,6 +93,40 @@ end
 
 function Layers.setTerrain(layers: Layers, index: number, terrainType: number)
 	buffer.writeu8(layers.terrain, index, terrainType)
+end
+
+-- Deposits are 2 × 2 cell patches (S-184, the user's playtest F6). Map
+-- builders place one cell per deposit; this grows each into its patch,
+-- toward the map's centre on each axis, so mirrored and rotated maps stay
+-- symmetric, and lists the patches (`layers.deposits`: centre x, z on the
+-- shared cell corner, and the value). A cell next to another deposit is
+-- left alone. MapRegistry.load runs it once per map.
+function Layers.expandDeposits(layers: Layers)
+	local g = layers.grid
+	local midX, midZ = (g.cellsX - 1) / 2, (g.cellsZ - 1) / 2
+	local seeds = {}
+	for i = 0, g.cellCount - 1 do
+		local v = Layers.getSupply(layers, i)
+		if v > 0 then
+			table.insert(seeds, { i, v })
+		end
+	end
+	local patches = {}
+	for _, seed in seeds do
+		local cx, cz = g:coords(seed[1])
+		local dx = if cx < midX then 1 elseif cx > midX then -1 else 1
+		local dz = if cz < midZ then 1 elseif cz > midZ then -1 else 1
+		for _, d in { { dx, 0 }, { 0, dz }, { dx, dz } } do
+			local nx, nz = cx + d[1], cz + d[2]
+			if g:inBounds(nx, nz) and Layers.getSupply(layers, g:index(nx, nz)) == 0 then
+				Layers.setSupply(layers, g:index(nx, nz), seed[2])
+			end
+		end
+		local x0, z0 = math.min(cx, cx + dx), math.min(cz, cz + dz)
+		local x, z = g:cellCenter(x0, z0)
+		table.insert(patches, { x + 4, z + 4, seed[2] }) -- (half a cell: the shared corner)
+	end
+	layers.deposits = patches
 end
 
 return Layers

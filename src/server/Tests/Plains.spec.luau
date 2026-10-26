@@ -13,14 +13,12 @@ return function(t: RunAll.Context)
 	local g = layers.grid
 	local n = g.cellsX
 
+	-- deposit patches (S-184) whose centre is within r of (x, z)
 	local function depositsNear(x: number, z: number, r: number): number
 		local c = 0
-		for i = 0, g.cellCount - 1 do
-			if Layers.getSupply(layers, i) > 0 then
-				local dx, dz = g:cellCenter(g:coords(i))
-				if (dx - x) ^ 2 + (dz - z) ^ 2 <= r * r then
-					c += 1
-				end
+		for _, d in layers.deposits :: { { number } } do
+			if (d[1] - x) ^ 2 + (d[2] - z) ^ 2 <= r * r then
+				c += 1
 			end
 		end
 		return c
@@ -59,12 +57,7 @@ return function(t: RunAll.Context)
 		for i, s in layers.starts do
 			t.equal(depositsNear(s[1], s[2], 80), 3, `hint {i}`)
 		end
-		local total = 0
-		for i = 0, g.cellCount - 1 do
-			if Layers.getSupply(layers, i) > 0 then
-				total += 1
-			end
-		end
+		local total = #(layers.deposits :: { any })
 		t.expect(total >= 16 * 3 + 60, `{total} deposits`)
 	end)
 
@@ -90,6 +83,33 @@ return function(t: RunAll.Context)
 		for _, id in w.ids do
 			if table.find(sim.defs.unitByIndex[w.defIndex[id]].categories, "COMMANDER") then
 				t.equal(depositsNear(w.posX[id], w.posZ[id], 80), 3, `player {w.owner[id]}'s Commander has three deposits at hand`)
+			end
+		end
+	end)
+
+	t.test("3, 5, 6 and 7 sides: each side's hints sit in one corner group or one half (S-186)", function()
+		local StartAreas = require("@shared/Match/StartAreas")
+		for n = 2, 8 do
+			local allies = {}
+			for a = 1, n do
+				table.insert(allies, a)
+			end
+			local sides = StartAreas.sides(allies, #layers.starts, layers.sideSplits)
+			local used = {}
+			for _, a in sides.allies do
+				local list = sides.startsOf[a]
+				t.expect(#list >= 2, `{n} sides: side {a} has hints`)
+				local west, north = 0, 0
+				for _, i in list do
+					t.expect(not used[i], `{n} sides: hint {i} once`)
+					used[i] = true
+					west += if layers.starts[i][1] < 0 then 1 else 0
+					north += if layers.starts[i][2] > 0 then 1 else 0
+				end
+				t.expect(west == 0 or west == #list, `{n} sides: side {a} on one half (west / east)`)
+				if #list <= 4 then
+					t.expect(north == 0 or north == #list, `{n} sides: side {a} in one corner group`)
+				end
 			end
 		end
 	end)

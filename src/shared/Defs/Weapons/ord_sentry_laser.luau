@@ -1,13 +1,15 @@
 --!strict
 -- Sentry's red laser (S-157, the user: "a simple laser tower that shoot red laser"):
 -- instant shots, modest damage; the T1 basic tower.
+-- S-179, the playtest's balance notes: a T1 defence's damage × 2 (too weak against T1 units)
 return {
 	id = "ord_sentry_laser",
 	type = "HITSCAN",
 	range = 190,
+	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.8,
 	accuracy = 0.3,
-	damage = { LIGHT = 50, ARMORED = 48, STRUCTURE = 30, SHIP = 40, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 100, ARMORED = 96, STRUCTURE = 60, SHIP = 80, AIR = 0, SUB = 0 },
 	aoe = 0,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "ARMORED", "GROUND", "STRUCTURE" },

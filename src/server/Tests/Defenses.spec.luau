@@ -80,10 +80,11 @@ return function(t: RunAll.Context)
 			end
 		end)
 		t.equal(n, 2, "two shots in 14 s: the first once aimed, the next 9 s later")
-		local full = sim.defs.weapons.ord_radiance_beam.damage.ARMORED
+		local beam = sim.defs.weapons.ord_radiance_beam
+		local full = beam.damage.ARMORED * Combat.nearFactor(beam, 600) -- a laser, a little stronger short of full range (S-178)
 		t.expect(afterFirstTick ~= nil and afterFirstTick < full / 10, `a lingering beam: one tick's share first ({afterFirstTick})`)
 		local hit = before - w.health[tank]
-		t.expect(math.abs(hit - 2 * full) < 1, `2 × {full} on an armored tank, each over 2.5 s ({hit})`)
+		t.expect(math.abs(hit - 2 * full) < 0.01 * full, `2 × {full} on an armored tank, each over 2.5 s ({hit})`)
 		t.expect(math.abs((acc.power.drawn - drawn) - 2 * 700) < 1, `700 power a shot ({acc.power.drawn - drawn})`)
 		-- empty stores: no shot
 		local held = 0
@@ -98,7 +99,7 @@ return function(t: RunAll.Context)
 			local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:128" })
 			local w = sim.world
 			local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
-			Spawn.unit(sim, "ord_watchtower", 1, -40, -300) -- radar only: the tank is a blip
+			Spawn.unit(sim, "ord_watchtower", 1, -40, 0) -- radar only (350 since S-179; sight 160): the tank is a blip
 			for i = 1, pinpointers do
 				Spawn.unit(sim, "ord_witness", 1, -200 + i * 30, -460)
 			end
@@ -439,7 +440,8 @@ return function(t: RunAll.Context)
 			local w = sim.world
 			local owner = if string.sub(set[1], 1, 4) == "ord_" then 1 else 2
 			local battery = Spawn.unit(sim, set[1], owner, 0, -400) -- (flat:128 spans ±512)
-			Spawn.unit(sim, set[2], owner, -40, -200) -- radar over both targets
+			local d0 = sim.defs.units[set[1]].maxRange - 40
+			Spawn.unit(sim, set[2], owner, -40, d0 - 600) -- radar over both targets (T1 radar halved, S-179), out of sight of them
 			Spawn.unit(sim, set[5], owner, 40, -200) -- and tracking
 			local d = sim.defs.units[set[1]].maxRange - 40
 			local arty = Spawn.unit(sim, set[3], 3 - owner, 0, d - 400, math.pi)

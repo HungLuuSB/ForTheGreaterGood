@@ -290,7 +290,7 @@ local function ecoRecord(sim: Types.Sim, team: number): Schema.Eco?
 		return {
 			stored = u32(r.stored),
 			storage = u32(r.storage),
-			income = u32(r.income * 10 + 0.5),
+			income = u32((r.income + (r.reclaimRate or 0)) * 10 + 0.5), -- reclaim counts as income (S-183, the user)
 			demand = u32(r.demand * 10 + 0.5),
 			ratio = math.clamp(math.floor(r.ratio * 255), 0, 255),
 		}
@@ -640,6 +640,24 @@ local function pregameEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNe
 	local pg = sim.pregame
 	local PF = Schema.PregameFlag
 	if pg then
+		if not pn.sentBoxes then
+			-- every side's spawn box, once (S-174)
+			pn.sentBoxes = true
+			local boxes = {}
+			for _, a in sim.allyTeams do
+				local b = pg.boxes[a]
+				if b then
+					table.insert(boxes, { allyTeam = a, x0 = math.floor(b[1]), z0 = math.floor(b[2]), x1 = math.ceil(b[3]), z1 = math.ceil(b[4]) })
+				end
+			end
+			table.insert(events, { kind = Schema.EventKind.START_BOXES, boxes = boxes })
+		end
+		local seconds, clockFlags = Pregame.clock(sim)
+		local clock = seconds * 4 + clockFlags
+		if pn.sentClock ~= clock then
+			pn.sentClock = clock
+			table.insert(events, { kind = Schema.EventKind.PICK_CLOCK, seconds = math.min(seconds, 255), clockFlags = clockFlags })
+		end
 		for _, pid in sim.playerOrder do
 			local p = pg.picks[pid]
 			local cell, ox, oz = 0, 0, 0
@@ -647,6 +665,7 @@ local function pregameEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNe
 				cell, ox, oz = g:encode(p[1], p[2])
 			end
 			local flags = (if p then PF.PICKED else 0) + (if pg.ready[pid] then PF.READY else 0) + (if sim.match.ai[pid] then PF.AI else 0)
+				+ (if sim.players[pid].faction == "chaos" then PF.CHAOS else 0) + (if pg.host == pid then PF.HOST else 0)
 			local sig = flags * 2 ^ 32 + cell * 65536 + ox * 256 + oz
 			if pn.sentPregame[pid] ~= sig then
 				pn.sentPregame[pid] = sig
@@ -1305,6 +1324,12 @@ function NetOut.step(sim: Types.Sim)
 			sightEvents(sim, pn, net.sight[ally], events)
 		end
 		pregameEvents(sim, g, pn, ally, events)
+		-- gifts and requests between allies (S-176): the giver's ally team and spectators
+		for _, e in sim.share.events do
+			if ally == SPECTATOR or sim.players[e.from].allyTeam == ally then
+				table.insert(events, { kind = Schema.EventKind.SHARE, player = e.from, toPlayer = e.to, shareKind = e.kind, amount = math.clamp(e.amount, 0, 0xFFFFFFFF) })
+			end
+		end
 		wreckEvents(sim, g, pn, net.wrecks[ally], events)
 		if sensorTick then
 			wreckStateEvents(sim, pn, ally, events)
@@ -1348,9 +1373,20 @@ function NetOut.step(sim: Types.Sim)
 		end
 		outbox.Eco = {}
 		if pn.forceFull or tick % Economy.STEP_TICKS == 0 then
-			-- a player: its own team's account; a spectator: every team's (S-21)
+			-- a player: its own team's account first, then its allies' (S-185,
+			-- the team panel: client-B); a spectator: every team's (S-21)
 			local records: { Schema.Eco } = {}
-			for _, t in (if team ~= 0 then { team } else teamOrder) do
+			local teams = teamOrder
+			if team ~= 0 then
+				teams = { team }
+				local ally = sim.allyOf[team]
+				for _, t in teamOrder do
+					if t ~= team and sim.allyOf[t] == ally then
+						table.insert(teams, t)
+					end
+				end
+			end
+			for _, t in teams do
 				local rec = ecoRecord(sim, t)
 				if rec then
 					table.insert(records, rec)

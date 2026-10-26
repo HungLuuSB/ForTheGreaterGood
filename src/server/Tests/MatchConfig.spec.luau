@@ -9,7 +9,7 @@ local RunAll = require("./RunAll")
 -- team 1, the host (10) and a hard AI on ally team 2.
 local function teamConfig(): any
 	return {
-		version = 1,
+		version = 2,
 		matchId = "m1",
 		createdAt = 1000,
 		seed = 42,
@@ -26,6 +26,7 @@ local function teamConfig(): any
 		},
 		spectators = {},
 		lobby = { placeId = 1, jobId = "job", roomId = "r1", roomName = "Teams room" },
+		host = 10,
 	}
 end
 
@@ -35,6 +36,9 @@ return function(t: RunAll.Context)
 		t.equal(MatchConfig.validate(c), nil)
 		c.spectators = { { user = 30, name = "Cee" } }
 		t.equal(MatchConfig.validate(c), nil)
+		c.host = 30
+		c.startBoxes = { [1] = { 0, 0, 0.3, 1 }, [2] = { 0.7, 0, 1, 1 } }
+		t.equal(MatchConfig.validate(c), nil, "a spectating host; drawn boxes (S-174)")
 		t.deepEqual(MatchConfig.users(c), { 20, 10, 30 })
 		t.equal(#MatchConfig.COLORS, 16) -- 16 players (S-169)
 	end)
@@ -47,8 +51,20 @@ return function(t: RunAll.Context)
 			t.expect(err ~= nil and string.find(err, pattern, 1, true) ~= nil, `expected "{pattern}", got {err}`)
 		end
 		broken(function(c)
-			c.version = 2
+			c.version = 1
 		end, "version")
+		broken(function(c)
+			c.host = 99
+		end, "host")
+		broken(function(c)
+			c.startBoxes = { [3] = { 0, 0, 0.5, 1 } }
+		end, "startBoxes[3]")
+		broken(function(c)
+			c.startBoxes = { [1] = { 0.5, 0, 0.5, 1 } }
+		end, "empty")
+		broken(function(c)
+			c.startBoxes = { [1] = { 0, 0, 1.5, 1 } }
+		end, "startBoxes[1]")
 		broken(function(c)
 			c.players[1].id = 7
 		end, "player 1: id")
@@ -85,10 +101,21 @@ return function(t: RunAll.Context)
 		end, "seed")
 	end)
 
+	t.test("match errors (S-180): every code has a title and a description; outside errors are cleaned", function()
+		for code, entry in MatchConfig.ERRORS do
+			t.expect((code >= 101 and code <= 121) or (code >= 201 and code <= 299), `code {code} in a range`)
+			t.expect(#entry.title > 0 and #entry.description > 0, `{code}: text`)
+		end
+		t.deepEqual(MatchConfig.cleanError({ code = 113 }), { code = 113, detail = nil })
+		t.equal(MatchConfig.cleanError({ code = 999 }), nil, "an unlisted code")
+		t.equal(MatchConfig.cleanError("113"), nil)
+		t.equal(#((MatchConfig.cleanError({ code = 202, detail = string.rep("x", 500) }) :: any).detail), MatchConfig.ERROR_DETAIL_MAX)
+	end)
+
 	t.test("results records are checked against their config", function()
 		local c = teamConfig()
 		local r: any = {
-			version = 1,
+			version = 2,
 			matchId = "m1",
 			outcome = "finished",
 			winner = 2,

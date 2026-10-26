@@ -7,9 +7,12 @@
 --   field  a patch of grass and dirt (structures)
 --   water  open water (ships and water structures; ships at their waterline)
 --   shore  sand running into the water (amphibious units)
+--   underwater  deep water over a sandy seabed, the camera under the
+--          surface: submarines float mid-water, amphibious units drive on
+--          the seabed, ships show their hulls from below
 --   sky    a runway far below (aircraft hover, bobbing)
 -- "auto" picks by the unit (client-B's Core/PortraitStage, as the build
--- menu's portraits do). The camera orbits the unit: it turns by itself
+-- menu's portraits do; submarines and amphibious units go underwater). The camera orbits the unit: it turns by itself
 -- (turntable), the mouse drags it round and the wheel zooms. Compare puts
 -- several units side by side. While the showroom is open the battle
 -- behind the menu is away (Scene.setAway).
@@ -34,14 +37,16 @@ local TEAM_TAG = "TeamColor"
 Showroom.ORDER = Color3.fromRGB(64, 132, 230)
 Showroom.CHAOS = Color3.fromRGB(222, 70, 62)
 
-Showroom.PLACES = { "auto", "pad", "field", "water", "shore", "sky" }
+Showroom.PLACES = { "auto", "pad", "field", "water", "shore", "underwater", "sky" }
 local CENTERS: { [string]: Vector3 } = {
 	pad = ORIGIN,
 	field = ORIGIN + Vector3.new(600, 0, 0),
 	water = ORIGIN + Vector3.new(1200, 0, 0),
 	shore = ORIGIN + Vector3.new(1800, 0, 0),
 	sky = ORIGIN + Vector3.new(2400, 0, 0),
+	underwater = ORIGIN + Vector3.new(3000, 0, 0),
 }
+local DEPTH = 44 -- underwater: the seabed this far below the surface
 
 local folder = Instance.new("Folder")
 folder.Name = "LobbyShowroom"
@@ -152,6 +157,7 @@ end
 
 local function water(c: Vector3, size: Vector3)
 	local t = workspace.Terrain
+	t.WaterTransparency = 0.05 -- the user's choice: water that reads as water, above and below
 	t:FillBlock(CFrame.new(c + Vector3.new(0, -size.Y / 2, 0)), size, Enum.Material.Water)
 	t:FillBlock(CFrame.new(c + Vector3.new(0, -size.Y - 2, 0)), Vector3.new(size.X, 4, size.Z), Enum.Material.Sand)
 end
@@ -184,7 +190,26 @@ local function buildSky(c: Vector3)
 	far(below, Color3.fromRGB(80, 90, 66))
 end
 
-local BUILDERS: { [string]: (Vector3) -> () } = { pad = buildPad, field = buildField, water = buildWater, shore = buildShore, sky = buildSky }
+local function buildUnderwater(c: Vector3)
+	water(c, Vector3.new(520, DEPTH + 4, 520))
+	-- the seabed: flat sand where the units are, rocks and weed around
+	part({ Name = "Seabed", Size = Vector3.new(520, 2, 520), CFrame = CFrame.new(c + Vector3.new(0, -DEPTH - 1, 0)), Material = Enum.Material.Sand, Color = Color3.fromRGB(150, 136, 104) })
+	for _ = 1, 60 do
+		local a, d = rng(0, math.pi * 2), rng(40, 200)
+		local s = rng(2, 9)
+		local weed = math.random() < 0.4
+		part({
+			Name = if weed then "Weed" else "Rock",
+			Shape = if weed then Enum.PartType.Block else Enum.PartType.Ball,
+			Size = if weed then Vector3.new(0.6, s * 1.6, 0.6) else Vector3.new(s * rng(1, 1.8), s, s * rng(1, 1.6)),
+			CFrame = CFrame.new(c + Vector3.new(math.cos(a) * d, -DEPTH + (if weed then s * 0.8 else s * 0.2), math.sin(a) * d)) * CFrame.Angles(rng(-0.2, 0.2), rng(0, 6.28), rng(-0.2, 0.2)),
+			Material = if weed then Enum.Material.Grass else Enum.Material.Rock,
+			Color = if weed then Color3.fromRGB(58, 96, 52) else Color3.fromRGB(88, 92, 90),
+		})
+	end
+end
+
+local BUILDERS: { [string]: (Vector3) -> () } = { pad = buildPad, field = buildField, water = buildWater, shore = buildShore, underwater = buildUnderwater, sky = buildSky }
 
 local function ensurePlace(name: string)
 	if built[name] then
@@ -196,6 +221,9 @@ end
 
 -- The place "auto" picks for a def.
 function Showroom.placeFor(def: any): string
+	if def.moveClass == "SUB" or def.moveClass == "AMPHIB" then
+		return "underwater"
+	end
 	local kind = PortraitStage.kind(def)
 	if kind == "air" then
 		return "sky"
@@ -234,6 +262,11 @@ local function applyLight()
 	if focus then
 		focus.Enabled = not open
 	end
+	-- under the surface the sea's own colour, whatever the light
+	local grade = Lighting:FindFirstChild("LobbyGrade") :: ColorCorrectionEffect?
+	if grade and open and placeNow == "underwater" then
+		grade.TintColor = if lightMode == "dusk" then Color3.fromRGB(150, 205, 225) else Color3.fromRGB(190, 225, 235)
+	end
 end
 
 -- units ---------------------------------------------------------------------
@@ -261,10 +294,24 @@ local function clearUnits()
 	table.clear(shown)
 end
 
+-- The top of the floor dressing a unit stands on, above the place's level:
+-- the pad's disc and marks, the field's dirt patch (their parts sit on the
+-- place's level, so a model at 0 sank into them).
+local FLOOR: { [string]: number } = { pad = 0.11, field = 0.12 }
+
 -- Where a unit's lowest point sits on a place (its base CFrame's
 -- position is the model's bounding box bottom center).
 local function bottomFor(kind: string, size: Vector3, def: any): number
-	if placeNow == "sky" then
+	if placeNow == "underwater" then
+		if def.moveClass == "SUB" then
+			return -DEPTH / 2 - size.Y / 2 -- mid-water
+		elseif kind == "water" then
+			return -size.Y * PortraitStage.WATERLINE -- ships: their hulls from below
+		elseif kind == "air" then
+			return 4
+		end
+		return -DEPTH -- amphibious (and anything else) on the seabed
+	elseif placeNow == "sky" then
 		return 4 -- hovering above the place's level; the ground is far below
 	elseif placeNow == "water" or (placeNow == "shore" and kind ~= "ground") then
 		local line = if def.moveClass == "SUB" then 0.55 else PortraitStage.WATERLINE
@@ -272,7 +319,7 @@ local function bottomFor(kind: string, size: Vector3, def: any): number
 			return -size.Y * line
 		end
 	end
-	return 0
+	return FLOOR[placeNow] or 0
 end
 
 local function layout()
@@ -288,6 +335,7 @@ local function layout()
 	local x = -total / 2
 	local radius = 0
 	local top = 0
+	local low, high = math.huge, -math.huge -- the units' own extent (underwater)
 	for i, s in shown do
 		local mx = x + widths[i] / 2
 		x += widths[i] + GAP
@@ -302,13 +350,20 @@ local function layout()
 			m:PivotTo(m:GetPivot() + delta)
 			s.base = m:GetPivot()
 			top = math.max(top, bottom + size.Y)
+			low = math.min(low, bottom)
+			high = math.max(high, bottom + size.Y)
 		end
 		radius = math.max(radius, s.size.Magnitude / 2)
 	end
 	local span = math.max(total, radius * 2)
 	fitDistance = math.max(14, span / 2 / math.tan(math.rad(FOV / 2)) * 1.5)
-	-- aircraft: their middle; on the ground a little below the top
-	target = center + Vector3.new(0, if placeNow == "sky" then top - (top - 4) / 2 else math.max(2, top * 0.45), 0)
+	-- aircraft: their middle; on the ground a little below the top;
+	-- underwater the middle of what's below the surface
+	if placeNow == "underwater" and low < math.huge then
+		target = center + Vector3.new(0, (low + math.min(high, -2)) / 2, 0)
+	else
+		target = center + Vector3.new(0, if placeNow == "sky" then top - (top - 4) / 2 else math.max(2, top * 0.45), 0)
+	end
 end
 
 local function spawn(s: Shown)
@@ -332,8 +387,12 @@ function Showroom.show(list: { { def: any, color: Color3 } })
 	if #list == 0 then
 		return
 	end
+	local was = placeNow
 	placeNow = if place == "auto" then Showroom.placeFor(list[1].def) else place
 	ensurePlace(placeNow)
+	if open and (was == "underwater") ~= (placeNow == "underwater") then
+		applyLight() -- in or out of the sea's tint
+	end
 	for _, item in list do
 		MeshModels.want(item.def.id, 1000)
 		local s: Shown = { def = item.def, color = item.color, model = nil, base = CFrame.new(), size = Vector3.one * 8, kind = PortraitStage.kind(item.def) }
@@ -341,7 +400,7 @@ function Showroom.show(list: { { def: any, color: Color3 } })
 		spawn(s)
 	end
 	layout()
-	pitch = if placeNow == "sky" then 0.12 else 0.32
+	pitch = if placeNow == "sky" or placeNow == "underwater" then 0.12 else 0.32
 end
 
 function Showroom.setPlace(name: string)
@@ -395,7 +454,8 @@ function Showroom.setRegion(g: GuiObject)
 			local d = p - lastMouse
 			lastMouse = p
 			yaw -= d.X * 0.008
-			pitch = math.clamp(pitch + d.Y * 0.006, -0.05, 1.2)
+			-- underwater the camera may look up at the surface from below
+			pitch = math.clamp(pitch + d.Y * 0.006, if placeNow == "underwater" then -0.7 else -0.05, 1.2)
 			idleSince = os.clock()
 		end
 	end)
@@ -425,7 +485,12 @@ local function step(dt: number)
 	cam.FieldOfView = FOV
 	local dist = fitDistance * zoom
 	local offset = Vector3.new(math.sin(yaw) * math.cos(pitch), math.sin(pitch), -math.cos(yaw) * math.cos(pitch)) * dist
-	local cf = CFrame.lookAt(target + offset, target)
+	local eye = target + offset
+	if placeNow == "underwater" then
+		-- stay under the surface, however far out the wheel zooms
+		eye = Vector3.new(eye.X, math.min(eye.Y, CENTERS.underwater.Y - 2), eye.Z)
+	end
+	local cf = CFrame.lookAt(eye, target)
 	-- slide the camera so the unit sits in the middle of the free area
 	local r = region
 	local vp = cam.ViewportSize

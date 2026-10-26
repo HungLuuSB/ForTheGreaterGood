@@ -42,7 +42,7 @@ local function aiStart(seed: number): (Sim.Sim, Skirmish.Brain)
 end
 
 return function(t: RunAll.Context)
-	-- A Chaos mortar (range 400) and a Chaos radar; an Order Lancer just
+	-- A Chaos mortar and a Chaos radar; an Order Lancer just
 	-- beyond the old candidate radius (range + largest collision radius,
 	-- measured on true positions). When the radar blip wobbles into range,
 	-- the team believes it is in range, so the mortar fires.
@@ -51,8 +51,9 @@ return function(t: RunAll.Context)
 		local w = sim.world
 		local range = sim.defs.weapons.chs_mortar.range
 		local mortar = Spawn.unit(sim, "chs_hellmouth", 2, 200, 0, -math.pi / 2)
-		Spawn.unit(sim, "chs_watcher", 2, 260, 120)
 		local d = range + sim.combat.maxRadius + 4
+		-- the radar halfway out: its radar covers the tank, its sight doesn't
+		Spawn.unit(sim, "chs_watcher", 2, 200 - d / 2, 120)
 		local tank = Spawn.unit(sim, "ord_lancer", 1, 200 - d, 0)
 		w.fireState[tank] = World.FireState.HOLD_FIRE
 		local shots, inRangeTicks = 0, 0
@@ -153,7 +154,7 @@ return function(t: RunAll.Context)
 		w.fireState[tank] = World.FireState.HOLD_FIRE
 		local tankSpotter = Spawn.unit(sim, "ord_lancer", 1, hx + dir * 300, hz + 60)
 		w.fireState[tankSpotter] = World.FireState.HOLD_FIRE
-		Spawn.unit(sim, "ord_watchtower", 1, hx, hz + 150) -- radar 650, sight 160
+		Spawn.unit(sim, "ord_watchtower", 1, hx, hz + 150) -- 250 studs from the generator: inside its radar, beyond its sight
 		steps(sim, 4)
 		t.equal(Sensors.level(sim, 1, tank), L.VISIBLE, "the tank is seen")
 		t.equal(Sensors.level(sim, 1, gen), L.RADAR, "the generator is a radar blip")

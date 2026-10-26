@@ -267,6 +267,16 @@ local function fire(
 			ey = Combat.groundHeight(c, ex, ez)
 		end
 	end
+	if weapon.beamDuration and weapon.fullLength and weapon.pierce then
+		-- a full-length hit-ray (S-181): on along the aim to the weapon's range
+		local dx, dz = ex - w.posX[id], ez - w.posZ[id]
+		local d = math.sqrt(dx * dx + dz * dz)
+		if d > 1e-6 and d < weapon.range then
+			local k = weapon.range / d
+			ex, ez = w.posX[id] + dx * k, w.posZ[id] + dz * k
+			ey = Combat.groundHeight(c, ex, ez)
+		end
+	end
 	if weapon.beamDuration then
 		-- a lingering beam (S-113 .. S-123): its full shot is kept, the first
 		-- up enemy dome on its line ends it there (hit = false, the dome
@@ -317,14 +327,15 @@ local function fire(
 		end
 	end
 	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
+	local near = Combat.nearFactor(weapon, dist) -- lasers hit harder up close (S-178)
 	if hit and scale ~= nil then
 		-- a ramping weapon (S-157): its target only, at the ramp's share
 		c.stats.hits += 1
 		local tp = c.profiles[w.defIndex[target]]
-		Combat.queueDamage(c, target, weapon.damage[Combat.armorOf(w, target, tp)] * scale, id, w.owner[id])
+		Combat.queueDamage(c, target, weapon.damage[Combat.armorOf(w, target, tp)] * scale * near, id, w.owner[id])
 	elseif hit then
 		c.stats.hits += 1
-		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target)
+		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target, nil, near)
 	elseif (weapon.aoe or 0) > 0 then
 		-- a miss still explodes on the ground beyond/beside the target
 		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], 0)
@@ -352,6 +363,9 @@ local function rayShare(sim: Types.Sim, b: Combat.Beam, sx: number, sz: number, 
 			local px, pz = sx + dx * t - w.posX[u], sz + dz * t - w.posZ[u]
 			if px * px + pz * pz <= tp.radius * tp.radius then
 				local amount = (weapon.damage[Combat.armorOf(w, u, tp)] or 0) / b.total
+				if weapon.closeDamage then
+					amount *= Combat.nearFactor(weapon, math.sqrt((w.posX[u] - w.posX[b.shooter]) ^ 2 + (w.posZ[u] - w.posZ[b.shooter]) ^ 2))
+				end
 				Combat.queueDamage(c, u, amount, b.shooter, w.owner[b.shooter])
 			end
 		end
@@ -470,6 +484,9 @@ local function beamTick(sim: Types.Sim, b: Combat.Beam): boolean
 		if u ~= 0 then
 			local tp = c.profiles[w.defIndex[u]]
 			local amount = (weapon.damage[Combat.armorOf(w, u, tp)] or 0) / b.total
+			if weapon.closeDamage then
+				amount *= Combat.nearFactor(weapon, math.sqrt((w.posX[u] - w.posX[id]) ^ 2 + (w.posZ[u] - w.posZ[id]) ^ 2))
+			end
 			Combat.queueDamage(c, u, amount, id, w.owner[id])
 		end
 	end
@@ -687,20 +704,25 @@ return function(sim: Types.Sim)
 			if ramp then
 				local on = w.wRampTarget[key] or 0
 				if target ~= on then
+					-- the ramp clock starts at minus the pause, so time spent in
+					-- the pause doesn't count toward the new ramp (S-185: a new
+					-- target can be found during the pause now)
+					local start = math.min(w.wRampTime[key] or 0, 0)
 					if on ~= 0 then
-						local f = min((w.wRampTime[key] or 0) / ramp.seconds, 1)
+						local f = min(max(w.wRampTime[key] or 0, 0) / ramp.seconds, 1)
 						local pause = ramp.cooldown[1] + (ramp.cooldown[2] - ramp.cooldown[1]) * f
 						if reload < pause then
 							reload = pause
 							w.wReload[key] = pause
 						end
+						start = -pause
 					end
 					w.wRampTarget[key] = target
-					w.wRampTime[key] = 0
+					w.wRampTime[key] = start
 				elseif canFire and target ~= 0 then
 					w.wRampTime[key] = min((w.wRampTime[key] or 0) + DT, ramp.seconds)
 				end
-				scale = (ramp.from + (ramp.to - ramp.from) * (w.wRampTime[key] or 0) / ramp.seconds) / ramp.to
+				scale = (ramp.from + (ramp.to - ramp.from) * max(w.wRampTime[key] or 0, 0) / ramp.seconds) / ramp.to
 			end
 
 			-- the rest of a salvo (S-69): `salvo.count` shots, `salvo.delay`
@@ -710,7 +732,7 @@ return function(sim: Types.Sim)
 			if salvoLeft ~= nil and salvoLeft > 0 then
 				local wait = w.wSalvoWait[key] - DT
 				w.wSalvoWait[key] = wait
-				if not canFire then
+				if not canFire and weapon.type ~= "BOMB" then -- a carpet keeps falling along the heading (S-178)
 					w.wSalvo[key] = 0
 				elseif wait <= 1e-9 then
 					w.wSalvo[key] = salvoLeft - 1

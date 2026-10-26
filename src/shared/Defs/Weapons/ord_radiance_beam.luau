@@ -9,6 +9,7 @@ return {
 	id = "ord_radiance_beam",
 	type = "BEAM",
 	range = 650,
+	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 9,
 	accuracy = 0,
 	damage = { LIGHT = 3000, ARMORED = 3000, STRUCTURE = 2300, SHIP = 3000, AIR = 0, SUB = 0 }, -- over the whole beam (S-113)

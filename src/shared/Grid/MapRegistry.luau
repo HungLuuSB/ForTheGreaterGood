@@ -95,7 +95,18 @@ function MapRegistry.info(mapId: string): MapGen.Info?
 end
 
 -- Layers for a map ID, nil for "none". Errors on an unknown or malformed ID.
+local loadRaw: (string) -> Layers.Layers?
+
+-- The map's layers, its deposits grown into 2 × 2 patches (S-184).
 function MapRegistry.load(mapId: string): Layers.Layers?
+	local layers = loadRaw(mapId)
+	if layers then
+		Layers.expandDeposits(layers)
+	end
+	return layers
+end
+
+function loadRaw(mapId: string): Layers.Layers?
 	if mapId == "none" then
 		return nil
 	end
@@ -163,7 +174,7 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 	local skirmishCells = string.match(mapId, "^skirmish:(%d+)$")
 	if skirmishCells then
 		local n = tonumber(skirmishCells) :: number
-		local layers = MapRegistry.load(`start:{n}`) :: Layers.Layers
+		local layers = loadRaw(`start:{n}`) :: Layers.Layers
 		local g = layers.grid
 		local mid = n // 2
 		for _, side in { -1, 1 } do

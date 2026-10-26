@@ -6,15 +6,17 @@
 -- table is the full 50). Leaving a target pauses it 0.1 s, up to 0.5 s from
 -- full intensity. The client draws the beam's width and brightness from the
 -- ramp, timed from how long it has fired at one target.
+-- S-179, the playtest's balance notes: a T1 defence's damage × 2 (too weak against T1 units)
 return {
 	id = "ord_beamer_beam",
 	type = "HITSCAN",
 	range = 220,
+	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.2,
 	accuracy = 0,
-	damage = { LIGHT = 50, ARMORED = 50, STRUCTURE = 40, SHIP = 45, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 100, ARMORED = 100, STRUCTURE = 80, SHIP = 91, AIR = 0, SUB = 0 },
 	aoe = 0,
-	ramp = { from = 10, to = 50, seconds = 4, cooldown = { 0.1, 0.5 } },
+	ramp = { from = 20, to = 100, seconds = 4, cooldown = { 0.1, 0.5 } },
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "ARMORED", "GROUND", "STRUCTURE" },
 	turret = { yawRate = 90, pitchRate = 60, tolerance = 1, minPitch = -60, maxPitch = 60, arc = 360 },

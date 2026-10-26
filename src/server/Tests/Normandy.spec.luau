@@ -74,6 +74,7 @@ return function(t: RunAll.Context)
 				end
 			end
 		end
+		count, value = count / 4, value / 4 -- 2 × 2 patches (S-184)
 		t.equal(count, 30, "30 deposits: 14 a side and a rich pair in the middle")
 		t.equal(value, 104, "worth 104 in all")
 		t.expect(onField, "every deposit on an open field cell")
@@ -88,7 +89,7 @@ return function(t: RunAll.Context)
 				end
 			end
 		end
-		t.equal(west, 8, "8 behind the west river: home and rear")
+		t.equal(west / 4, 8, "8 behind the west river: home and rear")
 	end)
 
 	t.test("the bluffs, river, hedges and houses stop land units (Commanders climb hedges); draws, bridges and gaps let them through", function()

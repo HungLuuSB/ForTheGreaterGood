@@ -68,6 +68,7 @@ return function(t: RunAll.Context)
 				t.deepEqual({ g:cellAt(layers.starts[k][1], layers.starts[k][2]) }, { math.floor(tx), math.floor(tz) }, `{mapId}: start {k}`)
 			end
 			local again = MapGen.generate(MapRegistry.genOptions(mapId) :: MapGen.Options)
+			Layers.expandDeposits(again) -- as MapRegistry.load does (S-184)
 			t.expect(
 				buffer.tostring(again.height) == buffer.tostring(layers.height) and buffer.tostring(again.waterDepth) == buffer.tostring(layers.waterDepth) and buffer.tostring(again.supply) == buffer.tostring(layers.supply),
 				`{mapId}: the same options give byte-identical layers`

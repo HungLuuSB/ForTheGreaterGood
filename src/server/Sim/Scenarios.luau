@@ -6,19 +6,20 @@
 local Nav = require("./Nav")
 local Spawn = require("./Spawn")
 local Types = require("./Types")
+local World = require("./World")
 
 local Scenarios: { [string]: (Types.Sim) -> () } = {}
 
 -- No units. Used by tests that build their own world.
 Scenarios.empty = function(_sim: Types.Sim) end
 
--- Ten tanks per player scattered over a 512 × 512 stud area: Order for odd
--- teams, Chaos for even teams. Headless test setup until real starts exist.
+-- Ten tanks per player scattered over a 512 × 512 stud area, of the
+-- player's faction (S-174; by default Order for odd teams, Chaos for even). Headless test setup until real starts exist.
 Scenarios.skirmish_test = function(sim: Types.Sim)
 	local defs = sim.defs
 	for _, playerId in sim.playerOrder do
 		local player = sim.players[playerId]
-		local defId = if player.team % 2 == 1 then "ord_lancer" else "chs_ravager"
+		local defId = if player.faction == "order" then "ord_lancer" else "chs_ravager"
 		for _ = 1, 10 do
 			local x = sim.rng:nextNumber(-256, 256)
 			local z = sim.rng:nextNumber(-256, 256)
@@ -70,8 +71,8 @@ Scenarios.duel_test = function(sim: Types.Sim)
 end
 
 -- Match start (guide 16.3): each player's Command Vehicle at its map start
--- position (player order), Order for odd teams and Chaos for even teams,
--- facing the map center. Needs a map with start positions.
+-- position (player order), of the player's faction (S-174), facing the map
+-- center. Needs a map with start positions.
 -- With chosen starts (the pre-game, S-169) each Commander stands on its
 -- player's pick (`sim.startPositions`), facing the map's centre.
 Scenarios.standard_start = function(sim: Types.Sim)
@@ -82,7 +83,7 @@ Scenarios.standard_start = function(sim: Types.Sim)
 	end
 	for i, playerId in sim.playerOrder do
 		local player = sim.players[playerId]
-		local defId = if player.team % 2 == 1 then "ord_sovereign" else "chs_warlord"
+		local defId = if player.faction == "order" then "ord_sovereign" else "chs_warlord"
 		if chosen then
 			local p = chosen[playerId]
 			local g = map.grid
@@ -108,7 +109,12 @@ Scenarios.ew_test = function(sim: Types.Sim)
 	Spawn.unit(sim, "ord_aegis", a, -450, 0)
 	Spawn.unit(sim, "ord_lancer", a, 100, 150, math.pi)
 	Spawn.unit(sim, "ord_generator", a, -450, 200)
-	Spawn.unit(sim, "ord_guardian", a, -250, -250)
+	-- the helicopter holds its fire and is tough, so the four IR towers keep
+	-- launching and its flares get to beat one (S-178 made it turn 1.5x as
+	-- fast and its rockets reach half as far: it used to win the duel first)
+	local heli = Spawn.unit(sim, "ord_guardian", a, -250, -250)
+	sim.world.fireState[heli] = World.FireState.HOLD_FIRE
+	World.setHealth(sim.world, heli, sim.world.health[heli] * 10)
 	Spawn.unit(sim, "chs_wasp", b, 100, 0)
 	Spawn.unit(sim, "chs_shroud", b, 120, -40)
 	for i = 0, 3 do

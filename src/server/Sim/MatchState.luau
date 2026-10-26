@@ -20,6 +20,8 @@ export type Config = {
 	friendlyFire: boolean?, -- blasts hurt allies too; default true (guide 10.6, S-73)
 	cheats: boolean?, -- cheat / test commands allowed; default off (S-102)
 	startMode: ("fixed" | "choose")?, -- "choose": players pick their starts in a pre-game (S-169); default fixed
+	host: number?, -- the player who starts the match from the pre-game (START); nil: it starts once everyone is ready (S-174)
+	startBoxes: { [number]: { number } }?, -- ally team → its spawn box { x0, z0, x1, z1 } as fractions of the map (0..1, west/south = 0), set in the lobby; default the map's (S-174)
 }
 
 export type MatchState = {
@@ -32,6 +34,7 @@ export type MatchState = {
 	commanders: { [number]: number }, -- player → owned COMMANDER units
 	eliminated: { [number]: number }, -- player → tick eliminated
 	doomed: { number }, -- eliminated players' units still to self-destruct: id, gen, id, gen... (S-144)
+	quiet: { [number]: boolean }, -- units self-destructing this tick: no death blast (S-178: chains would break the per-tick budget, S-164)
 	over: boolean,
 	winner: number, -- ally team that won; 0 while running or when nobody is left
 	endTick: number,
@@ -49,6 +52,7 @@ function MatchState.new(config: Config?, unitCap: number): MatchState
 		commanders = {},
 		eliminated = {},
 		doomed = {},
+		quiet = {},
 		over = false,
 		winner = 0,
 		endTick = 0,

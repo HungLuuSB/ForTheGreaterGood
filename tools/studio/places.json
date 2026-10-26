@@ -1,0 +1,31 @@
+{
+  "places": [
+    {
+      "name": "match",
+      "studio": "FTGG Match (Open from Roblox: FTGG Playtest > FTGG Match, place 123800718230540)",
+      "folder": "../FTGG-client",
+      "convert": "lune run serve",
+      "convertOut": "build/serve/src",
+      "project": "serve.project.json",
+      "port": 34872
+    },
+    {
+      "name": "lobby",
+      "studio": "FTGG Lobby (Open from Roblox: FTGG Playtest > FTGG Testplace, place 109045403486391)",
+      "folder": "../FTGG-lobby",
+      "convert": "lune run src/lobby/tools/sync serve",
+      "convertOut": "build/lobby/src",
+      "project": "lobby.project.json",
+      "port": 34874
+    },
+    {
+      "name": "art",
+      "studio": "FTGG Art",
+      "folder": "../FTGG-models",
+      "convert": "lune run serve",
+      "convertOut": "build/serve/src",
+      "project": "serve.project.json",
+      "port": 34873
+    }
+  ]
+}

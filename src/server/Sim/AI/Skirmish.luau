@@ -439,7 +439,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 	local base = Skirmish.LEVELS[levelName]
 	assert(base, `Skirmish.new: unknown level {levelName}`)
 	local p = sim.players[player]
-	local cfg = Skirmish.styled(base, if p.team % 2 == 1 then "ord_" else "chs_", levelName) -- S-76
+	local cfg = Skirmish.styled(base, if p.faction == "order" then "ord_" else "chs_", levelName) -- S-76
 	local map = sim.map :: Passability.PassMap
 	local layers = map.layers
 	local w = sim.world
@@ -470,9 +470,11 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		end
 	end
 	local deposits = {}
-	for i = 0, g.cellCount - 1 do
-		if Layers.getSupply(layers, i) > 0 then
-			local x, z = g:cellCenter(g:coords(i))
+	for _, patch in layers.deposits or {} do
+		-- each 2 × 2 patch once, by its min-corner cell (S-184)
+		local i = g:index(g:cellAt(patch[1] - 4, patch[2] - 4))
+		do
+			local x, z = patch[1], patch[2]
 			local own = math.sqrt((x - homeX) ^ 2 + (z - homeZ) ^ 2)
 			local mine = true
 			for _, s in enemyStarts do
@@ -492,6 +494,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 	table.sort(deposits, function(a, b)
 		local ax, az = g:cellCenter(g:coords(a))
 		local bx, bz = g:cellCenter(g:coords(b))
+		ax, az, bx, bz = ax + 4, az + 4, bx + 4, bz + 4 -- the patches' centres
 		local da, db = (ax - homeX) ^ 2 + (az - homeZ) ^ 2, (bx - homeX) ^ 2 + (bz - homeZ) ^ 2
 		if da ~= db then
 			return da < db
@@ -525,7 +528,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		player = player,
 		team = p.team,
 		ally = p.allyTeam :: number,
-		prefix = if p.team % 2 == 1 then "ord_" else "chs_",
+		prefix = if p.faction == "order" then "ord_" else "chs_",
 		rng = Prng.new((sim.seed * 31 + player * 7919) % 4294967296),
 		homeX = homeX,
 		homeZ = homeZ,
@@ -762,14 +765,19 @@ end
 -- (contested ones without an escort, S-97).
 -- With `builder`, only deposits it can reach (S-161: on Twin Lakes builders
 -- stood still for 20 s before deposits their move class can't get to).
+-- The centre of the deposit patch whose min-corner cell is `cell` (S-184).
+function Skirmish.depositPoint(g: any, cell: number): (number, number)
+	local x, z = g:cellCenter(g:coords(cell))
+	return x + 4, z + 4
+end
+
 function Skirmish.freeDeposit(brain: Brain, accept: ((number, number, number) -> boolean)?, builder: number?): number?
 	local sim = brain.sim
 	local pm = sim.map :: Passability.PassMap
 	local def = sim.defs.units[faction(brain, "extractor", "extractor")]
 	for _, cell in brain.deposits do
 		if (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick then
-			local x, z = pm.grid:cellCenter(pm.grid:coords(cell))
-			x += brain.toward * SNAP_NUDGE -- (a 2×2 extractor's snap ties at a cell centre, S-104: mirror it)
+			local x, z = Skirmish.depositPoint(pm.grid, cell)
 			local ok, _, x0, z0 = Placement.check(sim, def, x, z, nil, brain.ally)
 			if ok and (accept == nil or accept(cell, x, z)) and (builder == nil or reachable(sim, builder, def.footprint, x0, z0)) then
 				return cell
@@ -1390,11 +1398,7 @@ local function think(brain: Brain)
 		end
 		if cell then
 			local g = (sim.map :: Passability.PassMap).grid
-			local x, z = g:cellCenter(g:coords(cell))
-			-- an even footprint (the 2×2 T1 extractor, S-104) centred on a cell
-			-- is a snap tie, which rounds toward +x for everyone; nudged toward
-			-- the enemy it rounds the mirror way for mirrored players (as S-31)
-			x += brain.toward * SNAP_NUDGE
+			local x, z = Skirmish.depositPoint(g, cell) -- the patch's centre: the 2 × 2 extractor sits exactly on it (S-184)
 			-- the Command Vehicle only takes deposits near home
 			local far = (x - brain.homeX) ^ 2 + (z - brain.homeZ) ^ 2 >= Skirmish.HOME_RADIUS ^ 2
 			if not isCommander or not far then
@@ -1444,18 +1448,13 @@ local function think(brain: Brain)
 	local advDef = sim.defs.units[adv]
 	local layers = (sim.map :: Passability.PassMap).layers
 	local lg = layers.grid
-	-- the deposit cell under a T1 extractor: where its upgrade is centred
+	-- where a T1 extractor's upgrade goes: centred on it, over its patch (S-184)
 	local function depositOf(t1: number): (number?, number?)
 		local d = unitDef(sim, t1)
-		local x0, z0 = PlacementRules.snap(lg, d.footprint, w.posX[t1], w.posZ[t1])
-		for gz = z0, z0 + d.footprint - 1 do
-			for gx = x0, x0 + d.footprint - 1 do
-				if lg:inBounds(gx, gz) and Layers.getSupply(layers, lg:index(gx, gz)) > 0 then
-					return lg:cellCenter(gx, gz)
-				end
-			end
+		if PlacementRules.supplyUnder(layers, d.footprint, w.posX[t1], w.posZ[t1]) <= 0 then
+			return nil, nil
 		end
-		return nil, nil
+		return w.posX[t1], w.posZ[t1]
 	end
 	-- the safest upgrade: nearest home, no known enemy near, nobody sent there lately
 	local function nextUpgrade(): (number?, number?)
@@ -2021,17 +2020,31 @@ function Skirmish.tick(brain: Brain)
 	local b = brain :: any
 	if b.pending then
 		if sim.pregame then
-			-- the pre-game (S-169, S-171): its best spot (a hint first), then ready; as
-			-- commands, so a replay picks the same
-			if sim.pregame.picks[brain.player] == nil and not b.picked then
-				local x, z = Pregame.bestSpot(sim, brain.player)
-				if x and z then
-					local g = (sim.map :: Passability.PassMap).grid
-					local cell, ox, oz = g:encode(x, z)
-					submit(sim, brain.player, { cmdType = CT.START_POS, flags = 0, unitIds = {}, cell = cell, offX = ox, offZ = oz })
+			-- the pre-game (S-169, S-171, S-174): once a human has picked (or
+			-- there are none, or the pick time is over), its best spot of those
+			-- left (a hint first), then ready; as commands, so a replay picks
+			-- the same
+			local pg = sim.pregame
+			if not b.picked then
+				local humans, humanPicked = false, false
+				for _, pid in sim.playerOrder do
+					if not sim.match.ai[pid] then
+						humans = true
+						humanPicked = humanPicked or pg.picks[pid] ~= nil
+					end
 				end
-				submit(sim, brain.player, { cmdType = CT.READY, flags = 0, unitIds = {}, value = 1 })
-				b.picked = true
+				if not humans or humanPicked or pg.autoPicked or pg.picks[brain.player] ~= nil then
+					if pg.picks[brain.player] == nil then
+						local x, z = Pregame.bestSpot(sim, brain.player)
+						if x and z then
+							local g = (sim.map :: Passability.PassMap).grid
+							local cell, ox, oz = g:encode(x, z)
+							submit(sim, brain.player, { cmdType = CT.START_POS, flags = 0, unitIds = {}, cell = cell, offX = ox, offZ = oz })
+						end
+					end
+					submit(sim, brain.player, { cmdType = CT.READY, flags = 0, unitIds = {}, value = 1 })
+					b.picked = true
+				end
 			end
 			return
 		end
