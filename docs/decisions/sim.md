@@ -2638,3 +2638,11 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Change:** `SensorsState.losDirty`, per ally team and sensor row, the first and last column whose sight may have changed since NetOut's last diff (u16 pairs, not hashed). Sensors marks the bounding square of every sight stamp and unstamp, both circles of a one-cell shift, and the whole map for the reveal cheat. `NetOut.updateSight` reads only marked spans and clears them; the first diff still reads the whole map. The output (changes in cell order) is the same as before.
 - **Measured in Lune:** the empty preview on The Lakelands goes from 1.50 to 0.03 ms per tick. Four hard AIs on The Lakelands for 4 minutes: NetOut 0.548 → 0.155 ms per tick on average (peak 4.31 → 3.67).
 - **Tests:** `NetOut.spec`: two hard AIs on Coastline for 90 s, with the reveal cheat on and off: every sensor tick, every cell of both teams' diffed sight equals the sensor map. Marking one cell too few around a shift fails it, and fails the existing fog test.
+
+## S-192 — Mesh terrain for every map's ground, not Roblox terrain (the user) (2026-10-26)
+
+- **Asked:** "From now on, maybe switch to mesh terrain instead of Roblox terrain."
+- **Decision:** each map's ground is drawn from the models stream's baked mesh tiles (C-167, `Render/MeshGround`). A new named map ships only with an approved bake. Roblox Terrain voxels are only a fallback for maps without an approved bake, and for water until the client replaces it. Recorded in the guide, section 5.4.
+- **State at the decision:** baked grounds for Ridgeline, Coastline, Twin Lakes, Crossroads, Normandy, The Canyon (4-stud, in review) and The Lakelands (8-stud, approved); none for The Plains. Random `mapgen:` maps and test maps have no bake.
+- **Sim:** nothing changes. The sim's heights come from the map layers; the client stands units on the drawn surface (C-235).
+- **Asks:** models-C bakes The Plains, and bakes every new map as part of authoring it. Client-B makes mesh ground the default path, and looks into mesh water and mesh ground for unbaked maps (generated from the layers at load).
