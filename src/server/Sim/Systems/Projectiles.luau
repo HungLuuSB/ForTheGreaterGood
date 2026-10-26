@@ -257,7 +257,9 @@ return function(sim: Types.Sim)
 						sim.cheats.killing[u] = true -- (through god mode)
 					end
 					Combat.queueDamage(c, u, amount, if World.isRef(w, owner, c.pOwnerGen[id]) then owner else 0, c.pPlayer[id])
-					Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = u, other = id, x = w.posX[u], y = y1, z = w.posZ[u] })
+					-- (not tied to the bolt: an IMPACT with its ID would end it for
+					-- the clients, and NetOut would announce it again; client-B)
+					Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = u, other = 0, x = w.posX[u], y = y1, z = w.posZ[u] })
 					c.stats.hits += 1
 				end
 			end

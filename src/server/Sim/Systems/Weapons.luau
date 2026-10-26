@@ -622,6 +622,8 @@ return function(sim: Types.Sim)
 					pitch = 0 -- dropped, not aimed
 				elseif weapon.apex then
 					pitch = 0 -- lofted: fire() works out the launch (S-48)
+				elseif weapon.bolt then
+					pitch = 0 -- the D-Gun's bolt rides the ground: aimed in yaw only (S-194)
 				else
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy, weapon.highArc)
 				end
@@ -771,7 +773,7 @@ return function(sim: Types.Sim)
 				local onTarget = weapon.launch == "vertical" or (abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol)
 				-- line of fire (S-32): terrain in the way, no shot; Targeting
 				-- looks for a clear target, attack-moves go on (Orders)
-				if onTarget and kx ~= nil and kz ~= nil and not weapon.apex then -- lofted shots clear the terrain (S-48)
+				if onTarget and kx ~= nil and kz ~= nil and not weapon.apex and not weapon.bolt then -- lofted shots clear the terrain (S-48); a bolt follows it (S-194)
 					local clear = Combat.unitLineOfFire(c, w, id, weapon, target, defIndex, kx, kz)
 					w.wBlocked[key] = if clear then 0 else 1
 					onTarget = clear

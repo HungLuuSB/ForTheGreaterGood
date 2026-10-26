@@ -105,6 +105,35 @@ return function(t: RunAll.Context)
 		t.equal(Air.RETREAT_DEFAULT, Schema.RetreatAt.AT_30, "new aircraft retreat at 30%")
 	end)
 
+	t.test("the D-Gun fires at a point up a slope; only the bolt's end is an IMPACT with its ID (client-B's findings)", function()
+		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "map:supreme_strait" })
+		local w = sim.world
+		local com = Spawn.unit(sim, "ord_sovereign", 1, -1076, 52, math.pi / 2)
+		local tank = Spawn.unit(sim, "chs_juggernaut", 2, -1020, 52)
+		World.setFireState(w, com, World.FireState.HOLD_FIRE)
+		World.setFireState(w, tank, World.FireState.HOLD_FIRE)
+		local acc = sim.eco.accounts[1]
+		acc.power.stored = acc.power.storage
+		local g = (sim.map :: any).grid
+		local cell, ox, oz = g:encode(-980, 52)
+		submit(sim, 1, { cmdType = CT.DGUN, flags = 0, unitIds = { com }, cell = cell, offX = ox, offZ = oz })
+		local bolt, ends = nil, 0
+		for _ = 1, 15 * 6 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == com then
+					bolt = e.other
+				elseif e.kind == "IMPACT" and bolt ~= nil and e.other == bolt then
+					ends += 1
+				end
+			end
+		end
+		t.expect(bolt ~= nil or sim.orders.dgunX[com] == nil, "it fired")
+		t.equal(sim.orders.dgunX[com], nil, "the order is done")
+		t.equal(w.slot[tank], nil, "the tank on its path is gone")
+		t.expect(ends <= 1, `one ending IMPACT for the bolt ({ends})`)
+	end)
+
 	t.test("a turret locked on its target holds its aim while the hull turns (G9)", function()
 		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:96" })
 		local w = sim.world
@@ -154,6 +183,11 @@ return function(t: RunAll.Context)
 		steps(sim, 30)
 		t.equal(#sim.combat.proj, 0, "no bolt without an order")
 		local g = (sim.map :: any).grid
+		-- both players watch, so NetOut encodes the bolt's events (a
+		-- pass-through IMPACT with projId 0 once broke the encoder)
+		for p = 1, 2 do
+			submit(sim, p, { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 95, maxZ = 95 })
+		end
 		local cell, ox, oz = g:encode(40, 0)
 		submit(sim, 1, { cmdType = CT.DGUN, flags = 0, unitIds = { com }, cell = cell, offX = ox, offZ = oz })
 		local comHealth = w.health[enemyCom]
