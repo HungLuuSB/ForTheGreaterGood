@@ -1558,10 +1558,11 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if cfg.botLab and not isCommander and #c.factories > 0 and established and #c.botLabs + c.botFrames == 0 then
+		if cfg.botLab and not isCommander and #c.factories > 0 and c.extractors >= 6 and #c.army >= 4 and #c.botLabs + c.botFrames == 0 then
 			-- (S-187) a Bot Lab / Pit beside the plant: bots in the mix; only
-			-- once the economy and an army stand (S-193, G1: one factory type
-			-- early, not a plant and two labs)
+			-- once 6 extractors and an army stand (S-193, G1: one factory type
+			-- early, not a plant and two labs; without `established`'s stored
+			-- supply, which an aggressive AI never keeps)
 			local lab = brain.prefix .. "botlab"
 			local x, z = spotNear(brain, lab, brain.homeX + brain.toward * 60, brain.homeZ - 110, id)
 			if x and z then

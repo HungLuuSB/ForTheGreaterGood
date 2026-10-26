@@ -20,8 +20,6 @@ return Templates.extend(Templates.Unit, {
 	weapons = { { def = "chs_heavy_aam", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "pylon", "muzzle" },
 	icon = "fighter",
-	ammo = 10,
-	ammoCost = { supply = 10, power = 140 },
 	rearmTime = 1.4,
 	countermeasures = { flares = { charges = 12, chance = 0.55, refillSupply = 2 } },
 	model = "chs_manticore",

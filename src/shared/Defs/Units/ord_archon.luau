@@ -20,8 +20,6 @@ return Templates.extend(Templates.Unit, {
 	weapons = { { def = "ord_radar_aam", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "pylon", "muzzle" },
 	icon = "fighter",
-	ammo = 6,
-	ammoCost = { supply = 14, power = 200 },
 	rearmTime = 2,
 	countermeasures = { dircm = { chance = 0.68, cooldown = 2.5, powerDrain = 20 } },
 	model = "ord_archon",

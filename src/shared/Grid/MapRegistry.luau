@@ -36,6 +36,7 @@ local Layers = require("./Layers")
 local MapGen = require("./MapGen")
 local Normandy = require("./Normandy")
 local Plains = require("./Plains")
+local SupremeStrait = require("./SupremeStrait")
 local TestMap = require("./TestMap")
 
 local MapRegistry = {}
@@ -57,6 +58,7 @@ MapRegistry.HANDMADE = table.freeze({
 	normandy = { name = "Normandy", build = Normandy.build },
 	canyon = { name = "The Canyon", build = Canyon.build },
 	plains = { name = "The Plains", build = Plains.build }, -- 8v8 (S-173)
+	supreme_strait = { name = "Supreme Strait", build = SupremeStrait.build }, -- ground, air and naval, 8v8 (S-195, G6)
 } :: { [string]: Handmade })
 
 -- A map's size class for the lobby's picker (S-189, F4): small up to 256

@@ -54,6 +54,9 @@ export type OrdersState = {
 	manualX: { [number]: number }, -- the manual target's last known position (S-125)
 	manualZ: { [number]: number },
 	manualBlind: { [number]: boolean }, -- the manual target lives but the team doesn't see it: fire at manualX / Z (S-125)
+	dgunX: { [number]: number }, -- Commander → the point its D-Gun fires at once in range (S-194)
+	dgunZ: { [number]: number },
+	dgunWalk: { [number]: boolean }, -- it walks there (out of range when ordered); the bolt ends the walk
 	rally: { [number]: { RallyOrder } }, -- factory → the orders each unit it produces takes, in order (S-95)
 	repeatOn: { [number]: boolean }, -- factory → finished items go back to the end of the queue
 	anchorX: { [number]: number }, -- idle units: the spot a Maneuver unit returns to (S-34)
@@ -72,6 +75,9 @@ function OrdersState.new(): OrdersState
 		manualX = {},
 		manualZ = {},
 		manualBlind = {},
+		dgunX = {},
+		dgunZ = {},
+		dgunWalk = {},
 		rally = {},
 		repeatOn = {},
 		anchorX = {},
@@ -90,6 +96,9 @@ function OrdersState.clearUnit(o: OrdersState, id: number)
 	o.manualX[id] = nil
 	o.manualZ[id] = nil
 	o.manualBlind[id] = nil
+	o.dgunX[id] = nil
+	o.dgunZ[id] = nil
+	o.dgunWalk[id] = nil
 	o.rally[id] = nil
 	o.repeatOn[id] = nil
 	o.anchorX[id] = nil
@@ -123,6 +132,9 @@ function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
 		h = Hash.u32(Hash.u32(h, o.manual[id] or 0), o.manualGen[id] or 0)
 		if o.manualX[id] then
 			h = Hash.number(Hash.number(Hash.u32(h, if o.manualBlind[id] then 1 else 0), o.manualX[id]), o.manualZ[id])
+		end
+		if o.dgunX[id] then
+			h = Hash.number(Hash.number(Hash.u32(h, if o.dgunWalk[id] then 0xD7 else 0xD6), o.dgunX[id]), o.dgunZ[id])
 		end
 		local rally = o.rally[id]
 		if rally then

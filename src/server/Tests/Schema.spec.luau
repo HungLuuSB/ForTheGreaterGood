@@ -311,7 +311,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 38, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 39, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -359,6 +359,26 @@ return function(t: RunAll.Context)
 		expectTruncated(t, "state record", Schema.decodeState, encodeOne(Schema.encodeState, own))
 		local onlyStates: State = { unitId = 1, fireState = 0, moveState = 2 }
 		t.equal(hex(encodeOne(Schema.encodeState, onlyStates)), "01 00 80 02 08")
+		-- version 39 (S-194): the retreat setting in the STATES byte's bits 4-5,
+		-- the SELF_DESTRUCT owner field (seconds left; 0 = stopped)
+		local retreating: State = { unitId = 1, fireState = 2, moveState = 1, retreat = Schema.RetreatAt.AT_50 }
+		t.equal(hex(encodeOne(Schema.encodeState, retreating)), "01 00 80 02 36")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, retreating), Schema.decodeState)[1], retreating)
+		local counting: State = { unitId = 1, selfDestruct = 6 }
+		t.equal(hex(encodeOne(Schema.encodeState, counting)), "01 00 80 20 06")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, counting), Schema.decodeState)[1], counting)
+		local working: State = { unitId = 1, workKind = Schema.WorkKind.REPAIR, workTarget = 0x0203 }
+		t.equal(hex(encodeOne(Schema.encodeState, working)), "01 00 80 40 02 03 02")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, working), Schema.decodeState)[1], working)
+		local stopped: State = { unitId = 1, selfDestruct = 0 }
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, stopped), Schema.decodeState)[1], stopped)
+		for _, c in {
+			{ cmdType = CT.SET_RETREAT, flags = 0, unitIds = { 1 }, value = 3 },
+			{ cmdType = CT.SELF_DESTRUCT, flags = 0, unitIds = { 1, 2 }, value = 1 },
+			{ cmdType = CT.DGUN, flags = 0, unitIds = { 1 }, cell = 0x0102, offX = 3, offZ = 4 },
+		} :: { Schema.Command } do
+			t.deepEqual(Packer.readAll(encodeOne(Schema.encodeCommand, c), Schema.decodeCommand)[1], c)
+		end
 		-- version 24: shield domes (S-79): SHIELD state, SHIELD_HIT (generator 0 =
 		-- unknown), SHIELD_FIELD (the dome's centre, radius, force, phase)
 		local shield: Schema.Event = { kind = Schema.EventKind.SHIELD, unitId = 0x0102, charge = 0x80, shieldFlags = 3 }
@@ -777,7 +797,7 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 28, 0, 1, 0, 1, 0 }, "unknown cmdType 28") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36), 22 FACTION, 23 START, 24 SHARE_UNITS, 25 SHARE_RESOURCE, 26 REQUEST and 27 AREA (protocol 37)
+		expectRejected(t, cmd, { 31, 0, 1, 0, 1, 0 }, "unknown cmdType 31") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36), 22 FACTION, 23 START, 24 SHARE_UNITS, 25 SHARE_RESOURCE, 26 REQUEST and 27 AREA (protocol 37)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
 		expectRejected(t, cmd, { CT.STOP, 8, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137)
@@ -798,8 +818,8 @@ return function(t: RunAll.Context)
 
 		expectRejected(t, Schema.decodeState, { 1, 0, 0 }, "mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 0 }, "owner field mask is empty") -- 128 is OWNER since protocol 20
-		expectRejected(t, Schema.decodeState, { 1, 0, 128, 32 }, "owner field mask has reserved bits") -- 8 is CHARGES since protocol 21, 16 PRODUCING since 27
-		expectRejected(t, Schema.decodeState, { 1, 0, 128, 2, 16 }, "states byte has reserved bits")
+		expectRejected(t, Schema.decodeState, { 1, 0, 128, 128 }, "owner field mask has reserved bits") -- 8 is CHARGES since protocol 21, 16 PRODUCING since 27, 32 SELF_DESTRUCT and 64 WORK since 39
+		expectRejected(t, Schema.decodeState, { 1, 0, 128, 2, 64 }, "states byte has reserved bits")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 1, 51, 0 }, "queue of 51 items")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.STOCK, 0 }, "stock slot mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.TARGET, 0 }, "target slot mask is empty")

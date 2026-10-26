@@ -503,6 +503,7 @@ Ground units don't send height: the client looks it up from its own copy of the 
   - **Deposits ("glitter"):** many small value-2 deposits on a jittered grid about every 20 cells, plus four of value 4 round each start: 92 deposits in all.
   - **For drawing:** `Canyon.feature(cx, cz)` names each cell (mesa, cliff, apron, badlands, boulder, floor).
 - **The Plains** (S-173, the user): `map:plains` (`Shared/Grid/Plains`), a flat, open 256 × 256-cell (2048 × 2048-stud, the largest before S-189) grass map for 8v8, bigger than The Canyon. Gently rolling (under 2°), no water, roads east–west through the middle and north–south at x = ±520. Mirror-symmetric west ↔ east. 16 start hints (1–8 west, 9–16 east, in north and south groups of four), each with three value-3 deposits of its own; value-2 deposits on a jittered grid over the middle and the flanks, at least 120 studs from any hint.
+- **Supreme Strait** (S-195, the user's G6): `map:supreme_strait` (`Shared/Grid/SupremeStrait`), after BAR's 24 × 24 map: 320 × 320 cells (2,560 studs, medium) for ground, air and naval play. Point-symmetric: two seas bite in from the north-west and south-east corners (ships sail each), and a land strait joins the south-west and north-east plateaus through the middle. Rocky mountains in the other two corners, a crater with a pond and two mesas per half. 16 start hints, 1–8 south-west and their twins north-east, each with three value-3 deposits; value-2 deposits over the open ground.
 
 ---
 
