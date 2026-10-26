@@ -49,6 +49,7 @@ local CENTERS: { [string]: Vector3 } = {
 	underwater = ORIGIN + Vector3.new(3000, 0, 0),
 }
 local DEPTH = 44 -- underwater: the seabed this far below the surface
+local UNDERWATER_VIEW = 46 -- studs: the camera stays this close under water (it's murky)
 
 local folder = Instance.new("Folder")
 folder.Name = "LobbyShowroom"
@@ -386,11 +387,11 @@ local function layout()
 	-- the firing range: its targets join the view
 	local reach: Vector3? = nil
 	if firing and shown[1] and shown[1].model then
-		local points = Range.setFiring(true, shown[1].base, placeInfo())
+		local points = Range.setFiring(true, Range.frameOf(shown[1].model :: Model), placeInfo())
 		if #points > 0 then
 			-- a box round the unit, its targets and its missiles' climb: the
 			-- camera looks at its middle from far enough for its width or height
-			local lo, hi = center - Vector3.one * radius, center + Vector3.new(radius, top, radius)
+			local lo, hi = center + Vector3.new(-radius, low, -radius), center + Vector3.new(radius, high, radius)
 			for _, p in points do
 				lo, hi = lo:Min(p), hi:Max(p)
 			end
@@ -401,6 +402,9 @@ local function layout()
 	end
 	-- (with targets out, the whole scene matters more than a margin round the unit)
 	fitDistance = math.max(14, span / 2 / math.tan(math.rad(FOV / 2)) * (if reach then 1.1 else 1.5))
+	if reach and placeNow == "underwater" then
+		fitDistance = math.min(fitDistance, UNDERWATER_VIEW) -- farther, the water hides it
+	end
 	-- aircraft: their middle; on the ground a little below the top;
 	-- underwater the middle of what's below the surface
 	if placeNow == "underwater" and low < math.huge then

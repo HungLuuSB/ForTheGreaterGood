@@ -89,6 +89,7 @@ local nextProj = 0
 local groundAt: (Vector3) -> number = function(_p)
 	return 0
 end
+local placeNow: any = nil -- the place the range is set up in
 
 -- Shells on the move: our own state; Effects' projectile records are drawn.
 type Shot = { proj: any, target: Target, homing: boolean, vertical: boolean, turned: boolean, maxTurn: number, groundY: number, floor: number? }
@@ -221,6 +222,19 @@ end
 
 Range.targetKind = Codex.rangeTarget
 
+-- A unit model's own frame, as the match places it: its root part is the
+-- unit's frame times RootOffset (UnitRenderer), and the unit faces the
+-- frame's LookVector (models differ: some face their +Z, some their -Z;
+-- RootOffset says which).
+function Range.frameOf(model: Model): CFrame
+	local root = model.PrimaryPart
+	if root == nil then
+		return model:GetPivot()
+	end
+	local offset = (model:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity
+	return root.CFrame * offset:Inverse()
+end
+
 local function clearTargets()
 	for _, t in targets do
 		t.model:Destroy()
@@ -252,11 +266,12 @@ local function distanceFor(range: number, lo: number, hi: number): number
 end
 
 -- Sets the range up for the shown units: one target of each kind their
--- weapons take, in front of the first unit (`base`: its pivot), and each
+-- weapons take, in front of the first unit (`base`: its frame, Range.frameOf), and each
 -- weapon slot aimed at its kind. Returns the targets' points (for the
 -- camera). `on` false clears it.
 function Range.setFiring(on: boolean, base: CFrame?, place: Place?): { Vector3 }
 	firing = on
+	placeNow = place
 	clearTargets()
 	clearShots()
 	local points = {}
@@ -275,7 +290,7 @@ function Range.setFiring(on: boolean, base: CFrame?, place: Place?): { Vector3 }
 			end
 		end
 	end
-	local forward = -base.LookVector -- a unit model faces its +Z (its barrels point that way at rest)
+	local forward = base.LookVector
 	forward = Vector3.new(forward.X, 0, forward.Z)
 	if forward.Magnitude < 0.01 then
 		forward = Vector3.new(0, 0, -1)
@@ -293,12 +308,13 @@ function Range.setFiring(on: boolean, base: CFrame?, place: Place?): { Vector3 }
 			local center = origin + forward * d + Vector3.new(0, (if place.sky then base.Y else place.floor) + h, 0)
 			t = { kind = kind, model = targetModel("air", false), center = center, radius = d * 0.45, axis = right, phase = 0, pos = center, vel = Vector3.zero, flashUntil = 0 }
 		elseif kind == "sub" then
-			local d = distanceFor(range, 24, 40)
-			local y = ((place.water or 0) + (place.seabed or ((place.water or 0) - 30))) / 2
+			local d = if place.underwater then distanceFor(range, 16, 22) else distanceFor(range, 24, 40)
+			local y =((place.water or 0) + (place.seabed or ((place.water or 0) - 30))) / 2
 			local p = origin + forward * d + right * d * 0.35
 			t = { kind = kind, model = targetModel("sub", true), center = Vector3.new(p.X, y, p.Z), radius = 0, axis = right, phase = 0, pos = Vector3.new(p.X, y, p.Z), vel = Vector3.zero, flashUntil = 0 }
 		else
-			local d = distanceFor(range, 22, 40)
+			-- (under water closer: the water hides what's far)
+			local d = if place.underwater then distanceFor(range, 14, 20) else distanceFor(range, 22, 40)
 			local p = origin + forward * d + right * d * 0.35
 			local onWater = water and not place.underwater
 			local y = if place.sky then groundAt(p) elseif onWater then (place.water :: number) else place.floor
@@ -397,12 +413,17 @@ local function arcSpeed(w: any, pitch: number, dist: number): number
 	return math.sqrt((w.gravity or 0) * dist / s2)
 end
 
+-- Turret yaw (degrees, hull-relative, as the sim's: from the hull's
+-- forward) toward `p`.
+local function yawTo(u: Unit, p: Vector3): number
+	local lp = Range.frameOf(u.model):PointToObjectSpace(p)
+	return math.deg(math.atan2(-lp.X, -lp.Z))
+end
+
 -- Turret yaw and barrel pitch (degrees, hull-relative) toward `p`.
 local function aimAngles(u: Unit, s: Slot, p: Vector3): (number, number)
-	local pivot = u.model:GetPivot()
 	local from = muzzleOf(u, s)
-	local localP = pivot:PointToObjectSpace(p)
-	local yaw = math.deg(math.atan2(localP.X, localP.Z)) -- from the model's +Z, its forward
+	local yaw = yawTo(u, p)
 	local d = p - from
 	local dist = Vector3.new(d.X, 0, d.Z).Magnitude
 	local w = s.weapon
@@ -416,12 +437,36 @@ local function aimAngles(u: Unit, s: Slot, p: Vector3): (number, number)
 	local deg = math.deg(pitch)
 	if turret then
 		deg = math.clamp(deg, turret.minPitch or -90, turret.maxPitch or 90)
+		local arc = turret.arc or 360
+		if arc < 360 then
+			yaw = math.clamp(yaw, -arc / 2, arc / 2) -- a forward mount turns only so far
+		end
 	end
 	return yaw, deg
 end
 
+-- Whether the target is inside the weapon's arc (a forward mount, as in a
+-- match, fires only at what's ahead of it).
+local function inArc(u: Unit, s: Slot): boolean
+	local turret = s.weapon.turret
+	local arc = turret and turret.arc or 360
+	if arc >= 360 then
+		return true
+	end
+	return math.abs(yawTo(u, aimPoint(s.target))) <= arc / 2 + (turret.tolerance or 0)
+end
+
 local function burst(x: number, y: number, z: number, radius: number, kind: string, life: number, now: number, dir: Vector3?): any
 	local b = { x = x, y = y, z = z, radius = radius, born = now, life = life, kind = kind, size = radius, ground = groundAt(Vector3.new(x, y, z)) } :: any
+	local place = placeNow
+	if place and place.water and not place.underwater then
+		-- over water: no scorch on the surface (the seabed is the ground); a
+		-- shell that comes down on the water splashes
+		b.ground = place.seabed
+		if kind == "impact" and y <= place.water + 1 then
+			b.water = place.water
+		end
+	end
 	if dir and dir.Magnitude > 1e-6 then
 		local n = dir.Unit
 		b.dx, b.dy, b.dz = n.X, n.Y, n.Z
@@ -607,7 +652,7 @@ local function stepFiring(dt: number, now: number)
 			if #s.queue > 0 and clock >= s.queue[1] then
 				table.remove(s.queue, 1)
 				fire(u, s, now)
-			elseif #s.queue == 0 and clock >= s.nextAt then
+			elseif #s.queue == 0 and clock >= s.nextAt and inArc(u, s) then
 				local w = s.weapon
 				local salvo = w.salvo
 				local count = if salvo then salvo.count or 1 else 1
@@ -638,6 +683,17 @@ function Range.step(dt: number)
 	if firing then
 		stepTargets(dt)
 		stepFiring(dt, now)
+	end
+	-- spent bursts and tracers go, as the match's Effects.update drops them
+	for i = #fx.bursts, 1, -1 do
+		if now - fx.bursts[i].born >= fx.bursts[i].life then
+			table.remove(fx.bursts, i)
+		end
+	end
+	for i = #fx.tracers, 1, -1 do
+		if now - fx.tracers[i].born >= fx.tracers[i].life then
+			table.remove(fx.tracers, i)
+		end
 	end
 	if renderer == nil and (firing or next(fx.bursts) ~= nil) then
 		renderer = RenderEffects.new()

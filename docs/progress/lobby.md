@@ -2,6 +2,17 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: maps by size, F4)
+
+- Merged sim-A's `592af90a` (S-189: maps bigger than 256 cells, `MapRegistry.sizeClass`, The Lakelands at 512 cells, protocol 38).
+- **Size classes:** the server reads each map's class from its grid (small ≤ 256 cells a side, medium ≤ 512, large above) and sends it, with the cell count, in the map list, smallest first.
+- **Skirmish** groups its cards under "Small maps" and "Medium maps" (and "Large maps" once there are any), each card tagged with its size.
+- **The room's Map dropdown** lists them in that order with the size in each label ("The Lakelands (4) · Medium").
+- New Rooms spec: the pickers' sizes are MapRegistry's classes, smallest first.
+- **Studio:** the Skirmish groups and The Lakelands' details, 512 × 512 cells and 4 starts (`lobby_skirmish_sizes`); a room on The Lakelands (`lobby_room_lakelands`). The lobby's map loop now takes a few seconds longer (The Lakelands loads in 3 to 4 s).
+- Lobby specs 65 / 65; the build check passes.
+- Ready to merge: `16d09d77` (maps by size; includes the merge of sim-A's `592af90a`, protocol 38: integrate only after B's protocol-38 client; touches only `src/lobby` and the lobby progress)
+
 ## Summary (2026-10-26: anti-air with the game's missiles)
 
 - **The user:** anti-air missiles must use the game's missile system (vertical launch), and the target must be far away so the missile shows in action.
@@ -14,6 +25,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - Fire now stays on across page changes, as the switch shows.
 - **Studio:** Seraph: the missile climbs to about 190 studs over the launcher, pitches over and bursts on the drone 230 studs out (`lobby_range_seraph_pitchover`, `lobby_range_seraph_intercept`). Halo: the IR missile flies straight out to the drone 80 studs away.
 - Lobby specs 64 / 64; the build check passes.
+- Ready to merge: `8bb573b7` (anti-air with the game's missile guidance, far drone; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-26: the Units showroom comes alive, L-22)
 
