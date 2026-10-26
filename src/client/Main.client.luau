@@ -336,7 +336,7 @@ local _lobbyUI = LobbyUI.new(remotes) -- the lobby and results screens (C-70; pr
 -- this client's progress (Render/Preload) and hides once the match starts
 local matchLoading = MatchLoading.new(remotes)
 local preload = Preload.new()
-local LOAD_HOLD = 55 -- seconds at most the first CAMERA waits for the preload (the sim's Pregame.LOAD_WAIT is 60)
+local LOAD_HOLD = 115 -- seconds at most the first CAMERA waits for the preload (the sim's Pregame.LOAD_WAIT is 120)
 local holdSince: number? = nil
 local loadedAt: number? = nil
 Controls.capture = function(input: InputObject): boolean
