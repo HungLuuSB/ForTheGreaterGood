@@ -1086,7 +1086,7 @@ def main():
     for old in os.listdir(out):
         if old.startswith("ground_") and old.endswith(".fbx"):
             os.remove(os.path.join(out, old))
-    rig = {"map": name, "source": g.get("mapId"), "uvRepeat": UV_REPEAT, "tile": TILE, "parts": [], "meshes": []}
+    rig = {"map": name, "source": g.get("mapId"), "uvRepeat": UV_REPEAT, "tile": TILE, "step": f.step, "parts": [], "meshes": []}
     for pi, part in enumerate(parts):
         fbx = f"ground_{pi + 1}.fbx"
         export_fbx([r["object"] for r in part], os.path.join(out, fbx))
