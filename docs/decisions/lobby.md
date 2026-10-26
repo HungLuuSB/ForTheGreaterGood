@@ -156,3 +156,10 @@ The user approved it (queue item 5). "Invite" in the room calls `SocialService:P
 - **Full view** hides the lobby's own panels and its top bar; the stage takes the page, so drags anywhere turn the camera.
 - **Cost:** 25 more of client-B's modules are mounted read-only, the same rule as the kit: B keeps their APIs stable, and the lobby's build check fails when one changes its requires.
 - **Alternatives:** running a small sim in the lobby (the whole sim on the client for a preview), or the lobby's own simple effects (looks that drift from the match).
+
+## L-23 (2026-10-26): a loading screen on joining the lobby
+
+- **Decision:** the user asked for the lobby to load its assets the way a match does. On joining, a full-screen loading screen in the match start's look (key art, a tip, the olive bar) stays until the lobby has cached what it draws. Weights follow the match's `Render/Preload`: connected 0.10, the map list 0.10, every approved unit mesh built 0.55 (`MeshModels.start` with all defs), textures 0.25 (`PreloadAsync` on MeshMaterials, the Vfx templates and the icon sheets). Then it fades out.
+- **Why:** the showroom and the battle behind no longer pop in from blockouts to meshes, and Units opens instantly.
+- **Escape hatch:** a mesh that fails counts as done. After 12 s a Continue button lets the player in without waiting (a slow asset download shouldn't keep anyone out).
+- **Measured in Studio:** 138 meshes and the textures in about 25 s.

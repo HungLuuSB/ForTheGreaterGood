@@ -2,7 +2,8 @@
 -- The lobby client (L-10): BAR's lobby layout in the game's UI kit. A top
 -- bar with the pages (Home, Skirmish, Multiplayer, Units: the unit
 -- encyclopedia with its 3D showroom, L-18, Replays, Profile) and Settings; the battle room replaces the room browser while you're in one;
--- full-screen overlays while a match starts or runs (the loading screen,
+-- full-screen overlays while assets load on joining (Boot, L-23), while a
+-- match starts or runs (the loading screen,
 -- with the Studio stand-in's controls) and for a finished match's results.
 -- Behind it all, the 3D scene (Scene).
 
@@ -22,6 +23,7 @@ local Units = require("./Pages/Units")
 local ProfilePage = require("./Pages/Profile")
 local Settings = require("./Pages/Settings")
 local Loading = require("./Overlays/Loading")
+local Boot = require("./Overlays/Boot")
 local MatchError = require("./Overlays/MatchError")
 local Results = require("./Overlays/Results")
 
@@ -237,6 +239,8 @@ end)
 local loading = Loading.new(gui)
 local results = Results.new(gui)
 local matchError = MatchError.new(gui)
+-- the joining screen: caches the meshes, textures and maps first (L-23)
+Boot.start(gui, function() end)
 
 -- views -----------------------------------------------------------------------
 
