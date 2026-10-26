@@ -30,6 +30,8 @@ local TIPS = {
 	"Jammers hide units from radar; burn-through gets closer than the jammer wants.",
 }
 
+Loading.TIPS = TIPS -- the joining screen's too (Boot)
+
 local OLIVE = Color3.fromRGB(150, 160, 70)
 
 -- The key arts KeyArt shows here (approved; in review too in Studio), by name.

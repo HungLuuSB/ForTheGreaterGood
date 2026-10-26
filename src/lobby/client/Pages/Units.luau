@@ -15,6 +15,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local IconAtlas = require("@client/UI/IconAtlas")
 local Showroom = require("../Showroom")
+local StatBars = require("../StatBars")
 local Ui = require("../Ui")
 
 local Kit = Ui.Kit
@@ -473,20 +474,56 @@ function Units.new(frame: Frame, _router: any): any
 			end
 		end
 
-		-- in-game values
-		Kit.section(article, "In-game values", nextOrder())
+		-- the numbers (L-24, BAR's unit wiki): bars against the game's biggest,
+		-- then the details that aren't amounts, then the weapons as cards
+		local max = Codex.maxima(c)
+		local function bars(name: string): Frame
+			local f = Ui.frame(article, name, UDim2.new(1, 0, 0, 0))
+			f.AutomaticSize = Enum.AutomaticSize.Y
+			f.LayoutOrder = nextOrder()
+			Kit.list(f, 4)
+			return f
+		end
+		StatBars.heading(article, "Cost", nextOrder())
+		local cost = bars("Cost")
+		local k = 0
+		local function bar(parent: Frame, label: string, key: string, value: number?, shown: string?, top: number?)
+			if value and value > 0 then
+				k += 1
+				StatBars.bar(parent, label, key, value, shown or n(value), top, k)
+			end
+		end
+		bar(cost, "Supply", "supply", s.supply, nil, max.supply)
+		bar(cost, "Power", "power", s.power, nil, max.power)
+		bar(cost, "Build time", "time", s.buildSeconds, if s.buildSeconds then `{n(s.buildSeconds)} s` else nil, max.buildSeconds)
+		StatBars.heading(article, "General stats", nextOrder())
+		local general = bars("General")
+		bar(general, "Health", "health", s.health, nil, max.health)
+		bar(general, "Speed", "speed", s.speed, nil, max.speed)
+		bar(general, "Sight", "sight", s.sight, nil, max.sight)
+		bar(general, "Radar", "radar", s.radar, nil, max.radar)
+		bar(general, "DPS", "dps", s.dps, nil, max.dps)
+		bar(general, "Range", "range", if s.dps > 0 then s.range else nil, nil, max.range)
+		bar(general, "Build power", "build", s.buildPower, nil, max.buildPower)
+		local stock = 0
+		for _, w in s.weapons do
+			stock += w.stock or 0
+		end
+		bar(general, "Stockpile", "stock", stock, nil, 20)
+		bar(general, "Ammo", "ammo", s.ammo, nil, 20)
+
+		Kit.section(article, "Details", nextOrder())
 		local box = Ui.frame(article, "Infobox", UDim2.new(1, 0, 0, 0))
 		box.AutomaticSize = Enum.AutomaticSize.Y
 		box.LayoutOrder = nextOrder()
 		Kit.list(box, 3)
-		local k = 0
+		local r = 0
 		local function row(label: string, value: string?)
 			if value and value ~= "" then
-				k += 1
-				info(box, label, value, k)
+				r += 1
+				info(box, label, value, r)
 			end
 		end
-		row("Cost", `{n(s.supply)} supply · {n(s.power)} power`)
 		row("Value", `{n(s.value)}  (supply + power ÷ 10)`)
 		local where = ""
 		if s.buildSeconds and s.builder then
@@ -494,20 +531,13 @@ function Units.new(frame: Frame, _router: any): any
 			where = ` · {n(s.buildSeconds)} s ` .. (if b.domain == "structure" then `in the {b.name}` else `by one {b.name}`)
 		end
 		row("Build", `{n(s.work)} work` .. where)
-		row("Health", n(s.health))
 		row("Armor", CLASS_NAME[s.armor] or s.armor)
 		if s.speed then
-			row("Movement", `{MOVE_NAME[s.move or ""] or s.move or "?"} · speed {n(s.speed)}` .. (if s.turnRate then ` · turn rate {n(s.turnRate)}` else ""))
+			row("Movement", `{MOVE_NAME[s.move or ""] or s.move or "?"}` .. (if s.turnRate then ` · turn rate {n(s.turnRate)}` else ""))
 		end
 		local senses = {}
-		if s.sight then
-			table.insert(senses, `sight {n(s.sight)}`)
-		end
 		if s.airSight then
 			table.insert(senses, `air sight {n(s.airSight)}`)
-		end
-		if s.radar then
-			table.insert(senses, `radar {n(s.radar)}`)
 		end
 		if s.sonar then
 			table.insert(senses, `sonar {n(s.sonar)}`)
@@ -522,17 +552,8 @@ function Units.new(frame: Frame, _router: any): any
 		if s.stealth then
 			row("Stealth", `radar signature {string.format("%.2f", s.stealth)}`)
 		end
-		if s.dps > 0 then
-			row("Firepower", `{n(s.dps)} damage/s · range {n(s.range)}`)
-		end
 		if #s.countermeasures > 0 then
 			row("Countermeasures", table.concat(s.countermeasures, " · "))
-		end
-		if s.ammo then
-			row("Ammo", `{n(s.ammo)} (rearms at a pad)`)
-		end
-		if s.buildPower then
-			row("Build power", n(s.buildPower))
 		end
 		if s.income then
 			local parts = {}
@@ -551,42 +572,54 @@ function Units.new(frame: Frame, _router: any): any
 
 		-- weapons
 		if #s.weapons > 0 then
-			Kit.section(article, if #s.weapons == 1 then "Weapon" else `Weapons ({#s.weapons})`, nextOrder())
+			StatBars.heading(article, if #s.weapons == 1 then "Weapon" else `Weapons ({#s.weapons})`, nextOrder())
+			local F = StatBars.figure
 			for _, w in s.weapons do
-				local card = Ui.card(article, w.id, UDim2.new(1, 0, 0, 0), nil, 0.3)
-				card.AutomaticSize = Enum.AutomaticSize.Y
-				card.LayoutOrder = nextOrder()
-				Kit.pad(card, Kit.SPACE.m, Kit.SPACE.s)
-				Kit.list(card, 4)
-				paragraph(card, `<b>{weaponName(w.id)}</b>  <font color="#969CA8">{KIND_NAME[w.kind] or string.lower(w.kind)}</font>`, 1, "label")
-				local shot = if w.shots > 1 then ` ({w.shots} a volley)` else ""
-				paragraph(card, `{n(w.dps)} damage/s vs {string.lower(CLASS_NAME[w.class] or w.class)} · range {n(w.range)} · reload {n(w.reload)} s{shot}`, 2, "small")
+				local lines: { StatBars.Line } = {}
+				local function line(key: string, value: string, label: string, word: string?)
+					table.insert(lines, { key = key, value = value, label = label, word = word })
+				end
+				if w.stockSeconds then
+					line("time", F(w.stockSeconds), "sec. to build ammo")
+				end
+				if w.stock then
+					line("stock", tostring(w.stock), "stockpile")
+				end
+				line("dps", F(w.dps), "dps", `vs {string.lower(CLASS_NAME[w.class] or w.class)}`)
+				line("reload", F(w.reload), "reload", Codex.word("reload", w.reload))
+				line("alpha", F(w.alpha), "alpha", Codex.word("alpha", w.alpha))
+				if w.shots > 1 then
+					line("salvo", tostring(w.shots), "shots a volley")
+				end
+				line("range", F(w.range), "range", Codex.word("range", w.range))
+				if w.aoe then
+					line("aoe", F(w.aoe), "aoe", Codex.word("aoe", w.aoe))
+				end
+				if w.speed then
+					line("projectile", F(w.speed), "projectile speed")
+				end
+				if w.lockRange then
+					line("lock", F(w.lockRange), "lock range")
+				end
+				-- what it does, in a sentence: its kind, how it flies, what it hits
+				local kind = KIND_NAME[w.kind] or string.lower(w.kind)
+				local how = {}
+				if w.guidance then
+					table.insert(how, `{string.lower(w.guidance)}-guided`)
+				end
+				if w.launch == "vertical" then
+					table.insert(how, "launched vertically")
+				end
 				local dmg = {}
 				for _, cls in { "LIGHT", "ARMORED", "STRUCTURE", "AIR", "SHIP", "SUB" } do
 					if w.damage[cls] then
-						table.insert(dmg, `{CLASS_NAME[cls]} {n(w.damage[cls])}`)
+						table.insert(dmg, `{string.lower(CLASS_NAME[cls])} {n(w.damage[cls])}`)
 					end
 				end
-				paragraph(card, "Per hit: " .. table.concat(dmg, " · "), 3, "small", Kit.COLOR.dim)
-				local extra = {}
-				if #w.targets > 0 then
-					table.insert(extra, "targets " .. string.lower(table.concat(w.targets, ", ")))
-				end
-				if w.guidance then
-					table.insert(extra, `{string.lower(w.guidance)} guidance`)
-				end
-				if w.lockRange then
-					table.insert(extra, `lock {n(w.lockRange)}`)
-				end
-				if w.aoe then
-					table.insert(extra, `splash {n(w.aoe)}`)
-				end
-				if w.stock then
-					table.insert(extra, `stock of {w.stock}`)
-				end
-				if #extra > 0 then
-					paragraph(card, table.concat(extra, " · "), 4, "small", Kit.COLOR.dim)
-				end
+				local about = `{string.upper(string.sub(kind, 1, 1))}{string.sub(kind, 2)}` .. (if #how > 0 then ", " .. table.concat(how, ", ") else "")
+					.. (if #w.targets > 0 then `; hits {string.lower(table.concat(w.targets, ", "))}.` else ".")
+					.. `\n<font color="#969CA8">Per hit: {table.concat(dmg, " · ")}</font>`
+				StatBars.weapon(article, weaponName(w.id), w.kind, kind, if w.stockPower then n(w.stockPower) else nil, lines, about, nextOrder())
 			end
 		end
 
