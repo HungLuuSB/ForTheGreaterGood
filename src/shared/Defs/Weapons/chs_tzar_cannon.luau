@@ -14,5 +14,5 @@ return {
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "STRUCTURE", "ARMORED", "GROUND" },
 	turret = { yawRate = 50, pitchRate = 30, tolerance = 2, minPitch = 0, maxPitch = 60, arc = 360 },
-	fx = { trail = "plasma", color = { r = 255, g = 110, b = 30 }, impact = "explosion_huge", sound = "plasma_heavy" },
+	fx = { trail = "plasma", color = { r = 255, g = 225, b = 120 }, impact = "explosion_huge", sound = "plasma_heavy" }, -- the tank shell's colour (S-190)
 }
