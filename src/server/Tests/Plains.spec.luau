@@ -87,6 +87,33 @@ return function(t: RunAll.Context)
 		end
 	end)
 
+	t.test("3, 5, 6 and 7 sides: each side's hints sit in one corner group or one half (S-186)", function()
+		local StartAreas = require("@shared/Match/StartAreas")
+		for n = 2, 8 do
+			local allies = {}
+			for a = 1, n do
+				table.insert(allies, a)
+			end
+			local sides = StartAreas.sides(allies, #layers.starts, layers.sideSplits)
+			local used = {}
+			for _, a in sides.allies do
+				local list = sides.startsOf[a]
+				t.expect(#list >= 2, `{n} sides: side {a} has hints`)
+				local west, north = 0, 0
+				for _, i in list do
+					t.expect(not used[i], `{n} sides: hint {i} once`)
+					used[i] = true
+					west += if layers.starts[i][1] < 0 then 1 else 0
+					north += if layers.starts[i][2] > 0 then 1 else 0
+				end
+				t.expect(west == 0 or west == #list, `{n} sides: side {a} on one half (west / east)`)
+				if #list <= 4 then
+					t.expect(north == 0 or north == #list, `{n} sides: side {a} in one corner group`)
+				end
+			end
+		end
+	end)
+
 	t.test("the map is the same every time", function()
 		local again = MapRegistry.load("map:plains") :: Layers.Layers
 		t.expect(buffer.tostring(again.height) == buffer.tostring(layers.height), "heights")

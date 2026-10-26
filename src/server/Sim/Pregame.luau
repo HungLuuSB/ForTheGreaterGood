@@ -87,7 +87,7 @@ function Pregame.new(sim: Types.Sim, setup: (sim: Types.Sim) -> (), host: number
 		error("Pregame: needs a map", 0)
 	end
 	local layers = map.layers
-	local sides = StartAreas.sides(sim.allyTeams, #layers.starts)
+	local sides = StartAreas.sides(sim.allyTeams, #layers.starts, layers.sideSplits)
 	local g = map.grid
 	local deposits = {}
 	for _, d in layers.deposits or {} do

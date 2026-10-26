@@ -25,6 +25,7 @@ export type Layers = {
 	terrain: buffer, -- u8 × cellCount: Layers.Terrain type (guide 5.2 terrainType, S-37)
 	starts: { { number } }, -- start positions {x, z} in world studs, player order
 	startBoxes: { { number } }?, -- per start, its spawn box { x0, z0, x1, z1 } (studs); nil = derived (Shared/Match/StartAreas, S-171)
+	sideSplits: { [number]: { { number } } }?, -- side count → each side's start indices, where contiguous blocks would split a side across the map (S-186)
 	deposits: { { number } }?, -- every deposit's 2 × 2 patch: { x, z (its centre, a cell corner), value } (S-184; Layers.expandDeposits)
 	wind: { number }?, -- { min, max }: the map's wind range, fractions of a turbine's max (0..1); nil = the default 0.1..0.9 (S-177)
 }
