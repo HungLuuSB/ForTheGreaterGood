@@ -6,6 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- Ready to merge: `4d8a474d` (main b5c48c8f, S-193, merged in. Supersedes f53717fe: three specs re-timed for the slower units, and aircraft heights at cell edges fixed. test_client 321 / 321, test 575 / 575, build passed)
 - **Playtest round 2 (G2, G4, G9, G14, G15, G16):**
   - Planes no longer snap crossing mountains; they climb and dip smoothly.
   - Tank turrets stay on target while the hull turns, as far as the server's own turret allows.
