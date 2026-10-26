@@ -381,7 +381,7 @@ function Orders.areaTarget(sim: Types.Sim, id: number, op: number, cx: number, c
 		if (wx - cx) ^ 2 + (wz - cz) ^ 2 <= r2 then
 			local ok = true
 			if op == AREA.RESURRECT then
-				ok = not table.find(sim.defs.unitByIndex[c.wreckDef[wid]].categories, "COMMANDER")
+				ok = c.wreckKind[wid] == nil and not table.find(sim.defs.unitByIndex[c.wreckDef[wid]].categories, "COMMANDER") -- (no map features, S-197)
 			end
 			if ok then
 				local d = (wx - ux) ^ 2 + (wz - uz) ^ 2

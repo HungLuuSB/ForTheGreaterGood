@@ -10,9 +10,9 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	footprint = 2, -- size shows tech level (S-104)
 	description = "Supply Converter. Turns spare power into supply (switch off with TOGGLE).",
-	cost = { supply = 60, power = 1200, buildTime = 2200 },
+	cost = { supply = 1, power = 1200, buildTime = 2200 }, -- S-198, the user: 1 supply and 1200 power
 	health = 400,
-	converter = { power = 60, supply = 1 },
+	converter = { power = 70, supply = 1 }, -- 70 power a second into 1 supply (S-198, the user; 60 before)
 	icon = "converter",
 	model = "chs_converter",
 })

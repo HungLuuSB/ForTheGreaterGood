@@ -129,7 +129,7 @@ export type View = {
 	tick: number, -- receive calls so far
 }
 
-export type Wreck = { defIndex: number, x: number, z: number, heading: number, supply: number, fullSupply: number, rez: number } -- supply, rez: S-168
+export type Wreck = { defIndex: number, x: number, z: number, heading: number, supply: number, fullSupply: number, rez: number, featureKind: number? } -- supply, rez: S-168; featureKind: S-197
 
 Client.BLEND_TICKS = 5 -- a correction is blended in over this many ticks
 Client.SNAP_STUDS = 60 -- larger errors snap: they only happen when a projectile comes back into view
@@ -388,7 +388,7 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			elseif kind == EK.WRECK then
 				local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 				assert(view.wrecks[e.wreckId :: number] == nil, `WRECK {e.wreckId} the client already has`)
-				view.wrecks[e.wreckId :: number] = { defIndex = e.defIndex :: number, x = x, z = z, heading = e.heading :: number, supply = e.supply :: number, fullSupply = e.fullSupply :: number, rez = 0 }
+				view.wrecks[e.wreckId :: number] = { defIndex = e.defIndex :: number, x = x, z = z, heading = e.heading :: number, supply = e.supply :: number, fullSupply = e.fullSupply :: number, rez = 0, featureKind = e.featureKind or 0 }
 				continue
 			elseif kind == EK.PREGAME then
 				local picked = bit32.band(e.pregameFlags :: number, Schema.PregameFlag.PICKED) ~= 0

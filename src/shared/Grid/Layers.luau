@@ -28,6 +28,7 @@ export type Layers = {
 	sideSplits: { [number]: { { number } } }?, -- side count → each side's start indices, where contiguous blocks would split a side across the map (S-186)
 	deposits: { { number } }?, -- every deposit's 2 × 2 patch: { x, z (its centre, a cell corner), value } (S-184; Layers.expandDeposits)
 	wind: { number }?, -- { min, max }: the map's wind range, fractions of a turbine's max (0..1); nil = the default 0.1..0.9 (S-177)
+	features: { { kind: string, x: number, z: number, value: number? } }?, -- trees and rocks (Defs/Features), in studs; value nil = the kind's (S-197)
 }
 
 function Layers.new(grid: Grid.Grid): Layers

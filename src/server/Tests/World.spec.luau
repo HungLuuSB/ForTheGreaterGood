@@ -30,7 +30,7 @@ return function(t: RunAll.Context)
 		for _ = 1, World.MAX_ID do
 			World.spawn(w, 0, info())
 		end
-		t.equal(World.count(w), 65535)
+		t.equal(World.count(w), World.MAX_ID) -- (65534 since S-197: 65535 is a rock)
 		t.throws(function()
 			World.spawn(w, 0, info())
 		end, "no unit ID available")
