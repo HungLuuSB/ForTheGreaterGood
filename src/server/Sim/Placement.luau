@@ -55,7 +55,7 @@ function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number
 			end
 			local i = g:index(cellX, cellZ)
 			local occupant = Passability.occupant(pm, i)
-			if occupant ~= 0 and knower ~= nil and w.ally[occupant] ~= knower then
+			if occupant ~= 0 and occupant ~= Passability.ROCK and knower ~= nil and w.ally[occupant] ~= knower then
 				local level = Sensors.level(sim, knower, occupant)
 				if level ~= L.VISIBLE and level ~= L.GHOST then
 					occupant = 0 -- the planner doesn't know it is there

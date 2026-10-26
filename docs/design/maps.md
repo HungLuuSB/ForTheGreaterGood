@@ -10,6 +10,7 @@ How a map is made (S-196, the user: "follow Beyond All Reason's pipeline for map
 | `type.png` | typemap (8-bit) | 16 × size | Ground type per pixel: the greys `mapinfo.types` names (GRASS, SAND, ROCK, ROAD). |
 | `metal.png` | metalmap (8-bit RGB, red dots) | 16 × size | A red dot per metal spot; full red = `metalValue`, dimmer red less. |
 | `minimap.png` | minimap | 1024 × 1024 | The overview: the lobby's preview, the minimap. |
+| `features.luau` | featureplacer (mapconfig) | | The map's trees and rocks (S-197): { kind, u, v, value? } as fractions; with point symmetry, one side (the compiler adds the twins). Trees reclaim into power, rocks into supply; rocks block their cell. `lune run map_features` writes a first list. |
 | `mapinfo.luau` | mapinfo.lua | | Settings: name, description, `size` (BAR units), `cells` (our cells a side), `height` {min, max}, `waterLevel`, `wind`, `types`, `metalValue`, `symmetry`, `starts` (fractions: u from the west edge, v from the north), optional `sideSplits`. |
 
 `size` is BAR's map size in map units (512 elmos). Our maps run at The Canyon's scale, about 13 cells per BAR unit. A 24 × 24 BAR map is 320 cells (2,560 studs), so `cells` is set in mapinfo.
@@ -46,6 +47,7 @@ The painted texture (BAR's "diffuse", 512 × size pixels) isn't kept in the repo
 - **Supreme Strait** (`map:supreme_strait`, S-195, S-196): rebuilt from BAR's preview images.
   - `height.png` is its 1537-pixel height map; `type.png`, `metal.png` and `minimap.png` come from its dry texture (`map_derive`).
   - Heights run −6 to 83.25 studs, with the water at 8.
-  - 76 metal spots: 8 under water, 4 on mesa tops.
+  - 90 metal spots, BAR's own (its metal map, sent by the user): the six big ones on the strait at value 4; 12 under water, 4 on mesa tops.
+  - 398 trees and 170 rocks (`map_features`, seed 197).
   - The 16 starts are the user's 8v8 spawn points.
   - If it isn't close enough to the original, the user may send BAR's map file to convert instead.

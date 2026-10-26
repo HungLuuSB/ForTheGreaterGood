@@ -16,8 +16,10 @@ return {
 	waterLevel = 8, -- studs: the sea's surface (MapGen.WATER_LEVEL)
 	-- type.png's greys → ground types (Layers.Terrain)
 	types = { GRASS = 0, SAND = 85, ROCK = 170, ROAD = 255 },
-	-- metal.png: a spot's deposit value at full red (dimmer red, less)
-	metalValue = 3,
+	-- metal.png: a spot's deposit value at full red (dimmer red, less). BAR's
+	-- spots (read off its metal map, 2026-10-27): the six big ones on the
+	-- strait full red (4), the rest at 0.75 (3)
+	metalValue = 4,
 	symmetry = "point", -- the compiler makes every cell match its twin (x, z) → (-x, -z)
 	-- start hints as fractions of the map (u from the west edge, v from the
 	-- north edge): 1-8 the south-west side, 9-16 their twins (the compiler

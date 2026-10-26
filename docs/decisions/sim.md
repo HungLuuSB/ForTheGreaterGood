@@ -2773,3 +2773,38 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - each start has 2+ metal spots within 140 studs;
   - slow: four AIs build bases.
   - Plus `Base64.spec`.
+
+## S-197 — Map features: trees for power, rocks for supply, listed per map; Supreme Strait's metal is BAR's (the user) (2026-10-27)
+
+- **Asked:** "Introducing environmental resources. Each map features some environment probes: 1. Forests and trees (can be reclaimed for energy). 2. Rocks (can be reclaimed for orb). Each map defines its own list of these probes (type, position, value)." Choices: rocks block, trees don't; Supreme Strait first.
+- **Kinds** (`Shared/Defs/Features`):
+  - **tree:** 150 power, scenery units pass through, model "feature_tree".
+  - **rock:** 30 supply, solid: no ground or naval unit enters its cell and nothing is built there until it's reclaimed; model "feature_rock".
+- **Per map:**
+  - `Layers.features` = { kind, x, z, value? } in studs; value nil = the kind's default.
+  - Pipeline maps list them in `assets/maps/<name>/source/features.luau` as fractions, one side; `map_compile` adds the twins and checks the map with the rocks in place.
+  - `lune run map_features <name> [seed]` writes a first list: tree copses along the grass edges plus lone trees, rocks on islets and at cliff feet, clear of starts and metal. Edit it freely.
+  - Supreme Strait: 398 trees, 170 rocks.
+- **In the sim** (`Sim/Features`):
+  - At the start every feature becomes a reclaimable object on the wreck machinery: `Combat.addFeature`, with `wreckKind`, the amount in `wreckSupply`, `wreckFull`, and `wreckDef` 0.
+  - Reclaim orders and Smart Reclaim take them like wrecks; they're never resurrected.
+  - A tree pays power at `Build.POWER_RECLAIM_RATE` (1 power/s per point of build power, ten times supply's); a rock pays supply.
+  - A rock occupies its cell as `Passability.ROCK` (0xFFFF; unit IDs now end at 65534), and frees it when reclaimed.
+- **Wire, protocol 40:**
+  - WRECK gains `featureKind u8` (0 = a unit's wreck, 1 tree, 2 rock), 15 bytes.
+  - A feature's defIndex is 0, and its supply / fullSupply count its own resource (a tree's power).
+  - Every team knows the map's features from the start; only their removal needs sight, like a wreck's.
+- **Supreme Strait's metal:** the user sent BAR's metal map (white dots, 24 × 24).
+  - `metal.png` now holds its 89 spots: the six big ones on the strait at value 4, the rest 3. They were read off the image, its frame from the big dots' symmetry (centre at 406, 402 of 812 × 804).
+  - With point symmetry that's 90 deposits. The spot hidden under the image's "24 × 24" label is the twin of (120, 776), which the symmetry adds.
+  - The texture-derived spots had missed the six big ones and the islets'.
+- **For the streams:**
+  - client-B draws trees and rocks from WRECK `featureKind` (hover: power or supply left).
+  - models-C models "feature_tree" and "feature_rock".
+- **Tests:**
+  - `Features.spec`:
+    - Supreme Strait's features are there from the start;
+    - rocks occupy their cells, and nothing is built on one;
+    - reclaiming a tree pays power and a rock supply, freeing its cell;
+    - a client knows every feature without seeing it.
+  - `Schema.spec`: protocol 40's WRECK.
