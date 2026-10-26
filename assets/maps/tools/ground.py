@@ -48,6 +48,9 @@ STYLES = {
     "ridgeline": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
     "coastline": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
     "twin_lakes": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
+    # 512 cells (S-189): heights every 8 studs (`coarsen`), a quarter of the triangles: 4x the
+    # area of the 256-cell maps at the same cost; its gentle hills lose nothing visible
+    "lakelands": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock"), "coarsen": 2},
     "crossroads": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
     # the bocage: hedgerow foliage on the banks, crag on the bluffs
     "normandy": {"crag": "rock", "hedges": "leafy", "keep_cells": True, "boulders": True, "rock": "rock", "aim": ("feature", "hedge")},
@@ -73,6 +76,16 @@ class Field:
         self.feat_pal = g["featurePalette"]
         self.feat = np.array(g["features"]).reshape(self.cd, self.cw)
         self.per_cell = self.cell // self.step
+        gz, gx = np.gradient(self.h, self.step)
+        self.gx, self.gz = gx, gz
+
+    def coarsen(self, k):
+        """Keeps every k-th height sample (a big map's flatter ground at a fraction of the
+        triangles); the surface still passes through the sim's samples it keeps."""
+        self.h = self.h[::k, ::k]
+        self.nz, self.nx = self.h.shape
+        self.step *= k
+        self.per_cell = max(1, self.cell // self.step)
         gz, gx = np.gradient(self.h, self.step)
         self.gx, self.gz = gx, gz
 
@@ -1041,6 +1054,8 @@ def main():
     lib.reset_scene()
     f = Field(g)
     style = STYLES.get(name, {})
+    if style.get("coarsen"):
+        f.coarsen(style["coarsen"])
     rng = np.random.default_rng(sum(map(ord, name)) * 104729)
     records = []
     names, w = build_tiles(f, records, rng, style)
@@ -1093,7 +1108,7 @@ def main():
         look = (look[0], f.at(look[0], look[2]), look[2])
         shots = [("55_close", *shot(look, 90), 50), ("55_220", *shot(look, 220), 50),
                  ("side", (look[0] - 45, look[1] + 8, look[2] + 95), (look[0] + 5, look[1] + 10, look[2] - 10), 35),
-                 ("55_far", *shot((0, 20, 0), 900), 35)]
+                 ("55_far", *shot((f.ox + f.sx / 2, 20, f.oz + f.sz / 2), max(900, 0.9 * max(f.sx, f.sz))), 35)]  # the whole of a big map
         previews(name, records, out, f, shots)
 
 
