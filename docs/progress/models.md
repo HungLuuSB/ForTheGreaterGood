@@ -755,6 +755,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `6f40874d` (F6: `ord_advextractor` / `chs_advextractor` blockouts at the T1 extractor's size, 16 studs, as upgraded T1s, the user's call; supersedes `a506c48a`. Goes with sim-A's change of both defs to footprint 2).
 - Ready to merge: `6c93cc9e` (the 19 S-181 blockouts registered: bot labs with build pads and nano emitters, bots, Fatboy, Tzar, Centurion, Dragon, Liche; includes the merge of `main` 7c933c5c).
 - Ready to merge: `4f6f268f` (bot legs renamed to the Commander walker pieces `thighL` / `shinL` / `footL` + R, swing X, for client-B's walk; Skitter `thighFL`… / `shinFL`…; includes `6c93cc9e`).
+- Ready to merge: `e97ce583` (F27: the unit death explosion template `ReplicatedStorage.Vfx.Death`, `place/Vfx.model.json` and its generator; adds a `Vfx` entry to default/serve/build.project.json — the live sync needs one `rojo serve` restart).
 
 ## Requests
 
