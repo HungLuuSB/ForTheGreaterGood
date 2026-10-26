@@ -6,6 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- Ready to merge: `6a77b33b` (main ae6356ad merged in; the Lakelands' ground sampling read from the manifest's `step`, the client's stand-in table removed; test_client 316 / 316, test 573 / 573, build passed)
 - **Units on The Lakelands' baked ground (C-235):** that map's ground is drawn more coarsely than the simulation's heights, which left units up to 2 studs sunk into or floating above the grass at the foot of a cliff. They now stand on exactly what's drawn.
 - Ready to merge: `78734742` (C-235; main 08c20e4b and 679a89a7 merged in: approved meshes, the Lakelands ground; test_client 316 / 316, test 573 / 573, build passed. Studio: Lancers at the ridge's foot on the drawn ground, debug_out/screens/2026-10-26-lakelands-ridge-foot.jpg)
 - Ready to merge: `c5e996c5` (main e43b5726 merged in: models-C's Lakelands ground, still in review; test_client 315 / 315, test 573 / 573, build passed)
