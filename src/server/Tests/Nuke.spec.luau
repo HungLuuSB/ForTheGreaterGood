@@ -66,7 +66,8 @@ return function(t: RunAll.Context)
 		local sim, silo, units = range(1)
 		local w = sim.world
 		local key = World.slotKey(silo, 1)
-		t.equal(w.wStock[key], 2, "a placed silo starts with its 2 warheads")
+		local full = w.wStock[key]
+		t.equal(full, 10, "a placed silo starts with its 10 warheads (S-200)")
 		for _ = 1, 150 do
 			Sim.step(sim)
 			t.equal(#eventsOf(sim, "LAUNCH"), 0, "never fires on its own")
@@ -95,7 +96,7 @@ return function(t: RunAll.Context)
 		end
 		assert(launchedAt and impact, "launched and landed")
 		t.expect(launchedAt <= 2 + 151, `launched at once (tick {launchedAt})`)
-		t.equal(w.wStock[key], 1, "it spent a warhead")
+		t.equal(w.wStock[key], full - 1, "it spent a warhead")
 		t.equal(sim.air.groundX[silo], nil, "the order is done")
 		local flight = (impact[1] - launchedAt) / 15
 		print(string.format("    nuke: flight %.1f s, apex %.0f studs, landed %.1f studs from the target", flight, apex, math.sqrt((impact[2] - TARGET_X) ^ 2 + (impact[3] - TARGET_Z) ^ 2)))
@@ -354,6 +355,33 @@ return function(t: RunAll.Context)
 		t.equal(intercepted, 1, "one shot down")
 		t.equal(sim2.world.slot[site2], nil, "the other got through during the cooldown")
 		local _ = stock
+	end)
+
+	t.test("anti-nukes take turns: two sites split two nukes the same tick, one interceptor each (S-201, the user)", function()
+		local sim, silo = range(8)
+		local silo2 = Spawn.unit(sim, "ord_reckoning", 1, -800, 300, 0)
+		local siteA = Spawn.unit(sim, "chs_cerberus", 2, TARGET_X, TARGET_Z - 60, 0)
+		local siteB = Spawn.unit(sim, "chs_cerberus", 2, TARGET_X, TARGET_Z + 60, 0)
+		attackGround(sim, 1, { silo }, TARGET_X, TARGET_Z)
+		attackGround(sim, 1, { silo2 }, TARGET_X + 10, TARGET_Z)
+		local c = sim.combat
+		local chased: { number } = {}
+		local intercepted, blasts = 0, 0
+		for _ = 1, 500 do
+			Sim.step(sim)
+			for _, e in eventsOf(sim, "SPAWN_PROJ") do
+				if e.unit == siteA or e.unit == siteB then
+					table.insert(chased, c.pTargetProj[e.other])
+				end
+			end
+			intercepted += #eventsOf(sim, "INTERCEPTED")
+			blasts += #eventsOf(sim, "BLAST")
+		end
+		t.expect(#chased >= 2, `{#chased} interceptors`)
+		t.expect(chased[1] ~= chased[2], "the first two went after different warheads")
+		t.equal(#chased, 2, "one interceptor per warhead, none wasted")
+		t.equal(intercepted, 2, "both shot down")
+		t.equal(blasts, 0, "nothing landed")
 	end)
 
 	t.test("with an empty stockpile the anti-nuke can't stop it", function()

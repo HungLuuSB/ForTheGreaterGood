@@ -2853,3 +2853,16 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Factories: FRONT puts an order first on the list for new units. A factory's BUILD still appends to production.
   - DGUN out of range: the walk goes first. When the bolt fires, the walk ends and the queue goes on (`Orders.endWalk`); without FRONT the Commander stops there, as before.
 - **Tests:** Orders.spec: a FRONT move goes first, then the interrupted move, then the queued one; a FRONT BUILD mid-build finishes first, then the builder finishes the same frame; a FRONT D-Gun walks, fires and goes on to its queued move. Schema.spec: the reserved-bit case moved to 16.
+
+## S-200 — Bigger strategic stockpiles: nukes 10, anti-nukes 20 (the user) (2026-10-27)
+
+- **Asked:** "increase anti nuke stockpile to 20, nuke stockpile to 10".
+- **Changed:** the nuke silos' warhead stockpile (`ord_nuke`, `chs_nuke`) holds 10 instead of 2. The anti-nuke structures' interceptor stockpile (`ord_interceptor`, `chs_interceptor`) holds 20 instead of 3. Build time and cost per missile are unchanged (warheads 120 s for 1,500 supply + 40,000 power; interceptors 60 / 50 s). Mobile anti-nukes still carry 1.
+- **Wire:** none. The STOCK owner field's count is a u8.
+
+## S-201 — Anti-nukes take turns: each warhead gets one interceptor, the others take the next (the user) (2026-10-27)
+
+- **Asked:** "Anti nuke now take turn to intercept (if the current nuke is being intercepted, the others will choose to intercept other nuke warhead instead".
+- **Was:** an anti-nuke skipped a missile one of its team's interceptors already flew at (S-111), but in the tick before any launched, every site picked the nearest warhead. Two sites facing two warheads aimed at the same one. The one that fired then took the second warhead off the other site while it reloaded, and the second warhead landed.
+- **Now** (`Targeting.interceptTarget`): each tick an interceptor ready to fire (stock left, reload done) claims its missile for its ally team. The team's other interceptors leave it and take the next missile, nearest first; with none left they wait. An interceptor that is empty or reloading tracks a missile without claiming it, so it never keeps a ready site off. A missile whose interceptor misses or is shot down is free again. The same rule covers point defence (S-149).
+- **Test:** Nuke.spec: two sites, two warheads launched the same tick: two interceptors at different warheads, both shot down, nothing lands.
