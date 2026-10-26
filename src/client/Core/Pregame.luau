@@ -51,7 +51,7 @@ function Pregame.areas(world: World.World): Areas?
 	if #allies == 0 or #allies > #layers.starts then
 		return nil
 	end
-	local sides = StartAreas.sides(allies, #layers.starts)
+	local sides = StartAreas.sides(allies, #layers.starts, layers.sideSplits) -- the map's own splits (F40)
 	local hints = {}
 	for i, s in layers.starts do
 		table.insert(hints, { x = s[1], z = s[2], ally = sides.sideOfStart[i] })

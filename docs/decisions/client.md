@@ -1998,3 +1998,13 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **Camera:** no rotation limit; Q / C and Ctrl + wheel turn it all the way round (the user).
 
 **Why:** the user's look at the Overwatch's beam and their camera request (via sim-A).
+
+### C-229 — AI levels, per-shot power, side splits, formation preview (2026-10-26, S-186, S-187, F34, F40)
+
+- Merged m-sim-2 8713c298 (S-186, S-187). The shell-timing scene's count accepts 26.
+- **AI levels:** the in-match lobby offers Easy, Normal, Hard - Balanced ("hard") and Hard - Aggressive ("hard_aggressive") in a dropdown (the names don't fit segments); AI names read "AI 1 (Hard - Aggressive)" (`Lobby.levelName`).
+- **Per-shot power:** a weapon with `shotCost.power` shows "20 power/shot" on its stats line (unit panel, build menu tooltips); lasers hold fire without power (S-187).
+- **F40:** the pre-game's fallback boxes (before START_BOXES) pass the map's `sideSplits` to `StartAreas.sides`.
+- **F34, formation lines:** the right-drag line move (LINE flag; Ctrl adds GROUP) now previews each unit's slot along the line, as the order sends them (`Orders.lineSlots`), each with a tick facing across the line away from the group. Checked in Studio: six Lancers, the preview's six slots, the units spread into them. Units keep their travel heading at the end (asked sim-A about turning them to face).
+
+**Why:** sim-A's S-186 / S-187 and the playtest's F34 / F40.
