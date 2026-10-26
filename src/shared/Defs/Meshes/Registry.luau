@@ -7131,8 +7131,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 		},
 		plains = {
 			details = {  },
-			note = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))",
-			status = "review",
+			status = "approved",
 			tiles = {
 				{
 					center = { -896, 10.25, -896 },
