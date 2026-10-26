@@ -187,6 +187,8 @@ APPROVED = {
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
                 "tint the ground patch (teamPieces, alpha mask) to the terrain")
+FEATURE_NOTE = ("map feature (S-197): pick a variant and a +-15% scale from the wreck ID, turn it by the wire "
+                "heading; a rock fills its 8-stud cell, a tree is a point")
 # fx entries that reuse another weapon's mesh (the client looks meshes up by weapon ID)
 FX_ALIASES = {"ord_mobile_interceptor": "ord_interceptor", "chs_mobile_interceptor": "chs_interceptor"}
 # wreck versions (M-24) the user approved; the rest are "review"
@@ -367,21 +369,24 @@ def main():
         status = "approved" if wid in APPROVED else "review"
         fx[wid] = entry(load(rig_p), load(assets_p), status, None if status == "approved" else REVIEW_NOTE)
 
-    # supply deposits (M-28): one fx entry, variant 1's fields plus every variant
-    deposits = os.path.join(ROOT, "assets", "fx", "deposit")
-    variants = []
-    for vid in sorted(os.listdir(deposits)):
-        rig_p = os.path.join(deposits, vid, "export", "rig.json")
-        assets_p = os.path.join(deposits, vid, "roblox_assets.json")
-        if os.path.exists(rig_p) and os.path.exists(assets_p):
-            variants.append(entry(load(rig_p), load(assets_p), "review", None))
-    if variants:
-        status = "approved" if "deposit" in APPROVED else "review"
-        fx["deposit"] = {**variants[0], "status": status, "variants": variants}
-        for v in variants:
-            v["status"] = status
-        if status == "review":
-            fx["deposit"]["note"] = DEPOSIT_NOTE
+    # supply deposits (M-28) and map features (S-197): one fx entry per family, variant 1's
+    # fields plus every variant (`<family>_1`, `<family>_2`, ... in their folder)
+    for family, folder, note in (("deposit", "deposit", DEPOSIT_NOTE), ("feature_tree", "features", FEATURE_NOTE),
+                                 ("feature_rock", "features", FEATURE_NOTE)):
+        base = os.path.join(ROOT, "assets", "fx", folder)
+        variants = []
+        for vid in sorted(os.listdir(base)):
+            rig_p = os.path.join(base, vid, "export", "rig.json")
+            assets_p = os.path.join(base, vid, "roblox_assets.json")
+            if vid.startswith(family + "_") and os.path.exists(rig_p) and os.path.exists(assets_p):
+                variants.append(entry(load(rig_p), load(assets_p), "review", None))
+        if variants:
+            status = "approved" if family in APPROVED else "review"
+            fx[family] = {**variants[0], "status": status, "variants": variants}
+            for v in variants:
+                v["status"] = status
+            if status == "review":
+                fx[family]["note"] = note
     # weapons that reuse another weapon's mesh (S-111: the mobile interceptors)
     for alias, src in FX_ALIASES.items():
         if src in fx:

@@ -1,0 +1,55 @@
+{
+  "id": "feature_rock_2",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style map features (S-197)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.319,
+        1.6086,
+        0.0432
+      ],
+      "size": [
+        7.2543,
+        4.4172,
+        6.788
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      200,
+      200,
+      200
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 140,
+    "total": 140
+  },
+  "textures": {
+    "size": 512,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

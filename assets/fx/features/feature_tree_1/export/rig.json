@@ -1,0 +1,55 @@
+{
+  "id": "feature_tree_1",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style map features (S-197)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.2496,
+        8.1476,
+        -0.2152
+      ],
+      "size": [
+        6.9748,
+        16.9149,
+        7.0859
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      200,
+      200,
+      200
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 144,
+    "total": 144
+  },
+  "textures": {
+    "size": 512,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
