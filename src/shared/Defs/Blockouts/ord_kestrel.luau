@@ -5,7 +5,7 @@
 -- lit; `muzzle` at the cells. Legs are client pieces (Bots.luau). Order
 -- reads clean (M-14). Model space, forward = -Z.
 
-local Bots = require("../Bots")
+local Bots = require("./Bots")
 
 local LX, LY = 1.5, 5.0 -- the launcher's centre
 

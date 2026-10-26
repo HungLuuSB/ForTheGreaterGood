@@ -7,7 +7,7 @@
 -- (Bots.luau). Order reads clean and heavy (M-14). Model space,
 -- forward = -Z.
 
-local Bots = require("../Bots")
+local Bots = require("./Bots")
 
 local CY = 9.2 -- the barrel's height
 

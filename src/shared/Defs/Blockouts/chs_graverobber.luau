@@ -6,7 +6,7 @@
 -- (`nano1`). Legs are client pieces (Bots.luau). Chaos reads crude (M-14).
 -- Model space, forward = -Z.
 
-local Bots = require("../Bots")
+local Bots = require("./Bots")
 
 local parts: { any } = {
 	{ name = "base", shape = "box", size = { 1.8, 0.8, 1.4 }, at = { 0, 2.4, 0 }, color = "dark" },

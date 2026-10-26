@@ -6,7 +6,7 @@
 -- lenses). Legs are client pieces (Bots.luau). Order reads clean (M-14).
 -- Model space, forward = -Z.
 
-local Bots = require("../Bots")
+local Bots = require("./Bots")
 
 local AY = 3.9 -- the arms' height
 

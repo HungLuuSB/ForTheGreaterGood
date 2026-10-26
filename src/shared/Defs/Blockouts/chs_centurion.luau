@@ -7,7 +7,7 @@
 -- client pieces (Bots.luau). Chaos reads crude and brutal (M-14). Model
 -- space, forward = -Z.
 
-local Bots = require("../Bots")
+local Bots = require("./Bots")
 
 local LX, LY = 3.0, 7.2 -- the lance's axis
 
