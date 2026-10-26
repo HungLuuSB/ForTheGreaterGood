@@ -1990,3 +1990,11 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **F11:** the Sentry, Guard, Overwatch and Twin Guard lasers draw 1.8× wider (`Lasers.WIDER`): in Studio core 0.69 / glow 2.14 studs (was 0.39 / 1.19).
 
 **Why:** the user's playtest (F2, F10, F11, F14).
+
+### C-228 — Tower lasers after the user's look; the camera turns all the way round (2026-10-26)
+
+- **Where a hit ends:** a hitscan hit (lasers, beams, tracers) ends on the hit unit's drawn body: the line from the muzzle toward the middle of the nearest drawn model's box at the server's hit point, where it first meets that model (a raycast against it; `Effects.bodyAt`, set by Main). The server aims at its sim height's middle, near the top of most models, so tower lasers ran to the tanks' turrets (the user); ending at the box's middle then hid the burst inside the tank (the user again). Checked in Studio: an Overwatch's laser on a Juggernaut ends at (0.0, 0.3, −2.3) in the model's box (half sizes 3.2, 3.6, 4.3), its front surface; the start is the tower's muzzle attachment (28.7 vs 28.8).
+- **The look:** F11's wider towers widen the glow 1.8× and the core only by its square root, the core wavers ±22 % as the bolt lives, the glow fades along the line (0.6 → 0.78 → 0.9 transparency) instead of a uniform rod, and the impact halo is smaller and fainter. At the muzzle a white-hot flash and a soft halo in the beam's colour 1.15× as wide as the glow leaving it (the user: without one the glow looked wider than its starting point).
+- **Camera:** no rotation limit; Q / C and Ctrl + wheel turn it all the way round (the user).
+
+**Why:** the user's look at the Overwatch's beam and their camera request (via sim-A).

@@ -36,7 +36,7 @@ Camera.EDGE_PIXELS = 6
 -- Studio's mouse often rests on the window edge (toolbars, Output), which
 -- scrolls the view away; edge scroll is on in live games only.
 Camera.EDGE_SCROLL = not game:GetService("RunService"):IsStudio()
-Camera.MAX_YAW = math.rad(45) -- rotation limit either side of north-up
+-- no rotation limit (the user): the camera turns all the way round
 Camera.YAW_SPEED = math.rad(90) -- per second with Q / E
 Camera.YAW_STEP = math.rad(7.5) -- per wheel notch with Ctrl (F2)
 Camera.SEND_INTERVAL = 0.2 -- seconds between CAMERA commands (≤ 5 per second)
@@ -81,8 +81,8 @@ function Camera.bind(state: State)
 		if input.UserInputType == Enum.UserInputType.MouseWheel then
 			local notch = input.Position.Z
 			if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl) then
-				-- turn (F2, the user): Ctrl + wheel, within the rotation limit
-				state.yaw = math.clamp(state.yaw + notch * Camera.YAW_STEP, -Camera.MAX_YAW, Camera.MAX_YAW)
+				-- turn (F2, the user): Ctrl + wheel, all the way round
+				state.yaw = (state.yaw + notch * Camera.YAW_STEP) % (2 * math.pi)
 			elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService:IsKeyDown(Enum.KeyCode.RightAlt) then
 				-- tilt (C-69): wheel up looks further ahead
 				state.pitch = math.clamp(state.pitch - notch * Camera.PITCH_STEP, Camera.MIN_PITCH, Camera.MAX_PITCH)
@@ -136,9 +136,9 @@ function Camera.input(state: State, cam: Camera, dt: number): boolean
 			end
 		end
 		if turnKey(Camera.ROTATE_LEFT) then
-			state.yaw = math.clamp(state.yaw + Camera.YAW_SPEED * dt, -Camera.MAX_YAW, Camera.MAX_YAW)
+			state.yaw = (state.yaw + Camera.YAW_SPEED * dt) % (2 * math.pi)
 		elseif turnKey(Camera.ROTATE_RIGHT) then
-			state.yaw = math.clamp(state.yaw - Camera.YAW_SPEED * dt, -Camera.MAX_YAW, Camera.MAX_YAW)
+			state.yaw = (state.yaw - Camera.YAW_SPEED * dt) % (2 * math.pi)
 		end
 	end
 	local mouse = UserInputService:GetMouseLocation()

@@ -408,6 +408,38 @@ Controls.pregameClick = function(ground: Vector3?): boolean
 	end
 	return true
 end
+-- a hitscan hit on a drawn unit: the line from the muzzle toward the middle
+-- of the nearest model's box at the hit, ended where it first meets that
+-- model (Core/Effects.bodyAt)
+local bodyParams = RaycastParams.new()
+bodyParams.FilterType = Enum.RaycastFilterType.Include
+Effects.bodyAt = function(x0: number, y0: number, z0: number, x: number, _y: number, z: number): (number?, number?, number?)
+	local best, bestD = nil, math.huge
+	for id, u in world.units do
+		if u.tier == "tactical" and u.rx and u.rz then
+			local d = (u.rx - x) ^ 2 + (u.rz - z) ^ 2
+			local def = World.def(world, u)
+			local reach = ((def and def.footprint) or 1) * 4 + 3
+			if d < bestD and d <= reach * reach then
+				best, bestD = id, d
+			end
+		end
+	end
+	local model = best and UnitRenderer.modelOf(renderer, best)
+	if model == nil then
+		return nil, nil, nil
+	end
+	local centre = model:GetBoundingBox().Position
+	local from = Vector3.new(x0, y0, z0)
+	local dir = centre - from
+	if dir.Magnitude < 1e-3 then
+		return centre.X, centre.Y, centre.Z
+	end
+	bodyParams.FilterDescendantsInstances = { model }
+	local hit = workspace:Raycast(from, dir.Unit * (dir.Magnitude + 4), bodyParams)
+	local at = if hit then hit.Position else centre
+	return at.X, at.Y, at.Z
+end
 Overlay.bind(overlay, api, os.clock)
 local hud = Hud.new()
 api.changed.focus:Connect(function(p)

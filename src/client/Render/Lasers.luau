@@ -20,13 +20,17 @@ Lasers.GLOW_TIP = 0.35
 Lasers.FLARE = 1.1 -- the muzzle flare's diameter
 Lasers.ORB = 1.3 -- the impact orb's diameter (its halo twice that)
 Lasers.THREAD = 0.14 -- a held beam's core width (ramp 0)
--- weapons drawn wider (F11, the user: Sentry and Overwatch beams, both factions)
+-- weapons drawn wider (F11, the user: Sentry and Overwatch beams, both
+-- factions): their glow by this, the core by its square root, so a wider
+-- beam stays a bright core in a soft glow, not a solid rod (the user)
 Lasers.WIDER = table.freeze({ ord_sentry_laser = 1.8, chs_guard_laser = 1.8, ord_overwatch_laser = 1.8, chs_twin_laser = 1.8 }) :: { [string]: number }
+Lasers.PULSE = 0.22 -- a bolt's width wavers by this share as it lives
+Lasers.FLARE_OVER_GLOW = 1.15 -- the muzzle halo's diameter over the glow's width at the muzzle
 Lasers.FRINGE = 0.45 -- and its coloured fringe
 Lasers.CONE = 1.8 -- its impact cone's mouth, and length 1.4 times that
 Lasers.SPARKS = 10 -- flicker keypoints along a held beam's core
 
-type Bolt = { a0: Attachment, a1: Attachment, a2: Attachment, core: Beam, glow: Beam, cone: Beam, flare: Part, orb: Part, halo: Part }
+type Bolt = { a0: Attachment, a1: Attachment, a2: Attachment, core: Beam, glow: Beam, cone: Beam, flare: Part, muzzleHalo: Part, orb: Part, halo: Part }
 export type State = { folder: Folder, bolts: { Bolt }, used: number }
 
 local WHITE = Color3.new(1, 1, 1)
@@ -83,6 +87,7 @@ local function bolt(s: State, i: number): Bolt
 			glow = beam(a0, a1, s.folder, "LaserGlow"),
 			core = beam(a0, a1, s.folder, "LaserCore"),
 			flare = ball(s.folder, "LaserFlare"),
+			muzzleHalo = ball(s.folder, "LaserMuzzleHalo"),
 			orb = ball(s.folder, "LaserOrb"),
 			halo = ball(s.folder, "LaserHalo"),
 		}
@@ -131,6 +136,7 @@ local function thread(b: Bolt, color: Color3, ramp: number, from: Vector3, to: V
 	b.flare.CFrame = CFrame.new(from)
 	b.flare.Color = color
 	b.flare.Transparency = 0.2
+	b.muzzleHalo.Transparency = 1 -- (a bolt's: pooled bolts change kind)
 	local orb = 0.6 * grow
 	b.orb.Size = Vector3.new(orb, orb, orb)
 	b.orb.CFrame = CFrame.new(to)
@@ -160,10 +166,13 @@ function Lasers.step(s: State, tracers: { any }, now: number)
 			continue
 		end
 		b.cone.Enabled = false
-		local scale = math.clamp(0.55 + 0.15 * (t.size or 1), 0.7, 1.3) * (Lasers.WIDER[t.weaponId or ""] or 1)
+		local scale = math.clamp(0.55 + 0.15 * (t.size or 1), 0.7, 1.3)
+		local wider = Lasers.WIDER[t.weaponId or ""] or 1
 		local k = math.clamp((now - t.born) / t.life, 0, 1)
 		local fade = math.max(0, k - 0.35) / 0.65
-		b.core.Width0, b.core.Width1 = Lasers.CORE * scale, Lasers.TIP * scale
+		local pulse = 1 + Lasers.PULSE * math.sin(now * 55 + n * 1.7)
+		local coreW = scale * math.sqrt(wider) * pulse
+		b.core.Width0, b.core.Width1 = Lasers.CORE * coreW, Lasers.TIP * coreW
 		b.core.Color = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, WHITE),
 			ColorSequenceKeypoint.new(0.25, WHITE:Lerp(color, 0.55)),
@@ -173,15 +182,26 @@ function Lasers.step(s: State, tracers: { any }, now: number)
 			NumberSequenceKeypoint.new(0, math.min(1, 0.0 + fade)),
 			NumberSequenceKeypoint.new(1, math.min(1, 0.15 + fade)),
 		})
-		b.glow.Width0, b.glow.Width1 = Lasers.GLOW * scale, Lasers.GLOW_TIP * scale
+		b.glow.Width0, b.glow.Width1 = Lasers.GLOW * scale * wider, Lasers.GLOW_TIP * scale * wider
 		b.glow.Color = ColorSequence.new(color)
+		-- soft: brightest near the muzzle, fading along the line
 		b.glow.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, math.min(1, 0.5 + 0.5 * fade)),
-			NumberSequenceKeypoint.new(1, math.min(1, 0.8 + 0.2 * fade)),
+			NumberSequenceKeypoint.new(0, math.min(1, 0.6 + 0.4 * fade)),
+			NumberSequenceKeypoint.new(0.5, math.min(1, 0.78 + 0.22 * fade)),
+			NumberSequenceKeypoint.new(1, math.min(1, 0.9 + 0.1 * fade)),
 		})
 		b.core.Enabled, b.glow.Enabled = true, true
-		local flare = Lasers.FLARE * scale * (1 + 0.15 * math.sin(now * 40 + n))
+		-- the muzzle: a white-hot flash, and a soft halo in the beam's colour
+		-- as wide as the glow leaving it (the user: without one the glow
+		-- looked wider than the point it came from)
+		local flicker = 1 + 0.15 * math.sin(now * 40 + n)
+		local flare = Lasers.FLARE * scale * math.sqrt(wider) * flicker
 		b.flare.Size = Vector3.new(flare, flare, flare)
+		local mh = Lasers.GLOW * scale * wider * Lasers.FLARE_OVER_GLOW * flicker
+		b.muzzleHalo.Size = Vector3.new(mh, mh, mh)
+		b.muzzleHalo.CFrame = CFrame.new(from)
+		b.muzzleHalo.Color = color
+		b.muzzleHalo.Transparency = math.min(1, 0.55 + 0.45 * fade)
 		b.flare.CFrame = CFrame.new(from)
 		b.flare.Color = WHITE:Lerp(color, 0.35)
 		b.flare.Transparency = math.min(1, 0.15 + fade)
@@ -190,15 +210,15 @@ function Lasers.step(s: State, tracers: { any }, now: number)
 		b.orb.CFrame = CFrame.new(to)
 		b.orb.Color = color
 		b.orb.Transparency = math.min(1, 0.1 + fade)
-		b.halo.Size = Vector3.new(orb * 2, orb * 2, orb * 2)
+		b.halo.Size = Vector3.new(orb * 1.6, orb * 1.6, orb * 1.6)
 		b.halo.CFrame = CFrame.new(to)
 		b.halo.Color = color
-		b.halo.Transparency = math.min(1, 0.7 + 0.3 * fade)
+		b.halo.Transparency = math.min(1, 0.82 + 0.18 * fade)
 	end
 	for i = n + 1, s.used do
 		local b = s.bolts[i]
 		b.core.Enabled, b.glow.Enabled, b.cone.Enabled = false, false, false
-		b.flare.Transparency, b.orb.Transparency, b.halo.Transparency = 1, 1, 1
+		b.flare.Transparency, b.muzzleHalo.Transparency, b.orb.Transparency, b.halo.Transparency = 1, 1, 1, 1
 	end
 	s.used = n
 end

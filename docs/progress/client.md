@@ -6,6 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Tower lasers reworked (C-228), after your look:** they end on the target's surface facing the tower (not its turret top, not inside it), the wider beams are a bright wavering core in a soft fading glow instead of a solid rod, and a flash with a soft halo covers the muzzle. The camera turns all the way round now.
 - **Small playtest items (C-227):** Ctrl + wheel turns the camera (F2); a building's rotation stays for the next ones (F14); stockpiles show their count as a number with a bar for the one being made (F10); Sentry and Overwatch lasers (both factions) are wider (F11).
 - Ready to merge: `7547c68f` (C-227; src/client and a spec; test_client 312 of 313, Nanoframe waiting on models-C; build passed)
 - **Team panel (C-226, F23):** bottom right, every player by team with a supply bar over a power bar (hover them for the numbers); on an ally: Units (click asks for units, double-click gives your selection), ■ / ϟ (click asks, drag up gives from your bank); gifts and requests show above it. **Smart Reclaim (F42):** in reclaim / repair / resurrect mode, drag a circle and the workers clear everything in it. Deposits are 2 × 2 patches and extractors snap to them; the pre-game says "Waiting for players to load".

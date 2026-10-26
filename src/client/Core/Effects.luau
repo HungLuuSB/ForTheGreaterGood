@@ -44,6 +44,10 @@ Effects.SHOOTER_RADIUS = 12 -- studs: a unit this close to a launch point with t
 Effects.SNAP_STUDS = 60
 Effects.TRACER_SECONDS = 0.09
 Effects.LASER_SECONDS = 0.12 -- a laser bolt's line, drawn whole at once (C-198)
+-- Where a hitscan shot from (x0, y0, z0) at the server's hit point (x1,
+-- y1, z1) meets the hit unit's drawn body (its surface toward the shooter,
+-- on the line to the model's middle), or nil (Main sets it from the models)
+Effects.bodyAt = nil :: ((x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) -> (number?, number?, number?))?
 Effects.BEAM_SECONDS = 0.45 -- a BEAM shot without a duration of its own (S-96, C-112)
 -- Beam durations until the sim's `beamDuration` (S-113) is in the defs: the
 -- user's look (C-128): Radiance's ray lingers 3 s, Inferno's 1.5 s.
@@ -949,6 +953,17 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		end
 		if x0 == nil and shooter then
 			x0, y0, z0 = shooter.rx or shooter.x, (shooter.ry or World.groundY(world, shooter.x, shooter.z)) + 2.5, shooter.rz or shooter.z
+		end
+		-- a hit ends on the hit unit's drawn body, where the line toward its
+		-- middle meets the model's surface: the server aims at its sim
+		-- height's middle, near the top of most models (the user: a tower's
+		-- laser went to the tank's head; then: its burst sat inside the tank)
+		local body = Effects.bodyAt
+		if e.hit and body and x0 then
+			local bx, by, bz = body(x0, y0 :: number, z0 :: number, x1, y1, z1)
+			if bx then
+				x1, y1, z1 = bx, by :: number, bz :: number
+			end
 		end
 		if x0 then
 			local def = shooter and World.def(world, shooter)
