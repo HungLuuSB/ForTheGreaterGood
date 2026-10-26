@@ -183,6 +183,11 @@ return function(t: RunAll.Context)
 		steps(sim, 30)
 		t.equal(#sim.combat.proj, 0, "no bolt without an order")
 		local g = (sim.map :: any).grid
+		-- both players watch, so NetOut encodes the bolt's events (a
+		-- pass-through IMPACT with projId 0 once broke the encoder)
+		for p = 1, 2 do
+			submit(sim, p, { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 95, maxZ = 95 })
+		end
 		local cell, ox, oz = g:encode(40, 0)
 		submit(sim, 1, { cmdType = CT.DGUN, flags = 0, unitIds = { com }, cell = cell, offX = ox, offZ = oz })
 		local comHealth = w.health[enemyCom]
