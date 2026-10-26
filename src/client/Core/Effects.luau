@@ -194,7 +194,7 @@ export type Warning = { projId: number, x: number, y: number, z: number, born: n
 -- height under it (air bursts sit well above it); `dx, dy, dz`: the
 -- direction it faces (a muzzle's shot, a launch's flight), when known
 -- (C-47); `tx, ty, tz`: where flares head, or the missile a laser hits (C-48).
-export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, water: number?, dx: number?, dy: number?, dz: number?, tx: number?, ty: number?, tz: number? }
+export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, water: number?, dx: number?, dy: number?, dz: number?, tx: number?, ty: number?, tz: number?, noCrater: boolean? }
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
@@ -277,6 +277,8 @@ end
 -- radius alone gives (C-52).
 Effects.LARGE_IMPACT = 1.8
 Effects.FLAME_SECONDS = 0.35 -- a flame stream's life (S-181)
+Effects.HUGE_BLAST = 90 -- studs: a death blast this wide plays the nuke's look scaled to it (F15)
+Effects.BLAST_SHOWN = 0.6 -- an ordinary death blast's burst, as a share of its damage radius
 function Effects.impactSize(weapon: any): number
 	local impact = weapon and weapon.fx and weapon.fx.impact
 	local large = type(impact) == "string" and string.find(impact, "_large", 1, true) ~= nil
@@ -1237,9 +1239,15 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 				b.ground = ground
 				local blast = def and (def :: any).deathBlast
 				if blast then
-					-- it explodes when killed (S-70): a blast as wide as its damage
-					local big = burst(fx, now, d.x, ground + 2, d.z, blast.aoe, "impact", Effects.EXPLOSION_SECONDS)
+					-- every unit explodes when killed (S-70, S-178, F15), its blast's
+					-- size from its def: a huge one (a Commander, a fusion reactor) as
+					-- the nuke's look scaled to its radius, smaller than a nuke's;
+					-- others a burst of part of the blast's reach
+					local huge = blast.aoe >= Effects.HUGE_BLAST
+					local radius = if huge then blast.aoe else blast.aoe * Effects.BLAST_SHOWN
+					local big = burst(fx, now, d.x, ground + 2, d.z, radius, if huge then "nuke" else "impact", if huge then Effects.DEATH_SECONDS * 2 else Effects.EXPLOSION_SECONDS)
 					big.ground = ground
+					big.noCrater = huge or nil -- a nuke's look without its crater
 				end
 			end
 		end

@@ -6,6 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Death blasts (C-232, F15):** every unit explodes when it dies, sized by its blast; Commanders and fusion reactors go up in a fireball and smoke column like a smaller nuke (no crater).
 - **The bots walk (C-231):** the new bots step on their legs like the Commanders (Fatboy short heavy steps, Centurion long strides, Skitter scuttling on four legs), and the Dragon's fans turn. All client specs pass again.
 - Ready to merge: `39f70870` (C-231 with m-models 4f6f268f; test_client 315 / 315, build passed)
 - **Everything loads first (C-230):** in a lobby match every model and texture loads during the loading screen (twice as fast as before: 24.5 s in Studio), and the pick clock only starts once you're loaded. The loading screen's text has dark outlines so it reads over the art.

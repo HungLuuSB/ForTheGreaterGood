@@ -2024,3 +2024,10 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Ambient.spec: the bots stride and rest, the torso stays, Skitter's pairs swing together, the fans turn, Fatboy strides slower than Glint. Checked in Studio at a quarter speed: Glint, Mace, Fatboy, Centurion and Skitter walking.
 
 **Why:** the new walking units (S-181) and models-C's leg kit.
+
+### C-232 — Death blasts by unit (2026-10-26, F15, S-178)
+
+- Every unit now has a `deathBlast` (sim-A's `Defs.defaultDeathBlast`, S-178), so every death adds a blast burst sized from its def: an ordinary one at 0.6 × its damage radius (`Effects.BLAST_SHOWN`), so small units don't white out the screen; a huge one (90 studs and up: Commanders 120, fusion reactors 120; `Effects.HUGE_BLAST`) plays the nuke's look scaled to its radius (0.8 of a nuke), held twice as long, without the nuke's crater (`Burst.noCrater`). Generator chains follow from the sim's blasts.
+- Checked in Studio (Coastline): three Lancers' small blasts; a fusion reactor's big fireball and smoke column.
+
+**Why:** the user's playtest F15 ("death explosions for every unit, by tier / energy stored; Commander a huge blast, smaller than a nuke").
