@@ -2143,3 +2143,8 @@ The watchdog's WARN / INFO lines (S-140) stay on.
   - the mesas in red rock (`debug_out/screens/2026-10-26-dgun-bolt.jpg`, `…-supreme-strait-laser-card.jpg`).
 - A D-Gun point up a mesa's slope was never fired, and the order stayed pending. sim-A fixed it in S-194: the D-Gun aims in yaw only. Checked in Studio: the same shot fires and burns a Ravager on its path.
 - Follow-up: the server now sends only the bolt's end IMPACT. The units it burns through show as their DEATHs, so the client's flight-time check and spawn-tick bookkeeping are gone, and the bolt ends at its own IMPACT. Spec: one IMPACT; three tanks seen dying on the client.
+
+### C-243 — Supreme Strait by day; no atmosphere setting (2026-10-27)
+
+- The user: "Supreme Strait time of day is day, not night". `MapLook` gives `map:supreme_strait` the "clear" preset (13:00, crisp air), a sea-dark skirt past its edges (its seas run to them), and light daytime motes. Studio: `debug_out/screens/2026-10-27-supreme-strait-day.jpg`.
+- The user: "remove the option to change the environment from the setting". The Atmosphere row is gone from Settings > Graphics > Lighting, and `Settings` has no `atmosphere` key; `SettingsMenu.applySettings` always applies "map". Every map has its own lighting and time of day (`Core/MapLook`), the moonlit night unless it names another.

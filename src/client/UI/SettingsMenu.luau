@@ -7,7 +7,7 @@
 -- right-aligned controls, child rows indented under a fold arrow, and the
 -- hovered option's help in the footer.
 --   Graphics   Quality (dropdown; unfold for what it caps) · Models
---              (detailed models, glow) · Lighting (atmosphere, fog of war
+--              (detailed models, glow) · Lighting (fog of war
 --              shading, headlights)
 --   Interface  Scale (UI scale) · Building (build grid) · Developer
 --              (Advanced: developer mode and its keys, dimmed while off)
@@ -163,7 +163,7 @@ function SettingsMenu.apply(s: Settings.State)
 	Glow.HEADLIGHTS = s.headlights
 	Models.setDetailed(s.detailedModels)
 	PlacementGhost.GRID = s.buildGrid
-	Atmosphere.apply(s.atmosphere)
+	Atmosphere.apply("map") -- every map's own lighting and time of day (Core/MapLook; no choice since C-243)
 	local playerGui = (Players.LocalPlayer :: Player):FindFirstChild("PlayerGui")
 	for _, gui in (if playerGui then playerGui:GetChildren() else {}) do
 		if gui:IsA("ScreenGui") and SCALED[gui.Name] then
@@ -219,10 +219,6 @@ local function sections(ui: UI, changed: () -> ()): { Kit.OptionSection }
 		end
 	end
 	local panL, zoomL, scaleL = Settings.LIMITS.panSpeed, Settings.LIMITS.zoomStep, Settings.LIMITS.uiScale
-	local atmospheres = {}
-	for _, name in Settings.ATMOSPHERES do
-		table.insert(atmospheres, { name, Atmosphere.NAMES[name] or name })
-	end
 
 	local graphics: Kit.OptionSection = { name = "Graphics", subs = {
 		{ name = "Quality", options = {
@@ -262,12 +258,6 @@ local function sections(ui: UI, changed: () -> ()): { Kit.OptionSection }
 				end },
 		} },
 		{ name = "Lighting", options = {
-			{ id = "atmosphere", label = "Atmosphere", keywords = "lighting time day night dusk", help = "The lighting preset. Map's own: each map's lighting and time of day.",
-				build = function(c)
-					Kit.dropdown(c, atmospheres, s.atmosphere, function(name)
-						set("atmosphere", name)
-					end, 190)
-				end },
 			{ id = "fog", label = "Fog of war shading", keywords = "fog vision", help = "Darkens ground you can't see. What is hidden stays hidden either way.",
 				build = function(c)
 					Kit.toggle(c, s.fog, function(on)
