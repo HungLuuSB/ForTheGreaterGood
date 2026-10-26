@@ -32,7 +32,7 @@ return function(t: any)
 		t.equal(#arcs, 1)
 		local arc = arcs[1]
 		t.expect(arc.inRange, "the spot is in range")
-		t.equal(arc.stock, 2)
+		t.equal(arc.stock, sim.defs.weapons.ord_nuke.stockpile.capacity, "a full silo (it starts at its capacity, S-200)")
 		local last = arc.points[#arc.points]
 		t.expect(math.abs(last[1] - TX) < 1 and math.abs(last[3] - TZ) < 1, `the arc ends on the spot ({last[1]}, {last[3]})`)
 
