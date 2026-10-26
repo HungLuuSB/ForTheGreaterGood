@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Nukes aimed at a unit (C-246):** with a nuke silo selected, Attack and a click on an enemy unit now launches at that spot. Before, nothing launched.
+- Ready to merge: `c8c27416` (C-246; main 2c36d0da merged in; test_client 326 / 326, build passed; Studio: a launch from A + a click on a Ravager)
 - **Protocol 40 (C-245):**
   - Hold Space to put an order at the front of a unit's queue.
   - Trees and rocks stand on Supreme Strait (stand-ins until models-C's models are approved), and hovering one shows its power or supply.
