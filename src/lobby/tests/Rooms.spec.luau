@@ -16,7 +16,7 @@ local MAPS: { Rooms.MapInfo } = {
 local HOST, B, C, D = 1, 2, 3, 4
 
 local function room(opts: any?): Rooms.Room
-	local r, err = Rooms.new("r1", opts or { name = "Test room", privacy = "public", maxPlayers = 8 }, HOST, "Host", MAPS)
+	local r, err = Rooms.new("r1", opts or { name = "Test room", privacy = "public" }, HOST, "Host", MAPS)
 	assert(r, err)
 	return r
 end
@@ -300,5 +300,25 @@ return function(t: RunAll.Context)
 		for _, value in v do
 			t.notEqual(value, "hunter2")
 		end
+	end)
+
+	t.test("a room holds 16 people, AIs included, unless created with another cap (G11)", function()
+		local r = room()
+		t.equal(r.maxPlayers, 16)
+		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:big" })
+		for _ = 1, 14 do
+			t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi" }), nil)
+		end
+		t.equal(Rooms.headcount(r), 15)
+		t.equal(Rooms.join(r, MAPS, B, "B", nil), nil, "the 16th")
+		t.equal(Rooms.join(r, MAPS, 30, "C", nil), "This room is full", "AIs count")
+		t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi" }), "No free seat on this map")
+		-- a smaller cap (set with authority) caps AIs too
+		local small = room({ name = "Small", privacy = "public", maxPlayers = 3 })
+		Rooms.apply(small, MAPS, HOST, { op = "set", key = "mapId", value = "map:big" })
+		t.equal(Rooms.apply(small, MAPS, HOST, { op = "addAi" }), nil)
+		t.equal(Rooms.apply(small, MAPS, HOST, { op = "addAi" }), nil)
+		t.equal(Rooms.apply(small, MAPS, HOST, { op = "addAi" }), "The room is full: 3 people, AIs included")
+		t.equal(Rooms.join(small, MAPS, B, "B", nil), "This room is full")
 	end)
 end

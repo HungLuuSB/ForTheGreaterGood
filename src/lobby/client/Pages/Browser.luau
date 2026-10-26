@@ -70,11 +70,16 @@ local function createDialog(gui: Instance)
 	end, 82)
 	local pwRow = Kit.row(p.content, "Password (optional)", 3)
 	local pw = Ui.input(pwRow, "None", 250)
-	local maxPlayers = Config.DEFAULT_PLAYERS
-	Kit.slider(Kit.row(p.content, "Players and spectators", 4), Config.MIN_PLAYERS, Config.MAX_PLAYERS, 1, maxPlayers, "%d", function(v)
-		maxPlayers = v
-	end, 190)
-	local help = Kit.text(p.content, "Private rooms don't show in the browser: share the room code. The map's starts limit who plays; the rest spectate.", "small", Kit.COLOR.faint)
+	-- every room holds 16 people, AIs included; only someone with authority
+	-- sets another cap (G11)
+	local maxPlayers: number? = nil
+	if Net.view and Net.view.me.authority then
+		maxPlayers = Config.DEFAULT_PLAYERS
+		Kit.slider(Kit.row(p.content, "Room size (authority)", 4), Config.MIN_PLAYERS, Config.MAX_PLAYERS, 1, Config.DEFAULT_PLAYERS, "%d", function(v)
+			maxPlayers = v
+		end, 190)
+	end
+	local help = Kit.text(p.content, `Private rooms don't show in the browser: share the room code. A room holds {Config.DEFAULT_PLAYERS} people, AIs included; the map's starts limit who plays, the rest spectate.`, "small", Kit.COLOR.faint)
 	help.TextWrapped = true
 	help.Size = UDim2.new(1, 0, 0, 40)
 	help.LayoutOrder = 5
@@ -160,7 +165,7 @@ function Browser.new(frame: Frame, _router: any): any
 			if filter == "open" and r.phase ~= "setup" then
 				continue
 			end
-			if filter == "free" and (r.phase ~= "setup" or r.members >= r.maxPlayers) then
+			if filter == "free" and (r.phase ~= "setup" or r.members + r.ai >= r.maxPlayers) then
 				continue
 			end
 			shown += 1
@@ -182,7 +187,7 @@ function Browser.new(frame: Frame, _router: any): any
 			row.MouseLeave:Connect(function()
 				row.BackgroundTransparency = base
 			end)
-			local status = if r.phase == "setup" then (if r.members >= r.maxPlayers then "Full" else "Open") else (if r.phase == "starting" then "Starting" else "In match")
+			local status = if r.phase == "setup" then (if r.members + r.ai >= r.maxPlayers then "Full" else "Open") else (if r.phase == "starting" then "Starting" else "In match")
 			if r.phase == "match" and r.startedAt then
 				status = `In match · {Ui.minutes(r.startedAt)}`
 			end
@@ -191,7 +196,7 @@ function Browser.new(frame: Frame, _router: any): any
 				r.host,
 				r.mapName,
 				Ui.label2(r.mode),
-				`{r.members}/{r.maxPlayers}` .. (if r.ai > 0 then ` +{r.ai} AI` else ""),
+				`{r.members + r.ai}/{r.maxPlayers}` .. (if r.ai > 0 then ` ({r.ai} AI)` else ""), -- AIs count toward the cap (G11)
 				status,
 			}
 			local cx = 0

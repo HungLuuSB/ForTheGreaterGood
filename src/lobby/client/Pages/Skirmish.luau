@@ -64,7 +64,7 @@ function Skirmish.new(frame: Frame, _router: any): any
 	facts.LayoutOrder = 2
 	local previewHolder = Ui.frame(detail, "Preview", UDim2.new(1, -8, 0, 190))
 	previewHolder.LayoutOrder = 3
-	local preview = MapImage.new(previewHolder)
+	local preview = MapImage.new(previewHolder, false) -- no starts: they're picked in the match (G12)
 	local note = Kit.text(detail, "", "small", Kit.COLOR.text)
 	note.TextWrapped = true
 	note.AutomaticSize = Enum.AutomaticSize.Y

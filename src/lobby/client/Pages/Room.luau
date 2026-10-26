@@ -22,6 +22,7 @@ local MatchConfig = require("../../shared/MatchConfig")
 local SpawnBoxes = require("../../shared/SpawnBoxes")
 local BoxEditor = require("../BoxEditor")
 local MapImage = require("../MapImage")
+local MapPicker = require("../MapPicker")
 local Net = require("../Net")
 local Ui = require("../Ui")
 local Browser = require("./Browser")
@@ -245,7 +246,7 @@ function Room.new(frame: Frame, _router: any): any
 	local rulesH = 6 * RULE_H + 5 * RULE_GAP + Kit.SPACE.s * 2
 	local rightCol = Ui.frame(frame, "Setup", UDim2.new(0.36, 0, 1, 0), UDim2.new(0.64, 0, 0, 0))
 	local mapHolder = Ui.frame(rightCol, "MapHolder", UDim2.new(1, 0, 1, -(rulesH + 44 + Kit.SPACE.s * 2)))
-	local mapImage = MapImage.new(mapHolder)
+	local mapImage = MapImage.new(mapHolder, false) -- no starts: players pick theirs in the match (G12)
 	local boxEditor = BoxEditor.new(mapImage.image, function(team: number, box: { number })
 		Net.send({ op = "box", team = team, box = box })
 	end)
@@ -478,8 +479,14 @@ function Room.new(frame: Frame, _router: any): any
 		colors = MatchConfig.colors(room, me)
 		roles = MatchConfig.aiRoles(room)
 		local hostMember = memberOf(room, room.host)
+		local aiCount = 0 -- the cap counts them too (G11)
+		for _, s in room.slots do
+			if s.kind == "ai" then
+				aiCount += 1
+			end
+		end
 		name.Text = room.name
-		sub.Text = `Hosted by {if hostMember then hostMember.name else "?"}   ·   Code <b>{room.id}</b>   ·   {Ui.label2(room.privacy)}{if room.locked then " · password" else ""}   ·   {#room.members}/{room.maxPlayers}`
+		sub.Text = `Hosted by {if hostMember then hostMember.name else "?"}   ·   Code <b>{room.id}</b>   ·   {Ui.label2(room.privacy)}{if room.locked then " · password" else ""}   ·   {#room.members + aiCount}/{room.maxPlayers}`
 		currentRoom = room
 		paintStatus()
 		local noticeText2 = room.notice
@@ -566,7 +573,7 @@ function Room.new(frame: Frame, _router: any): any
 
 		-- map
 		local map = Net.map(room.settings.mapId)
-		mapImage.set(map) -- the starts are hints: players pick theirs in the match
+		mapImage.set(map)
 
 		-- spawn boxes (Teams): each team's, in the colour of its first seat as
 		-- you see it (yours for your own team)
@@ -593,15 +600,6 @@ function Room.new(frame: Frame, _router: any): any
 		-- rules: BAR's rows, editable for the host while the room is open
 		Ui.clear(rules)
 		local canEdit = host and setup
-		local mapOptions = {}
-		-- (the server lists small maps first, then medium, then large: F4)
-		local sizeName = {}
-		for _, z in Config.MAP_SIZES do
-			sizeName[z.id] = z.name
-		end
-		for _, m in Net.maps or {} do
-			table.insert(mapOptions, { m.id, `{m.name} ({m.starts}) · {sizeName[m.size] or "Small"}` })
-		end
 		local function choice(label: string, order2: number, opts: { { string } }, value: string, shown: string, key: string)
 			local cell = Ui.field(rules, label, order2, RULE_H)
 			if canEdit then
@@ -612,7 +610,23 @@ function Room.new(frame: Frame, _router: any): any
 				Ui.fieldText(cell, shown)
 			end
 		end
-		choice("Map", 1, mapOptions, room.settings.mapId, room.mapName, "mapId")
+		-- the map: a panel with the list, a preview and the map's facts (G12);
+		-- the host chooses there, everyone else can look
+		local mapCell = Ui.field(rules, "Map", 1, RULE_H)
+		Ui.fieldText(mapCell, room.mapName)
+		Ui.chevron(mapCell)
+		local openMaps = Instance.new("TextButton")
+		openMaps.Name = "Maps"
+		openMaps.BackgroundTransparency = 1
+		openMaps.Text = ""
+		openMaps.Size = UDim2.fromScale(1, 1)
+		openMaps.ZIndex = 5
+		openMaps.Parent = mapCell
+		openMaps.MouseButton1Click:Connect(function()
+			MapPicker.open(gui, room.settings.mapId, if canEdit then function(id: string)
+				Net.send({ op = "set", key = "mapId", value = id })
+			end else nil)
+		end)
 		choice("Mode", 2, options(Config.MODES), room.settings.mode, Ui.label2(room.settings.mode), "mode")
 		choice("Win rule", 3, options(Config.WINS), room.settings.win, Ui.label2(room.settings.win), "win")
 		Ui.fieldToggle(Ui.field(rules, "Friendly fire", 4, RULE_H), room.settings.friendlyFire, if canEdit then function(on)
