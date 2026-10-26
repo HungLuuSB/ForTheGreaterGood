@@ -94,7 +94,7 @@ def key_arts():
 # baked map ground (C-167, docs/contracts/map-ground.md): assets/maps/<name>/export/ground.json
 # (the bake) and assets/maps/<name>/roblox_assets.json (mesh IDs); textures per ground material
 # in assets/maps/materials/roblox_assets.json. Maps the user approved:
-GROUND_APPROVED = set()
+GROUND_APPROVED = {"lakelands"}  # 2026-10-26
 GROUND_NOTE = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))"
 MAPS_DIR = os.path.join(ROOT, "assets", "maps")
 
@@ -167,6 +167,12 @@ APPROVED = {
     "ord_archon", "chs_manticore", "ord_phantom", "chs_behemoth", "ord_archangel", "chs_banshee", "chs_wraith",
     "ord_providence", "chs_cerberus", "ord_custodian", "chs_chimera", "ord_sanction", "chs_scourge",
     "ord_tideguard", "chs_mire", "ord_zenith", "chs_condor", "ord_tidewatch", "chs_leech",
+    # 2026-10-26: the F18 towers, the F6 advanced extractors (the T1's size) and the S-181 units, with wrecks
+    "ord_bastion", "chs_maw", "ord_rampart", "chs_breaker", "ord_edict", "chs_cataclysm", "ord_sentry_tower", "chs_guard",
+    "ord_overwatch", "chs_geryon", "ord_beamer", "chs_twin_guard", "ord_advextractor", "chs_advextractor", "ord_botlab", "chs_botlab",
+    "ord_advbotlab", "chs_advbotlab", "ord_artisan", "chs_tinker", "ord_lazarus", "chs_graverobber", "ord_glint", "chs_skitter",
+    "ord_mace", "chs_thug", "ord_kestrel", "chs_needle", "ord_fatboy", "chs_tzar", "chs_centurion", "chs_dragon",
+    "ord_liche",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -192,6 +198,12 @@ APPROVED_WRECKS = {
     "ord_archon", "chs_manticore", "ord_phantom", "chs_behemoth", "ord_archangel", "chs_banshee", "chs_wraith",
     "ord_providence", "chs_cerberus", "ord_custodian", "chs_chimera", "ord_sanction", "chs_scourge",
     "ord_tideguard", "chs_mire",
+    # 2026-10-26: the F18 towers, the F6 advanced extractors (the T1's size) and the S-181 units, with wrecks
+    "ord_bastion", "chs_maw", "ord_rampart", "chs_breaker", "ord_edict", "chs_cataclysm", "ord_sentry_tower", "chs_guard",
+    "ord_overwatch", "chs_geryon", "ord_beamer", "chs_twin_guard", "ord_advextractor", "chs_advextractor", "ord_botlab", "chs_botlab",
+    "ord_advbotlab", "chs_advbotlab", "ord_artisan", "chs_tinker", "ord_lazarus", "chs_graverobber", "ord_glint", "chs_skitter",
+    "ord_mace", "chs_thug", "ord_kestrel", "chs_needle", "ord_fatboy", "chs_tzar", "chs_centurion", "chs_dragon",
+    "ord_liche",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
