@@ -2710,6 +2710,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - The AI's bot lab waits for 6 extractors and 4 army units, not `established`. The aggressive AIs never kept its 200 stored supply, so they built no bot lab at all.
   - The slow full-match test allows 45 minutes (units are 40% slower); the 3v3 roles test runs 14.
   - Movement clamps the terrain cell under a ground unit (one off the map stopped the sim; client-B).
+- **D-Gun fixes from client-B's Studio check:**
+  - A point up a slope never fired: the shell's line-of-fire check stopped it, though the bolt follows the ground. The D-Gun now aims in yaw only (pitch 0) and skips the line of fire.
+  - Each pass-through IMPACT carried the bolt's ID, so NetOut ended the bolt for the clients and announced it again (four SPAWN_PROJ for one bolt). Pass-through IMPACTs now carry no projectile ID; only the bolt's end does.
 - **G16, at the source (client-B's finding):** an aircraft's wire `alt` is now its height over the ground at the wire's rounded position (`NetOut.wireAlt`), not at its own. Before, a quarter-stud rounding across a cell edge over a cliff put the client's ground + alt 12 studs off.
 - **Wire:** protocol 39. Commands 28–30; owner mask bits 32 (SELF_DESTRUCT u8) and 64 (WORK kind u8 + target u16); STATES bits 4–5. `docs/contracts/net.md` updated.
 - **Tests:**
