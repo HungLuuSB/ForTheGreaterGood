@@ -776,6 +776,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `4f6f268f` (bot legs renamed to the Commander walker pieces `thighL` / `shinL` / `footL` + R, swing X, for client-B's walk; Skitter `thighFL`… / `shinFL`…; includes `6c93cc9e`).
 - Ready to merge: `e97ce583` (F27: the unit death explosion template `ReplicatedStorage.Vfx.Death`, `place/Vfx.model.json` and its generator; adds a `Vfx` entry to default/serve/build.project.json — the live sync needs one `rojo serve` restart).
 - Ready to merge: `1a586bf4` (F18 / F6 meshes: the six T2 defences as towers, the six T1 laser / beam towers taller, the advanced extractors at the T1's size, with wrecks; the four S-181 bot labs' meshes; all `review`, so nothing new draws in game; `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs).
+- Ready to merge: `19588182` (S-181 meshes: the 15 units' meshes and all 19 wrecks, `review`, so nothing new draws in game; includes `1a586bf4`; `Mesh.isAttachmentPiece` matches Blockout's; manifest, `place/MeshMaterials.model.json`, status table, docs).
 
 ## Requests
 
