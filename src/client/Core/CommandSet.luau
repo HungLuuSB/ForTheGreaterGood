@@ -31,6 +31,21 @@ local CommandSet = {}
 
 CommandSet.ORDER = { "fire", "movestate", "retreat", "repeat", "toggle", "priority", "cancel", "stop", "attack", "dgun", "move", "patrol", "fight", "guard", "repair", "reclaim", "resurrect", "upgrade", "selfdestruct", "alert" }
 
+-- Whether `def` is a nuke silo: armed with strategic weapons only (they
+-- launch on a manual attack at a point, ATTACK_GROUND; never at a unit).
+function CommandSet.isSilo(def: any, all: any): boolean
+	if def.weapons == nil or #def.weapons == 0 then
+		return false
+	end
+	for _, ws in def.weapons do
+		local w = all and all.weaponByIndex and all.weaponByIndex[(ws :: any).weaponIndex]
+		if w == nil or w.strategic ~= true or w.intercepts ~= nil then
+			return false
+		end
+	end
+	return true
+end
+
 -- Whether `def` has a D-Gun (S-194: the Commanders' manual-fire bolt).
 function CommandSet.hasDgun(def: any, all: any?): boolean
 	for _, ws in def.weapons or {} do

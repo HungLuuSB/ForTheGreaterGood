@@ -178,7 +178,7 @@ export type WeaponDef = {
 	stationary: boolean?, -- fires only while its unit stands still (S-111)
 	launch: ("turret" | "vertical")?, -- HOMING: "vertical" leaves straight up, no turret aim (S-42); default "turret"
 	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
-	canTargetRadar: boolean?,
+	canTargetRadar: boolean?, -- fires at radar contacts; every weapon does unless false (S-202, the user)
 	beamDuration: number?, -- BEAM: seconds the beam lingers; its damage is dealt over that time (S-113)
 	pierce: boolean?, -- with beamDuration: the beam's line hurts every enemy it crosses, hit or miss (S-115)
 	fullLength: boolean?, -- with pierce: the line runs on past the target to the weapon's full range (S-181: the Centurion clears lines)
@@ -932,6 +932,7 @@ function Defs.build(raw: RawDefs): DefSet
 			end
 		end
 		w.targetMask = Categories.mask(w.targets)
+		w.canTargetRadar = w.canTargetRadar ~= false -- (S-202: units take radar blips, the user)
 		w.priorityMasks = {}
 		for i, name in w.priority or {} do
 			w.priorityMasks[i] = Categories.Bit[name]
