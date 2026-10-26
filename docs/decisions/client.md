@@ -2008,3 +2008,26 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **F34, formation lines:** the right-drag line move (LINE flag; Ctrl adds GROUP) now previews each unit's slot along the line, as the order sends them (`Orders.lineSlots`), each with a tick facing across the line away from the group. Checked in Studio: six Lancers, the preview's six slots, the units spread into them. Units keep their travel heading at the end (asked sim-A about turning them to face).
 
 **Why:** sim-A's S-186 / S-187 and the playtest's F34 / F40.
+
+### C-230 — Everything loaded before the match; a readable loading screen (2026-10-26)
+
+- **Preload** (the user: every player sees their models without waiting in game): a lobby match's first CAMERA waits until this client's preload is complete (ground, every approved unit mesh, their SurfaceAppearances and the icon sheets; `Render/Preload`), at most `LOAD_HOLD` (115 s, under the sim's Pregame.LOAD_WAIT of 120 since sim-A raised it): the pre-game's clocks start on every human's first command (S-182), so nobody's pick time runs while they still load. Behind the loading screen 16 meshes build at once (8 in game). Measured in Studio's `contract` match: 45.9 s with 8 at once, 24.5 s with 16 (a cold Studio cache; the published place will be slower to download). The pre-game's Commanders redraw as their meshes finish (they stayed blockouts).
+- **Loading screen text** (the user: hard to see over the key art): a dark outline on the title, the players and the tip, the players larger and semibold, a strip behind the tip; no card behind the text (the user tried it: worse).
+
+**Why:** the user's preload request (via sim-A) and their look at the loading screen.
+
+### C-231 — The bots walk; the Dragon's fans turn (2026-10-26, S-181, models-C 4f6f268f)
+
+- Merged m-models 4f6f268f (the 19 S-181 blockouts registered, the bots' legs renamed to the walker convention). Nanoframe.spec passes again: all client specs pass.
+- `PieceScripts/Bot`: the eleven biped bots (Artisan, Tinker, Lazarus, Graverobber, Glint, Mace, Thug, Kestrel, Needle, Fatboy, Centurion) walk the Commander's stride on `thigh` / `shin` / `foot` L and R, without the torso twist (their torso is the weapon turret, aimed by Default) or arm swing (none), the pelvis dipping 5 % of the hip height. A stride covers 2.9 hip heights at the bot's top speed (0.25..1.2 s); the swing is scaled per bot (models-C: Fatboy ×0.5, Centurion ×1.15). Skitter walks a diagonal gait on its four splayed legs (FL with BR, FR with BL). Stopped, legs ease to rest.
+- `Bot.Dragon`: the Dragon's ducted fans (`fanL` / `fanR`) turn all the time, faster while it moves.
+- Ambient.spec: the bots stride and rest, the torso stays, Skitter's pairs swing together, the fans turn, Fatboy strides slower than Glint. Checked in Studio at a quarter speed: Glint, Mace, Fatboy, Centurion and Skitter walking.
+
+**Why:** the new walking units (S-181) and models-C's leg kit.
+
+### C-232 — Death blasts by unit (2026-10-26, F15, S-178)
+
+- Every unit now has a `deathBlast` (sim-A's `Defs.defaultDeathBlast`, S-178), so every death adds a blast burst sized from its def: an ordinary one at 0.6 × its damage radius (`Effects.BLAST_SHOWN`), so small units don't white out the screen; a huge one (90 studs and up: Commanders 120, fusion reactors 120; `Effects.HUGE_BLAST`) plays the nuke's look scaled to its radius (0.8 of a nuke), held twice as long, without the nuke's crater (`Burst.noCrater`). Generator chains follow from the sim's blasts.
+- Checked in Studio (Coastline): three Lancers' small blasts; a fusion reactor's big fireball and smoke column.
+
+**Why:** the user's playtest F15 ("death explosions for every unit, by tier / energy stored; Commander a huge blast, smaller than a nuke").

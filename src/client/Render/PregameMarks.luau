@@ -15,6 +15,7 @@ local StartAreas = require("@shared/Match/StartAreas")
 local Kit = require("../UI/Kit")
 local Pregame = require("../Core/Pregame")
 local World = require("../Core/World")
+local MeshModels = require("./MeshModels")
 local Models = require("./Models")
 local TeamColors = require("./TeamColors")
 
@@ -231,7 +232,8 @@ function PregameMarks.step(m: Marks, world: World.World, areas: Pregame.Areas?, 
 		m.areasKey = areasKey
 		drawAreas(m, world, areas)
 	end
-	local picksKey = `{pg.version}/{TeamColors.version}/{Models.version}`
+	-- (redrawn as meshes finish: a Commander drawn as a blockout gets its model)
+	local picksKey = `{pg.version}/{TeamColors.version}/{Models.version}/{MeshModels.stats.built}`
 	if picksKey ~= m.picksKey then
 		m.picksKey = picksKey
 		drawPicks(m, world)

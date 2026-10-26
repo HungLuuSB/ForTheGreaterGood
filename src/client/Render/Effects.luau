@@ -609,7 +609,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			Vfx.spawn(r.vfx, kind, b.x, b.y, b.z, burstScale, vt, b.ground, b.dx, b.dy, b.dz, b.tx, b.ty, b.tz)
 			r.stats.emits += 1
 		end
-		if kind == "nuke" then
+		if kind == "nuke" and not b.noCrater then
 			-- a burst near the ground digs a crater in Terrain ground (C-82)
 			local height = if b.ground then b.y - b.ground else math.huge
 			local dug = Ground.last ~= nil and Ground.last.ground == "terrain" and height < b.radius and Crater.make(b.x, b.ground :: number, b.z, b.radius)

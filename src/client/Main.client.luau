@@ -336,6 +336,9 @@ local _lobbyUI = LobbyUI.new(remotes) -- the lobby and results screens (C-70; pr
 -- this client's progress (Render/Preload) and hides once the match starts
 local matchLoading = MatchLoading.new(remotes)
 local preload = Preload.new()
+local LOAD_HOLD = 115 -- seconds at most the first CAMERA waits for the preload (the sim's Pregame.LOAD_WAIT is 120)
+local holdSince: number? = nil
+local loadedAt: number? = nil
 Controls.capture = function(input: InputObject): boolean
 	if SettingsMenu.capturing and input.UserInputType == Enum.UserInputType.Keyboard then
 		return true -- Settings > Keys is taking this key (C-159)
@@ -1001,6 +1004,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	_lobbyUI.gui.Enabled = replay == nil
 	MatchLoading.step(matchLoading, now, Preload.progress(preload, world))
+	-- twice the meshes building at once behind the loading screen (nothing to draw)
+	MeshModels.AT_ONCE = if matchLoading.gui.Enabled then 16 else 8
 	ReplayBar.step(replayBar, replay, if replay then `REPLAY: player {replay.replay.header.viewer}'s view` elseif world.joined and world.me.player == 0 then "SPECTATING: every player, no fog" else nil)
 	if world.rejected then
 		if not warned then
@@ -1108,6 +1113,23 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		end
 	end
 	local payload = Camera.apply(camState, world, workspace.CurrentCamera, now)
+	-- a lobby match's first CAMERA waits until this client has loaded
+	-- everything (or LOAD_HOLD seconds): the pre-game's clocks start on every
+	-- human's first command (S-182), so nobody's pick time runs while they
+	-- still load (the user: every model ready before the match)
+	if payload and loadedAt == nil then
+		holdSince = holdSince or now
+		local progress = Preload.progress(preload, world)
+		if not MatchLoading.isMatch(matchLoading) then
+			loadedAt = now -- not a lobby match: nothing to wait for
+		elseif progress >= 0.999 or now - holdSince >= LOAD_HOLD then
+			loadedAt = now
+			print(string.format("[Client] loaded in %.1f s (%s)", now - holdSince, if progress >= 0.999 then "everything ready" else "gave up waiting"))
+		else
+			camState.lastRect = nil -- sent again once loaded
+			payload = nil
+		end
+	end
 	if payload then
 		cmd:FireServer(payload)
 	end
