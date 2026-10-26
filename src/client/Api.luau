@@ -53,6 +53,8 @@ export type State = {
 	-- S-61): the first selected unit that has one; nil when none does
 	fireState: number?,
 	moveState: number?,
+	retreat: number?, -- the first selected aircraft's Schema.RetreatAt (protocol 39)
+	selfDestructing: boolean, -- a selected unit counts down to self-destruct
 	factoryQueues: { [number]: { number } }, -- own factory → its queue on the server (def indices, the head in production; S-61)
 }
 
@@ -98,6 +100,8 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		alerts = {},
 		commandMode = nil,
 		fireState = nil,
+		retreat = nil,
+		selfDestructing = false,
 		moveState = nil,
 		factoryQueues = {},
 	}
@@ -200,6 +204,19 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		return issue({ cmdType = CT.SET_MOVE_STATE, queue = false, value = n })
 	end
 
+	-- Aircraft: the health below which they fly to a rearm pad to heal
+	-- (Schema.RetreatAt; SET_RETREAT, S-194, G17).
+	function actions.setRetreat(n: number)
+		return issue({ cmdType = CT.SET_RETREAT, queue = false, value = n })
+	end
+
+	-- Self-destruct (S-194, G13): starts the selection's countdown, or stops
+	-- it when any selected unit is already counting down (`on` forces one).
+	function actions.selfDestruct(on: boolean?)
+		local start = if on == nil then not state.selfDestructing else on
+		return issue({ cmdType = CT.SELF_DESTRUCT, queue = false, value = if start then 1 else 0 })
+	end
+
 	-- Factories: repeat the queue on / off (REPEAT, S-13).
 	function actions.setRepeat(on: boolean)
 		return issue({ cmdType = CT.REPEAT, queue = false, value = if on then 1 else 0 })
@@ -275,6 +292,9 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 				return false, "repair needs an own unit"
 			end
 			ok, why = actions.order("repair", unitId, queue)
+		elseif kind == "dgun" then
+			-- the D-Gun at the point (S-194, G5): Commanders walk into range first
+			ok, why = issue({ cmdType = CT.DGUN, queue = queue == true, x = x, z = z })
 		elseif kind == "reclaim" or kind == "resurrect" then
 			-- the known wreck nearest the click (wrecks aren't pickable models), C-109;
 			-- RESURRECT the same way (S-168, C-216: workers with canResurrect)
@@ -574,12 +594,18 @@ function Api.frame(api: Api, now: number)
 			state.factoryQueues[id] = u.queue
 		end
 	end
-	state.fireState, state.moveState = nil, nil
+	state.fireState, state.moveState, state.retreat, state.selfDestructing = nil, nil, nil, false
 	for _, id in sel.ids do
 		local u = world.units[id]
-		if u and u.fireState then
+		if u and u.fireState and state.fireState == nil then
 			state.fireState, state.moveState = u.fireState, u.moveState
-			break
+		end
+		local def = u and World.def(world, u)
+		if def and def.domain == "air" and state.retreat == nil and u.team == world.me.team then
+			state.retreat = u.retreat or Schema.RetreatAt.AT_30 -- the server's default
+		end
+		if u and (u.selfDestruct or 0) > 0 then
+			state.selfDestructing = true
 		end
 	end
 	if world.joined then

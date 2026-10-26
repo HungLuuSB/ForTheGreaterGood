@@ -1,6 +1,7 @@
 --!strict
 -- Request 36 (S-61, protocol 20, C-75): the client's view of its own units'
--- factory queues, fire / move states and ammo matches the server's on every
+-- factory queues, fire / move states (and, since protocol 39, retreat
+-- settings, self-destruct countdowns and builders' work) matches the server's on every
 -- tick, through the real NetOut → NetIn path and the client API.
 
 local Api = require("../../src/client/Api")
@@ -119,22 +120,53 @@ return function(t: any)
 		t.equal(api.state.fireState, nil, "nothing selected: no state")
 	end)
 
-	t.test("ammo: an aircraft's rounds follow the server's", function()
-		local sim, world, _api, step = scene()
-		local bomber = Spawn.unit(sim, "ord_absolution", 1, 0, 0, 0)
+	t.test("protocol 39 (S-194): retreat setting, self-destruct countdown and builders' work follow the server's", function()
+		local sim, world, api, step = scene()
+		local Schema = require("@shared/Net/Schema")
+		local BuildTargets = require("../../src/client/Core/BuildTargets")
+		-- an aircraft's retreat setting (G17): the server's default, then set
+		local falcon = Spawn.unit(sim, "ord_falcon", 1, 0, 0, 0)
 		step(3)
-		local u = assert(world.units[bomber])
-		local max = sim.defs.units.ord_absolution.ammo
-		t.equal(u.ammo, sim.air.ammo[bomber], "full with the ENTER")
-		t.equal(u.maxAmmo, max)
-		for _, rounds in { max - 1, 1, 0, max } do
-			sim.air.ammo[bomber] = rounds
-			step(1)
-			t.equal(u.ammo, sim.air.ammo[bomber], `{rounds} rounds`)
-		end
-		local lancer = Spawn.unit(sim, "ord_lancer", 1, 40, 0, 0)
+		api.actions.select({ falcon })
+		step(1)
+		t.equal(api.state.retreat, Schema.RetreatAt.AT_30, "30% by default")
+		t.expect(api.actions.setRetreat(Schema.RetreatAt.AT_50))
 		step(2)
-		t.equal((world.units[lancer] :: any).ammo, nil, "no ammo for units without an ammo count")
+		t.equal((world.units[falcon] :: any).retreat, Schema.RetreatAt.AT_50, "the server's setting")
+		t.equal(api.state.retreat, Schema.RetreatAt.AT_50)
+		-- self-destruct (G13): the countdown, stopped, then to the end
+		local lancer = Spawn.unit(sim, "ord_lancer", 1, 40, 0, 0)
+		step(3)
+		api.actions.select({ lancer })
+		t.expect(api.actions.selfDestruct())
+		step(2)
+		local u = world.units[lancer] :: any
+		t.expect(u.selfDestruct ~= nil and u.selfDestruct >= 5 and u.selfDestruct <= Schema.SELF_DESTRUCT_SECONDS, `counting down ({u.selfDestruct})`)
+		t.expect(api.state.selfDestructing, "the card shows it")
+		t.expect(api.actions.selfDestruct(), "again: stop")
+		step(2)
+		t.equal(u.selfDestruct or 0, 0, "stopped")
+		api.actions.selfDestruct(true)
+		step(15 * (Schema.SELF_DESTRUCT_SECONDS + 1))
+		t.equal(world.units[lancer], nil, "gone at the end of the countdown")
+		-- WORK (G7): what a builder works on, from the server
+		local cmd = Spawn.unit(sim, "ord_sovereign", 1, -60, 0, 0)
+		step(3)
+		api.actions.select({ cmd })
+		t.expect(api.actions.beginPlacement("ord_vehplant"))
+		t.expect(api.actions.place(-60, 50, false, false))
+		local frame
+		for _ = 1, 15 * 10 do
+			step(1)
+			local c = world.units[cmd] :: any
+			if c.workKind == Schema.WorkKind.BUILD then
+				frame = c.workTarget
+				break
+			end
+		end
+		t.expect(frame ~= nil and world.units[frame] ~= nil, "building: the server names the frame")
+		local sprays = BuildTargets.list(world, api.waypoints.byUnit, {})
+		t.expect(#sprays == 1 and sprays[1].builder == cmd and sprays[1].target == frame, "the nano spray goes where the server builds")
 	end)
 
 	t.test("countermeasure charges (protocol 21): flares and chaff left follow the server's", function()

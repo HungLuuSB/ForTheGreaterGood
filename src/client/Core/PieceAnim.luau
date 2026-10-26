@@ -416,8 +416,9 @@ end
 
 -- Calls the hooks the replicated state asks for (guide 14.3). `shots` are
 -- this frame's { unitId, slot } shots (Core/Effects).
--- `work`: builder → the unit it works on now (Core/BuildTargets; G4).
-function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } }, work: { [number]: number }?)
+-- `work`: builder → where the thing it works on now stands, { x, z }
+-- (a unit or a wreck: Core/BuildTargets; G4).
+function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } }, work: { [number]: { number } }?)
 	local eco = world.economy
 	local ownRatio = if eco then eco.power.ratio / 255 else 1
 	local myTeam = world.me and world.me.team
@@ -495,14 +496,13 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } }, wo
 				local st = Schema.weaponStateAt(wu.weapon or 0, slot)
 				engaged = engaged or st == WS.AIMING or st == WS.READY
 			end
-			local tid = work and work[id]
-			local t = if tid and not engaged then world.units[tid] else nil
+			local at = if work and not engaged then work[id] else nil
 			local yaw: number? = nil
-			if t then
-				local rel = math.atan2(t.x - wu.x, t.z - wu.z) - (wu.rheading or wu.heading)
+			if at then
+				local rel = math.atan2(at[1] - wu.x, at[2] - wu.z) - (wu.rheading or wu.heading)
 				yaw = math.deg((rel + math.pi) % (2 * math.pi) - math.pi)
 			end
-			local key = if yaw then string.format("%d:%d", tid :: number, math.floor((yaw :: number) / 3)) else ""
+			local key = if yaw then tostring(math.floor((yaw :: number) / 3)) else ""
 			if key ~= (u.workKey or "") then
 				u.workKey = key
 				PieceAnim.call(u, "Work", yaw)

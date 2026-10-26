@@ -340,8 +340,9 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 			u.stock = stock
 			u.stockProgress = progress
 		end
-		-- own units' factory queue, fire / move state and ammo (protocol 20,
-		-- S-61): each part on change, all with the ENTER
+		-- own units' factory queue, fire / move / retreat state (protocol 20,
+		-- S-61; retreat 39), self-destruct countdown and work (protocol 39,
+		-- S-194): each part on change, all with the ENTER
 		if r.queue then
 			u.queue = r.queue
 			u.queueProgress = (r.queueProgress or 0) / 255
@@ -353,9 +354,14 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 		end
 		if r.fireState then
 			u.fireState, u.moveState = r.fireState, r.moveState
+			u.retreat = r.retreat
 		end
-		if r.ammo then
-			u.ammo, u.maxAmmo = r.ammo, r.maxAmmo
+		if r.selfDestruct ~= nil then
+			u.selfDestruct = r.selfDestruct
+			u.selfDestructAt = tick
+		end
+		if r.workKind ~= nil then
+			u.workKind, u.workTarget = r.workKind, r.workTarget
 		end
 		if r.flares ~= nil or r.chaff ~= nil then
 			u.flares, u.chaff = r.flares, r.chaff -- countermeasure charges left (protocol 21, S-63)
@@ -432,8 +438,11 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			queueProgress = if keep then keep.queueProgress else nil,
 			fireState = if keep then keep.fireState else nil,
 			moveState = if keep then keep.moveState else nil,
-			ammo = if keep then keep.ammo else nil,
-			maxAmmo = if keep then keep.maxAmmo else nil,
+			retreat = if keep then keep.retreat else nil,
+			selfDestruct = if keep then keep.selfDestruct else nil,
+			selfDestructAt = if keep then keep.selfDestructAt else nil,
+			workKind = if keep then keep.workKind else nil,
+			workTarget = if keep then keep.workTarget else nil,
 			stock = if keep then keep.stock else nil,
 		}
 		local status = world.ownStatus[r.unitId]

@@ -12,7 +12,8 @@
 -- emitter (`nano`) and a heavy gun (`forearmR`, `muzzle`). Original design.
 -- Model space, forward = -Z. The v1 mech is kept in Review/.
 --
--- Rig (rig.md 10, walkers): the same pieces as v1.
+-- Rig (rig.md 10, walkers): the same pieces as v1; `torso` is a def piece
+-- since S-194 (both weapons turn with it), `emitter` the laser's muzzle.
 
 local SWING = { motion = "swing", axis = { 1, 0, 0 } }
 
@@ -101,7 +102,7 @@ end
 
 return {
 	id = "chs_warlord",
-	visualPieces = { "torso", "head", "armL", "armR", "forearmR", "hipL", "thighL", "shinL", "footL", "hipR", "thighR", "shinR", "footR" },
+	visualPieces = { "head", "armL", "armR", "forearmR", "hipL", "thighL", "shinL", "footL", "hipR", "thighR", "shinR", "footR" },
 	parts = parts,
 	attachments = {
 		{ name = "nano1", parent = "nano", at = { -3.5, 3.25, -2.45 } }, -- nanoframe anchor (M-25)

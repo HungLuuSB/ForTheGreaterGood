@@ -134,6 +134,10 @@ local FEATURE: { [string]: string } = {
 	cliff = "redrock",
 	mesa = "redrock",
 	boulder = "redrock",
+	-- Supreme Strait (SupremeStrait.feature, S-195): sea, beach, grass, mesa as above
+	mountain = "rock",
+	crater = "ground",
+	pond = "sand",
 }
 function Terrain.material(layers: Layers.Layers, x: number, z: number, feature: Feature?): string
 	local lg = layers.grid

@@ -437,7 +437,14 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		local size = PROJ_SIZE[kind] or PROJ_SIZE.BALLISTIC
 		local color = PROJ_COLOR[kind] or PROJ_COLOR.BALLISTIC
 		local fxDef = p.weapon.fx
-		if fxDef and fxDef.trail == "plasma" then
+		local ball = fxDef ~= nil and (fxDef.trail == "plasma" or fxDef.trail == "dgun")
+		if fxDef and fxDef.trail == "dgun" then
+			-- the D-Gun (S-194, G5): a fat glowing plasma ball as wide as its bolt
+			local c = fxDef.color
+			color = if c then Color3.fromRGB(c.r or 255, c.g or 200, c.b or 90) else Color3.fromRGB(255, 200, 90)
+			local d = p.weapon.bolt or 7
+			size = Vector3.new(d, d, d)
+		elseif fxDef and fxDef.trail == "plasma" then
 			-- a plasma shot (S-181): a glowing ball in the weapon's colour, bigger
 			-- for a bigger blast; one with no blast (the Thug's, the Mace's) as
 			-- thick as a tank shell (S-190)
@@ -450,7 +457,15 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		if part.Size ~= size then
 			part.Size = size
 		end
-		local shape = if fxDef and fxDef.trail == "plasma" then Enum.PartType.Ball else Enum.PartType.Block
+		local shape = if ball then Enum.PartType.Ball else Enum.PartType.Block
+		-- the trail as wide as the ball (its attachments half a width apart)
+		local half = if ball then size.X * 0.4 else 0.35
+		local top = part:FindFirstChild("TrailTop") :: Attachment?
+		local bottom = part:FindFirstChild("TrailBottom") :: Attachment?
+		if top and bottom and top.Position.Y ~= half then
+			top.Position = Vector3.new(0, half, 0)
+			bottom.Position = Vector3.new(0, -half, 0)
+		end
 		if part.Shape ~= shape then
 			part.Shape = shape -- shells are pooled across weapons
 		end

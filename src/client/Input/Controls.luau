@@ -8,6 +8,8 @@
 --   Shift + right click      queue the order
 --   Ctrl + 1..9 / 1..9       set / recall a control group (double tap: jump the camera)
 --   S                        stop (BAR style; the camera pans with the arrow keys)
+--   D, then left click       D-Gun with a Commander selected (S-194, G5), else resurrect
+--   Ctrl + D                 self-destruct the selection (6 s; again to stop, G13)
 --   A / F / M / Z / G, then left click: attack (an enemy unit, or the ground:
 --                            how a nuke silo fires, C-57) / fight / move / patrol to the
 --                            point / guard a unit (C-68, Api.commandAt); Shift keeps the
@@ -32,6 +34,7 @@ local Players = game:GetService("Players")
 local Api = require("../Api")
 local Selection = require("../Core/Selection")
 local Upgrades = require("../Core/Upgrades")
+local CommandSet = require("../Core/CommandSet")
 local World = require("../Core/World")
 
 local Controls = {}
@@ -64,7 +67,21 @@ Controls.capture = nil :: ((InputObject) -> boolean)?
 -- the pre-game's left click (C-218): the ground point under the cursor;
 -- true = consumed (always, while the pre-game is on)
 Controls.pregameClick = nil :: ((Vector3?) -> boolean)?
+-- Whether the selection has a D-Gun (a Commander, S-194).
+function Controls.canDgun(api: any): boolean
+	local world = api.world
+	for _, id in api.state.selection do
+		local u = world.units[id]
+		local def = u and World.def(world, u)
+		if def and CommandSet.hasDgun(def, world.defs) then
+			return true
+		end
+	end
+	return false
+end
+
 Controls.HINT = {
+	dgun = "D-GUN: left-click where to fire (it burns through everything on its way)",
 	attack = "ATTACK: left-click an enemy or the ground",
 	fight = "FIGHT: left-click where to fight to",
 	move = "MOVE: left-click where to go",
@@ -324,6 +341,13 @@ function Controls.bind(api: Api.Api): Controls
 		-- command modes (C-68): the next left click gives the command
 		local mode = api.state.commandMode
 		local commandKey = Controls.COMMAND_KEYS[input.KeyCode]
+		if commandKey == "resurrect" and ctrl() then
+			api.actions.selfDestruct() -- BAR's Ctrl+D (G13)
+			return
+		end
+		if commandKey == "resurrect" and Controls.canDgun(api) then
+			commandKey = "dgun" -- a Commander selected: BAR's D is its D-Gun
+		end
 		if commandKey and not ctrl() then
 			api.actions.setCommandMode(commandKey)
 			return

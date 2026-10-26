@@ -29,7 +29,18 @@ local Upgrades = require("./Upgrades")
 
 local CommandSet = {}
 
-CommandSet.ORDER = { "fire", "movestate", "repeat", "toggle", "priority", "cancel", "stop", "attack", "move", "patrol", "fight", "guard", "repair", "reclaim", "resurrect", "upgrade", "alert" }
+CommandSet.ORDER = { "fire", "movestate", "retreat", "repeat", "toggle", "priority", "cancel", "stop", "attack", "dgun", "move", "patrol", "fight", "guard", "repair", "reclaim", "resurrect", "upgrade", "selfdestruct", "alert" }
+
+-- Whether `def` has a D-Gun (S-194: the Commanders' manual-fire bolt).
+function CommandSet.hasDgun(def: any, all: any?): boolean
+	for _, ws in def.weapons or {} do
+		local w = all and all.weaponByIndex and all.weaponByIndex[(ws :: any).weaponIndex]
+		if w and w.fx and w.fx.trail == "dgun" then
+			return true
+		end
+	end
+	return false
+end
 
 -- Whether resource priority does something for `def` (the sim's S-156
 -- consumers): build power, missile stockpiles, rearming, upkeep.
@@ -112,6 +123,15 @@ function CommandSet.forDef(def: any, all: any?): { [string]: boolean }
 	end
 	if CommandSet.consumer(def) then
 		set.priority = true
+	end
+	-- protocol 39 (S-194): every unit can self-destruct; aircraft retreat to
+	-- a pad below a health share; Commanders fire their D-Gun
+	set.selfdestruct = true
+	if def.domain == "air" and mobile then
+		set.retreat = true
+	end
+	if CommandSet.hasDgun(def, all) then
+		set.dgun = true
 	end
 	return set
 end

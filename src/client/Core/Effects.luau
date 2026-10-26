@@ -279,6 +279,7 @@ Effects.LARGE_IMPACT = 1.8
 Effects.FLAME_SECONDS = 0.35 -- a flame stream's life (S-181)
 Effects.HUGE_BLAST = 90 -- studs: a death blast this wide plays the nuke's look scaled to it (F15)
 Effects.BLAST_SHOWN = 0.6 -- an ordinary death blast's burst, as a share of its damage radius
+Effects.BOLT_HEIGHT = 5 -- studs a D-Gun bolt rides over the ground (the server's Combat.BOLT_HEIGHT, S-194)
 -- A shot with no blast whose impact is "explosion_small" (the Thug's and
 -- Mace's plasma, S-190) bursts like a tank shell's small hit: the Lancer's
 -- (aoe 3), not the smallest burst its missing blast radius would give.
@@ -670,6 +671,10 @@ local function advance(world: World.World, p: Proj, t: number): (number, number,
 	end
 	local dvx, dvy, dvz = vx - p.vx, vy - p.vy, vz - p.vz
 	local x, y, z, nvx, nvy, nvz = Ballistics.step(p.x, p.y, p.z, vx, vy, vz, weapon.gravity or 0, DT)
+	if weapon.bolt then
+		-- a D-Gun bolt rides the ground (S-194): the cell's height + BOLT_HEIGHT, as the server steps it
+		y, nvy = World.simGroundY(world, x, z) + Effects.BOLT_HEIGHT, 0
+	end
 	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz, follow, turned
 end
 
@@ -871,6 +876,8 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			warn(fx, p, e.projId, x, y, z, now)
 		end
 	elseif kind == EK.IMPACT then
+		-- (a D-Gun bolt's only IMPACT is its range's end: the units it burns
+		-- through show as their DEATHs, S-194)
 		local p = fx.projectiles[e.projId]
 		fx.projectiles[e.projId] = nil
 		if p then

@@ -55,6 +55,9 @@ local NEEDS: { [number]: string } = {
 	[Schema.CmdType.ATTACK_GROUND] = "attack",
 	[Schema.CmdType.REPAIR] = "repair",
 	[Schema.CmdType.RECLAIM] = "reclaim",
+	[Schema.CmdType.DGUN] = "dgun",
+	[Schema.CmdType.SET_RETREAT] = "retreat",
+	[Schema.CmdType.SELF_DESTRUCT] = "selfdestruct",
 }
 function Orders.able(world: World.World, cmdType: number, ids: { number }): { number }
 	local need = NEEDS[cmdType]

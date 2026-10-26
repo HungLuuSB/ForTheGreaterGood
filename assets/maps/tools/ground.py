@@ -53,6 +53,11 @@ STYLES = {
     # 512 cells (S-189): heights every 8 studs (`coarsen`), a quarter of the triangles: 4x the
     # area of the 256-cell maps at the same cost; its gentle hills lose nothing visible
     "lakelands": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock"), "coarsen": 2},
+    # 320 cells (S-195): two sandy seas, rock mountains, craters and mesas. At 4 studs the
+    # tiles alone were 835k triangles (1.3M with the crag); heights every 8 studs, but the
+    # crag skin on the rock still at 2-stud steps (`crag_sub` 4), so cliffs and rims stay rough
+    "supreme_strait": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock"),
+                       "coarsen": 2, "crag_sub": 4},
     "crossroads": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
     # the bocage: hedgerow foliage on the banks, crag on the bluffs
     "normandy": {"crag": "rock", "hedges": "leafy", "keep_cells": True, "boulders": True, "rock": "rock", "aim": ("feature", "hedge")},
@@ -784,8 +789,8 @@ def crag(f, rng, records, style, names, w):
     dom = w[k] - (others.max(0) if len(others) else 0)  # > 0 where rock wins, per sample
     ridge = Periodic(rng, 64.0, 2.6, lo=2, hi=40)
     ridge2 = Periodic(rng, 23.0, 2.2, lo=2, hi=30)
-    step = f.step / 2
-    sub = 2  # vertices per sample step
+    sub = style.get("crag_sub", 2)  # vertices per sample step (2 studs at the usual 4-stud sampling)
+    step = f.step / sub
 
     def dom_at(x, z):
         fx = np.clip((x - f.ox) / f.step, 0, f.nx - 1.001)

@@ -126,7 +126,7 @@ return function(t: any)
 		t.expect(string.find(lines[1], `Range {gun.range}`, 1, true) ~= nil, lines[1])
 	end)
 
-	t.test("live own state from the server: ammo, fire / move state, stockpile", function()
+	t.test("live own state from the server: retreat setting, fire / move state, stockpile", function()
 		local sim = Sim.new({ seed = 9, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "start:64", scenario = "empty" })
 		local world = World.new(sim.defs)
 		NetOut.join(sim, 1)
@@ -135,15 +135,11 @@ return function(t: any)
 		local falcon = Spawn.unit(sim, "ord_falcon", 1, 0, 0, 0)
 		local aegis = Spawn.unit(sim, "ord_aegis", 1, 60, 60, 0)
 		for tick = 1, 4 do
-			if tick == 2 then
-				sim.air.ammo[falcon] = 3
-			end
 			Sim.step(sim)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 		end
 		local f = UnitStats.of(world, assert(world.units[falcon]))
-		t.equal(f.ammo, 3, "the server's rounds")
-		t.equal(f.maxAmmo, sim.defs.units.ord_falcon.ammo)
+		t.equal(f.retreat, require("@shared/Net/Schema").RetreatAt.AT_30, "aircraft retreat at 30% by default (no ammo since S-194)")
 		t.equal(f.fireState, sim.world.fireState[falcon])
 		t.equal(f.moveState, sim.world.moveState[falcon])
 		local a = UnitStats.of(world, assert(world.units[aegis]))
