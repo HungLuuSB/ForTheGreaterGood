@@ -5,7 +5,7 @@
 -- the tubes' mouths. An amber eye, a slab body. Legs are client pieces
 -- (Bots.luau). Chaos reads crude (M-14). Model space, forward = -Z.
 
-local Bots = require("../Bots")
+local Bots = require("./Bots")
 
 local LY, LZ = 5.1, 0.4 -- the launcher's centre
 

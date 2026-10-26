@@ -6,7 +6,7 @@
 -- `muzzle` there. Legs are client pieces (Bots.luau). Chaos reads crude and
 -- brutal (M-14). Model space, forward = -Z.
 
-local Bots = require("../Bots")
+local Bots = require("./Bots")
 
 local CX, CY = 1.9, 3.6 -- the cannon's axis
 

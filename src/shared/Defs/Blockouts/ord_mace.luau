@@ -6,7 +6,7 @@
 -- arm; `muzzle` at the barrel's mouth. Legs are client pieces (Bots.luau).
 -- Order reads clean (M-14). Model space, forward = -Z.
 
-local Bots = require("../Bots")
+local Bots = require("./Bots")
 
 local BX, BY = 1.15, 5.0 -- the barrel's axis
 
