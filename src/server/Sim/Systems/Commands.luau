@@ -32,6 +32,7 @@ local Build = require("../Build")
 local Cheats = require("../Cheats")
 local Orders = require("../Orders")
 local Pregame = require("../Pregame")
+local Share = require("../Share")
 local Sensors = require("../Sensors")
 local Nav = require("../Nav")
 local NetOut = require("../NetOut")
@@ -181,6 +182,32 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	elseif cmdType == CT.CHEAT then
 		Cheats.apply(sim, player, cmd) -- (S-102) answered CHEATS_OFF unless the match allows them
 		return
+	elseif cmdType == CT.SHARE_UNITS then
+		Share.giveUnits(sim, player, cmd.value :: number, cmd.unitIds) -- (S-176)
+		return
+	elseif cmdType == CT.SHARE_RESOURCE then
+		Share.giveResource(sim, player, cmd.toPlayer :: number, cmd.resource :: number, cmd.amount :: number)
+		return
+	elseif cmdType == CT.REQUEST then
+		Share.request(sim, player, cmd.value :: number)
+		return
+	elseif cmdType == CT.AREA then
+		-- Smart Reclaim / repair / resurrect (S-183): builders only
+		local g = if sim.map then (sim.map :: any).grid else nil
+		local cell = cmd.cell :: number
+		if g == nil or cell >= g.cellCount then
+			return
+		end
+		local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
+		local builders = {}
+		for _, id in ownedUnits(w, player, cmd.unitIds) do
+			local d = sim.defs.unitByIndex[w.defIndex[id]]
+			if d.buildPower and d.domain ~= "structure" and (cmd.areaOp ~= Schema.AreaOp.RESURRECT or d.canResurrect) then
+				table.insert(builders, id)
+			end
+		end
+		Orders.give(sim, builders, { kind = "area", x = x, z = z, areaOp = cmd.areaOp, radius = cmd.radius }, band(cmd.flags, QUEUE) ~= 0)
+		return
 	end
 	for _, id in cmd.unitIds do
 		if w.owner[id] ~= player then
@@ -216,11 +243,23 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 end
 
 function Commands.step(sim: Types.Sim)
+	Share.clear(sim)
 	local queue = sim.queue
 	local used: { [number]: number } = {} -- player → unit IDs applied this tick
 	local waiting: { [number]: boolean } = {} -- player → a command of theirs waits: later ones too
 	local keep = {}
+	-- the Commanders are landing (S-174): orders wait, then the pre-game
+	-- queues go first
+	local landing = sim.landing
+	if landing and sim.tick >= landing.untilTick then
+		Pregame.land(sim)
+		landing = nil
+	end
 	for _, q in queue do
+		if landing and q.cmd.cmdType ~= CT.CAMERA and q.cmd.cmdType ~= CT.CHEAT then
+			table.insert(keep, q)
+			continue
+		end
 		local n = #q.cmd.unitIds
 		local u = used[q.player] or 0
 		if waiting[q.player] or (u > 0 and u + n > Commands.UNITS_PER_TICK) then

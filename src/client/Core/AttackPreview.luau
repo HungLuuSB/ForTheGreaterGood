@@ -6,6 +6,9 @@
 -- launched straight up from the unit's position at Combat.MUZZLE_HEIGHT of
 -- its height at `projectileSpeed`, stepped with Shared/Combat/Lofted toward
 -- the spot (boost to `climbHeight`, pitch-over, lofted arc) until it lands.
+-- Bombers with a carpet (a BOMB weapon with a salvo, S-178, F33) show where
+-- each bomb of the salvo lands: the first on the spot, the rest further on
+-- along the approach, `salvo.delay` × the bomber's speed apart.
 
 local Layers = require("@shared/Grid/Layers")
 local Effects = require("./Effects")
@@ -105,6 +108,58 @@ function AttackPreview.arcs(world: World.World, selection: { number }, tx: numbe
 			if #out >= AttackPreview.MAX_ARCS then
 				break
 			end
+		end
+	end
+	return out
+end
+
+export type Carpet = {
+	unitId: number,
+	weapon: any,
+	points: { { number } }, -- { x, z } of each bomb, first to last
+}
+
+-- The unit's carpet-bombing weapon (a BOMB with a salvo of 2 or more).
+function AttackPreview.carpetWeapon(world: World.World, u: World.Unit): any?
+	local def = World.def(world, u)
+	if def == nil then
+		return nil
+	end
+	for _, ws in def.weapons do
+		local w = world.defs.weaponByIndex[(ws :: any).weaponIndex]
+		if w and w.type == "BOMB" and w.salvo and (w.salvo.count or 1) > 1 then
+			return w
+		end
+	end
+	return nil
+end
+
+-- Each selected bomber's salvo aimed at (tx, tz): the bombs along the line
+-- from the bomber through the spot (its approach; its heading when over it).
+function AttackPreview.carpets(world: World.World, selection: { number }, tx: number, tz: number): { Carpet }
+	local out = {}
+	for _, id in selection do
+		local u = world.units[id]
+		local w = u and AttackPreview.carpetWeapon(world, u)
+		if u == nil or w == nil then
+			continue
+		end
+		local def = World.def(world, u)
+		local speed = (def and def.movement and def.movement.maxSpeed) or 0
+		local dx, dz = tx - u.x, tz - u.z
+		local d = math.sqrt(dx * dx + dz * dz)
+		if d < 1e-3 then
+			dx, dz, d = math.sin(u.heading), math.cos(u.heading), 1
+		end
+		local ux, uz = dx / d, dz / d
+		local step = (w.salvo.delay or 0) * speed
+		local points = {}
+		for k = 0, w.salvo.count - 1 do
+			table.insert(points, { tx + ux * step * k, tz + uz * step * k })
+		end
+		table.insert(out, { unitId = id, weapon = w, points = points })
+		if #out >= AttackPreview.MAX_ARCS then
+			break
 		end
 	end
 	return out

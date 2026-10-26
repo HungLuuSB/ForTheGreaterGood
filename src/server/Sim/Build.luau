@@ -64,21 +64,62 @@ local function inRange(sim: Types.Sim, builder: number, x: number, z: number, ta
 	return sqrt(dx * dx + dz * dz) <= (d.buildRange or 0) + targetHalf
 end
 
--- Drive toward (x, z) unless already moving there.
-local function approach(sim: Types.Sim, id: number, x: number, z: number)
-	local nav = sim.nav
+-- Where a unit braking from its speed now comes to rest, straight ahead.
+local function stopPoint(sim: Types.Sim, id: number): (number, number)
 	local w = sim.world
-	if nav and w.orderId[id] == 0 then
-		Nav.issueMove(nav, w, sim.tick, { id }, x, z)
+	local d = sim.defs.unitByIndex[w.defIndex[id]]
+	local v = w.speed[id] or 0
+	local brake = if d.movement then d.movement.brake else 0
+	if v <= 0 or brake <= 0 then
+		return w.posX[id], w.posZ[id]
 	end
+	local s = v * v / (2 * brake)
+	return w.posX[id] + math.sin(w.heading[id]) * s, w.posZ[id] + math.cos(w.heading[id]) * s
 end
 
--- Stop moving and hold this spot (a builder in range of its work).
+Build.CREEP_SPEED = 3 -- studs/s: slower than this, a builder counts as stopped (S-185)
+Build.STOP_INSIDE = 6 -- studs: an approaching builder stops this far inside its reach, so a nudge doesn't put it out of range
+
+-- Drive toward (x, z) unless already moving there. With `targetHalf`, a
+-- builder starts braking once its braking distance would carry it into
+-- range, so it stops at the edge of its reach instead of deep inside it
+-- (S-185, the playtest's F30); while it brakes it isn't sent on again.
+local function approach(sim: Types.Sim, id: number, x: number, z: number, targetHalf: number?)
+	local nav = sim.nav
+	local w = sim.world
+	if nav == nil then
+		return
+	end
+	local v = w.speed[id] or 0
+	if w.orderId[id] ~= 0 then
+		local d = def(sim, id)
+		local brake = if d.movement then d.movement.brake else 0
+		if targetHalf and brake > 0 and v > 0 then
+			local dx, dz = w.posX[id] - x, w.posZ[id] - z
+			if sqrt(dx * dx + dz * dz) - v * v / (2 * brake) <= (d.buildRange or 0) + targetHalf - Build.STOP_INSIDE then
+				Nav.clearOrder(nav, w, id)
+				w.goalX[id], w.goalZ[id] = stopPoint(sim, id)
+				sim.build.braking[id] = sim.tick
+			end
+		end
+		return
+	end
+	local since = sim.build.braking[id]
+	if since and v > Build.CREEP_SPEED and sim.tick - since < 45 then
+		return -- still braking from its early stop
+	end
+	sim.build.braking[id] = nil
+	Nav.issueMove(nav, w, sim.tick, { id }, x, z)
+end
+
+-- Stop moving and hold the spot it comes to rest on (a builder in range
+-- of its work): where its braking takes it, not where it is now, or it
+-- would coast past and drive back (S-185, the playtest's F30).
 local function halt(sim: Types.Sim, id: number)
 	local w = sim.world
 	if sim.nav and w.orderId[id] ~= 0 then
 		Nav.clearOrder(sim.nav, w, id)
-		w.goalX[id], w.goalZ[id] = w.posX[id], w.posZ[id]
+		w.goalX[id], w.goalZ[id] = stopPoint(sim, id)
 	end
 end
 
@@ -540,7 +581,7 @@ function Build.step(sim: Types.Sim)
 					end
 				end
 			else
-				approach(sim, id, pending.x, pending.z)
+				approach(sim, id, sx, sz, halfSize(sd))
 			end
 			continue
 		end
@@ -555,7 +596,7 @@ function Build.step(sim: Types.Sim)
 				halt(sim, id)
 				resurrectStep(sim, id, rezWreck, bp)
 			else
-				approach(sim, id, wx, c.wreckZ[rezWreck])
+				approach(sim, id, wx, c.wreckZ[rezWreck], Grid.CELL_SIZE / 2)
 			end
 			continue
 		end
@@ -577,7 +618,7 @@ function Build.step(sim: Types.Sim)
 					Combat.addEvent(c, { kind = "RECLAIMED", tick = sim.tick, unit = id, other = wreck })
 				end
 			else
-				approach(sim, id, wx, c.wreckZ[wreck])
+				approach(sim, id, wx, c.wreckZ[wreck], Grid.CELL_SIZE / 2)
 			end
 			continue
 		end
@@ -608,7 +649,7 @@ function Build.step(sim: Types.Sim)
 					addPower(t, bp, id)
 				end
 			else
-				approach(sim, id, w.posX[t], w.posZ[t])
+				approach(sim, id, w.posX[t], w.posZ[t], halfSize(def(sim, t)))
 			end
 		end
 	end

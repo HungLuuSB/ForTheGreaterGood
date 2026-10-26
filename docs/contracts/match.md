@@ -42,6 +42,8 @@ Built by `src/lobby/shared/MatchConfig.luau` (`MatchConfig.build`). The shapes, 
 | `win` | `"COMMAND_ENDS"` \| `"ANNIHILATION"` | guide 16.2 |
 | `friendlyFire` | boolean | S-73 |
 | `cheats` | boolean | the host's toggle; cheat commands still need the CheatConfig allow-list (C-119). Matches with cheats don't count on profiles |
+| `startBoxes` | `{ [allyTeam]: { x0, z0, x1, z1 } }`? | the host's spawn boxes (F26, 2026-10-26): fractions of the map, 0..1, x0 < x1, z0 < z1, f = (coord - origin) / size (x0 / z0 the low-X / low-Z edge). Every side's box once the host moved or resized any (the others are the defaults: `StartAreas.boxes` for the match's sides, as fractions); absent when untouched (the match uses its own). Teams only; the match place passes it as the Sim config's `match.startBoxes` |
+| `host` | number | the room host's UserId (F32, 2026-10-26). The match place maps it to a player ID, or to none when the host spectates (then the match starts once everyone is ready) |
 | `players` | array | one per seat, in sim player order (below) |
 | `spectators` | array of `{ user, name }` | members who watch |
 | `lobby` | `{ placeId, jobId, roomId, roomName }` | where the room lives (for the return trip) |
@@ -54,7 +56,7 @@ Each `players[i]`:
 | `start` | integer | **`0`: picked in the match's pre-game** (S-171, 2026-10-24: no fixed starts; the map's starts are only hints for the AI). `== id` is still accepted from lobbies published before and means the same |
 | `faction` | `"order"` \| `"chaos"` | |
 | `allyTeam` | integer 1..n | FFA: `== id`. TEAM: 1..number of ally teams, numbered in team order |
-| `color` | integer 1..12 | index into the palette below; unique per match |
+| `color` | integer 1..#COLORS | index into the palette below; unique per match. Validated but unused since S-172: the match and the lobby colour players by `TeamColors.forViewer` with `id` |
 | `user` | number? | a human's UserId (absent for an AI) |
 | `name` | string | display name; `"AI 1 (normal)"` for an AI |
 | `ai` | `"easy"` \| `"normal"` \| `"hard"`? | present only for an AI |
@@ -102,6 +104,7 @@ Written once by the match server when the match ends for the humans (the sim's `
 | `endedAt` | number | `os.time()` |
 | `cheatsUsed` | boolean | any cheat command applied (`sim.cheats.used`) |
 | `reason` | string? | optional, for `abandoned` |
+| `error` | `{ code, detail? }`? | why the match failed as a whole (section 11): 2xx from the match server (a refused config, nobody arrived, everyone left, a server error), or 120 written by a lobby that stopped hearing from it. Optional; the lobby shows it with the results |
 | `players` | array | `players[i]` for config `players[i]`: `{ id, won, outAt?, stats? }` |
 
 Which outcome (client-B's `MatchContract.outcomeOf`): the sim's end gives `"finished"` + `winner`, or `"draw"` (no ally team left). Before that, every human gone from the server gives `"abandoned"`; one ally team standing gives `"finished"` + that team; every human out while AI teams still fight gives `"finished"` with no `winner` (a loss for the humans, not a draw).
@@ -137,7 +140,7 @@ Lobby servers are the only writers (UpdateAsync, retried with backoff, waiting f
 
 ## 9. Refusals
 
-The match server refuses a match whose config is missing, fails validation or has another `version`: it writes `result/<matchId>` with `outcome = "abandoned"` and `reason`, then sends everyone back. The lobby shows the reason in the room.
+The match server refuses a match whose config is missing, fails validation or has another `version`: it writes `result/<matchId>` with `outcome = "abandoned"`, `reason` and `error` (201, 202 or 203, section 11), then sends everyone back with the same `error` in their teleport data. The lobby shows it.
 
 ## 10. What only a published test can check
 
@@ -158,10 +161,54 @@ Studio can't reserve or teleport, and MemoryStore / DataStore need a published p
 
 The ordered plan for a 4-tester session is in [`../progress/lobby.md`](../progress/lobby.md), "Live playtest".
 
+## 11. Errors (F38, 2026-10-26)
+
+The user's rule: "any failed attempt to connect to the game match must be displayed on the lobby when return with error code + description". Every failure has a number. The lobby shows it in a panel the player dismisses, with the code, a title, the description and the detail. That happens when the lobby itself fails to start or send them (1xx), or when they come back from a match server that couldn't take them or failed (2xx).
+
+**Shape:** `{ code: number, detail: string? }`. `detail` is free text for the curious, up to 200 characters (an engine message, the validator's reason). The lobby drops unknown codes and cuts long details.
+
+**How 2xx reach the lobby:**
+- **One player sent back** (they weren't listed, the server was full, the game versions differ): teleport data `{ matchId, error = { code, detail? } }` on their return teleport.
+- **The whole match failed** (a refused config, players didn't arrive, everyone left, a server error): the result record's `error` (section 5), and the same `error` in every returning player's teleport data. The lobby shows it once, with the results.
+
+| Code | Title | Description |
+|---|---|---|
+| **1xx** | **lobby side** | |
+| 101 | No match place | The lobby couldn't find the game's match place. |
+| 102 | Bad match setup | The lobby built a match setup that failed its own check. (detail: the validator's reason) |
+| 103 | No match server | Roblox didn't give the lobby a server for the match. (detail: the ReserveServer error) |
+| 104 | Match store unavailable | The lobby couldn't save the match setup (MemoryStore). |
+| 105 | Room changed | The room changed while the match was starting. |
+| 106 | Nobody to send | None of the room's players were on this lobby server. |
+| 110 | Teleport failed | Roblox couldn't send the players to the match server. (TeleportAsync threw, or TeleportResult `Failure`) |
+| 111 | Match server not found | The teleport couldn't find the match server. (`GameNotFound`) |
+| 112 | Match server closed | The match server shut down before you arrived. (`GameEnded`) |
+| 113 | Match server full | The match server had no room for you. (`GameFull`) |
+| 114 | Teleport not allowed | Roblox refused the teleport to the match. (`Unauthorized`) |
+| 115 | Too many teleports | Roblox is limiting teleports right now. (`Flooded`) |
+| 116 | Already teleporting | Another teleport was still in progress. (`IsTeleporting`) |
+| 120 | Match server stopped answering | The match server stopped reporting, so the match was ended. (the lobby's heartbeat timeout) |
+| 121 | Match not found | The running match's details have expired; it can't be rejoined. |
+| **2xx** | **match side** | |
+| 201 | No match setup | The match server found no setup for itself. (no `server/<id>` or `config/<id>`) |
+| 202 | Bad match setup | The match server refused the lobby's match setup. (detail: the validator's reason) |
+| 203 | Version mismatch | The lobby and the match place are on different versions. (config `version`) |
+| 204 | Game version mismatch | Your game client and the match server are on different versions. (protocol or defs REJECT) |
+| 205 | Not in this match | You aren't one of this match's players or spectators. |
+| 206 | Match full | The match had no free seat for you. |
+| 207 | Match already over | The match ended before you arrived. |
+| 208 | Players didn't arrive | Not everyone reached the match in time, so it didn't start. (the start timeout) |
+| 209 | Everyone left | Every player left, so the match was abandoned. |
+| 210 | Match server error | The match server hit an error and ended the match. (detail: the error) |
+| 299 | Match server problem | The match server sent you back for a reason it didn't name. |
+
+The table lives in code as `@shared/Match/MatchConfig.ERRORS` (with `cleanError`), shared by both places; the lobby reads it through `src/lobby/shared/MatchErrors.luau`.
+
 ## Changes
 
 - 2026-10-23: version 1 (L-4).
 - 2026-10-23: the checks moved to `@shared/Match/MatchConfig` (sim-A, S-145, the user's choice); the lobby and client-B dropped their copies.
 - 2026-10-24 (later): `start` is `0` for every player (S-171: the match opens with a pre-game where players pick their start; `== id` still accepted from older lobbies); the new limits (16 players; FFA up to the map's starts; TEAM 2-8 sides of any size, up to the map's starts). The colour index is still sent and validated; the match colours players itself (S-172). Still version 1.
+- 2026-10-26: **version 2** (sim-A's S-174): `host` (required: the room host's UserId, a player or a spectator) and `startBoxes` (optional, F26). The lobby sends `host` always and `startBoxes` once the host edited a box.
 - 2026-10-24: the match place comes from `Config.MATCH_PLACE_ID` (0: found at server start) instead of the hard-coded main game ID, for the "FTGG Playtest" experience (L-14); lobby-only records `hop/<userId>` and the `FtggRooms` sorted map (L-15). The match server's side is unchanged; still version 1.
 - 2026-10-23: `winner` may be absent on `"finished"` (every human out, AI still fighting), at client-B's question; still version 1 (nothing published yet).

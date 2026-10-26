@@ -38,8 +38,8 @@ local function dist(w: World.World, a: number, x: number, z: number): number
 end
 
 return function(t: RunAll.Context)
-	-- A Verdict howitzer shells a parked Ravager 380 studs away, beyond its
-	-- sight, on Order's early-warning radar; with or without a Tribunal.
+	-- A Verdict howitzer shells a parked Ravager at 0.9 × its range, beyond
+	-- its sight, on Order's early-warning radar; with or without a Tribunal.
 	-- Counted: direct hits.
 	local function shelling(tracking: boolean): (number, number)
 		local sim = Sim.new({ seed = 41, players = PLAYERS, mapId = "flat:128" })
@@ -49,7 +49,8 @@ return function(t: RunAll.Context)
 		if tracking then
 			Spawn.unit(sim, "ord_tribunal", 1, -250, -120)
 		end
-		local target = Spawn.unit(sim, "chs_ravager", 2, 180, 0, -math.pi / 2)
+		-- ~290 studs from the Watchtower and the Tribunal: inside the radar, beyond both sights
+		local target = Spawn.unit(sim, "chs_ravager", 2, -200 + sim.defs.weapons.ord_howitzer.range * 0.9, 0, -math.pi / 2)
 		w.fireState[target] = World.FireState.HOLD_FIRE
 		World.setHealth(w, target, 1e6)
 		local shots, hits = 0, 0
@@ -143,8 +144,10 @@ return function(t: RunAll.Context)
 		Spawn.unit(sim, "ord_tribunal", 1, -300, 100)
 		Spawn.unit(sim, "chs_eye", 2, 300, 0)
 		Spawn.unit(sim, "chs_seekerspire", 2, 300, 100)
-		local red = Spawn.unit(sim, "chs_ravager", 2, 100, -300) -- far apart: neither sees the other
-		local blue = Spawn.unit(sim, "ord_lancer", 1, -100, 300)
+		-- each inside the other team's radar, beyond every enemy sight; ~315 studs apart: neither sees the other
+		local ro, rc = sim.defs.units.ord_watchtower.sensors.radar :: number, sim.defs.units.chs_eye.sensors.radar :: number
+		local red = Spawn.unit(sim, "chs_ravager", 2, -300 + ro * 0.7, -ro * 0.4) -- 0.81 × the Watchtower's radar
+		local blue = Spawn.unit(sim, "ord_lancer", 1, 300 - rc * 0.75, rc * 0.5) -- 0.9 × the Eye's radar
 		w.fireState[red] = World.FireState.HOLD_FIRE
 		w.fireState[blue] = World.FireState.HOLD_FIRE
 		local worstO, worstC = 0, 0
@@ -169,15 +172,16 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 44, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		Spawn.unit(sim, "ord_watchtower", 1, -250, 0)
-		Spawn.unit(sim, "ord_tribunal", 1, -200, 0) -- 300 studs from the tank: deep inside its track
-		local tank = Spawn.unit(sim, "chs_ravager", 2, 100, 0)
+		Spawn.unit(sim, "ord_tribunal", 1, -200, 0) -- deep inside its track
+		-- inside the Watchtower's radar, beyond its sight
+		local tank = Spawn.unit(sim, "chs_ravager", 2, -250 + (sim.defs.units.ord_watchtower.sensors.radar :: number) * 0.8, 0)
 		w.fireState[tank] = World.FireState.HOLD_FIRE
 		for _ = 1, 4 do
 			powered(sim)
 			Sim.step(sim)
 		end
 		t.expect(Sensors.isTracked(sim, 1, tank), "tracked without the jammer")
-		local jammer = Spawn.unit(sim, "chs_shroud", 2, 140, 40)
+		local jammer = Spawn.unit(sim, "chs_shroud", 2, w.posX[tank] + 40, 40)
 		w.fireState[jammer] = World.FireState.HOLD_FIRE
 		for _ = 1, 4 do
 			powered(sim)

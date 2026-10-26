@@ -409,6 +409,12 @@ return function(sim: Types.Sim)
 		local h = nheading[k]
 		local x, z = nx[k], nz[k]
 		local tx, tz = x + sin(h) * v * DT, z + cos(h) * v * DT
+		if p.air then
+			-- aircraft stay over the map (S-183, F3; jets turn back first, Air.steerJet)
+			local g = nav.grid
+			tx = math.clamp(tx, g.originX + 1, g.originX + g.sizeX - 1)
+			tz = math.clamp(tz, g.originZ + 1, g.originZ + g.sizeZ - 1)
+		end
 		local exit = exitOf[k]
 		if exit then
 			-- out of its factory from the build pad: through the footprint,

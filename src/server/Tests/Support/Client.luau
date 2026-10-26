@@ -114,6 +114,9 @@ export type View = {
 	pregame: { [number]: { flags: number, x: number?, z: number? } }, -- players' pre-game state, from PREGAME (S-169)
 	prebuilds: { [number]: { { defIndex: number, x: number, z: number, facing: number } } }, -- from PREBUILD
 	countdown: { number }, -- every COUNTDOWN value received, in order
+	pickClock: { seconds: number, flags: number }?, -- the last PICK_CLOCK (S-174)
+	shares: { Schema.Event }, -- every SHARE received (S-176)
+	startBoxes: { [number]: { number } }?, -- ally team → its spawn box, from START_BOXES
 	economy: Schema.Eco?, -- own team's account, from the Eco channel (S-2)
 	economies: { [number]: Schema.Eco }, -- every team's account the client got: a spectator's are all teams (S-21)
 	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
@@ -152,6 +155,7 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?)
 		pregame = {},
 		prebuilds = {},
 		countdown = {},
+		shares = {},
 		strategicTick = -1,
 		received = {},
 		log = {},
@@ -404,6 +408,18 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				continue
 			elseif kind == EK.COUNTDOWN then
 				table.insert(view.countdown, e.seconds :: number)
+				continue
+			elseif kind == EK.SHARE then
+				table.insert(view.shares, e)
+				continue
+			elseif kind == EK.PICK_CLOCK then
+				view.pickClock = { seconds = e.seconds :: number, flags = e.clockFlags :: number }
+				continue
+			elseif kind == EK.START_BOXES then
+				view.startBoxes = {}
+				for _, bx in e.boxes :: { any } do
+					view.startBoxes[bx.allyTeam] = { bx.x0, bx.z0, bx.x1, bx.z1 }
+				end
 				continue
 			elseif kind == EK.WRECK_STATE then
 				local wreck = view.wrecks[e.wreckId :: number]

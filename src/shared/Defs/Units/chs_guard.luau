@@ -11,8 +11,11 @@ return Templates.extend(Templates.Structure, {
 	tier = 1,
 	categories = { "STRUCTURE" },
 	cost = { supply = 100, power = 750, buildTime = 2100 },
-	health = 750,
+	-- S-179, the playtest's balance notes: health × 2
+	health = 1500,
 	footprint = 2, -- size shows tech level (S-104)
+	height = 17.5, -- a tall tower (S-184; models-C's F18 blockouts, measured)
+	muzzleHeight = 16.0,
 	sensors = { sight = 210 },
 	weapons = { { def = "chs_guard_laser", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "barrel", "muzzle" }, -- barrel pitches (models-C, the user)

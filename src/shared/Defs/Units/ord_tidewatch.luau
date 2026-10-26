@@ -18,7 +18,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 220, power = 3600, buildTime = 7600 },
 	health = 720,
-	movement = { maxSpeed = 65, accel = 25, brake = 35, turnRate = 110 },
+	movement = { maxSpeed = 65, accel = 25, brake = 35, turnRate = 165 },
 	sensors = { sight = 180, airSight = 240, sonar = 170 },
 	weapons = { { def = "ord_asw_torpedo", turretPiece = "rack", muzzle = "muzzle" } },
 	ammo = 4,

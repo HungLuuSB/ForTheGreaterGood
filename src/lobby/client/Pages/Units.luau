@@ -258,7 +258,7 @@ function Units.new(frame: Frame, _router: any): any
 	end
 	Kit.segmented(row1, placeOptions, "auto", function(v)
 		Showroom.setPlace(v)
-	end, 64)
+	end, 74)
 	local row2 = Ui.frame(bar, "Options", UDim2.new(1, 0, 0, 30))
 	row2.LayoutOrder = 2
 	local r2 = Kit.list(row2, Kit.SPACE.m, true)

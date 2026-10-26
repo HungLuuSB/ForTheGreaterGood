@@ -39,6 +39,9 @@ local Listing = require("../shared/Listing")
 local Lobbies = require("./Lobbies")
 local MapPreview = require("../shared/MapPreview")
 local MapRegistry = require("@shared/Grid/MapRegistry")
+local SpawnBoxes = require("../shared/SpawnBoxes")
+local StartAreas = require("@shared/Match/StartAreas")
+local MatchErrors = require("../shared/MatchErrors")
 local MatchStore = require("./Services/MatchStore")
 local Places = require("./Places")
 local Profile = require("../shared/Profile")
@@ -78,6 +81,7 @@ local sendViews: () -> ()
 Ctx.studio = studio
 Ctx.store = if studio then MatchStore.standIn() else MatchStore.real()
 Ctx.teleport = if studio then Teleport.standIn(StandInMatch.start, flags, StandInPeer.hop) else Teleport.real()
+StandInMatch.init(flags)
 Ctx.index = if studio then RoomIndex.standIn() else RoomIndex.real()
 Ctx.profiles = if studio then ProfileStore.standIn() else ProfileStore.real()
 Ctx.social = if studio then Social.standIn() else Social.real()
@@ -109,6 +113,21 @@ Ctx.send = function(user: number, msg: any)
 	if p then
 		push:FireClient(p, msg)
 	end
+end
+-- match errors wait in the player's view until dismissed (F38): a push at
+-- arrival could beat the client's listener
+local pendingErrors: { [number]: { any } } = {}
+local errorId = 0
+Ctx.matchError = function(user: number, err: MatchErrors.Error)
+	errorId += 1
+	local list = pendingErrors[user] or {}
+	table.insert(list, { id = errorId, code = err.code, detail = err.detail })
+	while #list > 3 do
+		table.remove(list, 1)
+	end
+	pendingErrors[user] = list
+	print(`[Lobby] match error for {user}: {MatchErrors.line(err)}{if err.detail then ` ({err.detail})` else ""}`)
+	Ctx.publish(user)
 end
 if studio then
 	Returns.inStandIn = StandInMatch.has
@@ -144,7 +163,9 @@ task.spawn(function()
 		local ok, layers = pcall(MapRegistry.load, id)
 		if ok and layers then
 			local entry = MapRegistry.NAMED[name] or MapRegistry.HANDMADE[name]
-			table.insert(list, { id = id, name = entry.name, starts = #layers.starts })
+			-- the shape the spawn box defaults need (F26): bounds, start hints and the map's own boxes, in studs
+			local geo = { bounds = StartAreas.bounds(layers.grid), starts = layers.starts, startBoxes = layers.startBoxes, splits = SpawnBoxes.splitList(layers.sideSplits) }
+			table.insert(list, { id = id, name = entry.name, starts = #layers.starts, geo = geo })
 			previews[id] = MapPreview.build(layers, 128)
 		else
 			warn(`[Lobby] map {id}: {layers}`)
@@ -167,7 +188,7 @@ getMaps.OnServerInvoke = function(_player: Player): any
 	local out = {}
 	for _, m in Ctx.maps do
 		local p = previews[m.id]
-		table.insert(out, { id = m.id, name = m.name, starts = m.starts, preview = p })
+		table.insert(out, { id = m.id, name = m.name, starts = m.starts, geo = m.geo, preview = p })
 	end
 	return { ready = true, maps = out }
 end
@@ -213,6 +234,7 @@ local function viewFor(player: Player): any
 		rooms = list,
 		room = roomView,
 		profile = if rec then { summary = Profile.summary(rec), history = rec.history, settings = rec.settings } else nil,
+		errors = pendingErrors[user], -- F38: { { id, code, detail? } }, oldest first
 	}
 end
 
@@ -281,6 +303,21 @@ end
 local function handle(player: Player, msg: any): string?
 	local user = player.UserId
 	local op = msg.op
+	if op == "dismissError" then
+		local list = pendingErrors[user]
+		if list then
+			for i, e in list do
+				if e.id == msg.id then
+					table.remove(list, i)
+					break
+				end
+			end
+			if #list == 0 then
+				pendingErrors[user] = nil
+			end
+		end
+		return nil
+	end
 	if not mapsReady then
 		return "The lobby is still loading maps"
 	end
@@ -344,7 +381,11 @@ local function handle(player: Player, msg: any): string?
 		end
 		return Launcher.start(room, user, msg.force == true)
 	elseif op == "rejoin" then
-		return Launcher.rejoin(player)
+		local why, err = Launcher.rejoin(player)
+		if err then
+			Ctx.matchError(user, err)
+		end
+		return why
 	elseif op == "quick" then
 		local map = if type(msg.mapId) == "string" then Rooms.mapOf(Ctx.maps, msg.mapId) else Ctx.maps[1]
 		if map == nil then
@@ -412,13 +453,15 @@ local function added(player: Player)
 	task.spawn(Profiles.load, player.UserId)
 	local data = player:GetJoinData()
 	local hint = type(data) == "table" and type(data.TeleportData) == "table" and data.TeleportData.matchId or nil
+	-- F38: why the match server sent this player back, if it says
+	local sentBack = if type(data) == "table" and type(data.TeleportData) == "table" then MatchErrors.clean(data.TeleportData.error) else nil
 	local launch = if type(data) == "table" then data.LaunchData else nil
 	if studio and launch == nil then
 		launch = flags:GetAttribute("StandInLaunch")
 	end
 	task.spawn(function()
 		-- back from a match, then a move from another lobby server, then an invite
-		Returns.arrive(player, hint)
+		Returns.arrive(player, hint, sentBack)
 		if Lobbies.arrive(player) then
 			return
 		end
@@ -447,6 +490,7 @@ Players.PlayerRemoving:Connect(function(player: Player)
 	local user = player.UserId
 	tokens[user] = nil
 	dirty[user] = nil
+	pendingErrors[user] = nil
 	local room = Directory.roomOf(user)
 	if room and room.phase ~= "setup" then
 		-- in (or on the way to) the match: the seat stays theirs

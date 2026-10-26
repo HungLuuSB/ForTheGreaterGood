@@ -5,8 +5,11 @@
 -- `@shared/Match/MatchConfig` (S-145); this module re-exports them, so the
 -- lobby has one place to require. Pure Luau, tested under Lune.
 
+local MatchErrors = require("./MatchErrors")
 local Rooms = require("./Rooms")
+local SpawnBoxes = require("./SpawnBoxes")
 local Shared = require("@shared/Match/MatchConfig")
+local TeamColors = require("@shared/Match/TeamColors")
 
 local MatchConfig = {}
 
@@ -19,14 +22,17 @@ MatchConfig.validate = Shared.validate
 MatchConfig.validateResult = Shared.validateResult
 MatchConfig.users = Shared.users
 MatchConfig.OUTCOMES = Shared.OUTCOMES
+MatchConfig.CONFIG_VERSION = Shared.CONFIG_VERSION
 
 export type Lobby = { placeId: number, jobId: string }
 
--- The config for a room that passed Rooms.checkStart. In Teams, ally teams
--- sit together (team 1's players first) and are renumbered 1..n in team
--- order. Every player's `start` is 0: starts are picked in the match's
--- pre-game (S-171; the map's starts are only hints).
-function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now: number, lobby: Lobby): MatchConfig
+-- Who plays, in match order: each seat's slot index, its player ID and
+-- ally team. In Teams, ally teams sit together (team 1's players first) and
+-- are renumbered 1..n in team order; in a free-for-all each player is its
+-- own ally team. The match config and the room's colours both use it, so a
+-- seat has the same ID in both.
+export type Seat = { slot: number, id: number, allyTeam: number }
+function MatchConfig.seats(room: Rooms.Room): { Seat }
 	local order: { number } = {}
 	for i in room.slots do
 		table.insert(order, i)
@@ -43,18 +49,57 @@ function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now:
 	end
 	local allyOf: { [number]: number } = {}
 	local allies = 0
-	local players: { Player } = {}
-	local aiNumber = 0
+	local out: { Seat } = {}
 	for id, i in order do
-		local s = room.slots[i]
 		local ally = id
 		if team then
-			if allyOf[s.team] == nil then
+			local t = room.slots[i].team
+			if allyOf[t] == nil then
 				allies += 1
-				allyOf[s.team] = allies
+				allyOf[t] = allies
 			end
-			ally = allyOf[s.team]
+			ally = allyOf[t]
 		end
+		table.insert(out, { slot = i, id = id, allyTeam = ally })
+	end
+	return out
+end
+
+-- Each seat's colour as `viewer` (a user ID; nil or a spectator: the
+-- spectator's view) sees it, by slot index (S-172): you and your allies
+-- cold, enemies warm, as the match shows them.
+function MatchConfig.colors(room: Rooms.Room, viewer: number?): { [number]: TeamColors.Color }
+	local seats = MatchConfig.seats(room)
+	local players: { TeamColors.Player } = {}
+	local own = 0
+	for _, seat in seats do
+		local s = room.slots[seat.slot]
+		table.insert(players, { id = seat.id, allyTeam = seat.allyTeam })
+		if viewer ~= nil and s.kind == "human" and s.user == viewer then
+			own = seat.id
+		end
+	end
+	local byId = TeamColors.forViewer(own, players)
+	local out: { [number]: TeamColors.Color } = {}
+	for _, seat in seats do
+		out[seat.slot] = byId[seat.id]
+	end
+	return out
+end
+
+-- The config for a room that passed Rooms.checkStart, its players in
+-- MatchConfig.seats order. Every player's `start` is 0: starts are picked
+-- in the match's pre-game (S-171; the map's starts are only hints). `color`
+-- is still the seat's unique palette index (validated, unused: the match
+-- colours players by TeamColors.forViewer, S-172). `startBoxes` (F26) is
+-- every side's box by ally team, sent only when the host moved or resized
+-- one (Teams); `map` gives the defaults for the boxes the host left alone.
+function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now: number, lobby: Lobby, map: Rooms.MapInfo?): MatchConfig
+	local players: { Player } = {}
+	local aiNumber = 0
+	for _, seat in MatchConfig.seats(room) do
+		local id = seat.id
+		local s = room.slots[seat.slot]
 		local name
 		if s.kind == "human" then
 			local m = Rooms.member(room, s.user :: number)
@@ -67,12 +112,27 @@ function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now:
 			id = id,
 			start = 0,
 			faction = s.faction,
-			allyTeam = ally,
+			allyTeam = seat.allyTeam,
 			color = s.color,
 			user = if s.kind == "human" then s.user else nil,
 			name = name,
 			ai = if s.kind == "ai" then s.level else nil,
 		})
+	end
+	local startBoxes: { [number]: SpawnBoxes.Box }? = nil
+	local teams = SpawnBoxes.teams(room.slots)
+	if room.settings.mode == "TEAM" and SpawnBoxes.touched(teams, room.settings.boxes) then
+		local byTeam = SpawnBoxes.forTeams(map and map.geo, teams, room.settings.boxes)
+		local list: { [number]: SpawnBoxes.Box } = {}
+		local count = 0
+		for ally, team in teams do
+			list[ally] = byTeam[team]
+			count += if byTeam[team] then 1 else 0
+		end
+		-- every side has a box, or none is sent (the match uses its own)
+		if count == #teams then
+			startBoxes = list
+		end
 	end
 	local spectators = {}
 	for _, m in room.members do
@@ -90,6 +150,8 @@ function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now:
 		win = room.settings.win,
 		friendlyFire = room.settings.friendlyFire,
 		cheats = room.settings.cheats,
+		host = room.host, -- the room host's UserId (F32): the match's pre-game starts it; seated or not
+		startBoxes = startBoxes,
 		players = players,
 		spectators = spectators,
 		lobby = { placeId = lobby.placeId, jobId = lobby.jobId, roomId = room.id, roomName = room.name },
@@ -121,6 +183,8 @@ function MatchConfig.summary(c: MatchConfig, r: Result, mapName: string): any
 		winner = r.winner,
 		seconds = r.seconds,
 		cheatsUsed = r.cheatsUsed,
+		reason = (r :: any).reason,
+		error = MatchErrors.clean((r :: any).error), -- F38: why the match failed as a whole
 		players = players,
 	}
 end

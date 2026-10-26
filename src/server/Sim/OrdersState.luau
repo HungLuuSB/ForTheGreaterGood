@@ -6,7 +6,7 @@ local Hash = require("@shared/Util/Hash")
 
 local OrdersState = {}
 
-export type Kind = "move" | "fight" | "patrol" | "attack" | "guard" | "repair" | "reclaim" | "resurrect" | "build" | "attackGround"
+export type Kind = "move" | "fight" | "patrol" | "attack" | "guard" | "repair" | "reclaim" | "resurrect" | "build" | "attackGround" | "area"
 
 export type Order = {
 	kind: Kind,
@@ -29,6 +29,8 @@ export type Order = {
 	gz: number?,
 	issued: number, -- tick of the last chase move
 	auto: boolean?, -- given by the unit's move state, not a player (S-34): any command replaces it
+	areaOp: number?, -- area (S-183): Schema.AreaOp; x, z the circle's centre
+	radius: number?,
 }
 
 -- One of a factory's orders for the units it produces (S-95).
@@ -94,7 +96,7 @@ function OrdersState.clearUnit(o: OrdersState, id: number)
 	o.anchorZ[id] = nil
 end
 
-local KIND_CODE: { [string]: number } = { move = 1, fight = 2, patrol = 3, attack = 4, guard = 5, repair = 6, reclaim = 7, build = 8, attackGround = 9, resurrect = 10 }
+local KIND_CODE: { [string]: number } = { move = 1, fight = 2, patrol = 3, attack = 4, guard = 5, repair = 6, reclaim = 7, build = 8, attackGround = 9, resurrect = 10, area = 11 }
 
 -- Hash over units in `ids` (ascending).
 function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
@@ -113,6 +115,7 @@ function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
 				h = Hash.u32(h, ord.issued)
 				h = Hash.u32(h, if ord.auto then 1 else 0)
 				h = Hash.number(h, ord.speedCap or 0)
+				h = Hash.number(Hash.u32(h, ord.areaOp or 0), ord.radius or 0)
 			end
 		end
 		h = Hash.u32(h, if o.hold[id] then 1 else 0)

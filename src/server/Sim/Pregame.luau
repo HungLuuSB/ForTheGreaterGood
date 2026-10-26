@@ -1,16 +1,25 @@
 --!strict
--- The pre-game (S-169, S-171, the user): a match boots without units (match
--- option startMode "choose", which every match from the lobby uses; "fixed"
--- is left for headless tests and tools). Each player picks where its
--- Commander will start (START_POS, inside its side's spawn box:
--- Shared/Match/StartAreas),
--- may queue builds for it (BUILD with no unit IDs; QUEUE appends, else it
--- replaces; STOP with no unit IDs clears), and says READY. Everyone sees
--- every pick. When every player is ready (or TIMEOUT has passed) a COUNTDOWN
--- of 5 s runs; anyone un-readying cancels it. Then the scenario places the
--- Commanders on the picks (unpicked players get Pregame.bestSpot), each
--- Commander takes its queue as build orders, and the match starts on that
--- tick.
+-- The pre-game (S-169, S-171, S-174, the user): a match boots without units
+-- (match option startMode "choose", which every match from the lobby uses;
+-- "fixed" is left for headless tests and tools). Each player picks where
+-- its Commander will start (START_POS, inside its side's spawn box:
+-- Shared/Match/StartAreas, or the box the host drew in the lobby), may
+-- switch faction while not ready (FACTION; its queue is cleared), may queue
+-- builds for it (BUILD with no unit IDs; QUEUE appends, else it replaces;
+-- STOP with no unit IDs clears), and says READY. Everyone sees every pick
+-- and faction. After PICK_TIME, players who haven't picked get the best
+-- free spot (they still say READY themselves). When everyone is ready the
+-- match's host starts it (START; with no host it starts by itself); the
+-- host may also force a start at any time (START 1), and after MAX_WAIT it
+-- starts anyway. A COUNTDOWN of 3 s runs; anyone un-readying cancels it,
+-- unless forced. Then the scenario places the Commanders on the picks; they
+-- land for Schema.LANDING_TICKS (the client's star flare), taking no orders
+-- (Commands holds them), and then take their queues as build orders.
+--
+-- The clocks (PICK_TIME, MAX_WAIT) start once every human player has loaded:
+-- sent its first command (the client's CAMERA after WELCOME), or after
+-- LOAD_WAIT (client-B's Studio run: 41 s of loading came out of the pick
+-- time). Commands are recorded, so a replay starts them on the same tick.
 --
 -- The map's start positions are hints (S-171): the AI, and anyone who
 -- didn't pick, takes its side's k-th hint as the side's k-th player; past
@@ -32,8 +41,11 @@ local Types = require("./Types")
 
 local Pregame = {}
 
-Pregame.TIMEOUT = 90 * 15 -- ticks: then everyone counts as ready
-Pregame.COUNTDOWN = 5 * 15 -- ticks
+Pregame.PICK_TIME = 150 * 15 -- ticks: then the unpicked get a spot (S-174)
+Pregame.MAX_WAIT = 300 * 15 -- ticks: then the match starts anyway, ready or not
+Pregame.COUNTDOWN = 3 * 15 -- ticks
+Pregame.WARN = 30 * 15 -- ticks before MAX_WAIT: PICK_CLOCK counts down to it
+Pregame.LOAD_WAIT = 60 * 15 -- ticks: the clocks start then even if a human hasn't loaded
 Pregame.SCAN_STEP = 16 -- studs between candidate spots in a box (bestSpot)
 Pregame.DEPOSIT_RADIUS = 160 -- studs: deposits that count for a spot
 Pregame.CLAIM_RADIUS = 100 -- studs: deposits this near another pick are taken
@@ -41,8 +53,15 @@ Pregame.CLAIM_RADIUS = 100 -- studs: deposits this near another pick are taken
 export type Build = { defIndex: number, x: number, z: number, facing: number }
 export type State = {
 	phase: "pick" | "countdown",
-	deadline: number, -- tick
+	loaded: { [number]: boolean }, -- players whose first command arrived
+	begun: boolean, -- everyone loaded (or LOAD_WAIT): the clocks run
+	loadUntil: number, -- tick the clocks start on at the latest
+	deadline: number, -- tick the pick time ends on (math.huge until begun)
+	autoPicked: boolean, -- the pick time is over: everyone has a spot
+	maxWait: number, -- tick the match starts on, ready or not
 	countdownEnd: number?, -- tick the match starts on
+	forced: boolean, -- a forced countdown: un-readying doesn't cancel it
+	host: number?, -- the player who starts the match; nil: it starts when everyone is ready
 	picks: { [number]: { number } }, -- player → { x, z }
 	ready: { [number]: boolean },
 	builds: { [number]: { Build } }, -- player → its Commander's queue
@@ -54,35 +73,48 @@ export type State = {
 
 local CT = Schema.CmdType
 
--- The Commander def a player will get (faction by team parity, as
+-- The Commander def a player will get (its faction, as
 -- Scenarios.standard_start).
 function Pregame.commanderDef(sim: Types.Sim, player: number): any
-	return sim.defs.units[if sim.players[player].team % 2 == 1 then "ord_sovereign" else "chs_warlord"]
+	return sim.defs.units[if sim.players[player].faction == "order" then "ord_sovereign" else "chs_warlord"]
 end
 
-function Pregame.new(sim: Types.Sim, setup: (sim: Types.Sim) -> ()): State
+-- `host`: the match's host (nil: none); `startBoxes`: the lobby's boxes per
+-- ally team as fractions of the map (Sim.new checked them).
+function Pregame.new(sim: Types.Sim, setup: (sim: Types.Sim) -> (), host: number?, startBoxes: { [number]: { number } }?): State
 	local map = sim.map
 	if map == nil then
 		error("Pregame: needs a map", 0)
 	end
 	local layers = map.layers
-	local sides = StartAreas.sides(sim.allyTeams, #layers.starts)
+	local sides = StartAreas.sides(sim.allyTeams, #layers.starts, layers.sideSplits)
 	local g = map.grid
 	local deposits = {}
-	for i = 0, g.cellCount - 1 do
-		if Layers.getSupply(layers, i) > 0 then
-			table.insert(deposits, { g:cellCenter(g:coords(i)) })
-		end
+	for _, d in layers.deposits or {} do
+		table.insert(deposits, { d[1], d[2] }) -- each 2 × 2 patch once (S-184)
+	end
+	local bounds = StartAreas.bounds(g)
+	local boxes = StartAreas.boxes(sides, layers.starts, bounds, layers.startBoxes)
+	for ally, f in startBoxes or {} do
+		local w, d = bounds[3] - bounds[1], bounds[4] - bounds[2]
+		boxes[ally] = { bounds[1] + f[1] * w, bounds[2] + f[2] * d, bounds[1] + f[3] * w, bounds[2] + f[4] * d }
 	end
 	return {
 		phase = "pick",
-		deadline = sim.tick + Pregame.TIMEOUT,
+		loaded = {},
+		begun = false,
+		loadUntil = sim.tick + Pregame.LOAD_WAIT,
+		deadline = math.huge,
+		autoPicked = false,
+		maxWait = math.huge,
 		countdownEnd = nil,
+		forced = false,
+		host = host,
 		picks = {},
 		ready = {},
 		builds = {},
 		sides = sides,
-		boxes = StartAreas.boxes(sides, layers.starts, StartAreas.bounds(g), layers.startBoxes),
+		boxes = boxes,
 		deposits = deposits,
 		setup = setup,
 	}
@@ -184,10 +216,43 @@ function Pregame.bestSpot(sim: Types.Sim, player: number, picks: { [number]: { n
 	return bestX, bestZ
 end
 
+local function allReady(sim: Types.Sim): boolean
+	local pg = sim.pregame :: State
+	for _, pid in sim.playerOrder do
+		if not pg.ready[pid] then
+			return false
+		end
+	end
+	return true
+end
+Pregame.allReady = allReady
+
+local function countdown(sim: Types.Sim, forced: boolean)
+	local pg = sim.pregame :: State
+	pg.phase = "countdown"
+	pg.forced = forced
+	pg.countdownEnd = sim.tick + Pregame.COUNTDOWN
+end
+
+-- Every unpicked player's spot when the pick time ends (in player order).
+local function autoPick(sim: Types.Sim)
+	local pg = sim.pregame :: State
+	for _, pid in sim.playerOrder do
+		if pg.picks[pid] == nil then
+			local x, z = Pregame.bestSpot(sim, pid)
+			if x and z then
+				pg.picks[pid] = { x, z }
+			end
+		end
+	end
+	pg.autoPicked = true
+end
+
 -- A pre-game command (Commands): true when it was one (applied or refused).
 -- Others (CAMERA, CHEAT) go on as usual; the rest is ignored.
 function Pregame.command(sim: Types.Sim, player: number, cmd: Schema.Command): boolean
 	local pg = sim.pregame :: State
+	pg.loaded[player] = true
 	local t = cmd.cmdType
 	if t == CT.CAMERA or t == CT.CHEAT then
 		return false
@@ -203,6 +268,30 @@ function Pregame.command(sim: Types.Sim, player: number, cmd: Schema.Command): b
 		end
 	elseif t == CT.READY then
 		pg.ready[player] = cmd.value == 1 or nil
+	elseif t == CT.FACTION then
+		if not pg.ready[player] and pg.phase == "pick" then
+			local p = sim.players[player]
+			local faction: Types.Faction = if cmd.value == 0 then "order" else "chaos"
+			if p.faction ~= faction then
+				p.faction = faction
+				pg.builds[player] = nil -- the other Commander builds other things
+				local pick = pg.picks[player]
+				if pick then
+					pg.picks[player] = nil
+					if Pregame.validPick(sim, player, pick[1], pick[2]) then
+						pg.picks[player] = pick
+					end
+				end
+			end
+		end
+	elseif t == CT.START then
+		if player == pg.host and pg.phase == "pick" then
+			if cmd.value == 1 then
+				countdown(sim, true)
+			elseif allReady(sim) then
+				countdown(sim, false)
+			end
+		end
 	elseif t == CT.BUILD and #cmd.unitIds == 0 then
 		local d = sim.defs.unitByIndex[cmd.defIndex :: number]
 		local options = Pregame.commanderDef(sim, player).buildOptions
@@ -243,10 +332,17 @@ local function start(sim: Types.Sim)
 	sim.pregame = nil
 	sim.match.startTick = sim.tick
 	pg.setup(sim)
-	-- each Commander takes its player's pre-game queue, in order
+	sim.landing = { untilTick = sim.tick + Schema.LANDING_TICKS, builds = pg.builds }
+end
+
+-- When the landing is over (Commands, before the tick's commands): each
+-- Commander takes its player's pre-game queue, in order.
+function Pregame.land(sim: Types.Sim)
+	local landing = sim.landing :: Types.Landing
+	sim.landing = nil
 	local w = sim.world
 	for _, pid in sim.playerOrder do
-		local list = pg.builds[pid]
+		local list = landing.builds[pid]
 		if list and #list > 0 then
 			for _, id in w.ids do
 				if w.owner[id] == pid and table.find(sim.defs.unitByIndex[w.defIndex[id]].categories, "COMMANDER") then
@@ -260,7 +356,7 @@ local function start(sim: Types.Sim)
 	end
 end
 
--- Seconds left in the countdown (5..1), or nil.
+-- Seconds left in the countdown (3..1), or nil.
 function Pregame.secondsLeft(sim: Types.Sim): number?
 	local pg = sim.pregame
 	if pg == nil or pg.phase ~= "countdown" then
@@ -269,22 +365,48 @@ function Pregame.secondsLeft(sim: Types.Sim): number?
 	return math.max(1, math.ceil(((pg.countdownEnd :: number) - sim.tick) / 15))
 end
 
--- After the tick's commands (Commands.step): the countdown and the start.
+-- What PICK_CLOCK shows: seconds (of pick time, or to the forced start
+-- once MAX_WAIT is near) and Schema.PickClockFlag bits.
+function Pregame.clock(sim: Types.Sim): (number, number)
+	local pg = sim.pregame :: State
+	local flags = if allReady(sim) then Schema.PickClockFlag.ALL_READY else 0
+	if not pg.begun then
+		return Pregame.PICK_TIME // 15, flags + Schema.PickClockFlag.LOADING
+	end
+	if pg.phase == "pick" and sim.tick >= pg.maxWait - Pregame.WARN then
+		return math.max(0, math.ceil((pg.maxWait - sim.tick) / 15)), flags + Schema.PickClockFlag.MAX_WAIT
+	end
+	return math.max(0, math.ceil((pg.deadline - sim.tick) / 15)), flags
+end
+
+-- After the tick's commands (Commands.step): the pick time, the countdown
+-- and the start.
 function Pregame.step(sim: Types.Sim)
 	local pg = sim.pregame :: State
-	local all = true
-	for _, pid in sim.playerOrder do
-		if not pg.ready[pid] then
-			all = false
+	if not pg.begun then
+		local all = true
+		for _, pid in sim.playerOrder do
+			if not sim.match.ai[pid] and not pg.loaded[pid] then
+				all = false
+			end
+		end
+		if all or sim.tick >= pg.loadUntil then
+			pg.begun = true
+			pg.deadline = sim.tick + Pregame.PICK_TIME
+			pg.maxWait = sim.tick + Pregame.MAX_WAIT
 		end
 	end
-	if sim.tick >= pg.deadline then
-		all = true -- the timeout: whoever isn't ready plays from their pick or suggestion
+	if not pg.autoPicked and sim.tick >= pg.deadline then
+		autoPick(sim)
 	end
-	if pg.phase == "pick" and all then
-		pg.phase = "countdown"
-		pg.countdownEnd = sim.tick + Pregame.COUNTDOWN
-	elseif pg.phase == "countdown" and not all then
+	local all = allReady(sim)
+	if pg.phase == "pick" then
+		if sim.tick >= pg.maxWait then
+			countdown(sim, true) -- waited long enough
+		elseif all and pg.host == nil then
+			countdown(sim, false)
+		end
+	elseif pg.phase == "countdown" and not all and not pg.forced then
 		pg.phase = "pick"
 		pg.countdownEnd = nil
 	end

@@ -2,6 +2,108 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: The Plains' side splits, S-186)
+
+- Merged sim-A's `9583455e`: maps may carry `layers.sideSplits`, and `StartAreas.sides` takes it as a third argument.
+- The room's default spawn boxes pass the map's splits. The server sends them with the map's shape as a list (`SpawnBoxes.splitList`: a table keyed by side counts has gaps, which a remote can drop), and `SpawnBoxes.defaults` rebuilds them.
+- With 3 sides on The Plains: side 1 is the west strip, sides 2 and 3 the two eastern corners. No box spans the map's middle any more (`lobby_room_plains_3_sides`).
+- New spec: The Plains' 3-side defaults keep side 1 west and sides 2 and 3 east, apart. Lobby specs 61 / 61; the build check passes.
+
+## Summary (2026-10-26: tracks on the ground; the Underwater place)
+
+- **Tracks clipping into the ground (the user):** units stood at the place's level, under thin floor dressing on top of it:
+  - **The menu's battle:** the sand band, 0.15 studs. Units now stand on its top (`FIELD_TOP`).
+  - **The Units showroom:** the pad's disc and marks (0.11) and the field's dirt patch (0.12). Models now stand on each place's `FLOOR`.
+  - **Measured in Studio:** every unit's lowest point is exactly on the surface, sinking into nothing (`lobby_units_field_tank`).
+- **Submarines and amphibious units underwater (the user):** a new **Underwater** place in the showroom.
+  - Deep water over a sandy seabed with rocks and weed.
+  - Submarines float mid-water, amphibious units drive on the seabed, and ships show their hulls from below.
+  - The camera stays under the surface and may look up at it. "Auto" picks it for submarines and amphibious units; Shore is still available.
+  - A cool sea tint while underwater; leaving restores the menu's light.
+  - Water transparency 0.05 (the user's value), set by the showroom's water.
+  - Studio: `lobby_units_underwater_sub` (Silence), `lobby_units_underwater_amphib` (Tideguard).
+- Lobby specs 60 / 60; the build check passes.
+- Ready to merge: `782092e` (tracks on the ground, the Underwater showroom place; touches only `src/lobby` and the lobby docs)
+
+## Summary (2026-10-26: Codex roles for the bots, S-181)
+
+- Merged sim-A's `2b3ca0e` (the bot roster). Codex roles for the 19 new units:
+  - **Command and workers:** Bot constructor (Artisan / Tinker); Field engineer for repair, resurrect and reclaim (Lazarus / Graverobber).
+  - **Ground, bots:** Scout bot (Glint / Skitter); Light combat bot (Mace / Thug); AA bot (Kestrel / Needle); Heavy plasma (Fatboy / Tzar, the tank counterpart); Heavy laser bot (Chaos: Centurion).
+  - **Air:** Heavy bomber (Order: Liche); Flying fortress (Chaos: Dragon).
+  - **Factories:** Bot lab (Bot Lab / Bot Pit); Advanced bot lab.
+- Lobby specs 60 / 60 (the Codex spec lists every buildable unit's role); the build check passes. Studio: Fatboy's article with Tzar as its counterpart and the comparison (`lobby_units_fatboy`).
+- Ready to merge: `f8e3cbb` (Codex roles for the bots; includes the merge of sim-A's `2b3ca0e`; touches only `src/lobby` and the lobby progress)
+- **Not the lobby's:** the bots have no list icons (B) and no models yet (C), so the showroom shows the placeholder box.
+
+## Summary (2026-10-26: the shared error list)
+
+- Merged sim-A's `ed06b01`: `MatchConfig.ERRORS`, `ERROR_DETAIL_MAX` and `cleanError`, and `validateResult` accepting `error`. It also brings the new unit defs; the Codex spec still passes.
+- `MatchErrors` now reads the shared list and cleaning, and keeps only the lobby's teleport mapping and one-line form. The contract's note says where the table lives; `MatchErrors.spec` compares the contract with the shared table.
+- B's match side (`2b1fde9`) sends the 2xx codes in the return teleport data and the result's `error`. 206 has no path yet, and a player with no readable config is still kicked, with the code in the kick message.
+- Lobby specs 60 / 60; the build check passes; Studio: a staged reserve failure shows Error 103 from the shared table.
+- Ready to merge: `10f7b77` (the lobby reads `MatchConfig.ERRORS`; includes the merge of sim-A's `ed06b01`; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
+- **Next (F41):** four AI levels in the pickers once sim-A sends the level IDs.
+
+## Summary (2026-10-26: match errors with codes, F38)
+
+- **The user's rule:** "any failed attempt to connect to the game match must be displayed on the lobby when return with error code + description". One numbered list (`MatchErrors`, contract section 11, L-21):
+  - **1xx, the lobby's side:** no match place, a bad setup, no server, the match store, room changed, nobody to send, teleport failures by TeleportResult, the match server going silent (120), rejoin with the match gone.
+  - **2xx, the match server's side:** no or bad setup, version mismatches, not listed, full, already over, players didn't arrive, everyone left, a server error, unnamed.
+- **Shown:** a panel the player dismisses: "Couldn't reach the match", the code, title, description and detail.
+  - **Start failures:** every room member present gets it, and the room's notice carries the code.
+  - **A player's own failed teleport:** after the retries, for that player.
+  - **Rejoin:** its errors too.
+  - **A player sent back with `error` in the teleport data:** shown on arrival.
+  - **A match that failed as a whole:** the result's `error` shows in the results panel instead, once.
+  - Errors wait in the player's view until dismissed, so one raised during arrival isn't lost.
+- **Studio:** the stand-in match refuses with codes (201, 202, 203, 205), and `StandInFail = "match:<code>"` stages any 2xx. Checked (`debug_out/screens/`): `lobby_error_103_start` (reserve failed), `lobby_error_206_sent_back`, `lobby_error_120_results` (the lobby's heartbeat timeout), `lobby_error_209_results` (shown once, with the results), `lobby_error_114_teleport` (a player's teleport, after the retries).
+- **Specs** (`MatchErrors.spec`, 5 tests): the list, the contract's table equal to the code's, cleaning, the teleport mapping, results carrying the error. Lobby specs 60 / 60; the build check passes.
+- Ready to merge: `a8eb423` (match errors with codes, F38; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
+- **For B and sim-A:** the match place reports 2xx in the return teleport data and the result's `error`; sim-A moves the list to `MatchConfig.ERRORS`, then the lobby reads it from there.
+
+## Summary (2026-10-26: the host back from a match)
+
+- **The user's bug:** after a match, the host came back to a lobby and couldn't control the room, so they made a new one. Two causes, both fixed:
+  1. **A room rebuilt on another lobby server** (the room's server had closed, for example when everyone left it for the match) went to whoever was back first. `Rooms.fromMatch` (moved out of `Directory.recreate`) now gives it to the config's `host` (v2) when they're a member; without one (v1), still the first back.
+  2. **A host removed after the grace** (not back within `AWAY_GRACE` of the result) was attached to the room on return without being a member, so every request failed with "You're not in this room". `Rooms.welcomeBack` makes them a member again (a spectator; their seat went) and gives the match's host the room back.
+- **Spec:** back from a match as host, on a rebuilt room (the other player back first) and on the same server after the grace. Host rights, setup, a host-only setting, and Start's check pass again; a v1 config without `host` still goes to the first one back.
+- **Studio** (same server): Lobby → stand-in match → back as host; changing the win rule and the real Start button worked, and a second match launched (`lobby_host_back_from_match`).
+- **By design, not changed:** a host back early while others still play sees the room "In match" (Rejoin) until that match ends.
+- Lobby specs 55 / 55; the build check passes.
+- Ready to merge: `0ed1299` (the host keeps the room after a match; touches only `src/lobby` and the lobby progress)
+
+## Summary (2026-10-26: beta feedback F25, F31, F32, F35)
+
+From the user's playtest feedback (`FTGG-FEEDBACK.txt`; sim-A's plan in `docs/progress/playtest-2026-10-26.md`):
+- **F25 (an AI added to team 7 landed on team 2):** a new AI always sat on team 1 or 2, and the room moved it with a second request 0.3 s later, aimed at "the last seat"; if the view hadn't arrived, that moved a different AI or none. `addAi` and `play` now take the team in the same request (checked against the map's sides). Specs: back-to-back requests to teams 7, 2, 7, 8; team 9 and team 5 on a four-start map refused; a spectator joins team 3 in one request. Studio: five requests sent back to back and two quick clicks on Team 3's Add AI all land on their teams (`lobby_room_ai_teams_f25`).
+- **F31 (the 16-player crash):** the match place numbered teams by faction parity (B fixes it). The room already seats 16 in any mix; a new spec builds 16 seats, 9 Chaos and 7 Order, 8 against 8 and free for all on The Plains, and checks the start rules and the shared config check.
+- **F32:** the config carries `host` (the room host's UserId), seated or not. Contract row added.
+- **F35:** your seat editor says the faction is a first choice that can change in the match (`lobby_room_faction_note_f35`).
+- **Tests:** lobby specs 50 / 50; the build check passes.
+- Ready to merge: `7e667f4` (F25 AI team in one request, F31 spec, F32 `host` in the config, F35 faction note; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
+- **F26: spawn boxes edited by the host.** In Teams, the room's map shows every team's box in its colour as you see it. The defaults are the match's own: `StartAreas.boxes` for the room's sides, from each map's bounds, start hints and boxes, which the server now sends with the previews. The host drags a side to resize or the inside to move; sides within 3% of the map's edge snap to it, the smallest box is 4% of the map, and the box is sent when the drag ends. "Reset boxes" (beside the map, host only, once a box was edited) brings back the defaults. A new map or mode resets them too. The config's `startBoxes` carries every side's box by ally team once one was edited, and is omitted otherwise (`SpawnBoxes`, L-20).
+  - **Specs** (`SpawnBoxes.spec`, 4 tests): cleaning and snapping; the defaults equal `StartAreas` on The Plains for 2 to 8 sides; only the host edits, Teams only, seated teams only, resets on map and mode changes; the config's boxes by ally team, an emptied team's edit left out.
+  - **Studio** (`debug_out/screens/`): `lobby_room_spawn_boxes` (three teams' defaults), `lobby_room_spawn_boxes_dragged` (team 1's east side dragged, its west side snapped; team 3 moved down and snapped to the corner), `lobby_room_spawn_boxes_reset_button`, `lobby_room_spawn_boxes_after_reset`. A forced start with edited boxes passed the shared check and launched.
+  - **Note for sim-A:** with 3 sides on The Plains, side 2 gets starts 6-10, which lie in two corners. Its default box spans the map's middle column (`lobby_room_spawn_boxes`).
+- **Contract v2:** merged sim-A's `72fb087` (CONFIG_VERSION 2, `host`, `startBoxes`). The lobby specs follow the shared version and check that v2 refuses a host outside the match and boxes for a missing side. A forced start with an edited box passed the check in Studio. Lobby specs 54 / 54; the build check passes.
+- Ready to merge: `99c27ae` (F26 spawn boxes, `9a57381`, plus the merge of sim-A's `72fb087` and the v2 specs; must land with `72fb087`; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
+
+## Summary (2026-10-26: automatic colours, S-172)
+
+- **sim-A's request:** after the beta publish, the room still had the colour picker. Players' colours are now automatic in the lobby too:
+  - **Room:** the seat editor's colour grid is gone. Every seat's swatch (seat chips, the "You" row) comes from `TeamColors.forViewer` from your seat: you Blue, your allies cold, enemies warm; spectators see the lowest ally team as the cold side.
+  - **Same IDs as the match:** `MatchConfig.seats(room)` is the config's player order (each seat's player ID and ally team), split out of `MatchConfig.build`. `MatchConfig.colors(room, viewer)` calls `forViewer` with those IDs and the viewer's own ID (0 for a spectator), as sim-A asked and as B does in the match.
+  - **Results panel:** colours from your view, using the players' place in the list as their ID.
+  - **Contract:** `color` is still sent: a unique palette index, validated, unused. Still version 1.
+  - **The Plains** was already in the map picker (the server lists every hand-made map: "The Plains (16)").
+- **Checked:** lobby specs 48 / 48 (one new: seat colours from each viewer, the same as `forViewer` on the built config); the lobby build check passes. In Studio on the published lobby place ("FTGG Testplace"), a Teams room on The Plains (`debug_out/screens/`):
+  - `lobby_room_auto_colours`: you Blue, your AI ally Cyan; team 2 Red, Orange, Fuchsia; team 3 Yellow;
+  - `lobby_room_seat_no_picker`, `lobby_room_ai_no_picker`: the seat editors without the colour grid, shorter to fit;
+  - `lobby_room_spectator_colours`: as a spectator, team 1 Blue, team 2 Red and Orange.
+- Smart App Control blocked `lune.exe` and `rojo.exe` on the morning of 2026-10-26 (unsigned); the user turned it off.
+- Ready to merge: `192cab0` (automatic player colours in the room and results from your view, S-172; no colour picker; `MatchConfig.seats` / `MatchConfig.colors`; L-19; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md` (the `color` row: still sent, unused); still version 1)
+
 ## Summary (2026-10-24, the beta merge: new start rules and limits)
 
 - **sim-A's beta merge failed 3 lobby specs** after S-169 / S-171 raised the shared limits. Fixed on `m-lobby` with sim-A's `c06d3ca` merged in:
@@ -10,7 +112,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
   - **Room UI:** the seat editor lists only the teams the map allows, and its colour grid has a third row for the 16 colours. The room's map markers no longer take player colours, since starts are hints.
   - **Contract:** `docs/contracts/match.md` updated (start 0, the limits); still version 1.
 - **Checked in Studio:** The Plains (16 starts) is in the map list; a 4-against-4 Teams room on it, the seat editor with 8 teams and 16 colours (`lobby_room_plains_seat.jpg`), and a forced start whose config passed the shared check and launched.
-- **Not done yet (after the beta):** the automatic colours in the room (`TeamColors.forViewer`) and removing the colour picker; The Plains' skirmish note.
+- **Not done yet (after the beta):** the automatic colours in the room (`TeamColors.forViewer`) and removing the colour picker (done 2026-10-26, above); The Plains' skirmish note.
 - **Tests:** lobby specs 47 / 47; the lobby build check passes.
 - Ready to merge: `63ca504` (rooms to the new limits, start 0 for every player, seat editor for 8 teams and 16 colours, specs and contract; includes sim-A's `c06d3ca`; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
 

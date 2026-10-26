@@ -14,10 +14,11 @@
 -- and back to setup with the results.
 
 local Config = require("./Config")
+local SpawnBoxes = require("./SpawnBoxes")
 
 local Rooms = {}
 
-export type MapInfo = { id: string, name: string, starts: number }
+export type MapInfo = { id: string, name: string, starts: number, geo: SpawnBoxes.Geometry? }
 
 export type Member = {
 	user: number,
@@ -41,6 +42,7 @@ export type Settings = {
 	win: string,
 	friendlyFire: boolean,
 	cheats: boolean,
+	boxes: { [string]: SpawnBoxes.Box }?, -- the host's spawn box edits by team (F26); the map's or mode's change clears them
 }
 
 export type Room = {
@@ -184,8 +186,9 @@ local function maxSides(map: MapInfo): number
 end
 Rooms.maxSides = maxSides
 
--- Seats a member if the map has room; returns whether they sit.
-local function seat(room: Room, maps: { MapInfo }, user: number, faction: string?): boolean
+-- Seats a member if the map has room (on `team` if given); returns whether
+-- they sit.
+local function seat(room: Room, maps: { MapInfo }, user: number, faction: string?, team: number?): boolean
 	local map = mapOf(maps, room.settings.mapId)
 	if map == nil or #room.slots >= capacity(room, map) then
 		return false
@@ -194,7 +197,7 @@ local function seat(room: Room, maps: { MapInfo }, user: number, faction: string
 		kind = "human",
 		user = user,
 		faction = faction or "order",
-		team = lightTeam(room),
+		team = team or lightTeam(room),
 		color = freeColor(room),
 		level = "normal",
 	})
@@ -278,6 +281,73 @@ local function nextHost(room: Room, without: number): number?
 	return nil
 end
 
+-- A room rebuilt from a match record (a valid config), when its players
+-- come back to a lobby server that isn't the one they left from (contract
+-- section 6): the match's seats, every member away until they arrive, still
+-- in its match. The host is the room's host (the config's `host`, v2) when
+-- they're a member, so whoever is back first doesn't take the room;
+-- otherwise `user`, the first one back. `saved` is the lobby's own record of
+-- the room (privacy, password, size), if it survived.
+function Rooms.fromMatch(id: string, config: any, saved: any, user: number): Room
+	local privacy = if type(saved) == "table" and table.find(Config.PRIVACY, saved.privacy) then saved.privacy else "private"
+	local password = if type(saved) == "table" and type(saved.password) == "string" then saved.password else nil
+	local maxPlayers = if type(saved) == "table" and type(saved.maxPlayers) == "number" then saved.maxPlayers else Config.DEFAULT_PLAYERS
+	local room: Room = {
+		id = id,
+		name = config.lobby.roomName,
+		privacy = privacy,
+		password = password,
+		maxPlayers = math.max(maxPlayers, #config.players + #config.spectators),
+		host = user,
+		members = {},
+		slots = {},
+		settings = { mapId = config.mapId, mode = config.mode, win = config.win, friendlyFire = config.friendlyFire, cheats = config.cheats },
+		phase = "match",
+		matchId = config.matchId,
+		startedAt = config.createdAt,
+		notice = nil,
+		results = nil,
+		version = 1,
+	}
+	for _, p in config.players do
+		table.insert(room.slots, {
+			kind = if p.ai then "ai" else "human",
+			user = p.user,
+			faction = p.faction,
+			team = p.allyTeam,
+			color = p.color,
+			level = p.ai or "normal",
+		})
+		if p.user then
+			table.insert(room.members, { user = p.user, name = p.name, ready = false, away = true })
+		end
+	end
+	for _, s in config.spectators do
+		table.insert(room.members, { user = s.user, name = s.name, ready = false, away = true })
+	end
+	if type(config.host) == "number" and Rooms.member(room, config.host) then
+		room.host = config.host
+	end
+	return room
+end
+
+-- A player of the room's match is back (contract section 6). A member who
+-- was removed meanwhile (not back within the grace) comes back in, as a
+-- spectator; the match's host gets the room back. `matchHost` is the
+-- config's `host` (nil before v2).
+function Rooms.welcomeBack(room: Room, user: number, name: string, matchHost: number?)
+	local m = Rooms.member(room, user)
+	if m == nil then
+		table.insert(room.members, { user = user, name = name, ready = false, away = false })
+	else
+		m.away = false
+	end
+	if matchHost == user then
+		room.host = user
+	end
+	changed(room)
+end
+
 -- A member leaves (or is kicked): their seat goes; a leaving host passes the
 -- room on. Returns true when the room is empty and should close.
 function Rooms.leave(room: Room, user: number): boolean
@@ -310,11 +380,12 @@ end
 
 -- Applies member `from`'s request. Returns nil, or why it was refused.
 --   { op = "set", key = "mapId" | "mode" | "win" | "friendlyFire" | "cheats", value }   host
---   { op = "addAi", faction?, level? }                                         host
+--   { op = "addAi", faction?, level?, team? }                                  host
 --   { op = "ai", index, faction?, level?, team?, color? }                      host, an AI slot
 --   { op = "removeAi", index }                                                 host
+--   { op = "box", team, box } | { op = "resetBoxes" }                          host, Teams (F26)
 --   { op = "mine", faction?, team?, color? }                                   a seated member
---   { op = "spectate" } | { op = "play" }                                      a member
+--   { op = "spectate" } | { op = "play", team? }                               a member
 --   { op = "ready", value }                                                    a seated member
 --   { op = "kick", user }                                                      host
 function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): string?
@@ -342,7 +413,11 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 		if Rooms.slotOf(room, from) then
 			return nil
 		end
-		if not seat(room, maps, from) then
+		local map = mapOf(maps, room.settings.mapId)
+		if msg.team ~= nil and not (map and isInt(msg.team, 1, maxSides(map))) then
+			return "Bad team"
+		end
+		if not seat(room, maps, from, nil, msg.team) then
 			return "No free seat on this map"
 		end
 		changed(room)
@@ -391,6 +466,9 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 		else
 			return "Bad setting"
 		end
+		if key == "mapId" or key == "mode" then
+			room.settings.boxes = nil -- the defaults change with the map and the sides
+		end
 		unready(room)
 		changed(room)
 		return nil
@@ -405,11 +483,16 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 		if msg.level ~= nil and not find(Config.LEVELS, msg.level) then
 			return "Bad level"
 		end
+		-- the team in the same request (F25: a second "ai" request aimed at
+		-- the last seat could reach the room before or after another change)
+		if msg.team ~= nil and not isInt(msg.team, 1, maxSides(map)) then
+			return "Bad team"
+		end
 		table.insert(room.slots, {
 			kind = "ai",
 			user = nil,
 			faction = msg.faction or "chaos",
-			team = lightTeam(room),
+			team = msg.team or lightTeam(room),
 			color = freeColor(room),
 			level = msg.level or "normal",
 		})
@@ -426,6 +509,30 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 			room.slots[msg.index].level = msg.level
 		end
 		return Rooms.editSlot(room, msg.index, msg)
+	elseif op == "box" then
+		if room.settings.mode ~= "TEAM" then
+			return "Spawn boxes are per team: switch to Teams"
+		end
+		if not isInt(msg.team, 1, Config.MAX_ALLY_TEAMS) or table.find(SpawnBoxes.teams(room.slots), msg.team) == nil then
+			return "No one plays on that team"
+		end
+		local box, err = SpawnBoxes.clean(msg.box)
+		if box == nil then
+			return err
+		end
+		local boxes = room.settings.boxes or {}
+		boxes[tostring(msg.team)] = box
+		room.settings.boxes = boxes
+		unready(room)
+		changed(room)
+		return nil
+	elseif op == "resetBoxes" then
+		if room.settings.boxes ~= nil then
+			room.settings.boxes = nil
+			unready(room)
+			changed(room)
+		end
+		return nil
 	elseif op == "removeAi" then
 		if not isInt(msg.index, 1, #room.slots) or room.slots[msg.index].kind ~= "ai" then
 			return "Not an AI slot"

@@ -77,8 +77,8 @@ return function(t: RunAll.Context)
 				total += v
 			end
 		end
-		t.equal(deposits, 10)
-		t.equal(total, 40)
+		t.equal(deposits / 4, 10, "10 deposits (2 × 2 patches, S-184)")
+		t.equal(total / 4, 40)
 		Layers.setSupply(layers, 0, 300)
 		t.equal(Layers.getSupply(layers, 0), 255, "clamped to u8")
 	end)

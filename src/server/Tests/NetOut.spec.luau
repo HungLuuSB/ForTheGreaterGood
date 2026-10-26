@@ -234,21 +234,28 @@ return function(t: RunAll.Context)
 		print(string.format("    events: %d SPAWN_PROJ, %d IMPACT, %d DECOYED, %d LOST_LOCK; worst projectile drift %.3f studs", counts.SPAWN_PROJ, counts.IMPACT, counts.DECOYED, counts.LOST_LOCK, drift))
 	end)
 
-	-- A Hellmouth mortar outside Order's sight shells an Order generator it
-	-- sees on its own radar. Order's camera covers the map: it gets the
-	-- shells from the muzzle (S-43, client request 21: projectiles regardless
-	-- of sight; before, only once they flew into its sight), and never
-	-- learns the mortar's ID.
+	-- A Hellmouth mortar outside Order's sight shells an Order generator a
+	-- Chaos Watcher sees from beyond the generator's own sight. Order's
+	-- camera covers the map: it gets the shells from the muzzle (S-43, client
+	-- request 21: projectiles regardless of sight; before, only once they
+	-- flew into its sight), and never learns the mortar's ID.
+	-- (S-179 halved the mortar's range to 190: it stands at 0.9 × its range
+	-- from the generator. Shells at a radar blip land a radar error (50
+	-- studs, S-131) off it, so the Watcher's eyes, not its radar, give the
+	-- aim, and Order's Lancer, whose 200-stud sight now outreaches the
+	-- mortar, stays back out of sight of both, beyond the mortar's reach.)
 	t.test("a hidden shooter's shells show from the muzzle, but never the shooter", function()
 		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:96" })
 		local g = (sim.map :: any).grid
 		local c = sim.combat
 		local w = sim.world
 		local gen = Spawn.unit(sim, "ord_generator", 1, -150, 0)
-		local lancer = Spawn.unit(sim, "ord_lancer", 1, -150, 40)
+		World.setHealth(w, gen, 1e6) -- outlasts the shelling: shells keep coming
+		local lancer = Spawn.unit(sim, "ord_lancer", 1, -360, 0)
 		w.fireState[lancer] = World.FireState.HOLD_FIRE
-		local mortar = Spawn.unit(sim, "chs_hellmouth", 2, 200, 0, -math.pi / 2)
-		Spawn.unit(sim, "chs_watcher", 2, 250, 100)
+		local mortar = Spawn.unit(sim, "chs_hellmouth", 2, -150 + math.floor(sim.defs.weapons.chs_mortar.range * 0.9), 0, -math.pi / 2)
+		local watcher = Spawn.unit(sim, "chs_watcher", 2, -80, 70) -- 99 studs from the generator: inside its 110 sight, outside the generator's 60
+		World.setFireState(w, watcher, World.FireState.HOLD_FIRE)
 		camera(sim, 1, 0, 0, 95, 95)
 		camera(sim, 2, 0, 0, 95, 95)
 		local view = Client.new(g)
@@ -274,11 +281,8 @@ return function(t: RunAll.Context)
 		t.expect(impacts >= 1, `and their impacts ({impacts})`)
 		t.expect(nearest < 40, `from the muzzle: first seen {nearest} studs from the mortar`)
 		t.expect(view.received[mortar] == nil, "Order's client never learned the mortar's ID")
-		-- both are untracked radar blips to the mortar (no type, so no priority):
-		-- it shells whichever it found first
-		local hurt = (w.slot[gen] == nil or w.health[gen] < sim.defs.units.ord_generator.health)
-			or (w.slot[lancer] == nil or w.health[lancer] < sim.defs.units.ord_lancer.health)
-		t.expect(hurt, "Order's units were shelled")
+		t.expect(w.health[gen] < 1e6, "the generator was shelled")
+		t.expect(Sensors.level(sim, 1, watcher) == L.HIDDEN, "and the Watcher stayed hidden too")
 		print(string.format("    hidden mortar: %d shells shown, first seen %.0f studs from the muzzle", shells, nearest))
 	end)
 
@@ -290,11 +294,15 @@ return function(t: RunAll.Context)
 		local g = (sim.map :: any).grid
 		local w = sim.world
 		local mine = { Spawn.unit(sim, "ord_lancer", 1, -60, 0, 0), Spawn.unit(sim, "ord_lancer", 1, -60, 30, 0) } -- facing north: the turrets turn 90°
-		local theirs = { Spawn.unit(sim, "chs_ravager", 2, 120, 0, -math.pi / 2), Spawn.unit(sim, "chs_ravager", 2, 120, 40, -math.pi / 2) }
+		-- the Ravagers at 0.8 × the Lancer's range (95 since S-179), holding
+		-- fire: inside their own range now, and the Lancers must live
+		local x = -60 + math.floor(sim.defs.weapons[sim.defs.units.ord_lancer.weapons[1].def].range * 0.8)
+		local theirs = { Spawn.unit(sim, "chs_ravager", 2, x, 0, -math.pi / 2), Spawn.unit(sim, "chs_ravager", 2, x, 40, -math.pi / 2) }
 		camera(sim, 1, 0, 0, 63, 63)
 		camera(sim, 2, 0, 0, 63, 63)
 		for _, id in theirs do
 			World.setHealth(w, id, 1e6)
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
 		end
 		for _, id in { mine[1], mine[2], theirs[1], theirs[2] } do
 			World.setMoveState(w, id, World.MoveState.HOLD_POSITION) -- a static scene (move states, S-34)
@@ -548,8 +556,10 @@ return function(t: RunAll.Context)
 		-- since attack-move holds to engage (S-4) the torpedo flights are shorter: the
 		-- drift without corrections is smaller than it was (618 studs in D102);
 		-- since S-131 the drawn sonar blips sit within 1.5 studs of the subs,
-		-- and the uncorrected worst case fell from over 40 to 36.6 studs
-		t.expect(off.worst > 30, `without corrections torpedoes drift visibly ({off.worst} studs)`)
+		-- and the uncorrected worst case fell from over 40 to 36.6 studs;
+		-- S-179 halved the Lamprey's torpedo range (280 → 140), so its
+		-- torpedoes fly half as far: 20.1 studs (the 3× cut below still holds)
+		t.expect(off.worst > 15, `without corrections torpedoes drift visibly ({off.worst} studs)`)
 		t.expect(off.worst > 3 * math.max(on.worst, 1), `corrections cut the drift at least 3× ({off.worst} → {on.worst} studs)`)
 		t.expect(on.worst < 40, `with corrections the visible drift stays small ({on.worst} studs)`)
 		t.expect(lossy.worst < 80, `half the corrections lost: still bounded ({lossy.worst} studs)`)
@@ -1031,7 +1041,8 @@ return function(t: RunAll.Context)
 		local g = (sim.map :: any).grid
 		local w = sim.world
 		local tank = Spawn.unit(sim, "ord_lancer", 1, -150, -150, 0)
-		local still = Spawn.unit(sim, "chs_ravager", 2, -150, -20, 0)
+		-- in the Lancer's range (95 since S-179), at 0.8 × it
+		local still = Spawn.unit(sim, "chs_ravager", 2, -150, -150 + math.floor(sim.defs.weapons[sim.defs.units.ord_lancer.weapons[1].def].range * 0.8), 0)
 		World.setFireState(w, still, World.FireState.HOLD_FIRE)
 		World.setMoveState(w, still, World.MoveState.HOLD_POSITION)
 		World.setHealth(w, still, 1e6)

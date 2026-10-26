@@ -5,6 +5,7 @@ local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local Packer = require("@shared/Net/Packer")
 local Passability = require("@shared/Grid/Passability")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local RunAll = require("./RunAll")
 
@@ -95,10 +96,11 @@ return function(t: RunAll.Context)
 		acc.supply.stored, acc.power.stored = 0, 0
 		local start = layers.starts[1]
 		Spawn.unit(sim, "ord_sovereign", 1, start[1], start[2])
-		-- a deposit cell around the west start, and an empty cell
+		-- a deposit patch near the west start (its centre: S-184), and an empty cell
 		local sx, sz = g:cellAt(start[1], start[2])
 		local dx, dz = g:cellCenter(sx + 4, sz + 4)
-		Spawn.unit(sim, "ord_extractor", 1, dx, dz)
+		local px, pz = PlacementRules.depositNear(layers, dx, dz, 16)
+		Spawn.unit(sim, "ord_extractor", 1, px :: number, pz :: number)
 		local ex, ez = g:cellCenter(sx + 1, sz + 1)
 		Spawn.unit(sim, "ord_extractor", 1, ex, ez) -- no deposit: produces nothing
 		Spawn.unit(sim, "ord_generator", 1, start[1], start[2] - 40)
@@ -130,27 +132,30 @@ return function(t: RunAll.Context)
 		t.notEqual(Sim.hash(a), Sim.hash(b))
 	end)
 
-	t.test("wind changes every 30 s, seeded, and drives turbine income", function()
-		local values, distinct = {}, 0
-		for period = 0, 39 do
-			local v = Economy.windAt(7, period * Economy.WIND_PERIOD)
-			t.expect(v >= 0 and v <= 1, "wind in 0..1")
-			t.equal(Economy.windAt(7, period * Economy.WIND_PERIOD + Economy.WIND_PERIOD - 1), v, "constant within a period")
-			if not table.find(values, v) then
-				distinct += 1
-				table.insert(values, v)
+	t.test("wind: a fixed slow wave within the map's range, no RNG; it drives turbine income (S-177)", function()
+		local lo, hi, prev, maxStep = math.huge, -math.huge, nil, 0
+		for tick = 0, 15 * 1200, 5 do -- 20 minutes, every economy step
+			local v = Economy.windAt({ 0.25, 0.75 }, tick)
+			t.expect(v >= 0.25 - 1e-9 and v <= 0.75 + 1e-9, `wind in the map's range ({v})`)
+			lo, hi = math.min(lo, v), math.max(hi, v)
+			if prev then
+				maxStep = math.max(maxStep, math.abs(v - prev))
 			end
+			prev = v
 		end
-		t.expect(distinct >= 30, `it changes ({distinct} distinct values in 40 periods)`)
-		t.expect(Economy.windAt(7, 0) ~= Economy.windAt(8, 0), "another seed, other wind")
+		t.expect(hi - lo > 0.35, `it varies over most of the range ({lo}..{hi})`)
+		t.expect(maxStep < 0.01, `smoothly (largest step {maxStep} per economy step)`)
+		t.equal(Economy.windAt(nil, 3000), Economy.windAt(nil, 3000), "the same every time")
 
-		local sim = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:64" })
-		Spawn.unit(sim, "ord_windmill", 1, 0, 0)
-		Spawn.unit(sim, "ord_windmill", 1, 40, 0)
-		local max = sim.defs.units.ord_windmill.wind.max
-		for _, at in { 5, Economy.WIND_PERIOD + 5, 3 * Economy.WIND_PERIOD + 5 } do
-			step(sim, at - sim.tick)
-			near(t, sim.eco.accounts[1].power.income, 2 * max * Economy.windAt(7, sim.tick - (sim.tick % 5)), `turbine income at tick {sim.tick}`)
+		for _, seed in { 7, 8 } do
+			local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:64" })
+			Spawn.unit(sim, "ord_windmill", 1, 0, 0)
+			Spawn.unit(sim, "ord_windmill", 1, 40, 0)
+			local max = sim.defs.units.ord_windmill.wind.max
+			for _, at in { 5, 455, 1355 } do
+				step(sim, at - sim.tick)
+				near(t, sim.eco.accounts[1].power.income, 2 * max * Economy.windAt(nil, sim.tick - (sim.tick % 5)), `seed {seed}: turbine income at tick {sim.tick}, whatever the seed`)
+			end
 		end
 	end)
 
@@ -185,6 +190,7 @@ return function(t: RunAll.Context)
 		local start = layers.starts[1]
 		local sx, sz = g:cellAt(start[1], start[2])
 		local dx, dz = g:cellCenter(sx + 4, sz + 4)
+		dx, dz = PlacementRules.depositNear(layers, dx, dz, 16) -- on the patch (S-184)
 		local t1 = Spawn.unit(sim, "ord_extractor", 1, dx, dz)
 		Spawn.unit(sim, "ord_generator", 1, start[1] - 60, start[2]) -- some power
 		local builder = Spawn.unit(sim, "ord_architect", 1, dx - 30, dz)

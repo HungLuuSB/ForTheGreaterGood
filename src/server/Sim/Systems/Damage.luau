@@ -35,6 +35,16 @@ local function blastOf(def: any): any
 	return b
 end
 
+-- Is an upgrade frame being built on `id` (an extractor turning advanced)?
+local function upgradedFrom(sim: Types.Sim, id: number): boolean
+	for _, replaced in sim.build.upgrading do
+		if replaced == id then
+			return true
+		end
+	end
+	return false
+end
+
 return function(sim: Types.Sim)
 	local c = sim.combat
 	local count = c.dmgCount
@@ -81,7 +91,7 @@ return function(sim: Types.Sim)
 			end
 		end
 		local attacker = c.dmgAttacker[i]
-		if attacker ~= t then
+		if attacker ~= t and attacker ~= 0 then -- (a death blast has no attacker: it doesn't wipe who shot it, S-185)
 			w.lastAttacker[t] = attacker
 			w.lastAttackerGen[t] = if attacker ~= 0 then w.gen[attacker] or 0 else 0 -- D109
 		end
@@ -126,10 +136,13 @@ return function(sim: Types.Sim)
 			z = w.posZ[id],
 		})
 		c.stats.kills += 1
-		if def.deathBlast and not frame then
-			-- a reactor's blast (guide 8.5, S-70): every unit in reach, own
-			-- and allied included (team 0 is nobody's); applied next tick, so
-			-- reactors can set each other off
+		local quiet = sim.match.quiet[id]
+		sim.match.quiet[id] = nil
+		if def.deathBlast and not frame and not quiet and not upgradedFrom(sim, id) then
+			-- its death blast (guide 8.5, S-70; every unit since S-178): every
+			-- unit in reach, own and allied included (team 0 is nobody's);
+			-- applied next tick, so blasts can set each other off. Not for a
+			-- self-destruct (S-144) or a structure an upgrade frame stands on
 			local x, z = w.posX[id], w.posZ[id]
 			Combat.explode(c, w, x, Combat.groundHeight(c, x, z) + 4, z, blastOf(def), 0, 0, 0, w.owner[id])
 			Combat.addEvent(c, { kind = "BLAST", tick = sim.tick, unit = id, other = 0, x = x, z = z })

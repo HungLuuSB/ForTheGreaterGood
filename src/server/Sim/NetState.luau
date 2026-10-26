@@ -37,6 +37,8 @@ export type PlayerNet = {
 	sentPregame: { [number]: number }, -- players → their PREGAME state last sent (S-169)
 	sentPrebuild: { [number]: string }, -- players (self, allies) → their pre-game queue last sent
 	sentCountdown: number?, -- the COUNTDOWN seconds last sent (nil: none running)
+	sentClock: number?, -- PICK_CLOCK seconds × 4 + flags last sent (S-174)
+	sentBoxes: boolean?, -- START_BOXES sent (S-174)
 	wreckVersion: number, -- the ally team's wreck knowledge version last compared
 }
 
@@ -102,6 +104,8 @@ function NetState.viewer(spectator: boolean): PlayerNet
 		sentPregame = {},
 		sentPrebuild = {},
 		sentCountdown = nil,
+		sentClock = nil,
+		sentBoxes = nil,
 		wreckVersion = -1,
 	}
 end

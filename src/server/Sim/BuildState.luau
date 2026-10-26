@@ -24,12 +24,13 @@ export type BuildState = {
 	-- drives out through its factory's footprint from the build pad; the
 	-- factory waits until its pad is clear (S-133)
 	exiting: { [number]: { number } },
+	braking: { [number]: number }, -- builder → tick it began an early stop before its work (S-185)
 }
 
 BuildState.MAX_QUEUE = 50
 
 function BuildState.new(): BuildState
-	return { order = {}, target = {}, targetGen = {}, assist = {}, repair = {}, reclaim = {}, resurrect = {}, queue = {}, progress = {}, upgrading = {}, upgradingGen = {}, exiting = {} }
+	return { order = {}, target = {}, targetGen = {}, assist = {}, repair = {}, reclaim = {}, resurrect = {}, queue = {}, progress = {}, upgrading = {}, upgradingGen = {}, exiting = {}, braking = {} }
 end
 
 -- Forgets everything about one unit (it was removed from the world).
@@ -46,6 +47,7 @@ function BuildState.clearUnit(b: BuildState, id: number)
 	b.upgrading[id] = nil
 	b.upgradingGen[id] = nil
 	b.exiting[id] = nil
+	b.braking[id] = nil
 end
 
 -- Clears a builder's work (MOVE / STOP / new task).

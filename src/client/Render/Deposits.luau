@@ -92,11 +92,11 @@ local function plainPatch(s: Site): Model
 	model.Name = "Deposit"
 	local _, yaw = CoreDeposits.look(d, 1)
 	local base = CFrame.new(d.x, s.y, d.z) * CFrame.Angles(0, math.rad(yaw), 0)
-	part("Patch", Vector3.new(0.12, 6.6, 6.6), base * CFrame.new(0, 0.02, 0) * CFrame.Angles(0, 0, math.pi / 2), s.tint:Lerp(PATCH_DARK, 0.62), Enum.Material.Ground, model).Shape = Enum.PartType.Cylinder
+	part("Patch", Vector3.new(0.12, 13.2, 13.2), base * CFrame.new(0, 0.02, 0) * CFrame.Angles(0, 0, math.pi / 2), s.tint:Lerp(PATCH_DARK, 0.62), Enum.Material.Ground, model).Shape = Enum.PartType.Cylinder
 	for k = 1, 4 do
 		local a = math.rad(yaw + k * 97)
-		local r = 0.8 + (k * 0.55) % 2
-		local size = 0.5 + (k % 3) * 0.25
+		local r = 1.6 + (k * 1.1) % 4 -- a 2 x 2 patch (S-184)
+		local size = 0.8 + (k % 3) * 0.4
 		part(`Stone{k}`, Vector3.new(size, size * 0.55, size * 0.8), base * CFrame.new(math.cos(a) * r, size * 0.2, math.sin(a) * r) * CFrame.Angles(0.3 * k, a, 0.2), STONE:Lerp(PATCH_DARK, (k % 2) * 0.4), Enum.Material.Slate, model)
 	end
 	return model
@@ -118,6 +118,7 @@ local function meshedPatch(s: Site, variants: number): Model?
 			end
 		end
 	end
+	model:ScaleTo(CoreDeposits.PATCH) -- C's model fills a cell; a patch is 2 x 2 (S-184)
 	local offset = (model:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity
 	model:PivotTo(CFrame.new(s.d.x, s.y, s.d.z) * CFrame.Angles(0, math.rad(yaw), 0) * offset)
 	return model
@@ -150,7 +151,7 @@ local function overlayOf(v: View, s: Site): Part
 	if s.overlay then
 		return s.overlay
 	end
-	local p = part("Overlay", Vector3.new(8, 0.05, 8), CFrame.new(s.d.x, s.y + 0.5, s.d.z), RING, Enum.Material.SmoothPlastic, v.overlayFolder)
+	local p = part("Overlay", Vector3.new(16, 0.05, 16), CFrame.new(s.d.x, s.y + 0.5, s.d.z), RING, Enum.Material.SmoothPlastic, v.overlayFolder)
 	p.Transparency = 1
 	local gui = Instance.new("SurfaceGui")
 	gui.Face = Enum.NormalId.Top

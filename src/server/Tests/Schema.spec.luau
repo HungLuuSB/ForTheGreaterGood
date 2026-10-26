@@ -306,7 +306,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 36, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 37, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -423,7 +423,26 @@ return function(t: RunAll.Context)
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, prebuild), Schema.decodeEvent)[1], prebuild)
 		local none: Schema.Event = { kind = EKp.PREBUILD, player = 2, builds = {} }
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, none), Schema.decodeEvent)[1], none)
-		expectRejected(t, Schema.decodeEvent, { 28, 1, 8, 0, 0, 0, 0 }, "pregame flags 8")
+		expectRejected(t, Schema.decodeEvent, { 28, 1, 32, 0, 0, 0, 0 }, "pregame flags 32")
+		-- version 37: factions, the host, the pick clock and the spawn boxes (S-174)
+		local chaosHost: Schema.Event = { kind = EKp.PREGAME, player = 4, pregameFlags = Schema.PregameFlag.CHAOS + Schema.PregameFlag.HOST, cell = 0, offX = 0, offZ = 0 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, chaosHost)), "1c 04 18 00 00 00 00")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, chaosHost), Schema.decodeEvent)[1], chaosHost)
+		local clock: Schema.Event = { kind = EKp.PICK_CLOCK, seconds = 150, clockFlags = Schema.PickClockFlag.ALL_READY }
+		t.equal(hex(encodeOne(Schema.encodeEvent, clock)), "1f 96 01")
+		t.equal(Schema.eventBytes(clock), 3)
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, clock), Schema.decodeEvent)[1], clock)
+		expectRejected(t, Schema.decodeEvent, { 31, 10, 8 }, "pick clock flags 8")
+		local boxes: Schema.Event = { kind = EKp.START_BOXES, boxes = { { allyTeam = 2, x0 = -1024, z0 = -300, x1 = -600, z1 = 300 } } }
+		t.equal(hex(encodeOne(Schema.encodeEvent, boxes)), "20 01 02 00 fc d4 fe a8 fd 2c 01")
+		t.equal(Schema.eventBytes(boxes), 11)
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, boxes), Schema.decodeEvent)[1], boxes)
+		expectRejected(t, Schema.decodeEvent, { 32, 17 }, "START_BOXES of 17")
+		local switch: Command = { cmdType = CT.FACTION, flags = 0, unitIds = {}, value = 1 }
+		t.equal(hex(encodeOne(Schema.encodeCommand, switch)), "16 00 00 00 01")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeCommand, switch), Schema.decodeCommand)[1], switch)
+		local force: Command = { cmdType = CT.START, flags = 0, unitIds = {}, value = 1 }
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeCommand, force), Schema.decodeCommand)[1], force)
 		expectRejected(t, Schema.decodeEvent, { 30, 1, 31 }, "PREBUILD of 31")
 		local pick: Command = { cmdType = CT.START_POS, flags = 0, unitIds = {}, cell = 0x0203, offX = 4, offZ = 5 }
 		t.equal(hex(encodeOne(Schema.encodeCommand, pick)), "14 00 00 00 03 02 04 05")
@@ -589,7 +608,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 31, 1, 0 }, "unknown event kind 31") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29, 25 since 31, 26 since 34, 27 since 35, 28..30 since 36
+		expectRejected(t, Schema.decodeEvent, { 34, 1, 0 }, "unknown event kind 34") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29, 25 since 31, 26 since 34, 27 since 35, 28..30 since 36, 31..33 since 37
 		expectRejected(t, Schema.decodeEvent, { 18, 10, 0, 0, 0, 0 }, "alert kind 10")
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind
@@ -751,7 +770,7 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 22, 0, 1, 0, 1, 0 }, "unknown cmdType 22") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36)
+		expectRejected(t, cmd, { 28, 0, 1, 0, 1, 0 }, "unknown cmdType 28") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36), 22 FACTION, 23 START, 24 SHARE_UNITS, 25 SHARE_RESOURCE, 26 REQUEST and 27 AREA (protocol 37)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
 		expectRejected(t, cmd, { CT.STOP, 8, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137)

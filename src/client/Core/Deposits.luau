@@ -1,9 +1,9 @@
 --!strict
 -- Supply deposits as the client shows them (the user's deposit brief,
--- C-123): one per deposit cell, with its value, who holds it (a known
--- structure standing on its cell: built over, or a remembered ghost), the
--- look variant and rotation (C's deposit models, picked from the cell so
--- every client draws the same), and the yield text for the BAR-style
+-- C-123): one per deposit patch (2 x 2 cells since S-184, at its centre),
+-- with its value, who holds it (a known structure standing on it: built
+-- over, or a remembered ghost), the look variant and rotation (C's deposit
+-- models, picked from its cell so every client draws the same), and the yield text for the BAR-style
 -- overlay. Render/Deposits, the overlay and the minimap read this. Pure
 -- Luau (C-7).
 
@@ -15,31 +15,28 @@ local World = require("./World")
 local Deposits = {}
 
 export type Deposit = {
-	cell: number, -- grid index
+	cell: number, -- grid index of the patch's min-corner cell
 	cx: number,
 	cz: number,
-	x: number, -- the cell's center (studs)
+	x: number, -- the patch's centre (studs; a cell corner)
 	z: number,
-	supply: number, -- the layer's value (an extractor yields rate × this)
+	supply: number, -- the patch's value (an extractor on it yields rate × this)
 }
+
+Deposits.PATCH = 2 -- cells per side (S-184)
 
 -- A holder: the team whose structure stands on the deposit, and whether it
 -- is only remembered (a ghost: drawn dim, the deposit not hidden).
 export type Holder = { team: number, ghost: boolean, id: number }
 
--- Every deposit of the map, in cell order.
+-- Every deposit patch of the map (layers.deposits, S-184), in its order.
 function Deposits.list(layers: Layers.Layers): { Deposit }
 	local g = layers.grid
 	local out = {}
-	for cz = 0, g.cellsZ - 1 do
-		for cx = 0, g.cellsX - 1 do
-			local i = g:index(cx, cz)
-			local supply = Layers.getSupply(layers, i)
-			if supply > 0 then
-				local x, z = g:cellCenter(cx, cz)
-				table.insert(out, { cell = i, cx = cx, cz = cz, x = x, z = z, supply = supply })
-			end
-		end
+	local half = Deposits.PATCH * 4 -- studs: half a patch
+	for _, d in layers.deposits or {} do
+		local cx, cz = g:cellAt(d[1] - half / 2, d[2] - half / 2)
+		table.insert(out, { cell = g:index(cx, cz), cx = cx, cz = cz, x = d[1], z = d[2], supply = d[3] })
 	end
 	return out
 end

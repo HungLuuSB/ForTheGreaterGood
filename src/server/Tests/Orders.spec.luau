@@ -87,7 +87,9 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:64" })
 		local w = sim.world
 		local tank = Spawn.unit(sim, "ord_lancer", 1, -200, 0, math.pi / 2)
-		local enemy = Spawn.unit(sim, "chs_ravager", 2, 0, 120)
+		-- the enemy sits well inside the Lancer's range of the path (at 0.63 × range)
+		local range = sim.defs.weapons[sim.defs.units.ord_lancer.weapons[1].def].range
+		local enemy = Spawn.unit(sim, "chs_ravager", 2, 0, math.floor(range * 0.63))
 		World.setFireState(w, enemy, World.FireState.HOLD_FIRE)
 		World.setHealth(w, enemy, 1e6)
 		at(sim, kind, 1, { tank }, 200, 0)
@@ -196,24 +198,29 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:64" })
 		local w = sim.world
 		local tank = Spawn.unit(sim, "ord_lancer", 1, -220, 0, math.pi / 2)
-		local enemy = Spawn.unit(sim, "chs_ravager", 2, 0, 110)
+		-- the path passes the enemy at 0.58 × the Lancer's range
+		local enemyZ = math.floor(sim.defs.weapons[sim.defs.units.ord_lancer.weapons[1].def].range * 0.58)
+		local enemy = Spawn.unit(sim, "chs_ravager", 2, 0, enemyZ)
 		World.setFireState(w, enemy, World.FireState.HOLD_FIRE)
 		World.setHealth(w, enemy, 1e6)
-		local spotter = Spawn.unit(sim, "ord_herald", 1, 0, 70) -- the team sees the enemy from the start
+		local spotter = Spawn.unit(sim, "ord_herald", 1, 0, enemyZ + 40) -- the team sees the enemy from the start
 		World.setFireState(w, spotter, World.FireState.HOLD_FIRE)
 		World.setHealth(w, spotter, 1e6)
 		local range = sim.combat.profiles[w.defIndex[tank]].weapons[1].range + sim.combat.profiles[w.defIndex[enemy]].radius
 		at(sim, CT.FIGHT, 1, { tank }, 220, 0)
 		local heldOut, heldIn, seenOut, retreated = 0, 0, 0, false
 		-- the hold is decided at the start of a tick (Commands), from the
-		-- positions the previous tick ended with
+		-- positions the previous tick ended with, and re-checked every
+		-- Orders.HOLD_EVERY (2) ticks (S-107): a hold may stand one tick
+		-- longer, so "beyond range" means at the end of both previous ticks
 		local d = dist(w, tank, w.posX[enemy], w.posZ[enemy])
-		steps(sim, 1500, function(i)
+		local older = d
+		steps(sim, 1500, function()
 			local before = d
 			d = dist(w, tank, w.posX[enemy], w.posZ[enemy])
 			if before > range + 0.5 then
 				seenOut += 1
-				if sim.orders.hold[tank] then
+				if sim.orders.hold[tank] and older > range + 0.5 then
 					heldOut += 1
 				end
 			elseif sim.orders.hold[tank] then
@@ -223,6 +230,7 @@ return function(t: RunAll.Context)
 				retreated = true
 				at(sim, CT.MOVE, 2, { enemy }, 40, 240) -- backs off out of range
 			end
+			older = before
 			return retreated and dist(w, tank, 220, 0) < 30
 		end)
 		t.expect(seenOut > 30, `the enemy was seen out of range for a while ({seenOut} ticks)`)
@@ -503,8 +511,13 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 4, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0, 0)
-		local manual = Spawn.unit(sim, "chs_ravager", 2, 0, 160, math.pi)
-		local other = Spawn.unit(sim, "chs_ravager", 2, 0, -160, 0)
+		-- both enemies in range of the start (0.84 × range); from the south
+		-- stop, only `other` is (the manual one beyond range + 10% hysteresis)
+		local range = sim.defs.weapons[sim.defs.units.ord_lancer.weapons[1].def].range
+		local off = math.floor(range * 0.84)
+		local south = -math.floor(range * 0.53)
+		local manual = Spawn.unit(sim, "chs_ravager", 2, 0, off, math.pi)
+		local other = Spawn.unit(sim, "chs_ravager", 2, 0, -off, 0)
 		for _, id in { manual, other } do
 			World.setFireState(w, id, World.FireState.HOLD_FIRE)
 			World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
@@ -516,7 +529,7 @@ return function(t: RunAll.Context)
 		steps(sim, 20)
 		t.equal(w.wTarget[key], manual, "the attack order's target")
 		-- a plain move south: the attack order ends, the manual target stays
-		at(sim, CT.MOVE, 1, { tank }, 0, -120)
+		at(sim, CT.MOVE, 1, { tank }, 0, south)
 		steps(sim, 15 * 12)
 		t.equal(sim.orders.manual[tank], manual, "kept after the order ended")
 		t.equal(w.wTarget[key], other, "out of range: it picks its own target")

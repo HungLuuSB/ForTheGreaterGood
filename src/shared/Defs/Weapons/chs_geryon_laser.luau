@@ -2,13 +2,15 @@
 -- Geryon's green laser (S-157): Overwatch's Chaos counterpart, harder
 -- hitting and shorter. Three barrels on a drum; the top one fires, then the
 -- drum turns the next one up (client). Bulwark carries it too.
+-- S-179, the playtest's balance notes: a T1 defence's damage × 2 (too weak against T1 units)
 return {
 	id = "chs_geryon_laser",
 	type = "HITSCAN",
 	range = 215,
+	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.5,
 	accuracy = 0.3,
-	damage = { LIGHT = 84, ARMORED = 78, STRUCTURE = 52, SHIP = 64, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 168, ARMORED = 156, STRUCTURE = 104, SHIP = 128, AIR = 0, SUB = 0 },
 	aoe = 0,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "ARMORED", "GROUND", "STRUCTURE" },

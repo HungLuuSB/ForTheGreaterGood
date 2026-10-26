@@ -38,7 +38,7 @@ Waypoints.AIR_PASS = 220
 
 local CT = Schema.CmdType
 
-export type Point = { kind: number, x: number, z: number, targetId: number?, reach: number, defIndex: number?, facing: number?, approached: boolean? }
+export type Point = { kind: number, x: number, z: number, targetId: number?, reach: number, defIndex: number?, facing: number?, approached: boolean?, radius: number? } -- radius: an AREA's circle (S-183)
 export type Waypoints = {
 	byUnit: { [number]: { Point } },
 	idleSince: { [number]: number }, -- since when the server reports the unit idle
@@ -86,7 +86,7 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 	end
 	if kind ~= CT.MOVE and kind ~= CT.FIGHT and kind ~= CT.PATROL and kind ~= CT.ATTACK
 		and kind ~= CT.ATTACK_GROUND and kind ~= CT.GUARD and kind ~= CT.REPAIR and kind ~= CT.RECLAIM
-		and kind ~= CT.BUILD then
+		and kind ~= CT.BUILD and kind ~= CT.AREA then
 		return -- state commands don't move anything
 	end
 	local slots = if intent.x2
@@ -110,6 +110,9 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 			point = { kind = kind, x = if t then t.x else 0, z = if t then t.z else 0, targetId = intent.targetId, reach = 0 }
 		elseif intent.defIndex then
 			point = { kind = kind, x = intent.x :: number, z = intent.z :: number, reach = reach, defIndex = intent.defIndex, facing = intent.facing }
+		elseif intent.areaOp then
+			-- Smart Reclaim's circle (S-183): it lasts until the server reports the builder idle
+			point = { kind = kind, x = intent.x :: number, z = intent.z :: number, reach = 0, radius = intent.radius }
 		elseif slots then
 			point = { kind = kind, x = slots[id][1], z = slots[id][2], reach = reach }
 		else
@@ -127,7 +130,10 @@ local function buildDone(world: World.World, p: Point): boolean
 	local def = world.defs.unitByIndex[p.defIndex :: number]
 	for _, s in world.units do
 		local sdef = World.def(world, s)
-		if sdef and sdef.domain == "structure" and math.abs(s.x - p.x) < 1 and math.abs(s.z - p.z) < 1 then
+		-- off camera a record has only its cell's centre (F13: the frame read
+		-- as "something else took the spot", and the order was dropped)
+		local tol = if s.tier == "tactical" then 1 else World.CELL_SLACK
+		if sdef and sdef.domain == "structure" and math.abs(s.x - p.x) < tol and math.abs(s.z - p.z) < tol then
 			-- ours of that def, finished (C-193: the line stays while it goes
 			-- up), or something else (blocked); not the extractor this build
 			-- upgrades in place (C-121)
@@ -238,8 +244,8 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 				first.x, first.z = t.rx or t.x, t.rz or t.z
 				break -- attack / guard / repair / reclaim last until the target is gone (or whole)
 			end
-			if first.kind == CT.BUILD or first.kind == CT.PATROL then
-				break -- a build until its frame is finished; a patrol until replaced
+			if first.kind == CT.BUILD or first.kind == CT.PATROL or first.kind == CT.AREA then
+				break -- a build until its frame is finished; a patrol until replaced; an area until idle
 			end
 			local x, z = u.rx or u.x, u.rz or u.z
 			local d2 = (first.x - x) ^ 2 + (first.z - z) ^ 2

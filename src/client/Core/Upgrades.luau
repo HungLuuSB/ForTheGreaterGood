@@ -38,11 +38,9 @@ function Upgrades.canUpgrade(world: World.World, def: any, u: any): boolean
 	return udef ~= nil and Upgrades.replaces(def, udef)
 end
 
--- Where `def` goes to upgrade unit `id`: on the deposit under it (S-108:
--- the BUILD at the deposit cell, so a bigger footprint covers the old one),
--- as the point the snap turns into that spot (an odd footprint's center is
--- the cell's center, an even one's its min corner). The old unit's center
--- when no deposit is known under it.
+-- Where `def` goes to upgrade unit `id`: centred on the deposit patch
+-- under it (S-184: the advanced extractor's footprint 4 around the T1 on
+-- its 2 x 2 patch), the old unit's centre when no patch is known under it.
 function Upgrades.site(world: World.World, def: any, id: number): (number, number)
 	local u = world.units[id]
 	local udef = World.def(world, u)
@@ -50,27 +48,11 @@ function Upgrades.site(world: World.World, def: any, id: number): (number, numbe
 	if udef == nil or layers == nil then
 		return u.x, u.z
 	end
-	local g = world.grid
-	local x0, z0 = PlacementRules.snap(g, udef.footprint, u.x, u.z)
-	local best, bestD = nil, math.huge
-	for cz = z0, z0 + udef.footprint - 1 do
-		for cx = x0, x0 + udef.footprint - 1 do
-			if g:inBounds(cx, cz) and Layers.getSupply(layers, g:index(cx, cz)) > 0 then
-				local wx, wz = g:cellCenter(cx, cz)
-				local d = (wx - u.x) ^ 2 + (wz - u.z) ^ 2
-				if d < bestD then
-					best, bestD = { cx, cz, wx, wz }, d
-				end
-			end
-		end
-	end
-	if best == nil then
+	local px, pz = PlacementRules.depositNear(layers, u.x, u.z, udef.footprint * Grid.CELL_SIZE / 2 + 1)
+	if px == nil or pz == nil then
 		return u.x, u.z
 	end
-	if def.footprint % 2 == 1 then
-		return best[3], best[4]
-	end
-	return g.originX + best[1] * Grid.CELL_SIZE, g.originZ + best[2] * Grid.CELL_SIZE
+	return px, pz
 end
 
 -- Every extractor `def` can upgrade, by id.

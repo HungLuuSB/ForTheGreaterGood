@@ -15,7 +15,7 @@ return Templates.extend(Templates.TankT1, {
 	sensors = { sight = 180 },
 
 	weapons = {
-		{ def = "chs_light_cannon", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" },
+		{ def = "chs_ravager_cannon", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" },
 	},
 
 	model = "chs_ravager",

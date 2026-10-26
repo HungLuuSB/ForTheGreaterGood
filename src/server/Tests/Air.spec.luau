@@ -1,4 +1,5 @@
 --!strict
+local Defs = require("@shared/Defs/Defs")
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 local Air = require("../Sim/Air")
@@ -268,27 +269,41 @@ return function(t: RunAll.Context)
 			World.setHealth(w, id, 1e6) -- survive, so every bomb can be judged
 		end
 		w.fireState[spotter] = World.FireState.HOLD_FIRE
-		moveTo(sim, 1, { bomber }, 150, -100)
 		if moving then
 			moveTo(sim, 2, targets, 150, 150) -- driving north under the bombs, staying in the spotter's sight
+			-- up to speed first: since S-178 the bomber turns fast enough to
+			-- line up while a column starting from rest still accelerates
+			for _ = 1, 30 do
+				Sim.step(sim)
+			end
 		end
+		moveTo(sim, 1, { bomber }, 150, -100)
 		return sim, bomber, targets
 	end
 
-	-- Steps `ticks`; returns bombs released and how many landed within the
-	-- blast radius of a target unit (judged at impact).
+	-- Steps `ticks`; returns bomb runs released and how many of their lead
+	-- bombs landed within the blast radius of a target unit (judged at
+	-- impact). Since S-178 a release is a carpet of bombs along the heading:
+	-- only the first is aimed at the lead point, the rest walk on past it.
+	local CARPET_TICKS = 20 -- bombs closer together than this belong to one carpet
 	local function judge(sim: Sim.Sim, bomber: number, targets: { number }, ticks: number): (number, number, { number })
 		local w = sim.world
 		local released, near = 0, 0
 		local releaseTicks = {}
+		local lead: { [number]: boolean } = {}
+		local last = -math.huge
 		local aoe = sim.defs.weapons.ord_bomb.aoe :: number
 		for _ = 1, ticks do
 			Sim.step(sim)
 			for _, e in sim.combat.events do
 				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
-					released += 1
-					table.insert(releaseTicks, sim.tick)
-				elseif e.kind == "IMPACT" and e.x then
+					if sim.tick - last > CARPET_TICKS then
+						released += 1
+						table.insert(releaseTicks, sim.tick)
+						lead[e.other] = true
+					end
+					last = sim.tick
+				elseif e.kind == "IMPACT" and e.x and lead[e.other] then
 					local best = math.huge
 					for _, t in targets do
 						if w.slot[t] then
@@ -309,7 +324,7 @@ return function(t: RunAll.Context)
 		t.equal(sim.world.alt[bomber], Air.ALTITUDE.BOMBER, "bombers fly in their own band")
 		local released, near = judge(sim, bomber, targets, 1800)
 		local ammo = sim.defs.units.ord_absolution.ammo :: number
-		t.equal(released, ammo, `all {ammo} bombs dropped`)
+		t.equal(released, ammo, `all {ammo} runs dropped (a carpet each)`)
 		t.expect(near >= ammo - 1, `{near} of {released} bombs landed within the blast radius`)
 		print(`    parked targets: {near} of {released} bombs within the blast radius`)
 	end)
@@ -515,13 +530,19 @@ return function(t: RunAll.Context)
 		local w = sim.world
 		local pending: { [number]: { level: number, target: number, bx: number, bz: number, tx: number, tz: number, hp: number } } = {}
 		local drops: { Drop } = {}
+		local last = -math.huge
 		for _ = 1, ticks do
 			for _, r in pending do
 				r.hp = w.health[r.target]
 			end
 			Sim.step(sim)
 			for _, e in sim.combat.events do
+				local lead = false
 				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
+					lead = sim.tick - last > CARPET_TICKS -- a carpet's first bomb (S-178)
+					last = sim.tick
+				end
+				if lead then
 					local target = w.wTarget[World.slotKey(bomber, 1)]
 					local bx, bz, level = Sensors.knownPosition(sim, w.ally[bomber], target, true)
 					pending[e.other] = { level = level, target = target, bx = bx :: number, bz = bz :: number, tx = w.posX[target], tz = w.posZ[target], hp = w.health[target] }
@@ -547,7 +568,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 31, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local bomber = Spawn.unit(sim, "chs_plague", 2, 450, 0, -math.pi / 2)
-		Spawn.unit(sim, "chs_eye", 2, 200, 250) -- radar 600 reaches the target; sight 160 doesn't
+		Spawn.unit(sim, "chs_eye", 2, -50, 150) -- radar 280 reaches the target (269 studs off); sight 160 doesn't
 		local target = Spawn.unit(sim, "ord_lancer", 1, -150, -100, 0)
 		w.fireState[target] = World.FireState.HOLD_FIRE
 		World.setHealth(w, target, 1e6)
@@ -653,7 +674,11 @@ return function(t: RunAll.Context)
 		end
 		-- a point inside the jet's turn circle can't be reached exactly: it
 		-- counts as reached at the closest approach
-		for _, case in { { -120, 60, "inside the loiter radius, off to the side", 70 }, { 0, -150, "inside the loiter radius, behind", 70 }, { -400, 300, "far away", Air.ARRIVE_RADIUS + 1 } } do
+		-- (since S-178 jets turn 1.5× as fast: a goal beside them is closer to
+		-- the turn circle's far side; within 1.2 turn radii counts)
+		local falcon = Defs.load().units.ord_falcon.movement
+		local turnRadius = (falcon.maxSpeed :: number) / math.rad(falcon.turnRate :: number)
+		for _, case in { { -120, 60, "inside the loiter radius, off to the side", math.max(70, 1.2 * turnRadius) }, { 0, -150, "inside the loiter radius, behind", math.max(70, 1.2 * turnRadius) }, { -400, 300, "far away", Air.ARRIVE_RADIUS + 1 } } do
 			local best, last = closest(case[1] :: number, case[2] :: number)
 			t.expect(best <= (case[4] :: number), `{case[3]}: it got within {best} studs of the point`)
 			t.expect(math.abs(last - Air.LOITER_RADIUS) < 60, `{case[3]}: then circles it ({last} studs off)`)

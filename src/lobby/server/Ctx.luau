@@ -7,6 +7,7 @@ local ProfileStore = require("./Services/ProfileStore")
 local RoomIndex = require("./Services/RoomIndex")
 local Social = require("./Services/Social")
 local Teleport = require("./Services/Teleport")
+local MatchErrors = require("../shared/MatchErrors")
 local Rooms = require("../shared/Rooms")
 
 export type Ctx = {
@@ -23,6 +24,9 @@ export type Ctx = {
 	toast: (user: number, text: string, kind: string?) -> (),
 	-- a server-to-client event (the stand-in match screen)
 	send: (user: number, msg: any) -> (),
+	-- a failed attempt to reach (or stay in) a match, for the player's error
+	-- panel (F38): kept in their view until they dismiss it
+	matchError: (user: number, err: MatchErrors.Error) -> (),
 }
 
 local ctx: Ctx = {} :: any

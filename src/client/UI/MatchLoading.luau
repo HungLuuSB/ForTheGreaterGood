@@ -164,7 +164,7 @@ function MatchLoading.step(ui: UI, now: number, progress: number)
 		if ui.artShown then
 			ui.artShown = false
 			ui.art.hide()
-			RunService:Set3dRenderingEnabled(true)
+			pcall(RunService.Set3dRenderingEnabled, RunService, true)
 		end
 		return
 	end
@@ -174,7 +174,10 @@ function MatchLoading.step(ui: UI, now: number, progress: number)
 		-- the screen is opaque (art or gradient): don't pay for drawing the
 		-- world behind it, so the parallax stays smooth (C-184). Loading
 		-- (meshes, ground, textures) is script and ContentProvider work.
-		RunService:Set3dRenderingEnabled(false)
+		-- Game scripts may lack the capability for it (a Studio playtest
+		-- refused it, 2026-10-26): then the world just keeps drawing, and
+		-- the error mustn't abort the client's frame.
+		pcall(RunService.Set3dRenderingEnabled, RunService, false)
 	end
 	ui.bar.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
 	ui.percent.Text = string.format("%d%%", math.floor(progress * 100))

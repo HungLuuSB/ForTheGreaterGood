@@ -129,6 +129,29 @@ function World.applyStatus(u: Unit, status: OwnStatus)
 	end
 end
 
+-- The pre-game (net.md 9b, protocols 36-37, S-169, S-174; C-218): every
+-- player's pick, ready, faction and host flags (PREGAME), the pick clock
+-- (PICK_CLOCK), the spawn boxes (START_BOXES), the countdown (COUNTDOWN)
+-- and the Commanders' queued builds (PREBUILD). `active` from the first PREGAME until the
+-- COUNTDOWN 0 that starts the match; a match with fixed starts never has one.
+export type PregamePick = { flags: number, x: number?, z: number? } -- flags: Schema.PregameFlag
+export type PregameBuild = { defIndex: number, x: number, z: number, facing: number }
+export type Pregame = {
+	active: boolean,
+	started: boolean, -- COUNTDOWN 0 arrived: the Commanders are on the picks
+	picks: { [number]: PregamePick }, -- by sim player
+	countdown: number?, -- 3..1 while counting down (5..1 before protocol 37), nil otherwise
+	builds: { [number]: { PregameBuild } }, -- by sim player: the player's and its allies' (spectators: all)
+	clock: { seconds: number, flags: number }?, -- the last PICK_CLOCK (protocol 37): Schema.PickClockFlag bits
+	boxes: { [number]: { number } }?, -- ally team → its spawn box { x0, z0, x1, z1 } (START_BOXES, protocol 37)
+	startedTick: number?, -- the tick of COUNTDOWN 0: the Commanders land for Schema.LANDING_TICKS from it
+	version: number, -- bumps on every change (the views redraw)
+}
+
+function World.newPregame(): Pregame
+	return { active = false, started = false, picks = {}, countdown = nil, builds = {}, clock = nil, boxes = nil, startedTick = nil, version = 0 }
+end
+
 export type World = {
 	shownTick: number?, -- the render tick World.settle last ran for (C-49)
 	grid: Grid.Grid,
@@ -166,6 +189,9 @@ export type World = {
 	remoteDomes: { [number]: { x: number, y: number, z: number, radius: number, charge: number, flags: number } }, -- domes of generators not in the tactical tier (DOME, protocol 29, S-122): drawn without vision, as in BAR (C-145)
 	shields: { [number]: { charge: number, flags: number } }, -- shield generators' domes by unit id (SHIELD, protocol 24, S-79): charge 0..1 of capacity, Schema.ShieldFlag bits
 	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
+	pregame: Pregame, -- the pre-game's picks and countdown (C-218)
+	teamEco: { [number]: Schema.Eco }, -- every Eco record by team: the own, allies' (when the server sends them) and, for spectators, all (F23)
+	shares: { Schema.Event }, -- SHARE events (gifts and requests, S-176) the team panel drains
 }
 
 -- An empty world waiting for the server's WELCOME (net.md section 10).
@@ -205,6 +231,9 @@ function World.new(defs: Defs.DefSet): World
 		ownStatus = {},
 		lastShot = {},
 		deathWrecks = {},
+		pregame = World.newPregame(),
+		teamEco = {},
+		shares = {},
 	}
 end
 
@@ -238,6 +267,9 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.idle) -- the join sends every idle one again
 	table.clear(world.lastShot)
 	table.clear(world.deathWrecks)
+	world.pregame = World.newPregame() -- a join during the pre-game sends it all again
+	table.clear(world.teamEco)
+	table.clear(world.shares)
 	world.strategicTick = -1
 	world.economy = nil
 	world.latestTick = rec.tick :: number -- unwraps wire ticks from here on
@@ -256,6 +288,7 @@ function World.angle(v: number): number
 	return v / 255 * 2 * math.pi - math.pi
 end
 
+World.CELL_SLACK = 4.5 -- studs: a strategic record sits at its cell's centre, at most half a cell (4) from the unit
 World.BLIP_SMOOTH = 0.45 -- seconds: a strategic record's drawn spot closes most of the way to a new reading in this time
 World.BLIP_SNAP = 160 -- studs: a jump this big snaps (a contact reappearing elsewhere)
 World.BLIP_ORBIT = 1.5 -- studs: radar / sonar blips circle their reported spot, as in BAR (C-154)

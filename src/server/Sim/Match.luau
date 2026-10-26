@@ -8,7 +8,10 @@
 --     At the cap, new construction fails ("unit_cap") and finished factory
 --     items wait at the exit until there is room.
 --   * Win conditions, checked every tick by the Match system:
---       COMMAND_ENDS  a player with no Command Vehicle (COMMANDER) left is out;
+--       COMMAND_ENDS  an ally team with no Command Vehicle (COMMANDER) left
+--                     is out, all its players at once (S-175, the user: in
+--                     Teams a player whose Commander died plays on while an
+--                     ally's Commander lives; in FFA that's the player's own);
 --       ANNIHILATION  a player with no units or structures left is out.
 --     An eliminated player's units and structures self-destruct (lethal
 --     overkill damage: no wrecks), applied by the next Damage step. An ally
@@ -150,6 +153,7 @@ local function selfDestruct(sim: Types.Sim)
 				break
 			end
 			Combat.queueDamage(sim.combat, id, w.health[id] * 4 + 1, 0)
+			m.quiet[id] = true
 			done += weight
 		end
 		i += 2
@@ -170,9 +174,17 @@ function Match.step(sim: Types.Sim)
 	local w = sim.world
 	local c = sim.combat
 	local newly: { number } = {}
+	-- Command Ends counts the ally team's Commanders (S-175)
+	local allyCommanders: { [number]: number } = {}
+	if m.win == "COMMAND_ENDS" then
+		for _, pid in sim.playerOrder do
+			local ally = sim.players[pid].allyTeam :: number
+			allyCommanders[ally] = (allyCommanders[ally] or 0) + (m.commanders[pid] or 0)
+		end
+	end
 	for _, pid in sim.playerOrder do
 		if m.eliminated[pid] == nil then
-			local out = if m.win == "COMMAND_ENDS" then (m.commanders[pid] or 0) == 0 else (m.units[pid] or 0) == 0
+			local out = if m.win == "COMMAND_ENDS" then allyCommanders[sim.players[pid].allyTeam :: number] == 0 else (m.units[pid] or 0) == 0
 			if out then
 				m.eliminated[pid] = sim.tick
 				table.insert(newly, pid)

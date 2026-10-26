@@ -12,6 +12,8 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 380, power = 3800, buildTime = 7600 },
 	health = 5200,
 	footprint = 3, -- size shows tech level (S-104)
+	height = 24.3, -- a tall tower (S-184; models-C's F18 blockouts, measured)
+	muzzleHeight = 19.6,
 	sensors = { sight = 260 },
 	weapons = { { def = "ord_heavy_cannon", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "muzzle" },

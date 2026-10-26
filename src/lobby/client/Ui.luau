@@ -174,6 +174,14 @@ function Ui.color(index: number?): Color3
 	return Color3.fromRGB(c.rgb[1], c.rgb[2], c.rgb[3])
 end
 
+-- A TeamColors colour (S-172); grey when there's none.
+function Ui.rgb(c: { rgb: { number } }?): Color3
+	if c == nil then
+		return Color3.fromRGB(120, 120, 120)
+	end
+	return Color3.fromRGB(c.rgb[1], c.rgb[2], c.rgb[3])
+end
+
 function Ui.swatch(parent: Instance, color: Color3, size: number?): Frame
 	local s = Instance.new("Frame")
 	s.Name = "Swatch"

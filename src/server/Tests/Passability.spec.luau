@@ -35,7 +35,7 @@ return function(t: RunAll.Context)
 
 	t.test("required clearance by footprint", function()
 		t.equal(Passability.requiredClearance(1), 1)
-		t.equal(Passability.requiredClearance(2), 2)
+		t.equal(Passability.requiredClearance(2), 1) -- (S-185: footprint 2 passes two-cell gaps)
 		t.equal(Passability.requiredClearance(3), 2)
 		t.equal(Passability.requiredClearance(4), 3)
 	end)
