@@ -27,7 +27,7 @@ function Hud.new(): Hud
 	label.TextYAlignment = Enum.TextYAlignment.Top
 	label.AutomaticSize = Enum.AutomaticSize.XY
 	label.AnchorPoint = Vector2.new(1, 1)
-	label.Position = UDim2.new(1, -8, 1, -8) -- bottom right (C-124; top right until then)
+	label.Position = UDim2.new(1, -8, 1, -8) -- bottom right (C-124; top right until then), over the team panel while shown
 	label.Text = ""
 	label.Parent = gui
 	local pad = Instance.new("UIPadding")
@@ -36,6 +36,9 @@ function Hud.new(): Hud
 	pad.PaddingTop = UDim.new(0, 4)
 	pad.PaddingBottom = UDim.new(0, 4)
 	pad.Parent = label
+	-- off in a live game (F3 shows it): the team panel has its corner (F23)
+	gui.Enabled = game:GetService("RunService"):IsStudio()
+	gui.DisplayOrder = 20
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode == Enum.KeyCode.F3 then

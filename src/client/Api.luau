@@ -13,6 +13,7 @@ local Signal = require("./Core/Signal")
 local Waypoints = require("./Core/Waypoints")
 local Upgrades = require("./Core/Upgrades")
 local World = require("./Core/World")
+local CommandSet = require("./Core/CommandSet")
 
 local Api = {}
 
@@ -296,6 +297,29 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		return ok, why
 	end
 
+	-- Smart Reclaim / repair / resurrect (F42, S-183): every selected unit
+	-- that has `kind` ("reclaim", "repair", "resurrect") takes the targets
+	-- inside the circle one after another.
+	local AREA_OP = { reclaim = Schema.AreaOp.RECLAIM, repair = Schema.AreaOp.REPAIR, resurrect = Schema.AreaOp.RESURRECT }
+	function actions.areaOrder(kind: string, x: number, z: number, radius: number, queue: boolean?)
+		local op = AREA_OP[kind]
+		if op == nil then
+			return false, "no area order " .. kind
+		end
+		local ids = {}
+		for _, id in sel.ids do
+			local u = world.units[id]
+			local def = u and World.def(world, u)
+			if def and u.team == world.me.team and CommandSet.forDef(def, world.defs)[kind] then
+				table.insert(ids, id)
+			end
+		end
+		if #ids == 0 then
+			return false, "no selected unit can do that"
+		end
+		return issue({ cmdType = CT.AREA, queue = queue == true, x = x, z = z, areaOp = op, radius = radius }, ids)
+	end
+
 	function actions.toggle(on: boolean)
 		return issue({ cmdType = CT.TOGGLE, queue = false, value = if on then 1 else 0 })
 	end
@@ -327,6 +351,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		return nil
 	end
 
+	local lastFacing = 0 -- the last placement rotation (F14)
 	function actions.beginPlacement(defId: string)
 		local def = defOf(defId)
 		if def == nil or def.domain ~= "structure" then
@@ -335,7 +360,8 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		if #buildersOf(defId) == 0 then
 			return false, "no selected builder can build it"
 		end
-		local facing = if state.placement then state.placement.facing else 0
+		-- the last rotation carries on to every later placement (F14, the user)
+		local facing = if state.placement then state.placement.facing else lastFacing
 		state.placement = { defId = defId, defIndex = def.index, x = state.camera.x, z = state.camera.z, facing = facing, valid = false, reason = nil }
 		api.changed.placement:Fire(state.placement)
 		return true
@@ -347,6 +373,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			return false, "not placing"
 		end
 		p.facing = (p.facing + 1) % 4
+		lastFacing = p.facing
 		return true
 	end
 

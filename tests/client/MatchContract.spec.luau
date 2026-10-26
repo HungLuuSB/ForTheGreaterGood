@@ -1,9 +1,9 @@
 --!strict
 -- The match server's side of the lobby contract (C-173, docs/contracts/
 -- match.md v1): a config the lobby writes passes the check and runs as a
--- real match; bad configs are refused; seats, spectators and team colours
--- come from it; the results record the match writes passes the lobby's
--- check.
+-- real match (opening with the pre-game, C-218); bad configs are refused;
+-- seats and spectators come from it; the results record the match writes
+-- passes the lobby's check.
 
 local MatchContract = require("../../src/roblox/MatchContract")
 local Lobby = require("../../src/roblox/Lobby")
@@ -11,6 +11,34 @@ local Combat = require("../../src/server/Sim/Combat/Combat")
 local Sim = require("../../src/server/Sim/Sim")
 local Skirmish = require("../../src/server/Sim/AI/Skirmish")
 local Stats = require("../../src/server/Sim/Stats")
+local Pregame = require("../../src/client/Core/Pregame")
+local Schema = require("@shared/Net/Schema")
+
+-- Through the pre-game (every lobby match has one): the humans say READY,
+-- the host forces the start, the AI picks and readies on its own; steps
+-- until the match starts and the Commanders have landed.
+local function start(sim: any, brains: { any }, humans: { number })
+	assert(sim.pregame ~= nil, "a lobby match opens with the pre-game")
+	for _, id in humans do
+		assert(Sim.submit(sim, id, Pregame.ready(true)))
+	end
+	if sim.pregame.host then
+		assert(Sim.submit(sim, sim.pregame.host, Pregame.start(true))) -- the host forces the start (S-174)
+	end
+	for _ = 1, 10 * 15 do
+		for _, b in brains do
+			Skirmish.tick(b)
+		end
+		Sim.step(sim)
+		if sim.pregame == nil then
+			for _ = 1, Schema.LANDING_TICKS do
+				Sim.step(sim)
+			end
+			return
+		end
+	end
+	error("the pre-game didn't end")
+end
 
 -- What the lobby's MatchConfig.build writes for a room.
 local function config(mode: string): any
@@ -26,7 +54,7 @@ local function config(mode: string): any
 			{ id = 2, start = 2, faction = "chaos", allyTeam = 2, color = 2, name = "AI 1 (normal)", ai = "normal" },
 		}
 	return {
-		version = 1,
+		version = 2,
 		matchId = "0f2c-match",
 		createdAt = 1700000000,
 		seed = 42,
@@ -38,6 +66,7 @@ local function config(mode: string): any
 		players = players,
 		spectators = { { user = 33, name = "Cy" } },
 		lobby = { placeId = 123, jobId = "job-1", roomId = "room-1", roomName = "Ann's room" },
+		host = 11,
 	}
 end
 
@@ -50,7 +79,7 @@ return function(t: any)
 			edit(c)
 			return MatchContract.validate(c)
 		end
-		t.expect(broken(function(c) c.version = 2 end) ~= nil, "another version")
+		t.expect(broken(function(c) c.version = 1 end) ~= nil, "another version")
 		t.expect(broken(function(c) c.players[2].color = 1 end) ~= nil, "a shared colour")
 		t.expect(broken(function(c) c.players[1].start = 2 end) ~= nil, "start must equal id in v1")
 		t.expect(broken(function(c) c.players[1].user = nil; c.players[1].ai = nil end) ~= nil, "a human without a user")
@@ -59,17 +88,15 @@ return function(t: any)
 		t.expect(broken(function(c) c.lobby = nil end) ~= nil, "no lobby to return to")
 	end)
 
-	t.test("seats, spectators and team colours from the config", function()
+	t.test("seats and spectators from the config", function()
 		local c = config("TEAM")
 		t.equal(MatchContract.seatOf(c, 11), 1)
 		t.equal(MatchContract.seatOf(c, 22), 3)
 		t.equal(MatchContract.seatOf(c, 33), "spectator")
 		t.equal(MatchContract.seatOf(c, 99), nil, "not listed: kicked")
-		local teams = MatchContract.teams(c)
-		t.deepEqual(teams, { 1, 2, 4, 3 }, "Order odd, Chaos even, in player order")
-		local colors = MatchContract.teamColors(c)
-		t.equal(colors["1"], 1)
-		t.equal(colors["4"], 2, "Bo's team takes his colour")
+		local sc = MatchContract.toSim(c)
+		t.deepEqual({ sc.players[3].team, sc.players[3].faction }, { 3, "chaos" }, "team = seat, the faction in the entry (S-174)")
+		t.equal(sc.match.host, 1, "Ann hosts")
 	end)
 
 	t.test("a Teams config runs as a match and its results record passes the lobby's check", function()
@@ -81,6 +108,7 @@ return function(t: any)
 		t.equal(#brains, 2, "two AI")
 		local lobby = MatchContract.toLobby(c)
 		t.deepEqual(Lobby.humans(lobby), { 1, 3 })
+		start(sim, brains, Lobby.humans(lobby))
 		for _ = 1, 300 do
 			for _, b in brains do
 				Skirmish.tick(b)
@@ -113,6 +141,7 @@ return function(t: any)
 	t.test("ended before the sim's own end: winner from who stands, else a draw", function()
 		local c = config("FFA")
 		local sim = Sim.new(MatchContract.toSim(c))
+		start(sim, Skirmish.forMatch(sim), Lobby.humans(MatchContract.toLobby(c)))
 		for _ = 1, 30 do
 			Sim.step(sim)
 		end
@@ -134,11 +163,27 @@ return function(t: any)
 		t.expect(r.players[2].won and not r.players[1].won)
 	end)
 
+	t.test("failures carry an error code for the lobby (match.md section 11, F38)", function()
+		local E = MatchContract.ERROR
+		t.equal(MatchContract.refusal(nil, "no match config for this server").code, E.NO_SETUP)
+		local old = config("FFA")
+		old.version = 1
+		t.equal(MatchContract.refusal(old, "version or matchId").code, E.VERSION)
+		local bad = MatchContract.refusal(config("FFA"), "players")
+		t.deepEqual({ bad.code, bad.detail }, { E.BAD_SETUP, "players" }, "the validator's reason as the detail")
+		t.equal(#(MatchContract.error(E.SERVER_ERROR, string.rep("x", 500)).detail :: string), MatchContract.DETAIL_MAX, "details cut to 200")
+		t.equal(MatchContract.error(E.OVER).detail, nil)
+		local c = config("TEAM")
+		local r = MatchContract.result(c, "abandoned", nil, nil, 0, 1700000100, "every player left", nil, MatchContract.error(E.EVERYONE_LEFT))
+		t.equal(r.error.code, 209)
+		t.equal(MatchContract.validateResult(r, c), nil, "the record with an error still passes the lobby's check")
+	end)
+
 	t.test("refused or deserted: an abandoned record still passes the check", function()
 		local c = config("FFA")
-		local r = MatchContract.result(c, "abandoned", nil, nil, 0, 1700000100, "config refused: version 2")
+		local r = MatchContract.result(c, "abandoned", nil, nil, 0, 1700000100, "config refused: version 1")
 		t.equal(MatchContract.validateResult(r, c), nil)
-		t.equal(r.reason, "config refused: version 2")
+		t.equal(r.reason, "config refused: version 1")
 		t.equal(r.seconds, 0)
 	end)
 end

@@ -1,0 +1,251 @@
+{
+  "id": "chs_stalker_wreck",
+  "wreckOf": "chs_stalker",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.014,
+        3.1469,
+        -0.1467
+      ],
+      "size": [
+        4.1907,
+        4.7941,
+        7.8109
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -1.8838,
+        0.713,
+        -2.1661
+      ],
+      "size": [
+        0.6991,
+        1.542,
+        1.4543
+      ],
+      "pivot": [
+        -1.9000000000000001,
+        0.75,
+        -2.2
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -1.8945,
+        0.7167,
+        0.1303
+      ],
+      "size": [
+        0.652,
+        1.5259,
+        1.4499
+      ],
+      "pivot": [
+        -1.9000000000000001,
+        0.75,
+        0.09999999999999964
+      ]
+    },
+    "wheelL3": {
+      "parent": "base",
+      "center": [
+        -1.9068,
+        0.6979,
+        2.4315
+      ],
+      "size": [
+        0.7552,
+        1.5528,
+        1.4958
+      ],
+      "pivot": [
+        -1.9000000000000001,
+        0.75,
+        2.3999999999999995
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        1.8719,
+        0.8077,
+        -2.1784
+      ],
+      "size": [
+        0.8493,
+        1.5209,
+        1.4892
+      ],
+      "pivot": [
+        1.9000000000000001,
+        0.75,
+        -2.2
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        1.9332,
+        0.7903,
+        0.0671
+      ],
+      "size": [
+        0.695,
+        1.5074,
+        1.5326
+      ],
+      "pivot": [
+        1.9000000000000001,
+        0.75,
+        0.09999999999999964
+      ]
+    },
+    "wheelR3": {
+      "parent": "base",
+      "center": [
+        1.9489,
+        0.747,
+        2.4143
+      ],
+      "size": [
+        0.7041,
+        1.5553,
+        1.4792
+      ],
+      "pivot": [
+        1.9000000000000001,
+        0.75,
+        2.3999999999999995
+      ]
+    },
+    "dish": {
+      "parent": "base",
+      "center": [
+        -0.4085,
+        6.3032,
+        2.1629
+      ],
+      "size": [
+        2.8797,
+        1.8408,
+        0.839
+      ],
+      "pivot": [
+        -0.4,
+        5.6,
+        2.2
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "dish": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 496,
+    "wheelL1": 56,
+    "wheelL2": 36,
+    "wheelL3": 36,
+    "wheelR1": 56,
+    "wheelR2": 36,
+    "wheelR3": 56,
+    "dish": 168,
+    "total": 940
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

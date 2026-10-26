@@ -210,6 +210,57 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 				w.supply = e.supply or w.supply
 				w.rez = (e.rez or 0) / 255
 			end
+		elseif EK.PREGAME ~= nil and kind == EK.PREGAME then
+			-- one player's pick, ready and AI flags (protocol 36, S-169; C-218)
+			local pg = world.pregame
+			local flags = e.pregameFlags :: number
+			local x, z = nil, nil
+			if bit32.band(flags, Schema.PregameFlag.PICKED) ~= 0 then
+				x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+			end
+			pg.picks[e.player :: number] = { flags = flags, x = x, z = z }
+			pg.active = not pg.started
+			pg.version += 1
+		elseif EK.COUNTDOWN ~= nil and kind == EK.COUNTDOWN then
+			-- 3..1, then 0 as the match starts (the Commanders' ENTERs follow); 255 cancelled
+			local pg = world.pregame
+			local seconds = e.seconds :: number
+			if seconds == Schema.COUNTDOWN_STARTED then
+				pg.active, pg.started, pg.countdown = false, true, nil
+				pg.startedTick = tick
+			elseif seconds == Schema.COUNTDOWN_CANCELLED then
+				pg.countdown = nil
+			else
+				pg.countdown = seconds
+			end
+			pg.version += 1
+		elseif EK.PICK_CLOCK ~= nil and kind == EK.PICK_CLOCK then
+			-- the pick time left, or the forced start's (protocol 37, S-174)
+			world.pregame.clock = { seconds = e.seconds :: number, flags = e.clockFlags or 0 }
+			world.pregame.version += 1
+		elseif EK.START_BOXES ~= nil and kind == EK.START_BOXES then
+			-- every side's spawn box, as the host drew it or the map's (protocol 37)
+			local boxes = {}
+			for _, b in e.boxes or {} do
+				boxes[b.allyTeam] = { b.x0, b.z0, b.x1, b.z1 }
+			end
+			world.pregame.boxes = boxes
+			world.pregame.version += 1
+		elseif EK.SHARE ~= nil and kind == EK.SHARE then
+			-- a gift or a request for help in the ally team (protocol 37, S-176)
+			table.insert(world.shares, e)
+			if #world.shares > 20 then
+				table.remove(world.shares, 1)
+			end
+		elseif EK.PREBUILD ~= nil and kind == EK.PREBUILD then
+			-- a player's queued builds for its Commander, the whole list
+			local list = {}
+			for _, b in e.builds or {} do
+				local x, z = g:decode(b.cell, b.offX, b.offZ)
+				table.insert(list, { defIndex = b.defIndex, x = x, z = z, facing = b.facing })
+			end
+			world.pregame.builds[e.player :: number] = list
+			world.pregame.version += 1
 		elseif kind == EK.WRECK_GONE then
 			local id = e.wreckId :: number
 			world.wrecks[id] = nil
@@ -433,6 +484,7 @@ function NetIn.apply(world: World.World, channel: string, msg: buffer, now: numb
 		-- own, a spectator every team's: keep the own team's
 		local own = (records :: any)[1]
 		for _, r in records :: any do
+			world.teamEco[r.team] = r -- allies' too, when sent (F23)
 			if r.team == world.me.team then
 				own = r
 			end

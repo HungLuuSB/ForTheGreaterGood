@@ -1,0 +1,148 @@
+{
+  "id": "chs_forgemaster_wreck",
+  "wreckOf": "chs_forgemaster",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0128,
+        1.804,
+        -0.1014
+      ],
+      "size": [
+        5.8048,
+        2.8,
+        8.2651
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -2.3547,
+        0.4898,
+        0.0357
+      ],
+      "size": [
+        0.8446,
+        1.0603,
+        7.9251
+      ],
+      "pivot": [
+        -2.4,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        2.3917,
+        0.4834,
+        0.0031
+      ],
+      "size": [
+        0.8991,
+        1.0468,
+        8.0792
+      ],
+      "pivot": [
+        2.4,
+        0.46,
+        0.0
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        0.7885,
+        4.5455,
+        -0.7378
+      ],
+      "size": [
+        2.3909,
+        4.8223,
+        5.3961
+      ],
+      "pivot": [
+        0.8,
+        2.2,
+        -0.2
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        1.1,
+        5.7,
+        -3.0
+      ]
+    },
+    "nano2": {
+      "parent": "nano",
+      "at": [
+        0.2,
+        3.9,
+        1.9
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 564,
+    "trackL": 344,
+    "trackR": 344,
+    "nano": 220,
+    "total": 1472
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -4,6 +4,39 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-26, pre-game and automatic colours)
+
+- **Death blasts (C-232, F15):** every unit explodes when it dies, sized by its blast; Commanders and fusion reactors go up in a fireball and smoke column like a smaller nuke (no crater).
+- Ready to merge: `1bc6b6a7` (C-232 with its spec fix; supersedes the 01895765 line, whose Splash.spec still expected the old blast: test_client 315 / 315, build passed)
+- **The bots walk (C-231):** the new bots step on their legs like the Commanders (Fatboy short heavy steps, Centurion long strides, Skitter scuttling on four legs), and the Dragon's fans turn. All client specs pass again.
+- Ready to merge: `39f70870` (C-231 with m-models 4f6f268f; test_client 315 / 315, build passed)
+- **Everything loads first (C-230):** in a lobby match every model and texture loads during the loading screen (twice as fast as before: 24.5 s in Studio), and the pick clock only starts once you're loaded. The loading screen's text has dark outlines so it reads over the art.
+- Ready to merge: `8fd37e1d` (C-230; src/client; test_client 313 of 314, Nanoframe passes once models-C's 6c93cc9e is in; build passed)
+- Ready to merge: `e6121b44` (LOAD_HOLD 115 s to match the sim's LOAD_WAIT 120; build passed)
+- **More from the playtest (C-229):** right-drag a line and every selected unit's spot shows along it before you let go (F34; Ctrl keeps them together). AI levels read Hard - Balanced and Hard - Aggressive; lasers show their power per shot.
+- Ready to merge: `5f0fabdf` (C-229 with m-sim-2 8713c298; test_client 313 of 314, Nanoframe waiting on models-C; build passed)
+- **Tower lasers reworked (C-228), after your look:** they end on the target's surface facing the tower (not its turret top, not inside it), the wider beams are a bright wavering core in a soft fading glow instead of a solid rod, and a flash with a soft halo covers the muzzle. The camera turns all the way round now.
+- Ready to merge: `cc254306` (C-228; src/client; test_client 312 of 313, Nanoframe waiting on models-C; build passed)
+- **Small playtest items (C-227):** Ctrl + wheel turns the camera (F2); a building's rotation stays for the next ones (F14); stockpiles show their count as a number with a bar for the one being made (F10); Sentry and Overwatch lasers (both factions) are wider (F11).
+- Ready to merge: `7547c68f` (C-227; src/client and a spec; test_client 312 of 313, Nanoframe waiting on models-C; build passed)
+- **Team panel (C-226, F23):** bottom right, every player by team with a supply bar over a power bar (hover them for the numbers); on an ally: Units (click asks for units, double-click gives your selection), ■ / ϟ (click asks, drag up gives from your bank); gifts and requests show above it. **Smart Reclaim (F42):** in reclaim / repair / resurrect mode, drag a circle and the workers clear everything in it. Deposits are 2 × 2 patches and extractors snap to them; the pre-game says "Waiting for players to load".
+- Ready to merge: `5748408d` (C-223..C-226 with m-sim-2 676ddca merged; test_client 311 of 312: Nanoframe's pads for the new labs wait on models-C registering the S-181 blockouts after S-181 reaches main; test 561, build passed)
+- **Wind and tidal in the top bar (C-224):** a wind box after your sketch (the current in the middle over a see-through fan turning with the wind, min top right, max bottom right) and TIDAL.
+- **Bomb carpets (C-225):** in attack mode, selected bombers show a blast ring where each of their three bombs will land.
+- **sim phase 2 merged (C-223):** the new bot and air units have icons (borrowing the closest existing ones for now), plasma shots glow in their colour, the Dragon breathes a fire stream, and the Centurion's beam runs to its full range. Two scenes wait on sim-A (decoys) and the new labs' build pads on models-C.
+- **Playtest phase 1 (C-222):** the unit panel shows what a unit makes in green and what it uses in red, per resource ("■ +1.0 −26", "ϟ +20 −51"), not 0/0 (F9). A builder's queued builds survive the camera being away, so its spray goes to the structure it's really building (F13). Aircraft: they're never drawn outside the map; ones that overshoot while turning stick to the edge because the server clamps their position there, so sim-A is keeping them inside (F3).
+- **The camera opens on your Commander** at the start of every match, fixed starts included.
+- Ready to merge: `dfcf7c8` (camera on the Commander at the start; src/client; test_client 308, build passed)
+- Ready to merge: `c5ddf27` (C-222; src/client and a spec; test_client 308, build passed)
+- **Pick your start (C-218), after your BAR screenshot:** every lobby match opens with the pre-game. Your area is filled green on the ground, the enemies' red; click inside yours to place your Commander (its model stands there with your name). A big Ready button on the right, the host's Start under it (lit when everyone is ready), the pick clock (150 s); the victory condition and "Pick a start spot within the green area, and click the Ready button." low on the screen; "Pick your faction" at the bottom with both Commanders. Start counts down 3 s, then the Commanders drop from the sky in a star flare and land 1.5 s later. `/forcestart` lets the host start at any time. Built on sim-A's protocol 37 (merged 72fb087), which also fixes the "team ... got 18" seat crash.
+- **Automatic colours (C-217):** you are Blue, your allies cold colours, enemies warm ones, the same as the lobby.
+- **Build menu on the unit panel (C-219)** instead of hanging under the minimap on tall screens; **Commander name labels (C-220)** over every Commander in game.
+- Checked in Studio on FTGG Match (Coastline vs a Normal AI): picking, faction switch, Ready, Start, countdown, the landing flare, /forcestart, the build menu, the name labels.
+- Ready to merge: `a0e3bad` (C-217..C-220 with m-sim-2 72fb087 merged; test_client 306, test 539, build passed)
+- **Match failures reach the lobby (C-221, F38):** whenever the match server sends someone back (a refused setup, not in the match, a stale game version, the match already over, nobody arrived, a server error), the return carries D's error code and detail, and so does the result record, so the lobby can show it. Tried in Studio with the lobby-style test match: codes 203, 204, 205 and 208 go back with the right detail. Also fixed: the loading screen's call to stop drawing the world threw an error at the start and end of loading.
+- Ready to merge: `9340b6b` (C-221 Studio check, MatchLoading fix, contract profile v2; test_client 307, build passed)
+- Ready to merge: `2b1fde9` (C-221; src/roblox and a spec; test_client 307, test 539, build passed)
+
 ## Summary (2026-10-24, playtest logging, BAR settings, HUD, watchdog run, facing arrow, bars under units)
 
 - **Live playtest logging (C-201):** the match place prints a `[Match]` line at each step of lobby → match → lobby: the config read (match id, map, mode, room, one line per seat), each player admitted or refused (with user id) and leaving, the start (who hadn't loaded), a heartbeat every 30 s, the result and when the store accepted it, and each teleport back (target, started or failed, fallback, retries). Failed store reads and writes warn per attempt and once more when they give up. The watchdog's WARN / INFO lines stay on.

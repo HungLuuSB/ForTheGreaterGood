@@ -1,0 +1,229 @@
+{
+  "id": "ord_advshipyard",
+  "footprintStuds": 48,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        8.3,
+        0.1
+      ],
+      "size": [
+        47.2,
+        19.0,
+        47.0
+      ]
+    },
+    "gantry": {
+      "parent": "base",
+      "center": [
+        0.0,
+        10.365,
+        -17.4
+      ],
+      "size": [
+        43.0,
+        15.67,
+        3.6
+      ],
+      "pivot": [
+        0.0,
+        16.6,
+        -17.4
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -5.3,
+        13.05,
+        -4.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        -5.3,
+        13.05,
+        6.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        5.3,
+        13.05,
+        -4.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        5.3,
+        13.05,
+        6.0
+      ]
+    },
+    "nano5": {
+      "parent": "gantry",
+      "at": [
+        -7.0,
+        15.4,
+        -17.4
+      ]
+    },
+    "nano6": {
+      "parent": "gantry",
+      "at": [
+        7.0,
+        15.4,
+        -17.4
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "gantry"
+  ],
+  "visualPieces": [
+    "gantry"
+  ],
+  "anim": {
+    "gantry": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 5.0
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        9.165,
+        0.125
+      ],
+      "size": [
+        46.5,
+        17.79,
+        46.45
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        -2.12,
+        8.04,
+        6.2399
+      ],
+      "size": [
+        35.76,
+        14.48,
+        32.2799
+      ]
+    },
+    {
+      "name": "gantry_glow_running",
+      "piece": "gantry",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        11.71,
+        -17.5475
+      ],
+      "size": [
+        36.42,
+        12.22,
+        0.595
+      ]
+    },
+    {
+      "name": "gantry_glow_power",
+      "piece": "gantry",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        15.43,
+        -17.4
+      ],
+      "size": [
+        15.2,
+        0.05,
+        0.9
+      ]
+    }
+  ],
+  "glowShare": 0.0259,
+  "triangles": {
+    "base": 4476,
+    "gantry": 1196,
+    "total": 5672
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

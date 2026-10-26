@@ -25,5 +25,28 @@
       "EMI": "rbxassetid://86107223634107"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_phalanx_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://109457220694124",
+    "meshes": {
+      "base": "rbxassetid://132251686878406",
+      "core": "rbxassetid://118937803783541"
+    },
+    "decals": {
+      "ALB": "rbxassetid://126576303442185",
+      "RGH": "rbxassetid://136533911376852",
+      "NOR": "rbxassetid://130349466847768",
+      "MTL": "rbxassetid://116576927354350",
+      "EMI": "rbxassetid://116770825148458"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://120324757793827",
+      "NOR": "rbxassetid://70649062014330",
+      "RGH": "rbxassetid://74412781390879",
+      "MTL": "rbxassetid://118570537805534",
+      "EMI": "rbxassetid://104589959271184"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_phalanx_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1576 triangles"
   }
 }

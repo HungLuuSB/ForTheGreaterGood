@@ -1,0 +1,77 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "re-upload: a texture map failed to load (HTTP 502): 7386 triangles, glow share 1.6%",
+  "bar": {
+    "model": "rbxassetid://124432634414379",
+    "meshes": {
+      "base": "rbxassetid://83545723088146",
+      "base_glow_power": "rbxassetid://96993164367758",
+      "base_glow_running": "rbxassetid://132430524379664",
+      "radarPanel": "rbxassetid://95640724187735",
+      "radarPanel_glow_running": "rbxassetid://75235694599070"
+    },
+    "decals": {
+      "ALB": "rbxassetid://121014449441671",
+      "RGH": "rbxassetid://88077642291725",
+      "NOR": "rbxassetid://113370187183303",
+      "MTL": "rbxassetid://138938532430403",
+      "EMI": "rbxassetid://113957454565682"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://119157781437213",
+      "NOR": "rbxassetid://84190530179846",
+      "RGH": "rbxassetid://137656300624774",
+      "MTL": "rbxassetid://120113248942472",
+      "EMI": "rbxassetid://123868172156964"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advairfield_bar in FTGG Art"
+  },
+  "bar_1": {
+    "model": "rbxassetid://101679813309658",
+    "meshes": {
+      "base": "rbxassetid://83545723088146",
+      "base_glow_power": "rbxassetid://96993164367758",
+      "base_glow_running": "rbxassetid://132430524379664",
+      "radarPanel": "rbxassetid://95640724187735",
+      "radarPanel_glow_running": "rbxassetid://75235694599070"
+    },
+    "decals": {
+      "ALB": "rbxassetid://132236107833684",
+      "RGH": "rbxassetid://79021610240160",
+      "NOR": "rbxassetid://89770755874949",
+      "MTL": "rbxassetid://88814783313078",
+      "EMI": "rbxassetid://116589411686264"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://125275879407729",
+      "NOR": "rbxassetid://93041177727670",
+      "RGH": "rbxassetid://115177662086017",
+      "MTL": "rbxassetid://133586596025939",
+      "EMI": "rbxassetid://106754842733428"
+    },
+    "note": "T2 structure at the S-104 size (queue item 5): 7386 triangles, glow share 1.6%"
+  },
+  "wreck": {
+    "model": "rbxassetid://129421410919621",
+    "meshes": {
+      "base": "rbxassetid://132260705242076",
+      "radarPanel": "rbxassetid://87367537861371"
+    },
+    "decals": {
+      "ALB": "rbxassetid://85751553140858",
+      "RGH": "rbxassetid://79476859566256",
+      "NOR": "rbxassetid://91526161460827",
+      "MTL": "rbxassetid://100429904964183",
+      "EMI": "rbxassetid://136678139065918"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://110142568282803",
+      "NOR": "rbxassetid://100741869333494",
+      "RGH": "rbxassetid://118265475151968",
+      "MTL": "rbxassetid://81695608566965",
+      "EMI": "rbxassetid://129245525080603"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advairfield_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 5464 triangles"
+  }
+}

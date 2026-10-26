@@ -1,0 +1,242 @@
+{
+  "id": "ord_advextractor",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        4.35,
+        0.0
+      ],
+      "size": [
+        23.5348,
+        8.7,
+        23.5348
+      ]
+    },
+    "drillL": {
+      "parent": "base",
+      "center": [
+        -4.0,
+        9.07,
+        0.0
+      ],
+      "size": [
+        3.8042,
+        5.3,
+        3.8042
+      ],
+      "pivot": [
+        -4.0,
+        6.42,
+        0.0
+      ]
+    },
+    "drillR": {
+      "parent": "base",
+      "center": [
+        4.0,
+        9.07,
+        0.0
+      ],
+      "size": [
+        3.8042,
+        5.3,
+        3.8042
+      ],
+      "pivot": [
+        4.0,
+        6.42,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "drillL",
+    "drillR"
+  ],
+  "visualPieces": [
+    "drillL",
+    "drillR"
+  ],
+  "anim": {
+    "drillL": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "drillR": {
+      "motion": "turn",
+      "axis": [
+        0,
+        -1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        5.085,
+        -0.075
+      ],
+      "size": [
+        22.77,
+        7.47,
+        18.35
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        2.385,
+        -1.5775
+      ],
+      "size": [
+        15.69,
+        0.81,
+        15.245
+      ]
+    },
+    {
+      "name": "drillL_glow_running",
+      "piece": "drillL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -4.0,
+        9.37,
+        0.0
+      ],
+      "size": [
+        3.7142,
+        0.12,
+        3.7142
+      ]
+    },
+    {
+      "name": "drillL_glow_power",
+      "piece": "drillL",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        -4.0,
+        9.3,
+        0.0
+      ],
+      "size": [
+        3.76,
+        5.22,
+        3.76
+      ]
+    },
+    {
+      "name": "drillR_glow_running",
+      "piece": "drillR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        4.0,
+        9.37,
+        0.0
+      ],
+      "size": [
+        3.7142,
+        0.12,
+        3.7142
+      ]
+    },
+    {
+      "name": "drillR_glow_power",
+      "piece": "drillR",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        4.0,
+        9.3,
+        0.0
+      ],
+      "size": [
+        3.76,
+        5.22,
+        3.76
+      ]
+    }
+  ],
+  "glowShare": 0.0236,
+  "triangles": {
+    "base": 3998,
+    "drillL": 976,
+    "drillR": 976,
+    "total": 5950
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

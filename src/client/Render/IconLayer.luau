@@ -62,7 +62,7 @@ function IconLayer.step(layer: Layer, draws: { Icons.Draw }, tiers: { [number]: 
 		local st = d.style
 		local red = st.attacked == true and blink
 		if st.tile ~= shown.tile or st.size ~= shown.size or st.team ~= shown.team or st.alpha ~= shown.alpha or st.selected ~= shown.selected or red ~= shown.red then
-			Glyph.apply(slot, st, TeamColors(st.team))
+			Glyph.apply(slot, st, TeamColors.of(st.team))
 			shown.tile, shown.size, shown.team, shown.alpha, shown.selected, shown.red = st.tile, st.size, st.team, st.alpha, st.selected, red
 			layer.stats.styled += 1
 		end

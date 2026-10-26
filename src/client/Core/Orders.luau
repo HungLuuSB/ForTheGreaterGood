@@ -26,6 +26,8 @@ export type Intent = {
 	defIndex: number?, -- BUILD: what to build at (x, z)
 	facing: number?, -- BUILD: 0..3
 	group: boolean?, -- MOVE / FIGHT / PATROL with Ctrl: keep together at the slowest unit's speed (GROUP, S-137, C-169)
+	areaOp: number?, -- AREA: Schema.AreaOp, the circle around (x, z) of `radius` (Smart Reclaim, S-183)
+	radius: number?,
 }
 
 local GROUPABLE = { [CT.MOVE] = true, [CT.FIGHT] = true, [CT.PATROL] = true }
@@ -151,6 +153,10 @@ function Orders.encode(world: World.World, intent: Intent, ids: { number }): { b
 		}
 		if intent.targetId then
 			cmd.targetId = intent.targetId
+		elseif intent.areaOp then
+			cmd.areaOp = intent.areaOp
+			cmd.radius = math.clamp(math.floor((intent.radius or 1) + 0.5), 1, Schema.AREA_MAX_RADIUS)
+			cmd.cell, cmd.offX, cmd.offZ = g:encode(intent.x :: number, intent.z :: number)
 		elseif intent.defIndex then
 			cmd.defIndex = intent.defIndex
 			cmd.cell, cmd.offX, cmd.offZ = g:encode(intent.x :: number, intent.z :: number)

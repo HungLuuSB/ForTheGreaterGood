@@ -86,6 +86,13 @@ local AttackPreviewRender = require("./Render/AttackPreview")
 local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
+local Pregame = require("./Core/Pregame")
+local PregameMarks = require("./Render/PregameMarks")
+local PregamePanel = require("./UI/PregamePanel")
+local Landing = require("./Render/Landing")
+local CommanderNames = require("./Render/CommanderNames")
+local TeamPanel = require("./UI/TeamPanel")
+local TeamColors = require("./Render/TeamColors")
 
 local defs = Defs.load()
 -- no Roblox HUD (C-109, the user): chat, player list, backpack, health and
@@ -329,6 +336,9 @@ local _lobbyUI = LobbyUI.new(remotes) -- the lobby and results screens (C-70; pr
 -- this client's progress (Render/Preload) and hides once the match starts
 local matchLoading = MatchLoading.new(remotes)
 local preload = Preload.new()
+local LOAD_HOLD = 115 -- seconds at most the first CAMERA waits for the preload (the sim's Pregame.LOAD_WAIT is 120)
+local holdSince: number? = nil
+local loadedAt: number? = nil
 Controls.capture = function(input: InputObject): boolean
 	if SettingsMenu.capturing and input.UserInputType == Enum.UserInputType.Keyboard then
 		return true -- Settings > Keys is taking this key (C-159)
@@ -363,6 +373,75 @@ local function muzzleOf(id: number, slot: number): (number?, number?, number?)
 		return p.X, p.Y, p.Z
 	end
 	return nil, nil, nil
+end
+-- the pre-game (C-218, net.md 9b): spawn boxes and picks on the map; the
+-- panel with the countdown and Ready; a left click places the Commander
+local pregameMarks = PregameMarks.new()
+local pregamePanel = PregamePanel.new({
+	ready = function(on: boolean)
+		api.send(Pregame.ready(on))
+	end,
+	faction = function(faction: string)
+		if not Pregame.isReady(world, world.me.player) then
+			api.send(Pregame.faction(faction))
+		end
+	end,
+	start = function()
+		if Pregame.allReady(world) then
+			api.send(Pregame.start(false))
+		end
+	end,
+})
+local pregameSeen = { active = false, started = false, homed = false } -- for the camera's jumps
+local commanderNames = CommanderNames.new() -- each Commander's player name over it
+local teamPanel = TeamPanel.new(api) -- players by team, sharing with allies (F23)
+local landing = Landing.new() -- the Commanders drop in with a star flare as the match starts (S-174)
+UnitRenderer.lift = Landing.lift(world)
+Controls.pregameClick = function(ground: Vector3?): boolean
+	local pg = world.pregame
+	if not pg.active or world.me.player == 0 then
+		return pg.active
+	end
+	local areas = Pregame.areas(world)
+	if ground and areas and Pregame.canPick(world, areas, ground.X, ground.Z) then
+		api.send(Pregame.startPos(world.grid, ground.X, ground.Z))
+		PregamePanel.sent(pregamePanel, ground.X, ground.Z, os.clock())
+	else
+		PregamePanel.refuse(pregamePanel, "Pick a spot inside your area, away from the other starts.", os.clock())
+	end
+	return true
+end
+-- a hitscan hit on a drawn unit: the line from the muzzle toward the middle
+-- of the nearest model's box at the hit, ended where it first meets that
+-- model (Core/Effects.bodyAt)
+local bodyParams = RaycastParams.new()
+bodyParams.FilterType = Enum.RaycastFilterType.Include
+Effects.bodyAt = function(x0: number, y0: number, z0: number, x: number, _y: number, z: number): (number?, number?, number?)
+	local best, bestD = nil, math.huge
+	for id, u in world.units do
+		if u.tier == "tactical" and u.rx and u.rz then
+			local d = (u.rx - x) ^ 2 + (u.rz - z) ^ 2
+			local def = World.def(world, u)
+			local reach = ((def and def.footprint) or 1) * 4 + 3
+			if d < bestD and d <= reach * reach then
+				best, bestD = id, d
+			end
+		end
+	end
+	local model = best and UnitRenderer.modelOf(renderer, best)
+	if model == nil then
+		return nil, nil, nil
+	end
+	local centre = model:GetBoundingBox().Position
+	local from = Vector3.new(x0, y0, z0)
+	local dir = centre - from
+	if dir.Magnitude < 1e-3 then
+		return centre.X, centre.Y, centre.Z
+	end
+	bodyParams.FilterDescendantsInstances = { model }
+	local hit = workspace:Raycast(from, dir.Unit * (dir.Magnitude + 4), bodyParams)
+	local at = if hit then hit.Position else centre
+	return at.X, at.Y, at.Z
 end
 Overlay.bind(overlay, api, os.clock)
 local hud = Hud.new()
@@ -425,6 +504,16 @@ local function submitCheat(text: string)
 			CheatConsole.print(cheatConsole, `lobby: Cheats {if lower == "cheat on" then "on" else "off"} (host only; takes effect at the next match)`)
 		else
 			CheatConsole.print(cheatConsole, "cheat on|off: no lobby here (Studio profiles always allow cheats)")
+		end
+		return
+	end
+	if lower == "forcestart" then
+		-- the host starts the match now, ready or not (S-174)
+		if world.pregame.active and Pregame.isHost(world, world.me.player) then
+			api.send(Pregame.start(true))
+			CheatConsole.print(cheatConsole, "forcing the start")
+		else
+			CheatConsole.print(cheatConsole, "forcestart: only the host, during the pre-game", Kit.COLOR.defeat)
 		end
 		return
 	end
@@ -915,6 +1004,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	_lobbyUI.gui.Enabled = replay == nil
 	MatchLoading.step(matchLoading, now, Preload.progress(preload, world))
+	-- twice the meshes building at once behind the loading screen (nothing to draw)
+	MeshModels.AT_ONCE = if matchLoading.gui.Enabled then 16 else 8
 	ReplayBar.step(replayBar, replay, if replay then `REPLAY: player {replay.replay.header.viewer}'s view` elseif world.joined and world.me.player == 0 then "SPECTATING: every player, no fog" else nil)
 	if world.rejected then
 		if not warned then
@@ -929,6 +1020,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	if world.joins ~= seenJoins then
 		-- a (re)join: start over from the server's full picture
 		seenJoins = world.joins
+		TeamColors.setViewer(world.me.player, world.me.team, world.teamAllies) -- you Blue, allies cold, enemies warm (C-217)
+		pregameSeen.active, pregameSeen.started, pregameSeen.homed = false, false, false
 		FactoryFrames.clear(factoryFrames)
 		UnitRenderer.clear(renderer)
 		Effects.clear(fx)
@@ -961,6 +1054,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	World.smoothStrategic(world, dt, now) -- radar blips glide, not jump, and circle their spot (C-151, C-154)
 	local t0 = os.clock()
 	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
+	Landing.step(landing, world, t, now)
 	if strategic then
 		FactoryFrames.clear(factoryFrames)
 	else
@@ -994,7 +1088,48 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		camState.distance = math.min(math.max(camState.distance, camState.minDistance), Camera.MAX_DISTANCE)
 		camState.minDistance = nil
 	end
+	-- the pre-game opens over the own area; the match starts over the own Commander
+	local pg = world.pregame
+	if (pg.active and not pregameSeen.active) or (pg.started and not pregameSeen.started and world.me.player ~= 0) then
+		camState.x, camState.z = Pregame.focus(world, Pregame.areas(world))
+		camState.follow = nil
+		local fit = pg.active and Pregame.fitDistance(world, Pregame.areas(world))
+		if fit then
+			camState.distance = math.clamp(fit, camState.distance, Camera.MAX_DISTANCE) -- the whole area in view
+		end
+	end
+	pregameSeen.active, pregameSeen.started = pg.active, pg.started
+	-- every match opens over the own Commander, the first time it's there
+	-- after a join (the user; fixed starts too, not only the pre-game's)
+	if not pregameSeen.homed and not pg.active and world.me.player ~= 0 then
+		for _, u in world.units do
+			local def = u.team == world.me.team and World.def(world, u)
+			if def and table.find(def.categories or {}, "COMMANDER") then
+				camState.x, camState.z = u.x, u.z
+				camState.follow = nil
+				pregameSeen.homed = true
+				break
+			end
+		end
+	end
 	local payload = Camera.apply(camState, world, workspace.CurrentCamera, now)
+	-- a lobby match's first CAMERA waits until this client has loaded
+	-- everything (or LOAD_HOLD seconds): the pre-game's clocks start on every
+	-- human's first command (S-182), so nobody's pick time runs while they
+	-- still load (the user: every model ready before the match)
+	if payload and loadedAt == nil then
+		holdSince = holdSince or now
+		local progress = Preload.progress(preload, world)
+		if not MatchLoading.isMatch(matchLoading) then
+			loadedAt = now -- not a lobby match: nothing to wait for
+		elseif progress >= 0.999 or now - holdSince >= LOAD_HOLD then
+			loadedAt = now
+			print(string.format("[Client] loaded in %.1f s (%s)", now - holdSince, if progress >= 0.999 then "everything ready" else "gave up waiting"))
+		else
+			camState.lastRect = nil -- sent again once loaded
+			payload = nil
+		end
+	end
 	if payload then
 		cmd:FireServer(payload)
 	end
@@ -1127,6 +1262,10 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	IdleStrip.step(idleStrip, #idle.builders, #idle.factories, SettingsMenu.binds.idle or "")
 	IdleMarks.step(idleMarks, world, idle.builders, strategic, workspace.CurrentCamera)
+	CommanderNames.step(commanderNames, world, strategic, workspace.CurrentCamera)
+	TeamPanel.step(teamPanel, api, now)
+	PregameMarks.step(pregameMarks, world, Pregame.areas(world), if pg.active then Controls.hover() else nil, workspace.CurrentCamera)
+	PregamePanel.step(pregamePanel, world, now)
 	BuildMenuUI.step(buildMenu, api)
 	CommandCard.step(commandCard, api)
 	UnitPanel.step(unitPanel, api)

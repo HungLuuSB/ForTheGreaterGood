@@ -1,0 +1,177 @@
+{
+  "id": "ord_warden_wreck",
+  "wreckOf": "ord_warden",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0138,
+        1.1077,
+        -0.2372
+      ],
+      "size": [
+        7.1932,
+        2.3538,
+        8.5222
+      ]
+    },
+    "spades": {
+      "parent": "base",
+      "center": [
+        0.0252,
+        2.4847,
+        4.0143
+      ],
+      "size": [
+        5.7873,
+        3.42,
+        0.6861
+      ],
+      "pivot": [
+        0.0,
+        0.8,
+        4.05
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.005,
+        2.9569,
+        0.2872
+      ],
+      "size": [
+        4.8276,
+        1.8209,
+        5.7026
+      ],
+      "pivot": [
+        0.0,
+        2.1,
+        0.9
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0134,
+        2.9411,
+        -5.4705
+      ],
+      "size": [
+        1.2109,
+        0.9431,
+        7.7875
+      ],
+      "pivot": [
+        0.0,
+        2.95,
+        -1.7
+      ]
+    },
+    "shieldL": {
+      "parent": "base",
+      "center": [
+        -3.8534,
+        1.9631,
+        -2.999
+      ],
+      "size": [
+        0.5026,
+        2.8636,
+        3.408
+      ],
+      "pivot": [
+        -3.85,
+        2.0,
+        -4.5
+      ]
+    },
+    "shieldR": {
+      "parent": "base",
+      "center": [
+        3.8448,
+        1.9998,
+        -2.9897
+      ],
+      "size": [
+        0.5861,
+        2.936,
+        3.3571
+      ],
+      "pivot": [
+        3.85,
+        2.0,
+        -4.5
+      ]
+    },
+    "jacks": {
+      "parent": "base",
+      "center": [
+        0.0234,
+        1.4982,
+        1.1424
+      ],
+      "size": [
+        8.7077,
+        1.3691,
+        4.35
+      ],
+      "pivot": [
+        -3.9,
+        1.525,
+        -0.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        2.95,
+        -9.4
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1304,
+    "spades": 216,
+    "turret": 304,
+    "barrel": 364,
+    "shieldL": 164,
+    "shieldR": 164,
+    "jacks": 248,
+    "total": 2764
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

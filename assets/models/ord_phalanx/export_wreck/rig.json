@@ -1,0 +1,91 @@
+{
+  "id": "ord_phalanx_wreck",
+  "wreckOf": "ord_phalanx",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0167,
+        4.7208,
+        -0.002
+      ],
+      "size": [
+        14.9242,
+        9.652,
+        14.9204
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        -0.0575,
+        6.9767,
+        -0.0829
+      ],
+      "size": [
+        1.5927,
+        2.5759,
+        1.5653
+      ],
+      "pivot": [
+        0.0,
+        5.7,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "beam": {
+      "parent": "core",
+      "at": [
+        0,
+        8.3,
+        0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1368,
+    "core": 208,
+    "total": 1576
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

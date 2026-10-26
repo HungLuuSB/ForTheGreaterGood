@@ -45,13 +45,8 @@ local function setup()
 	local sx, sz = sim.world.posX[start], sim.world.posZ[start]
 	local deposits = {}
 	local layers = (sim.map :: any).layers
-	for cz = 0, grid.cellsZ - 1 do
-		for cx = 0, grid.cellsX - 1 do
-			if Layers.getSupply(layers, grid:index(cx, cz)) > 0 then
-				local wx, wz = grid:cellCenter(cx, cz)
-				table.insert(deposits, { wx, wz, (wx - sx) ^ 2 + (wz - sz) ^ 2 })
-			end
-		end
+	for _, d in layers.deposits do -- 2 x 2 patches, by their centres (S-184)
+		table.insert(deposits, { d[1], d[2], (d[1] - sx) ^ 2 + (d[2] - sz) ^ 2 })
 	end
 	table.sort(deposits, function(a, b)
 		return a[3] < b[3]

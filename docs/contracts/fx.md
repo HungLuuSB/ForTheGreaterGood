@@ -3,7 +3,7 @@
 Owner: models stream (the assets). Readers: the client stream, which builds the effects and animates them. Source: the user's request of 2026-10-22 (deployable shield, Order); `assets/fx/<effect>/build.py` makes every asset, `assets/fx/<effect>/roblox_assets.json` lists the uploaded IDs.
 
 General rules:
-- **Every effect asset is white or greyscale.** The client tints it with the team color at runtime (`TeamColors(team)`, as for unit team color, rig.md 6). Nothing is baked in a team color.
+- **Every effect asset is white or greyscale.** The client tints it with the team color at runtime (`TeamColors.of(team)`, as for unit team color, rig.md 6). Nothing is baked in a team color.
 - **Meshes are imported MeshParts.** A MeshPart's origin is the center of its mesh's bounding box, so each entry below says where that center sits relative to the shape's natural pivot. Set `CanCollide`, `CanQuery`, `CanTouch` = false and `CastShadow` = false on every effect part.
 - **Textures** are PNG with a transparent background; the shape is in the alpha, the color is white.
 - The models stream keeps the source copies in "FTGG Art" under `ReplicatedStorage.FX.<Effect>`; copy them into the game place (they reference uploaded assets, so they work in any place of the same creator).

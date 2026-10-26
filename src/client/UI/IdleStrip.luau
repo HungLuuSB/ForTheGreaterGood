@@ -7,6 +7,7 @@
 local Players = game:GetService("Players")
 
 local Kit = require("./Kit")
+local ResourceBar = require("./ResourceBar")
 
 local IdleStrip = {}
 
@@ -37,8 +38,8 @@ function IdleStrip.new(pick: (string) -> ()): Strip
 	local root = Instance.new("Frame")
 	root.Name = "Idle"
 	root.AnchorPoint = Vector2.new(0, 0)
-	-- the resource bar is 546 px wide, centred, 6 px down (UI/ResourceBar)
-	root.Position = UDim2.new(0.5, 279, 0, 6)
+	-- right of the resource bar (centred, 6 px down; UI/ResourceBar.WIDTH)
+	root.Position = UDim2.new(0.5, ResourceBar.WIDTH / 2 + 6, 0, 6)
 	root.Size = UDim2.fromOffset(128, 40)
 	root.BackgroundColor3 = Kit.COLOR.panel
 	root.BorderSizePixel = 0

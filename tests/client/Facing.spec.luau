@@ -4,7 +4,11 @@
 -- produce, heading = facing × 90°), and the names follow the map as the
 -- camera shows it (up = -Z = North).
 
+local Api = require("../../src/client/Api")
 local Facing = require("../../src/client/Core/Facing")
+local NetIn = require("../../src/client/Core/NetIn")
+local World = require("../../src/client/Core/World")
+local NetOut = require("../../src/server/Sim/NetOut")
 local Build = require("../../src/server/Sim/Build")
 local Sim = require("../../src/server/Sim/Sim")
 local Spawn = require("../../src/server/Sim/Spawn")
@@ -31,5 +35,22 @@ return function(t: any)
 			local ex, ez = Facing.exit(f)
 			t.expect(dx * ex + dz * ez > 0, `facing {f}: the pad lies on the exit side ({dx}, {dz})`)
 		end
+	end)
+
+	t.test("a rotation carries on to every later placement (F14)", function()
+		local sim = Sim.new({ seed = 5, players = { { id = 1, team = 1 } }, mapId = "start:64", scenario = "empty" })
+		local mason = Spawn.unit(sim, "ord_mason", 1, 0, 0, 0)
+		local world = World.new(sim.defs)
+		local api = Api.new(world, function() end)
+		NetOut.join(sim, 1)
+		Sim.step(sim)
+		NetIn.applyOutbox(world, sim.net.players[1].outbox, 1 / 15)
+		api.actions.select({ mason })
+		assert(api.actions.beginPlacement("ord_vehplant"))
+		api.actions.rotatePlacement()
+		api.actions.rotatePlacement()
+		api.actions.cancelPlacement()
+		assert(api.actions.beginPlacement("ord_solar"))
+		t.equal((api.state.placement :: any).facing, 2, "the next placement starts as the last one was turned")
 	end)
 end

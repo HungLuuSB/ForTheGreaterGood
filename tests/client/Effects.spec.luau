@@ -185,7 +185,7 @@ return function(t: any)
 			worst = math.max(worst, d)
 		end
 		print(string.format("    %d shells; worst delay after reaching the impact point %.1f ms", #delays, worst * DT * 1000))
-		t.expect(#delays > 50, "plenty of impacts")
+		t.expect(#delays > 20, "plenty of impacts") -- (38 since S-179 halved T1 ranges and damage; 26 since S-187)
 		t.expect(worst <= 1 / SUBS + 1e-9, `the burst comes within a frame of arrival (worst {worst} ticks)`)
 	end)
 

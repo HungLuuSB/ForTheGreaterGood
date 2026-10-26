@@ -1,0 +1,156 @@
+{
+  "id": "ord_citadel_wreck",
+  "wreckOf": "ord_citadel",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.1579,
+        3.0824,
+        0.0451
+      ],
+      "size": [
+        23.5743,
+        6.324,
+        23.8522
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.0907,
+        6.0045,
+        0.0364
+      ],
+      "size": [
+        8.301,
+        3.5,
+        8.1022
+      ],
+      "pivot": [
+        0.0,
+        4.4,
+        0.5
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0775,
+        5.7118,
+        -9.7686
+      ],
+      "size": [
+        2.0614,
+        1.6959,
+        11.1457
+      ],
+      "pivot": [
+        0.0,
+        5.9,
+        -4.0
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -5.7892,
+        6.5585,
+        -5.8643
+      ],
+      "size": [
+        3.1417,
+        1.3169,
+        2.9774
+      ],
+      "pivot": [
+        -5.6,
+        5.8,
+        -5.6
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        5.5518,
+        7.6673,
+        5.5218
+      ],
+      "size": [
+        4.4558,
+        2.7539,
+        1.3551
+      ],
+      "pivot": [
+        5.6,
+        6.2,
+        5.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        5.9,
+        -15.1
+      ]
+    },
+    "muzzle2": {
+      "parent": "launcher",
+      "at": [
+        -5.6,
+        6.6,
+        -7.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 664,
+    "turret": 216,
+    "barrel": 164,
+    "launcher": 196,
+    "radar": 152,
+    "total": 1392
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

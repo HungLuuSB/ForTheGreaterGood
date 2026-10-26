@@ -56,7 +56,7 @@ local TILE = Color3.fromRGB(58, 62, 70)
 local ITEMS_PER_ROW = 4
 local CELL = 66
 local ROWS = 2 -- visible rows; more scroll (2 since C-76: room for the wider unit panel)
-local WIDTH = 280 -- four 66-pixel tiles; the grid sits under the minimap (BAR layout)
+local WIDTH = 280 -- four 66-pixel tiles; the grid sits on the unit panel, under the minimap (BAR layout)
 local TOP = MinimapUI.SIZE
 local FULL_HEIGHT = 26 + ROWS * (CELL + 3) + 8
 
@@ -159,8 +159,10 @@ function BuildMenuUI.new(api: Api.Api): UI
 	gui.DisplayOrder = 6
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
-	panel.AnchorPoint = Vector2.new(0, 0)
-	panel.Position = UDim2.fromOffset(0, TOP) -- under the minimap
+	-- on top of the unit panel (120 high), growing up towards the minimap
+	-- (the user: on tall screens it hung under the minimap with a gap below)
+	panel.AnchorPoint = Vector2.new(0, 1)
+	panel.Position = UDim2.new(0, 0, 1, -(120 + 4))
 	panel.Size = UDim2.fromOffset(WIDTH, FULL_HEIGHT)
 	panel.BackgroundColor3 = BG
 	panel.BackgroundTransparency = 0.15
@@ -499,7 +501,7 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 		b.LayoutOrder = i
 		b.Visible = true
 		local style = Icons.ofDef(def, world.me.team, 18)
-		Glyph.apply(ui.itemGlyphs[i], style, TeamColors(world.me.team))
+		Glyph.apply(ui.itemGlyphs[i], style, TeamColors.of(world.me.team))
 		Portrait.set(ui.portraits[i], def, world.me.team)
 		;(b :: any).Supply.Text = tostring(cost.supply or 0)
 		;(b :: any).Power.Text = tostring(cost.power or 0)

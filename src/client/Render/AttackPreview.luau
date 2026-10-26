@@ -100,6 +100,20 @@ function Render.step(s: State, world: World.World, selection: { number }, aim: V
 			prev = v
 		end
 	end
+	-- bombers' carpets: a blast ring on every bomb's spot, joined along the run
+	if aim then
+		for _, c in AttackPreview.carpets(world, selection, aim.X, aim.Z) do
+			local prev: Vector3? = nil
+			for _, p in c.points do
+				ring(s, world, p[1], p[2], c.weapon.aoe or 0, BLAST)
+				local v = Vector3.new(p[1], World.groundY(world, p[1], p[2]) + 1, p[2])
+				if prev then
+					line(s, prev, v, BLAST, 2, 0.35)
+				end
+				prev = v
+			end
+		end
+	end
 	local first = arcs[1]
 	if first then
 		ring(s, world, first.x, first.z, first.weapon.aoe or 0, if first.inRange then BLAST else OUT_OF_RANGE)

@@ -73,4 +73,48 @@ return function(t: any)
 		t.expect(math.abs(flown - arc.seconds) < 0.2, `flight time {arc.seconds} s, flown {flown} s`)
 		t.expect(math.abs(peak - arc.apexY) < 1, `apex {arc.apexY}, flown {peak}`)
 	end)
+
+	t.test("a bomber's carpet: the preview's spots are where its salvo lands (S-178, F33)", function()
+		local sim = Sim.new({ seed = 9, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "empty" })
+		local bomber = Spawn.unit(sim, "ord_absolution", 1, -380, 0, math.pi / 2)
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		local g = sim.map.layers.grid
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
+		Sim.step(sim)
+		NetIn.applyOutbox(world, sim.net.players[1].outbox, DT)
+		local tx, tz = 120, 0 -- dead ahead: a straight run
+		local carpets = AttackPreview.carpets(world, { bomber }, tx, tz)
+		t.equal(#carpets, 1)
+		local pts = carpets[1].points
+		t.equal(#pts, 3, "three bombs")
+		local w = carpets[1].weapon
+		local step = w.salvo.delay * sim.defs.units.ord_absolution.movement.maxSpeed
+		t.expect(math.abs(math.sqrt((pts[2][1] - pts[1][1]) ^ 2 + (pts[2][2] - pts[1][2]) ^ 2) - step) < 1e-6, "salvo.delay x speed apart")
+		t.deepEqual({ pts[1][1], pts[1][2] }, { tx, tz }, "the first on the spot")
+		-- the server's run: where the three bombs burst
+		local cell, ox, oz = g:encode(tx, tz)
+		assert(Sim.submit(sim, 1, Commands.encode({ cmdType = Schema.CmdType.ATTACK_GROUND, flags = 0, unitIds = { bomber }, cell = cell, offX = ox, offZ = oz })))
+		local impacts = {}
+		for _ = 1, 15 * 20 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "IMPACT" and e.x then
+					table.insert(impacts, { e.x, e.z })
+				end
+			end
+			if #impacts >= 3 then
+				break
+			end
+		end
+		t.expect(#impacts >= 3, `the salvo landed ({#impacts})`)
+		-- each bomb inside its previewed blast ring (the bomber holds its
+		-- heading through the salvo, S-178)
+		local worst = 0
+		for k = 1, 3 do
+			worst = math.max(worst, math.sqrt((impacts[k][1] - pts[k][1]) ^ 2 + (impacts[k][2] - pts[k][2]) ^ 2))
+		end
+		print(string.format("    carpet: 3 bombs, the worst %.1f studs from its previewed spot (blast %d)", worst, w.aoe))
+		t.expect(worst <= w.aoe, `each bomb inside its previewed ring ({worst})`)
+	end)
 end

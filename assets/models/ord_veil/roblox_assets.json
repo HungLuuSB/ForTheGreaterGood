@@ -60,5 +60,36 @@
       "EMI": "rbxassetid://96462196732981"
     },
     "note": "2026-10-22, first BAR upload (M-15): 1296 triangles, glow share 7.0%"
+  },
+  "wreck": {
+    "model": "rbxassetid://105287651004417",
+    "meshes": {
+      "array": "rbxassetid://122981303460789",
+      "base": "rbxassetid://70987714504710",
+      "wheelL1": "rbxassetid://71400430014802",
+      "wheelL2": "rbxassetid://107740044762998",
+      "wheelL3": "rbxassetid://95131318837452",
+      "wheelL4": "rbxassetid://83937219469616",
+      "wheelR1": "rbxassetid://111156909319893",
+      "wheelR2": "rbxassetid://103232022371760",
+      "wheelR3": "rbxassetid://91300689457879",
+      "wheelR4": "rbxassetid://126603698044120"
+    },
+    "decals": {
+      "ALB": "rbxassetid://85523393763806",
+      "RGH": "rbxassetid://102010953490136",
+      "NOR": "rbxassetid://132484631867765",
+      "MTL": "rbxassetid://76325478467933",
+      "EMI": "rbxassetid://107633502110242"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://106034430840785",
+      "NOR": "rbxassetid://109086264531919",
+      "RGH": "rbxassetid://82978162650648",
+      "MTL": "rbxassetid://100049537347013",
+      "EMI": "rbxassetid://83299524439453"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_veil_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1204 triangles"
   }
 }

@@ -52,7 +52,7 @@ function Portrait.set(p: Portrait, def: any, team: number)
 		p.model:Destroy()
 	end
 	local model = template:Clone()
-	local color = TeamColors(team)
+	local color = TeamColors.of(team)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") and CollectionService:HasTag(d, "TeamColor") then
 			d.Color = color

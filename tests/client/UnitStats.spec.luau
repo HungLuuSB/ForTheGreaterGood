@@ -153,4 +153,17 @@ return function(t: any)
 			print("    " .. l)
 		end
 	end)
+
+	t.test("lasers show their power per shot (S-187)", function()
+		local Sim = require("../../src/server/Sim/Sim")
+		local World = require("../../src/client/Core/World")
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		local lines = UnitStats.lines(UnitStats.ofDef(world, sim.defs.units.ord_sentry_tower))
+		local found = false
+		for _, l in lines do
+			found = found or string.find(l, "20 power/shot", 1, true) ~= nil
+		end
+		t.expect(found, "the Sentry's 20 power a shot: " .. table.concat(lines, " | "))
+	end)
 end

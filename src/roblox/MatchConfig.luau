@@ -127,7 +127,7 @@ local PROFILES = {
 			{ def = "chs_lamprey", player = 2, x = 130, z = 70, heading = -math.pi / 2 },
 		},
 	},
-	-- The lobby place's match (C-173, docs/contracts/match.md v1) in Studio:
+	-- The lobby place's match (C-173, docs/contracts/match.md v2) in Studio:
 	-- the match role runs from this config as if the lobby had stored it
 	-- (an in-memory stand-in for the MemoryStore); the playtester takes the
 	-- first human seat (contractAdmitAny). Loading screen, start once loaded,
@@ -142,7 +142,7 @@ local PROFILES = {
 		restartAfter = nil,
 		contractAdmitAny = true,
 		contract = {
-			version = 1,
+			version = 2,
 			matchId = "studio-match",
 			createdAt = 0,
 			seed = 7,
@@ -157,6 +157,7 @@ local PROFILES = {
 			},
 			spectators = {},
 			lobby = { placeId = 0, jobId = "studio-lobby", roomId = "studio-room", roomName = "Studio room" },
+			host = 1, -- the Playtester's seat user: they start the match from the pre-game (v2, S-174)
 		},
 	},
 	-- The Canyon (S-132, C-153): both Commanders at their starts, no AI;

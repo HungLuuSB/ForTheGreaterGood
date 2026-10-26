@@ -42,6 +42,12 @@ local function cap(text: string): string
 	return string.upper(string.sub(text, 1, 1)) .. string.sub(text, 2)
 end
 
+-- An AI level's name (S-187: "hard" reads Hard - Balanced)
+local LEVEL_NAME = { easy = "Easy", normal = "Normal", hard = "Hard - Balanced", hard_aggressive = "Hard - Aggressive" }
+local function levelName(level: string): string
+	return LEVEL_NAME[level] or cap(level)
+end
+
 local function clear(ui: UI)
 	for _, c in ui.body:GetChildren() do
 		if not c:IsA("UIListLayout") and not c:IsA("UIPadding") then
@@ -96,24 +102,25 @@ local function seatRow(ui: UI, data: any, s: any, i: number, sl: any, me: number
 	if host and i > 1 and sl.kind ~= "human" then
 		local opts = {}
 		for _, l in data.levels do
-			table.insert(opts, { l, cap(l) })
+			table.insert(opts, { l, levelName(l) })
 		end
 		table.insert(opts, { "open", "Open" })
-		Kit.segmented(r, opts, if sl.kind == "ai" then sl.level else "open", function(v)
+		-- a dropdown: the levels' names don't fit segments (S-187)
+		Kit.dropdown(r, opts, if sl.kind == "ai" then sl.level else "open", function(v)
 			if v == "open" then
 				send({ op = "slot", index = i, kind = "open" })
 			else
 				send({ op = "slot", index = i, kind = "ai", level = v })
 			end
-		end, 62).frame.LayoutOrder = 2
+		end, 150).button.LayoutOrder = 2
 		if #s.slots > 2 then
 			Kit.button(r, "×", "ghost", function()
 				send({ op = "slot", index = i, kind = nil })
 			end, 28).LayoutOrder = 3
 		end
 	elseif sl.kind == "ai" then
-		local l = Kit.text(r, cap(sl.level), "label", Kit.COLOR.dim)
-		l.Size = UDim2.fromOffset(62, 28)
+		local l = Kit.text(r, levelName(sl.level), "label", Kit.COLOR.dim)
+		l.Size = UDim2.fromOffset(150, 28)
 		l.LayoutOrder = 2
 	end
 	if s.mode == "TEAM" then
