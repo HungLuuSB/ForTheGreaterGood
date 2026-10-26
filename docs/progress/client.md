@@ -8,6 +8,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 - **Everything loads first (C-230):** in a lobby match every model and texture loads during the loading screen (twice as fast as before: 24.5 s in Studio), and the pick clock only starts once you're loaded. The loading screen's text has dark outlines so it reads over the art.
 - Ready to merge: `8fd37e1d` (C-230; src/client; test_client 313 of 314, Nanoframe passes once models-C's 6c93cc9e is in; build passed)
+- Ready to merge: `e6121b44` (LOAD_HOLD 115 s to match the sim's LOAD_WAIT 120; build passed)
 - **More from the playtest (C-229):** right-drag a line and every selected unit's spot shows along it before you let go (F34; Ctrl keeps them together). AI levels read Hard - Balanced and Hard - Aggressive; lasers show their power per shot.
 - Ready to merge: `5f0fabdf` (C-229 with m-sim-2 8713c298; test_client 313 of 314, Nanoframe waiting on models-C; build passed)
 - **Tower lasers reworked (C-228), after your look:** they end on the target's surface facing the tower (not its turret top, not inside it), the wider beams are a bright wavering core in a soft fading glow instead of a solid rod, and a flash with a soft halo covers the muzzle. The camera turns all the way round now.
