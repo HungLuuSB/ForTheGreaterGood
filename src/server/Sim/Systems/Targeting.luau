@@ -53,6 +53,7 @@ local Types = require("../Types")
 local World = require("../World")
 
 local STAGGER = 6
+local SENSOR_EVERY = 2 -- Sensors' cadence (Sim's system table): visibility changes on these ticks
 
 -- Search phase per unit ID: hashed, so its parity doesn't follow the ID's
 -- (S-23). Cached: it depends only on the ID.
@@ -378,6 +379,7 @@ return function(sim: Types.Sim)
 		local p = profiles[w.defIndex[id]]
 		local fs = w.fireState[id]
 		local staggerTick = (phaseOf(id) + tick) % STAGGER == 0
+		local sensorTick = tick % SENSOR_EVERY == 0
 		local attacker = w.lastAttacker[id]
 		if not World.isRef(w, attacker, w.lastAttackerGen[id]) then
 			attacker = 0 -- gone, or its ID now belongs to another unit (D109)
@@ -423,7 +425,12 @@ return function(sim: Types.Sim)
 		for slot = 1, count do
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
-			local searchNow = staggerTick or retarget or w.wOverkill[key] == OK_RETARGET
+			-- a weapon with no target also searches on every sensor tick, when
+			-- what the team sees changes (S-185): the staggered phase made
+			-- some IDs react a tick or more later to a new enemy, and in close
+			-- mirror fights the first volley decided (odd IDs won 34 of 40)
+			local idleNow = sensorTick and w.wTarget[key] == 0
+			local searchNow = staggerTick or retarget or idleNow or w.wOverkill[key] == OK_RETARGET
 			if groundOrder and (weapon.type == "BOMB" or weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") then
 				World.setTarget(w, key, 0) -- bombing / shelling the ordered spot (Air.bombAim, S-68)
 				continue

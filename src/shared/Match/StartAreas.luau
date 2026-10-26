@@ -31,9 +31,12 @@ export type Sides = {
 	sideOfStart: { [number]: number }, -- start index → its ally team
 }
 
--- Shares `startCount` starts among `allyTeams` (any order; duplicates ignored).
--- Errors when there are more sides than starts.
-function StartAreas.sides(allyTeams: { number }, startCount: number): Sides
+-- Shares `startCount` starts among `allyTeams` (any order; duplicates ignored):
+-- contiguous blocks, or the map's own split for that many sides (`splits`,
+-- Layers.sideSplits: side count → each side's start indices, S-186, for
+-- maps whose start order would put a side in two corners). Errors when there
+-- are more sides than starts.
+function StartAreas.sides(allyTeams: { number }, startCount: number, splits: { [number]: { { number } } }?): Sides
 	local allies: { number } = {}
 	for _, a in allyTeams do
 		if table.find(allies, a) == nil then
@@ -47,6 +50,16 @@ function StartAreas.sides(allyTeams: { number }, startCount: number): Sides
 	end
 	local startsOf: { [number]: { number } } = {}
 	local sideOfStart: { [number]: number } = {}
+	local split = splits and splits[n]
+	if split then
+		for k, a in allies do
+			startsOf[a] = table.clone(split[k])
+			for _, i in split[k] do
+				sideOfStart[i] = a
+			end
+		end
+		return { allies = allies, startsOf = startsOf, sideOfStart = sideOfStart }
+	end
 	for k, a in allies do
 		local first, last = (k - 1) * startCount // n + 1, k * startCount // n
 		local list = {}

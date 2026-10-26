@@ -101,6 +101,8 @@ export type UnitDef = {
 	-- switched off (TOGGLE), it retracts: can't fire, and damage to it is
 	-- divided by `armor` (S-96, client request 43). It starts switched on.
 	retract: { armor: number }?,
+	height: number?, -- studs: the body's height (hit cylinder, sight lines); default 6 × footprint (S-184: tall towers)
+	muzzleHeight: number?, -- studs above its base its weapons fire from; default 0.6 × height
 	retired: boolean?, -- no longer built (on no build list); kept so old replays and scenes load (S-157)
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
@@ -349,6 +351,8 @@ local UNIT_SPEC: Spec = {
 		pinpointer = { kind = "boolean", optional = true },
 		pinpointFull = { kind = "number", optional = true, min = 1 },
 		deploy = { kind = "record", optional = true, fields = { time = POSITIVE, armor = { kind = "number", min = 1 } } },
+		height = opt(POSITIVE),
+		muzzleHeight = opt(POSITIVE),
 		deathBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 } } },
 		shield = { kind = "record", optional = true, fields = { radius = POSITIVE, capacity = POSITIVE, recharge = POSITIVE, power = NON_NEGATIVE } },
 		retract = { kind = "record", optional = true, fields = { armor = { kind = "number", min = 1 } } },

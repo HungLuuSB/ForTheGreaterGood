@@ -354,7 +354,7 @@ precision u8        Pinpointer precision, floor(p × 255)  (protocol 32, S-147)
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
 | 34 | Event `OWN_STATUS 26`: own units off camera, health / build / queue head on change, capped per tick (S-158) |
-| 37 | Pre-game v2 (section 9b, S-174): commands FACTION 22, START 23; PREGAME flags CHAOS 8, HOST 16; events PICK_CLOCK 31, START_BOXES 32; a 3 s countdown, then the landing (`Schema.LANDING_TICKS`). Sharing (S-176): commands SHARE_UNITS 24, SHARE_RESOURCE 25, REQUEST 26; event SHARE 33 |
+| 37 | Pre-game v2 (section 9b, S-174): commands FACTION 22, START 23; PREGAME flags CHAOS 8, HOST 16; events PICK_CLOCK 31, START_BOXES 32; a 3 s countdown, then the landing (`Schema.LANDING_TICKS`). Sharing (S-176): commands SHARE_UNITS 24, SHARE_RESOURCE 25, REQUEST 26; event SHARE 33. Smart Reclaim (S-183): command AREA 27 (params `op u8 (AreaOp RECLAIM 1, REPAIR 2, RESURRECT 3), cell u16, offX u8, offZ u8, radius u16` studs 1..1024, builders' unit IDs); REPEAT now also on mobile builders (an area order stays) |
 | 36 | Up to 16 teams: strategic records 7 B (team 4 bits); commands START_POS 20, READY 21, and BUILD / STOP with no unit IDs in the pre-game; events PREGAME 28, COUNTDOWN 29, PREBUILD 30 (section 9b, S-169); every match has the pre-game, spawn boxes (S-171) |
 | 35 | Command RESURRECT 19; WRECK carries `supply`, `fullSupply` (14 B); event WRECK_STATE 27 (S-168) |
 | 33 | Command PRIORITY 18 and unit state bit LOW_PRIORITY 128: resource priority (S-156) |

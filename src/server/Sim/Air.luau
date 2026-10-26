@@ -453,7 +453,14 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 	-- stay over the map
 	local g = nav.grid
 	local cx, cz = g.originX + g.sizeX / 2, g.originZ + g.sizeZ / 2
-	if math.abs(x - cx) > g.sizeX / 2 - Air.EDGE_MARGIN or math.abs(z - cz) > g.sizeZ / 2 - Air.EDGE_MARGIN then
+	-- (S-183, the playtest's F3: a jet turning back at a fixed margin
+	-- overshot the edge and was drawn pinned to it: heading out, it turns
+	-- back a turn radius earlier)
+	local turnBack = v / math.max(p.turnRate, 1e-3) + 20
+	local sx, sz = math.sin(h), math.cos(h)
+	local mx = if (x - cx) * sx > 0 then math.max(Air.EDGE_MARGIN, turnBack) else Air.EDGE_MARGIN
+	local mz = if (z - cz) * sz > 0 then math.max(Air.EDGE_MARGIN, turnBack) else Air.EDGE_MARGIN
+	if math.abs(x - cx) > g.sizeX / 2 - mx or math.abs(z - cz) > g.sizeZ / 2 - mz then
 		dirX, dirZ = cx - x, cz - z
 	end
 

@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 37 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174); SHARE_UNITS, SHARE_RESOURCE and REQUEST commands, SHARE events (S-176)
+Schema.PROTOCOL_VERSION = 37 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174); SHARE_UNITS, SHARE_RESOURCE and REQUEST commands, SHARE events (S-176); AREA command: Smart Reclaim / repair / resurrect (S-183)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -109,7 +109,9 @@ Schema.CmdType = table.freeze({
 	SHARE_UNITS = 24, -- the unit IDs (own, complete, not a Commander) go to ally player `value` (S-176; protocol 37)
 	SHARE_RESOURCE = 25, -- share params: give `amount` of `resource` to ally player `toPlayer` (S-176)
 	REQUEST = 26, -- value = Schema.ShareKind ASK_UNITS / ASK_SUPPLY / ASK_POWER: ask the allies for help (S-176)
+	AREA = 27, -- area params: Smart Reclaim / repair / resurrect inside a circle, target after target (S-183; protocol 37)
 })
+Schema.AreaOp = table.freeze({ RECLAIM = 1, REPAIR = 2, RESURRECT = 3 }) -- AREA op (S-183)
 
 -- CHEAT commands (S-102, net.md "Cheat commands"): what to do.
 Schema.CheatOp = table.freeze({
@@ -154,8 +156,10 @@ Schema.MoveState = table.freeze({ HOLD_POSITION = 0, MANEUVER = 1, ROAM = 2 })
 --           (unit count 0..MAX: KILL SELECTED's units; S-102)
 --   share   toPlayer u8, resource u8 (ShareKind.SUPPLY / POWER), amount u32
 --           (unit count 0; S-176)
+--   area    op u8 (AreaOp), cell u16, offX u8, offZ u8 (the circle's centre),
+--           radius u16 (studs, 1..AREA_MAX_RADIUS) (S-183)
 --   none
-type ParamKind = "pos" | "target" | "build" | "value" | "camera" | "cheat" | "share" | "none"
+type ParamKind = "pos" | "target" | "build" | "value" | "camera" | "cheat" | "share" | "area" | "none"
 
 local CT = Schema.CmdType
 local PARAMS: { [number]: ParamKind } = {
@@ -185,7 +189,9 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.SHARE_UNITS] = "value",
 	[CT.SHARE_RESOURCE] = "share",
 	[CT.REQUEST] = "value",
+	[CT.AREA] = "area",
 }
+Schema.AREA_MAX_RADIUS = 1024 -- studs
 -- commands that may carry no unit IDs besides CAMERA and CHEAT (S-169): the
 -- pre-game's START_POS and READY, and BUILD / STOP for the Commander that
 -- doesn't exist yet (its pre-game build queue)
@@ -239,6 +245,8 @@ export type Command = {
 	-- share (S-176; amount as cheat)
 	toPlayer: number?,
 	resource: number?, -- Schema.ShareKind.SUPPLY / POWER
+	-- area (S-183; cell / offX / offZ as pos)
+	areaOp: number?, -- Schema.AreaOp (radius as cheat's)
 }
 
 function Schema.encodeCommand(w: Writer, cmd: Command)
@@ -309,6 +317,17 @@ function Schema.encodeCommand(w: Writer, cmd: Command)
 		w:writeU8(minZ)
 		w:writeU8(maxX)
 		w:writeU8(maxZ)
+	elseif kind == "area" then
+		local op = required(cmd.areaOp, "areaOp")
+		local radius = required(cmd.radius, "radius")
+		if op < 1 or op > 3 or radius < 1 or radius > Schema.AREA_MAX_RADIUS then
+			error(`Schema: area op {op} radius {radius}`, 2)
+		end
+		w:writeU8(op)
+		w:writeU16(required(cmd.cell, "cell"))
+		w:writeU8(required(cmd.offX, "offX"))
+		w:writeU8(required(cmd.offZ, "offZ"))
+		w:writeU16(radius)
 	elseif kind == "share" then
 		local resource = required(cmd.resource, "resource")
 		if resource ~= Schema.ShareKind.SUPPLY and resource ~= Schema.ShareKind.POWER then
@@ -404,6 +423,16 @@ function Schema.decodeCommand(r: Reader): Command
 			fail(r, "camera rectangle has min > max")
 		end
 		cmd.minX, cmd.minZ, cmd.maxX, cmd.maxZ = minX, minZ, maxX, maxZ
+	elseif kind == "area" then
+		local op = r:readU8()
+		cmd.cell = r:readU16()
+		cmd.offX = r:readU8()
+		cmd.offZ = r:readU8()
+		local radius = r:readU16()
+		if op < 1 or op > 3 or radius < 1 or radius > Schema.AREA_MAX_RADIUS then
+			fail(r, `area op {op} radius {radius}`)
+		end
+		cmd.areaOp, cmd.radius = op, radius
 	elseif kind == "share" then
 		cmd.toPlayer = r:readU8()
 		local resource = r:readU8()
