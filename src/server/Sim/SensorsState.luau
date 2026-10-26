@@ -43,6 +43,7 @@ export type State = {
 	-- powered sensor (tracking radars, jammers: D104, D108), the share of its
 	-- power upkeep it gets (0..1), which scales its track and jam radii
 	tracked: { [number]: { [number]: boolean } },
+	radarGhosts: { [number]: { [number]: boolean } }, -- per team: live structures it remembers (GHOST) that its radar covers now (S-202)
 	trackError: { [number]: number },
 	pinpoints: { [number]: number }, -- per team: finished Pinpointers (S-59); recomputed every sensor step
 	powerScale: { [number]: number },
@@ -51,9 +52,10 @@ export type State = {
 function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 	local g = grid or Grid.new(256, 256)
 	local width, depth = g.sensorX, g.sensorZ
-	local maps, vis, ghosts, ghostIds, tracked, losDirty = {}, {}, {}, {}, {}, {}
+	local maps, vis, ghosts, ghostIds, tracked, losDirty, radarGhosts = {}, {}, {}, {}, {}, {}, {}
 	for _, team in teams do
 		tracked[team] = {}
+		radarGhosts[team] = {}
 		local m = {}
 		for _, kind in SensorsState.KINDS do
 			m[kind] = buffer.create(width * depth * 2)
@@ -92,6 +94,7 @@ function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 		end)(),
 		radarError = {},
 		tracked = tracked,
+		radarGhosts = radarGhosts,
 		trackError = {},
 		pinpoints = {},
 		powerScale = {},
