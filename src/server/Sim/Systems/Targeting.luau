@@ -4,11 +4,13 @@
 --
 -- Targeting follows team knowledge, never server truth (D100). Each weapon
 -- keeps its current target while it stays valid: an enemy the team knows
--- about (VISIBLE; RADAR contacts only for canTargetRadar weapons, guide
--- 11.4), a category it can hit, within range (+10% hysteresis, measured to
+-- about (VISIBLE, or a RADAR contact: every weapon takes blips unless its
+-- canTargetRadar is false, S-202, the user; guide 11.4), a category it can hit, within range (+10% hysteresis, measured to
 -- the known position) and arc, and allowed by the unit's fire state.
 -- Structure ghosts (remembered, not in sight) are targets only on an attack
--- order or as a manual target (S-127, the user: never picked by the search);
+-- order or as a manual target (S-127, the user: never picked by the search),
+-- unless the team's radar covers the live structure now: then it is a blip
+-- like any other (S-202);
 -- one stays a target even if its structure died unseen (the team can't
 -- tell). Bombers with an attack-ground order (Air) don't auto-target.
 -- An untracked radar or sonar contact reveals only its domain (D107): it is
@@ -189,6 +191,13 @@ end
 -- Can `weapon` on unit `id` engage `t`? Returns the center distance when yes.
 local VISIBLE, RADAR, GHOST, SONAR = Sensors.Level.VISIBLE, Sensors.Level.RADAR, Sensors.Level.GHOST, Sensors.Level.SONAR
 
+-- A remembered structure (GHOST) that is alive and under the team's radar
+-- now: the search takes it like a blip (S-202).
+local function radarGhost(sim: Types.Sim, ally: number, t: number, gen: number?): boolean
+	local onRadar = sim.sensors.radarGhosts[ally]
+	return onRadar ~= nil and onRadar[t] == true and sim.world.slot[t] ~= nil and (gen == nil or sim.world.gen[t] == gen)
+end
+
 -- `gen` is the remembered target's generation (D109); nil = the live unit.
 -- Also returns what it looked up (level, def index, type known, known
 -- categories), so a search scores the target without asking again (S-74).
@@ -214,7 +223,7 @@ local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t:
 	local radius = if known then tp.radius else 0
 	local allowed = level == VISIBLE
 		or (level == RADAR and weapon.canTargetRadar)
-		or (level == GHOST and weapon.canTargetRadar and manual == true)
+		or (level == GHOST and weapon.canTargetRadar and (manual == true or radarGhost(sim, w.ally[id], t, gen)))
 		or (level == SONAR and weapon.type == "TORPEDO") -- torpedoes hunt sonar contacts
 	if not allowed then
 		return nil

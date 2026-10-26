@@ -2866,3 +2866,15 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Was:** an anti-nuke skipped a missile one of its team's interceptors already flew at (S-111), but in the tick before any launched, every site picked the nearest warhead. Two sites facing two warheads aimed at the same one. The one that fired then took the second warhead off the other site while it reloaded, and the second warhead landed.
 - **Now** (`Targeting.interceptTarget`): each tick an interceptor ready to fire (stock left, reload done) claims its missile for its ally team. The team's other interceptors leave it and take the next missile, nearest first; with none left they wait. An interceptor that is empty or reloading tracks a missile without claiming it, so it never keeps a ready site off. A missile whose interceptor misses or is shot down is free again. The same rule covers point defence (S-149).
 - **Test:** Nuke.spec: two sites, two warheads launched the same tick: two interceptors at different warheads, both shot down, nothing lands.
+
+## S-202 — Every unit takes radar blips; a ghost under radar is a blip (the user) (2026-10-27)
+
+- **Asked:** "unit also need to auto target radar blips (I tested a Radiance with some unit outside of it vision range but in its attack range, aided with good radar but it does not shoot)".
+- **Was:**
+  - Only 20 of 93 weapons had `canTargetRadar` (artillery, long-range missiles, bombs, the Radiance). The rest ignored blips: Inferno, Bulwark, Talos, the naval guns, the Citadel.
+  - A structure the team had seen once was a GHOST whenever it was out of sight, even under radar. The search never takes a ghost (S-127: only on an attack order), so a scouted base sitting on radar wasn't shot. That's the likely case in the playtest: the Radiance itself already fires at plain blips (Defenses.spec).
+- **Now:**
+  - `Defs` sets `canTargetRadar` true unless a def says false. No def opts out today.
+  - Sensors keeps `radarGhosts[team]`: the live structures it remembers that its radar covers this sensor tick. Targeting treats those like radar contacts, aimed at the remembered spot (structures don't move). A ghost off radar still needs an attack order.
+  - Blips are aimed at their hidden aim point (S-131), so radar shots miss by the radar's error, less with tracking radar and Pinpointers. IR missiles still can't lock a blip (EW).
+- **Tests:** RadarTargets.spec: a Talos, whose def doesn't ask for it, shells a radar blip beyond its sight and holds fire with no radar; a structure seen once is shelled while radar covers it and left alone when only remembered.
