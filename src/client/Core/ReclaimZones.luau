@@ -34,7 +34,7 @@ end
 function ReclaimZones.of(world: World.World): { Zone }
 	local ids = {}
 	for id, w in world.wrecks do
-		if w.supply > 0 then
+		if w.supply > 0 and w.feature == nil then -- (map features aren't zoned: trees and rocks would ring the whole map, S-197)
 			table.insert(ids, id)
 		end
 	end

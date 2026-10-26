@@ -6,7 +6,9 @@
 -- and what the client knows:
 --   production       generators, solar (def.production)
 --   wind             the turbine's max × the team's current wind (Eco)
---   extractor        rate × every deposit value under its footprint
+--   extractor        rate × every deposit value under its footprint, at the
+--                    share of its power upkeep paid (S-198: the team's power
+--                    ratio), and the upkeep itself
 --   converter        while on: power in, supply out
 --   upkeep           radar / jammer / tracking drain (while on, if switchable)
 --   building         a factory with a queue, or a builder next to an own
@@ -27,6 +29,7 @@ export type Context = {
 	queue: { number }?, -- a factory's queue (def indices), Api.state.factoryQueues
 	wind: number?, -- 0..1, Api.state.economy.wind
 	ratio: number?, -- 0..1, the slower of the team's supply / power stall ratios
+	powerRatio: number?, -- 0..1, the team's power stall ratio (an extractor's upkeep paid, S-198)
 }
 
 -- The own unfinished frame a builder `u` is working on, or nil: the
@@ -98,7 +101,10 @@ function UnitFlow.parts(world: World.World, u: World.Unit, def: any, ctx: Contex
 		out.powerIn += def.wind.max * (ctx.wind or 0)
 	end
 	if def.extractor then
-		out.supplyIn += def.extractor.rate * depositsUnder(world, def, u.x, u.z)
+		local upkeep = def.extractor.upkeep or 0
+		local paid = if upkeep > 0 then (ctx.powerRatio or 1) else 1
+		out.supplyIn += def.extractor.rate * depositsUnder(world, def, u.x, u.z) * paid
+		out.powerOut += upkeep * paid
 	end
 	if def.converter and on then
 		out.powerOut += def.converter.power or 0

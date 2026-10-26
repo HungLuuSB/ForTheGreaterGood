@@ -32,7 +32,7 @@ local function unit(w: any, defId: string, x: number, z: number, extra: { [strin
 end
 
 return function(t: any)
-	t.test("an extractor yields rate × the deposits under it; a frame yields nothing", function()
+	t.test("an extractor yields rate × the deposits under it at the upkeep paid; a frame yields nothing", function()
 		local w = world()
 		local g = w.grid
 		local cx, cz = g:cellAt(4, 4)
@@ -40,7 +40,11 @@ return function(t: any)
 		local u, def = unit(w, "ord_extractor", 4, 4)
 		local s, p = UnitFlow.of(w, u, def, {})
 		t.equal(s, def.extractor.rate * 4)
-		t.equal(p, 0)
+		t.equal(p, -def.extractor.upkeep, "its power upkeep (S-198)")
+		-- a power stall: the upkeep only partly paid, the extraction with it
+		s, p = UnitFlow.of(w, u, def, { powerRatio = 0.5 })
+		t.equal(s, def.extractor.rate * 4 * 0.5)
+		t.equal(p, -def.extractor.upkeep * 0.5)
 		u.build = 0.5
 		t.equal((UnitFlow.of(w, u, def, {})), 0, "a frame: nothing yet")
 	end)

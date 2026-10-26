@@ -19,6 +19,7 @@ local Deaths = require("../Core/Deaths")
 local World = require("../Core/World")
 local MeshModels = require("./MeshModels")
 local Models = require("./Models")
+local Features = require("@shared/Defs/Features")
 local Prng = require("@shared/Util/Prng")
 
 local RenderDeaths = {}
@@ -54,6 +55,8 @@ export type State = {
 	pending: { [number]: boolean }, -- WRECK records not placed yet
 	reclaimed: { [number]: boolean }, -- WRECK_GONE before its death finished playing
 	free: { [string]: { Model } },
+	features: { [number]: { model: Model, kind: number, real: boolean } }, -- map features by wreck ID (S-197): uncapped, apart from the wrecks
+	featureVersion: number, -- MeshModels.fxVersion when the placeholders were last checked
 	folder: Folder,
 	stats: { shakes: number, flings: number, wrecks: number, crashes: number },
 }
@@ -62,7 +65,7 @@ function RenderDeaths.new(): State
 	local folder = Instance.new("Folder")
 	folder.Name = "Wrecks"
 	folder.Parent = workspace
-	return { playing = {}, wrecks = {}, byWreck = {}, pending = {}, reclaimed = {}, free = {}, folder = folder, stats = { shakes = 0, flings = 0, wrecks = 0, crashes = 0 } }
+	return { playing = {}, wrecks = {}, byWreck = {}, pending = {}, reclaimed = {}, free = {}, features = {}, featureVersion = -1, folder = folder, stats = { shakes = 0, flings = 0, wrecks = 0, crashes = 0 } }
 end
 
 local function wreckModel(s: State, def: any, id: number): Model
@@ -237,7 +240,87 @@ end
 -- Follows the team's wreck records (C-65), at render tick `t`: reclaimed
 -- wrecks go; a known wreck nobody is placing appears from its record (a
 -- recent DEATH of the client's gets DEATH_WAIT ticks to place it itself).
+-- Map features (S-197): a tree or a rock where the server says, turned by
+-- its heading; models-C's variant (Meshes.fx.feature_tree / feature_rock)
+-- and a ±15% scale picked from the wreck ID, so every client draws the
+-- same. Until the meshes are approved and built, a plain stand-in: a trunk
+-- under a crown, a grey block filling its cell.
+RenderDeaths.FEATURE_SCALE = 0.15
+local TRUNK, CROWN, STONE = Color3.fromRGB(96, 72, 52), Color3.fromRGB(70, 104, 58), Color3.fromRGB(118, 114, 108)
+
+local function plain(name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, shape: Enum.PartType?, parent: Instance): BasePart
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery = true, false, false, false
+	p.Size, p.CFrame, p.Color, p.Material = size, cf, color, material
+	if shape then
+		p.Shape = shape
+	end
+	p.Parent = parent
+	return p
+end
+
+local function standIn(kind: number): Model
+	local m = Instance.new("Model")
+	if kind == Features.TREE then
+		local base = plain("base", Vector3.new(0.9, 4, 0.9), CFrame.new(0, 2, 0), TRUNK, Enum.Material.Wood, Enum.PartType.Cylinder, m)
+		base.CFrame = CFrame.new(0, 2, 0) * CFrame.Angles(0, 0, math.pi / 2)
+		plain("crown", Vector3.new(5, 5, 5), CFrame.new(0, 5.5, 0), CROWN, Enum.Material.Grass, Enum.PartType.Ball, m)
+		m.PrimaryPart = base
+	else
+		local base = plain("base", Vector3.new(6.8, 3, 6.8), CFrame.new(0, 0.9, 0), STONE, Enum.Material.Rock, nil, m)
+		m.PrimaryPart = base
+	end
+	return m
+end
+
+-- The model for feature `wid` of `kind`: the mesh variant when built, else
+-- the stand-in. `real`: it's the mesh.
+local function featureModel(kind: number, wid: number): (Model, boolean)
+	local k = Features.BY_ID[kind]
+	local n = if k then MeshModels.fxVariants(k.model) else 0
+	if n > 0 then
+		local template = MeshModels.fxVariant(k.model, wid % n + 1)
+		if template then
+			return template:Clone(), true
+		end
+	end
+	return standIn(kind), false
+end
+
+local function placeFeature(s: State, world: any, wid: number, rec: any)
+	local model, real = featureModel(rec.feature, wid)
+	local rng = Prng.new(wid)
+	local scale = 1 + rng:nextNumber(-RenderDeaths.FEATURE_SCALE, RenderDeaths.FEATURE_SCALE)
+	model:ScaleTo(scale)
+	local y = World.groundY(world, rec.x, rec.z)
+	model:PivotTo(CFrame.new(rec.x, y, rec.z) * CFrame.Angles(0, rec.heading, 0))
+	model.Parent = s.folder
+	s.features[wid] = { model = model, kind = rec.feature, real = real }
+end
+
 function RenderDeaths.syncWrecks(s: State, world: any, t: number)
+	for _, wid in world.wreckGone do
+		local f = s.features[wid]
+		if f then
+			f.model:Destroy() -- a map feature reclaimed (S-197)
+			s.features[wid] = nil
+		end
+	end
+	-- the meshes arrived: stand-ins become the real thing
+	if MeshModels.fxVersion ~= s.featureVersion then
+		s.featureVersion = MeshModels.fxVersion
+		for wid, f in s.features do
+			local rec = world.wrecks[wid]
+			if not f.real and rec then
+				local _, real = featureModel(f.kind, wid)
+				if real then
+					f.model:Destroy()
+					placeFeature(s, world, wid, rec)
+				end
+			end
+		end
+	end
 	for _, wid in world.wreckGone do
 		s.pending[wid] = nil
 		local w = s.byWreck[wid]
@@ -262,7 +345,12 @@ function RenderDeaths.syncWrecks(s: State, world: any, t: number)
 	table.clear(world.wreckAdded)
 	for wid in s.pending do
 		local rec = world.wrecks[wid]
-		if rec == nil or s.byWreck[wid] then
+		if rec == nil or s.byWreck[wid] or s.features[wid] then
+			s.pending[wid] = nil
+			continue
+		end
+		if rec.feature then
+			placeFeature(s, world, wid, rec)
 			s.pending[wid] = nil
 			continue
 		end
@@ -309,6 +397,10 @@ function RenderDeaths.clear(s: State)
 	table.clear(s.byWreck)
 	table.clear(s.pending)
 	table.clear(s.reclaimed)
+	for _, f in s.features do
+		f.model:Destroy()
+	end
+	table.clear(s.features)
 	for _, list in s.free do
 		for _, m in list do
 			m:Destroy()

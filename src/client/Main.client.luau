@@ -905,6 +905,10 @@ if RunService:IsStudio() then
 			-- Invoke("beamsanyway", on): models-C's review beam shot effect (for the user's review, C-133)
 			require("./Render/BeamShots").ANYWAY = (...) == true
 			return true
+		elseif query == "featuresanyway" then
+			-- Invoke("featuresanyway", on): draw C's review tree and rock meshes (S-197)
+			MeshModels.FEATURES_ANYWAY = (...) == true
+			return true
 		elseif query == "depositsanyway" then
 			-- Invoke("depositsanyway", on): draw C's review deposit models (for the user's review, C-123)
 			MeshModels.DEPOSITS_ANYWAY = (...) == true
