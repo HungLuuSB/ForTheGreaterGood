@@ -73,6 +73,22 @@ ANCHORS = {
     "chs_warlord": {"nano1": (N, (-3.5, 3.25, -2.45))},
     "ord_zenith": {"nano1": (N, (0.0, -0.5, -2.1)), "nano2": (N, (0.0, -0.5, 1.6))},
     "chs_condor": {"nano1": (N, (0.0, 0.1, -1.9)), "nano2": (N, (0.0, 0.2, 2.1))},
+    # S-181 bot factories: the pad under the gantry / in the pit, the emitter heads
+    "ord_botlab": {"buildpad": (B, (0.0, 0.8, -6.5)),
+                   "nano1": (B, (-4.5, 12.7, -6.5)), "nano2": (B, (4.5, 12.7, -6.5)), "nano3": (B, (0.0, 12.7, -6.5))},
+    "chs_botlab": {"buildpad": (B, (0.0, 0.8, -2.0)),
+                   "nano1": (B, (-3.5, 12.6, -2.0)), "nano2": (B, (3.5, 12.6, -2.0))},  # the hook blocks
+    "ord_advbotlab": {"buildpad": (B, (0.0, 0.8, -8.0)),
+                      "nano1": (B, (-9.0, 16.3, -8.0)), "nano2": (B, (9.0, 16.3, -8.0)),
+                      "nano3": (B, (-3.0, 16.3, -8.0)), "nano4": (B, (3.0, 16.3, -8.0))},
+    "chs_advbotlab": {"buildpad": (B, (0.0, 0.8, -3.0)),
+                      "nano1": (B, (0.0, 19.2, -3.0)),  # the tower crane's hook
+                      "nano2": (B, (-10.2, 12.1, -3.0)), "nano3": (B, (10.2, 12.1, -3.0))},  # the lamp masts
+    # S-181 walking constructors and helpers: the emitter at the tip of the `nano` arm
+    "ord_artisan": {"nano1": (N, (1.45, 4.6, -2.2))},
+    "chs_tinker": {"nano1": (N, (0.95, 5.4, -2.65))},
+    "ord_lazarus": {"nano1": (N, (-1.45, 4.5, -2.05))},
+    "chs_graverobber": {"nano1": (N, (1.45, 3.35, -3.0))},
 }
 
 

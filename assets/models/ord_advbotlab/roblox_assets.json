@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 2388 triangles, glow share 2.4%",
+  "bar": {
+    "model": "rbxassetid://75497457073581",
+    "meshes": {
+      "base": "rbxassetid://94634003373195",
+      "base_glow_power": "rbxassetid://113386966690452",
+      "base_glow_running": "rbxassetid://128696365420951",
+      "radar": "rbxassetid://100437943542931",
+      "radar_glow_running": "rbxassetid://132062132619698"
+    },
+    "decals": {
+      "ALB": "rbxassetid://100318287346700",
+      "RGH": "rbxassetid://109133094003711",
+      "NOR": "rbxassetid://117182751854969",
+      "MTL": "rbxassetid://117495115334950",
+      "EMI": "rbxassetid://77559570893989"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://140399193120867",
+      "NOR": "rbxassetid://111578749986389",
+      "RGH": "rbxassetid://118952069204543",
+      "MTL": "rbxassetid://104741552525546",
+      "EMI": "rbxassetid://102331865762648"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advbotlab_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://112552237312697",
+    "meshes": {
+      "base": "rbxassetid://108417820660856",
+      "radar": "rbxassetid://83461803608362"
+    },
+    "decals": {
+      "ALB": "rbxassetid://80296495971233",
+      "RGH": "rbxassetid://84446703682330",
+      "NOR": "rbxassetid://128744013206746",
+      "MTL": "rbxassetid://82038730694752",
+      "EMI": "rbxassetid://79345656029436"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://111006740095344",
+      "NOR": "rbxassetid://101082432974818",
+      "RGH": "rbxassetid://110795941232735",
+      "MTL": "rbxassetid://112733508774412",
+      "EMI": "rbxassetid://136319425174803"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advbotlab_wreck_bar in FTGG Art",
+    "revision": "S-181 wreck, rigged in FTGG Art 2026-10-26, review: 2092 triangles"
+  }
+}

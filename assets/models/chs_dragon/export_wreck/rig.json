@@ -1,0 +1,202 @@
+{
+  "id": "chs_dragon_wreck",
+  "wreckOf": "chs_dragon",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0011,
+        3.8908,
+        2.2566
+      ],
+      "size": [
+        31.8232,
+        6.5643,
+        32.7441
+      ]
+    },
+    "fanL": {
+      "parent": "base",
+      "center": [
+        -8.5174,
+        4.1447,
+        1.507
+      ],
+      "size": [
+        5.9349,
+        0.9068,
+        5.4363
+      ],
+      "pivot": [
+        -8.6,
+        4.1,
+        1.6
+      ]
+    },
+    "fanR": {
+      "parent": "base",
+      "center": [
+        8.6126,
+        4.2317,
+        1.6955
+      ],
+      "size": [
+        5.7989,
+        0.5885,
+        5.4823
+      ],
+      "pivot": [
+        8.6,
+        4.1,
+        1.6
+      ]
+    },
+    "belly": {
+      "parent": "base",
+      "center": [
+        -0.0655,
+        0.4074,
+        -2.084
+      ],
+      "size": [
+        3.6747,
+        1.4919,
+        3.9284
+      ],
+      "pivot": [
+        0.0,
+        1.0,
+        -2.0
+      ]
+    },
+    "flame": {
+      "parent": "belly",
+      "center": [
+        -0.0681,
+        -1.2412,
+        -1.9982
+      ],
+      "size": [
+        1.9137,
+        1.4385,
+        1.9546
+      ],
+      "pivot": [
+        0.0,
+        -0.3,
+        -2.0
+      ]
+    },
+    "laser_l": {
+      "parent": "base",
+      "center": [
+        -15.1998,
+        3.4411,
+        -2.8408
+      ],
+      "size": [
+        1.9249,
+        1.7213,
+        5.5576
+      ],
+      "pivot": [
+        -15.2,
+        3.6,
+        -0.6
+      ]
+    },
+    "laser_r": {
+      "parent": "base",
+      "center": [
+        15.2528,
+        3.3753,
+        -2.669
+      ],
+      "size": [
+        1.8994,
+        1.7493,
+        5.3547
+      ],
+      "pivot": [
+        15.2,
+        3.6,
+        -0.6
+      ]
+    }
+  },
+  "attachments": {
+    "laser_l_muzzle": {
+      "parent": "laser_l",
+      "at": [
+        -15.2,
+        3.6,
+        -5.6000000000000005
+      ]
+    },
+    "laser_r_muzzle": {
+      "parent": "laser_r",
+      "at": [
+        15.2,
+        3.6,
+        -5.6000000000000005
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "fanL": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fanR": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1740,
+    "fanL": 80,
+    "fanR": 80,
+    "belly": 200,
+    "flame": 88,
+    "laser_l": 152,
+    "laser_r": 116,
+    "total": 2456
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

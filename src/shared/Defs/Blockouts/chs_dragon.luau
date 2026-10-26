@@ -58,6 +58,7 @@ end
 
 return {
 	id = "chs_dragon",
+	visualPieces = { "fanL", "fanR" }, -- client-spun
 	parts = parts,
 	attachments = {
 		{ name = "laser_l_muzzle", parent = "laser_l", at = { -TX, WY, TZ - 4.4 } },

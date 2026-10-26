@@ -1,0 +1,79 @@
+{
+  "id": "chs_botlab_wreck",
+  "wreckOf": "chs_botlab",
+  "footprintStuds": 32,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0416,
+        8.279,
+        -0.0485
+      ],
+      "size": [
+        31.1552,
+        17.1857,
+        31.5174
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.8,
+        -2.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -3.5,
+        12.6,
+        -2.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        3.5,
+        12.6,
+        -2.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2076,
+    "total": 2076
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

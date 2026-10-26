@@ -9,6 +9,11 @@ an upright armored head with a sensor, a grille and a team panel. The
 `barrel` (pitch, -60..+60 degrees): the emitter's mount on the head's left,
 a ribbed laser tube and a glowing lens; `muzzle` at the lens. Order reads
 clean and heavy (M-14). Writes export/ through tools/unit.py.
+
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved mesh scaled x1.277 (the
+`scale` below), so it stands as tall as its approved F18 blockout
+(~20.3 studs) and reads heavier; same shapes, pieces and anchors.
 """
 
 import math
@@ -93,11 +98,14 @@ def details_barrel(p):
     ring(p, (BARREL[0], BARREL[1] + 0.61, BARREL[2]), UP, 0.3)
 
 
+F18 = 1.277  # the F18 scale (old top 15.9 -> 20.3 studs)
+
 unit.run(__file__, "ord_sentry_tower", "order", footprint=2,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("turret", "base", TURRET, build_turret, details_turret),
                  unit.PieceSpec("barrel", "turret", BARREL, build_barrel, details_barrel)],
          attachments={"muzzle": {"parent": "barrel", "at": list(MUZZLE)}},
          budget=4000,
-         previews=[("35", (-20, 17, -24), (0, 7.0, 0), 40),
-                   ("close", (-9, 15, -10), (-0.3, 11.6, -1.0), 35)])
+         scale=(F18, F18, F18),
+         previews=[("35", (-25.5, 21.7, -30.6), (0.0, 8.9, 0.0), 40),
+                   ("close", (-11.5, 19.2, -12.8), (-0.4, 14.8, -1.3), 35)])

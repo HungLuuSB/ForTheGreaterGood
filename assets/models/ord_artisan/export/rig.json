@@ -1,0 +1,422 @@
+{
+  "id": "ord_artisan",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.275,
+        3.865,
+        0.5058
+      ],
+      "size": [
+        2.75,
+        2.93,
+        2.7785
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        1.425,
+        4.6,
+        -0.8477
+      ],
+      "size": [
+        0.65,
+        0.72,
+        2.4045
+      ],
+      "pivot": [
+        1.35,
+        4.6,
+        0.0
+      ]
+    },
+    "thighL": {
+      "parent": "base",
+      "center": [
+        -0.7,
+        1.9897,
+        -0.1266
+      ],
+      "size": [
+        0.6326,
+        1.8255,
+        0.8583
+      ],
+      "pivot": [
+        -0.7,
+        2.6,
+        0.0
+      ]
+    },
+    "shinL": {
+      "parent": "thighL",
+      "center": [
+        -0.7,
+        0.8538,
+        -0.1034
+      ],
+      "size": [
+        0.5746,
+        1.2256,
+        0.8571
+      ],
+      "pivot": [
+        -0.7,
+        1.352,
+        -0.24750000000000003
+      ]
+    },
+    "footL": {
+      "parent": "shinL",
+      "center": [
+        -0.7,
+        0.208,
+        -0.065
+      ],
+      "size": [
+        0.6876,
+        0.416,
+        1.32
+      ],
+      "pivot": [
+        -0.7,
+        0.45,
+        0.1
+      ]
+    },
+    "thighR": {
+      "parent": "base",
+      "center": [
+        0.7,
+        1.9897,
+        -0.1266
+      ],
+      "size": [
+        0.6326,
+        1.8255,
+        0.8583
+      ],
+      "pivot": [
+        0.7,
+        2.6,
+        0.0
+      ]
+    },
+    "shinR": {
+      "parent": "thighR",
+      "center": [
+        0.7,
+        0.8538,
+        -0.1034
+      ],
+      "size": [
+        0.5746,
+        1.2256,
+        0.8571
+      ],
+      "pivot": [
+        0.7,
+        1.352,
+        -0.24750000000000003
+      ]
+    },
+    "footR": {
+      "parent": "shinR",
+      "center": [
+        0.7,
+        0.208,
+        -0.065
+      ],
+      "size": [
+        0.6876,
+        0.416,
+        1.32
+      ],
+      "pivot": [
+        0.7,
+        0.45,
+        0.1
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        1.45,
+        4.6,
+        -2.2
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "nano",
+    "thighL",
+    "shinL",
+    "footL",
+    "thighR",
+    "shinR",
+    "footR"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "thighL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.1,
+        0.1
+      ],
+      "size": [
+        2.26,
+        0.12,
+        1.4
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.55,
+        -0.84
+      ],
+      "size": [
+        0.5,
+        0.104,
+        0.049
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        3.4,
+        1.87
+      ],
+      "size": [
+        1.2,
+        0.1,
+        0.04
+      ]
+    },
+    {
+      "name": "nano_glow_power",
+      "piece": "nano",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        1.45,
+        4.6,
+        -2.11
+      ],
+      "size": [
+        0.48,
+        0.48,
+        0.12
+      ]
+    },
+    {
+      "name": "thighL_glow_running",
+      "piece": "thighL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -0.986,
+        1.976,
+        -0.1237
+      ],
+      "size": [
+        0.03,
+        0.7488,
+        0.0799
+      ]
+    },
+    {
+      "name": "footL_glow_running",
+      "piece": "footL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -0.7,
+        0.3,
+        -0.705
+      ],
+      "size": [
+        0.4812,
+        0.08,
+        0.03
+      ]
+    },
+    {
+      "name": "thighR_glow_running",
+      "piece": "thighR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.986,
+        1.976,
+        -0.1237
+      ],
+      "size": [
+        0.03,
+        0.7488,
+        0.0799
+      ]
+    },
+    {
+      "name": "footR_glow_running",
+      "piece": "footR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.7,
+        0.3,
+        -0.705
+      ],
+      "size": [
+        0.4812,
+        0.08,
+        0.03
+      ]
+    }
+  ],
+  "glowShare": 0.0256,
+  "triangles": {
+    "base": 704,
+    "nano": 316,
+    "thighL": 324,
+    "shinL": 180,
+    "footL": 88,
+    "thighR": 324,
+    "shinR": 180,
+    "footR": 88,
+    "total": 2204
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

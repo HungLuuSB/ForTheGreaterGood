@@ -9,6 +9,11 @@ boxy housing with a lit top. The `barrel` (pitch, -60..+60 degrees): a
 focusing emitter, coil rings and a glowing blue lens; `muzzle` at the lens
 (the beam's start). Order reads clean and heavy (M-14). Writes export/
 through tools/unit.py.
+
+F18 (the user's beta feedback 2026-10-26, "turret should stand high,
+proud, tower above others"): the approved mesh scaled x1.197 (the
+`scale` below), so it stands as tall as its approved F18 blockout
+(~19.1 studs) and reads heavier; same shapes, pieces and anchors.
 """
 
 import os
@@ -82,11 +87,14 @@ def details_barrel(p):
     seam(p, (-0.5, 14.41, -1.4), (0.5, 14.41, -1.4), UP)
 
 
+F18 = 1.197  # the F18 scale (old top 15.95 -> 19.1 studs)
+
 unit.run(__file__, "ord_beamer", "order", footprint=2,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("turret", "base", TURRET, build_turret, details_turret),
                  unit.PieceSpec("barrel", "turret", BARREL, build_barrel, details_barrel)],
          attachments={"muzzle": {"parent": "barrel", "at": list(MUZZLE)}},
          budget=4000,
-         previews=[("35", (-20, 18, -24), (0, 7.5, 0), 40),
-                   ("close", (-10, 16, -11), (0, 12.8, -1.0), 38)])
+         scale=(F18, F18, F18),
+         previews=[("35", (-23.9, 21.5, -28.7), (0.0, 9.0, 0.0), 40),
+                   ("close", (-12.0, 19.2, -13.2), (0.0, 15.3, -1.2), 38)])
