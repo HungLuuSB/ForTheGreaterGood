@@ -7,6 +7,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 ## Summary (2026-10-26, pre-game and automatic colours)
 
 - **More from the playtest (C-229):** right-drag a line and every selected unit's spot shows along it before you let go (F34; Ctrl keeps them together). AI levels read Hard - Balanced and Hard - Aggressive; lasers show their power per shot.
+- Ready to merge: `5f0fabdf` (C-229 with m-sim-2 8713c298; test_client 313 of 314, Nanoframe waiting on models-C; build passed)
 - **Tower lasers reworked (C-228), after your look:** they end on the target's surface facing the tower (not its turret top, not inside it), the wider beams are a bright wavering core in a soft fading glow instead of a solid rod, and a flash with a soft halo covers the muzzle. The camera turns all the way round now.
 - Ready to merge: `cc254306` (C-228; src/client; test_client 312 of 313, Nanoframe waiting on models-C; build passed)
 - **Small playtest items (C-227):** Ctrl + wheel turns the camera (F2); a building's rotation stays for the next ones (F14); stockpiles show their count as a number with a bar for the one being made (F10); Sentry and Overwatch lasers (both factions) are wider (F11).
