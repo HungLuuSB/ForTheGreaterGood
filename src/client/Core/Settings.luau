@@ -11,9 +11,9 @@
 --              model detail distance (piece animation LOD), and fog of war shading
 --              on / off (the near-zoom fog of war lights; off by default,
 --              the user's call from C-32's review)
---   atmosphere a lighting preset (Render/Atmosphere, C-83): Map's own (C-155, the default: each map's
---              lighting and time of day, Core/MapLook), Night (C-101: no sun), Current (the
---              place as saved), Clear day, Battle haze, Dusk
+-- (No atmosphere choice since C-243, the user: "remove the option to
+-- change the environment from the setting": every map has its own lighting
+-- and time of day, Core/MapLook.)
 --   interface  UI scale
 -- High is today's look; listed under "Needs my review".
 
@@ -27,7 +27,6 @@ export type State = {
 	edgeScroll: boolean,
 	quality: Quality,
 	fog: boolean, -- the fog blanket's shading (C-100); what is hidden stays hidden either way
-	atmosphere: string,
 	uiScale: number,
 	detailedModels: boolean, -- BAR mesh models (Render/MeshModels); off: blockouts, nothing loaded (C-106)
 	glow: Glow, -- unit glow (Render/Glow): off, low (resting glow, stall dimming), high (also factory pulse, weapon flash)
@@ -56,7 +55,6 @@ Settings.QUALITY = table.freeze({
 }) :: { [Quality]: Graphics }
 
 Settings.QUALITIES = { "low", "medium", "high" } :: { Quality }
-Settings.ATMOSPHERES = { "map", "night", "current", "clear", "haze", "dusk", "desert" }
 Settings.GLOWS = { "off", "low", "high" } :: { Glow }
 
 Settings.LIMITS = table.freeze({
@@ -68,7 +66,7 @@ Settings.LIMITS = table.freeze({
 -- The defaults; `studio` turns edge scroll off (Studio's mouse often rests
 -- on the window edge, Camera.EDGE_SCROLL).
 function Settings.new(studio: boolean): State
-	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "map", uiScale = 1, detailedModels = true, glow = "high", headlights = true, devMode = studio, buildGrid = true }
+	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, uiScale = 1, detailedModels = true, glow = "high", headlights = true, devMode = studio, buildGrid = true }
 end
 
 local function round(x: number, step: number): number
@@ -91,12 +89,6 @@ function Settings.set(s: State, key: string, value: any): boolean
 			return false
 		end
 		t[key] = value
-		return true
-	elseif key == "atmosphere" then
-		if table.find(Settings.ATMOSPHERES, value) == nil then
-			return false
-		end
-		s.atmosphere = value
 		return true
 	elseif key == "glow" then
 		if table.find(Settings.GLOWS, value) == nil then

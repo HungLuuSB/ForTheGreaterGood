@@ -3,9 +3,8 @@
 -- environment + lighting settings + effects + time of day"): its lighting
 -- preset (Render/Atmosphere, with the time of day), the colour of the land
 -- past its edge, and its ambient particles (Render/Environment). Maps
--- without an entry get the default, the moonlit night (C-101). The
--- Settings atmosphere "map" (the default) follows this; the other presets
--- override it.
+-- without an entry get the default, the moonlit night (C-101). There is
+-- no setting to override it (C-243).
 
 local MapLook = {}
 
@@ -36,6 +35,15 @@ MapLook.LOOKS = table.freeze({
 		skirt = { 150, 116, 80 },
 		dust = { color = { 226, 196, 150 }, wind = { 4, 0.2, 1.5 } },
 		mist = { color = { 222, 196, 158 }, wind = { 2, 0, 0.8 } },
+	} :: Look),
+	-- Supreme Strait (S-196, BAR's map): daytime, the user: "Supreme Strait
+	-- time of day is day, not night"; its seas run to the edges, so the land
+	-- past them is sea-dark; a light sea breeze
+	["map:supreme_strait"] = table.freeze({
+		atmosphere = "clear",
+		skirt = { 46, 72, 86 },
+		dust = { color = { 236, 232, 216 }, wind = { 2.5, 0.1, 1 } },
+		mist = { color = { 214, 226, 236 }, wind = { 1.5, 0, 0.6 } },
 	} :: Look),
 } :: { [string]: Look })
 
