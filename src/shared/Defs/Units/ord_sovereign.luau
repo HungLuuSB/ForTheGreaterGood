@@ -17,6 +17,12 @@ return Templates.extend(Templates.Builder, {
 	moveClass = "WALKER", -- climbs 40° slopes, BAR-bot style (S-159)
 	buildRange = 60, -- 70% of 80 (client request 7, S-19), + 4 for the bigger body (S-124: the reach from its edge stays)
 	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_vehplant", "ord_botlab", "ord_airfield", "ord_shipyard", "ord_sentry_tower", "ord_watchtower" },
+	-- a laser on the left arm and the D-Gun on the right (S-194, the user's G5); both turn with the torso
+	pieces = { "base", "nano", "torso", "emitter", "muzzle" }, -- (S-194: the weapons turn with the torso)
+	weapons = {
+		{ def = "ord_sovereign_laser", turretPiece = "torso", muzzle = "emitter" },
+		{ def = "ord_sovereign_dgun", turretPiece = "torso", muzzle = "muzzle" },
+	},
 	production = { supply = 1, power = 20 },
 	deathBlast = { damage = 4000, aoe = 120, edge = 0.15 }, -- a Commander goes up in a huge blast, smaller than a nuke's 150 (S-178, F15)
 	model = "ord_sovereign",

@@ -117,6 +117,14 @@ export type Combat = {
 	contacts: ContactGrid.ContactGrid,
 	friendlyFire: boolean, -- AoE damages allies (direct hits never do)
 	events: { Event },
+	-- self-destruct (S-194, G13): unit → the tick it goes off; units it
+	-- killed this tick (no wreck, a bigger blast)
+	selfDestruct: { [number]: number },
+	selfDestructed: { [number]: boolean },
+	-- the D-Gun (S-194): units each bolt already hit; units it struck this
+	-- tick (they leave no wreck)
+	pHit: { [number]: { [number]: boolean } },
+	noWreck: { [number]: boolean },
 
 	-- projectiles (struct-of-arrays, u16 IDs)
 	proj: { number }, -- dense list of live projectile IDs
@@ -234,6 +242,10 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		contacts = ContactGrid.new(grid),
 		friendlyFire = true,
 		events = {},
+		selfDestruct = {},
+		selfDestructed = {},
+		pHit = {},
+		noWreck = {},
 		proj = {},
 		projSlot = {},
 		px = {},
@@ -581,7 +593,10 @@ function Combat.nearFactor(weapon: Defs.WeaponDef, dist: number): number
 end
 
 local COMMANDER_BIT = Categories.Bit.COMMANDER
+Combat.COMMANDER_BIT = COMMANDER_BIT
 Combat.STRATEGIC_COMMANDER = 0.33 -- strategic blasts (nukes) do a third to Commanders (S-178, F16)
+Combat.BOLT_COMMANDER = 0.5 -- a D-Gun bolt takes this share of a Commander's max health (S-194)
+Combat.BOLT_HEIGHT = 5 -- studs above the ground a D-Gun bolt rides
 
 -- Explosion at (x, y, z) from `weapon` fired by `attacker` of ally team `team`.
 -- `direct` (0 = none) is the unit the projectile struck: it takes full
@@ -722,6 +737,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.pGoal[id] = nil
 	c.pAge[id], c.pKnownX[id], c.pKnownY[id], c.pKnownZ[id], c.pPoint[id], c.pLost[id] = nil, nil, nil, nil, nil, nil
 	c.pShield[id], c.pShieldPhase[id] = nil, nil
+	c.pHit[id] = nil
 	local si = table.find(c.strategic, id)
 	if si then
 		table.remove(c.strategic, si)
@@ -809,6 +825,14 @@ function Combat.hash(c: Combat, h: number): number
 	end
 	h = Hash.u32(h, c.nextProjId)
 	h = Hash.u32(h, c.projSerial)
+	local armed = {}
+	for id in c.selfDestruct do
+		table.insert(armed, id)
+	end
+	table.sort(armed)
+	for _, id in armed do
+		h = Hash.u32(Hash.u32(h, id), c.selfDestruct[id])
+	end
 	for _, id in c.strategic do
 		h = Hash.u32(h, id)
 	end

@@ -6,7 +6,7 @@ return {
 	type = "BALLISTIC",
 	rocket = true, -- point defence intercepts it (S-149)
 	range = 110,
-	reload = 0.8,
+	reload = 1.4, -- 0.8 + the 0.6 s rearm per round it no longer flies home for (S-194, G17: no ammo)
 	projectileSpeed = 300,
 	gravity = 20,
 	accuracy = 1.5,

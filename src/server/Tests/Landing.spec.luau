@@ -5,13 +5,14 @@ local Air = require("../Sim/Air")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
+local AmmoDefs = require("./Support/AmmoDefs") -- the aircraft with ammo, as before S-194
 local RunAll = require("./RunAll")
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
 
 return function(t: RunAll.Context)
 	t.test("tanks shoot an aircraft parked on its pad, as a light ground unit; SAMs don't", function()
-		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = AmmoDefs.load(), seed = 1, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local pad = Spawn.unit(sim, "ord_airpad", 1, 0, 0)
 		World.setHealth(w, pad, 1e6)

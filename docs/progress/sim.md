@@ -14,6 +14,8 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 - **Maps and movement:** 2 × 2 deposits (S-184), side splits (S-186), jets over the map (S-183), Maneuver leash, builders stop at their reach, footprint-2 clearance (S-185).
 - **New units (S-181):** bots and labs, Tzar, Centurion, Dragon, Liche. Transports wait for a load / unload mechanic.
 - **AI (S-187):** Hard - Aggressive, team roles, teamwork, counters, tidy generators, the new units.
+- **Supreme Strait (S-195, G6):** `map:supreme_strait`, 320 cells, two seas and a land strait, 16 hints.
+- **Protocol 39 (S-194):** self-destruct with a 6 s countdown (G13); aircraft without ammo heal at rearm pads below a retreat setting (G17); the Commanders' laser and D-Gun (G5); turrets hold their aim through hull turns (G9); builders' work target and kind on the wire (G7, G4).
 - **Playtest feedback 2, first batch (S-193):** units 40% slower (G8); Fatboy and Tzar fire tank shells (G10); one factory type early, no doubled bot labs (G1); 16-stud lanes in the AI's generator block (G3); `MapRegistry.details` for the lobby's map panel (G12).
 - **Sight diff (S-191, B's watchdog):** NetOut diffs only the sight rows Sensors changed: the empty Lakelands preview 1.50 → 0.03 ms per tick, a 4-AI Lakelands match 0.55 → 0.16 ms.
 - **Plasma (S-190, the user):** every plasma shot in the tank shell's colour; Thug and Mace lose their splash (direct hits only) and use the tank's small hit.

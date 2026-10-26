@@ -9,6 +9,7 @@ local Sensors = require("../Sim/Sensors")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
+local AmmoDefs = require("./Support/AmmoDefs") -- the aircraft with ammo, as before S-194
 local RunAll = require("./RunAll")
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
@@ -41,7 +42,7 @@ end
 
 -- A Falcon circling (-200, 0) and a Wasp flying in from the east.
 local function intercept(seed: number): (Sim.Sim, number, number)
-	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+	local sim = Sim.new({ defs = AmmoDefs.load(), seed = seed, players = PLAYERS, mapId = "flat:128" })
 	local falcon = Spawn.unit(sim, "ord_falcon", 1, -200, 0, math.pi / 2)
 	local wasp = Spawn.unit(sim, "chs_wasp", 2, 380, 30, -math.pi / 2)
 	moveTo(sim, 1, { falcon }, -200, 0)
@@ -128,7 +129,7 @@ return function(t: RunAll.Context)
 
 	t.test("an advanced rearm pad rearms two aircraft at once, twice as fast (S-166)", function()
 		for _, padId in { "ord_empyrean", "chs_rookery" } do
-			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+			local sim = Sim.new({ defs = AmmoDefs.load(), seed = 1, players = PLAYERS, mapId = "flat:128" })
 			local team = if padId == "ord_empyrean" then 1 else 2
 			local fighter = if team == 1 then "ord_falcon" else "chs_harpy"
 			local pad = Spawn.unit(sim, padId, team, 0, 0)
@@ -199,7 +200,7 @@ return function(t: RunAll.Context)
 
 	t.test("rearming slows down when the team stalls", function()
 		local function rearmTicks(stall: boolean): number
-			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+			local sim = Sim.new({ defs = AmmoDefs.load(), seed = 1, players = PLAYERS, mapId = "flat:128" })
 			local w = sim.world
 			local pad = Spawn.unit(sim, "ord_airpad", 1, 0, 0)
 			if stall then
@@ -258,7 +259,7 @@ return function(t: RunAll.Context)
 	-- An Absolution bomber 600 studs west of three parked Ravagers, with an
 	-- Order spotter keeping them VISIBLE; the bomber is told to fight there.
 	local function bombRange(seed: number, moving: boolean): (Sim.Sim, number, { number })
-		local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = AmmoDefs.load(), seed = seed, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local bomber = Spawn.unit(sim, "ord_absolution", 1, -450, 0, math.pi / 2)
 		local spotter = Spawn.unit(sim, "ord_lancer", 1, 150, 0) -- 100 studs from the targets: in sight

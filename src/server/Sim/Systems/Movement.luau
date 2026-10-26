@@ -389,6 +389,9 @@ return function(sim: Types.Sim)
 		local top = p.maxSpeed
 		if not p.air then
 			local tx, tz = g:cellAt(nx[k], nz[k])
+			-- (clamped: a ground unit off the map, e.g. a debug spawn, used to
+			-- index past the terrain layer and stop the whole sim; client-B)
+			tx, tz = min(max(tx, 0), g.cellsX - 1), min(max(tz, 0), g.cellsZ - 1)
 			top *= Terrain.factor(layers, p.moveClass, tz * g.cellsX + tx)
 			-- a group move (ctrl): no faster than the group's slowest (S-137)
 			local q = sim.orders.queue[id]

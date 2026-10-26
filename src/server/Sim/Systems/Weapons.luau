@@ -58,6 +58,7 @@ local ContactGrid = require("../Combat/ContactGrid")
 local Defs = require("@shared/Defs/Defs")
 local Guidance = require("@shared/Combat/Guidance")
 local Lofted = require("@shared/Combat/Lofted")
+local Orders = require("../Orders")
 local Deploy = require("../Deploy")
 local Shield = require("../Shield")
 local EW = require("../EW")
@@ -550,7 +551,15 @@ return function(sim: Types.Sim)
 			-- ordered spot for a bomber's attack-ground.
 			local kx, kz, defIndex = nil, nil, nil
 			local projTarget = 0
-			if (weapon.type == "BOMB" or weapon.manualFire or weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil then
+			if weapon.bolt then
+				-- the D-Gun (S-194): only at its DGUN point
+				local dx = sim.orders.dgunX[id]
+				if dx ~= nil then
+					target, kx, kz = 0, dx, sim.orders.dgunZ[id]
+				else
+					target = 0
+				end
+			elseif (weapon.type == "BOMB" or weapon.manualFire or weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil then
 				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
 			elseif (weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.orders.manualBlind[id] and target == 0
 				and (sim.orders.manualX[id] - x) ^ 2 + (sim.orders.manualZ[id] - z) ^ 2 <= weapon.range * weapon.range then
@@ -657,6 +666,20 @@ return function(sim: Types.Sim)
 
 			-- rotate the turret (fixed mounts without a turret table aim
 			-- instantly); without a target: hold, then back to rest
+			-- a turret on target holds its aim while the hull turns under it
+			-- (S-194, the user's G9): it counter-turns by the hull's turn
+			-- since last tick (within its arc), then slews as usual
+			local hullTurn = wrapAngle(heading - (w.wHull[key] or heading))
+			if hullTurn ~= 0 and turret and (aimed or w.wHold[key] > 0) then
+				local held = wrapAngle(w.wYaw[key] - hullTurn)
+				if turret.arc < 360 then
+					local half = rad(turret.arc) / 2
+					held = math.clamp(held, -half, half)
+				end
+				w.wYaw[key] = held
+				w.dirty[id] = bit32.bor(w.dirty[id], World.Dirty.STATE)
+			end
+			w.wHull[key] = heading
 			aimState.yaw, aimState.pitch, aimState.hold = w.wYaw[key], w.wPitch[key], w.wHold[key]
 			if weapon.beamDuration and beaming(c, id, slot) then
 				-- a lingering beam burning (S-119, client request 53): the
@@ -766,7 +789,13 @@ return function(sim: Types.Sim)
 					if salvo and salvo.count > 1 then
 						w.wSalvo[key], w.wSalvoWait[key] = salvo.count - 1, salvo.delay
 					end
-					if weapon.manualFire then
+					if weapon.bolt then
+						sim.orders.dgunX[id], sim.orders.dgunZ[id] = nil, nil -- one bolt per DGUN order (S-194)
+						if sim.orders.dgunWalk[id] then
+							sim.orders.dgunWalk[id] = nil
+							Orders.stopCommand(sim, id) -- it walked into range: stop there
+						end
+					elseif weapon.manualFire then
 						Air.clearGround(sim, id) -- one shot per order (S-48)
 					end
 				end

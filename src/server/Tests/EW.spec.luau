@@ -37,8 +37,11 @@ local FIXED_RANGES = { ord_radar_sam = 600, chs_radar_sam = 560, ord_ir_sam = 30
 local FIXED_RADARS = { ord_aegis = 650, ord_seraph = 520, chs_wyvern = 600, chs_gorgon = 480 }
 local FIXED_AIR_SIGHT = { ord_vigil = 320, ord_halo = 320, chs_thorn = 420, chs_hornet = 300 }
 
-local function testDefs(units: { [string]: { from: string, with: { [string]: any } } }, weapons: { [string]: { from: string, with: { [string]: any } } }): Defs.DefSet
+local function testDefs(units: { [string]: { from: string, with: { [string]: any } } }, weapons: { [string]: { from: string, with: { [string]: any } } }, tweak: ((any) -> ())?): Defs.DefSet
 	local raw = deepCopy(Registry)
+	if tweak then
+		tweak(raw)
+	end
 	for id, r in FIXED_RANGES do
 		raw.weapons[id].range, raw.weapons[id].lockRange = r, r
 	end
@@ -64,6 +67,10 @@ local function testDefs(units: { [string]: { from: string, with: { [string]: any
 end
 
 local BASE = testDefs({}, {}) -- the registered defs with the fixed radar SAM ranges
+-- and with the Harpy's ammo as before S-194 (the rearm test)
+local AMMO_BASE = testDefs({}, {}, function(raw)
+	raw.units.chs_harpy.ammo, raw.units.chs_harpy.ammoCost = 6, { supply = 8, power = 110 }
+end)
 
 local function moveTo(sim: Sim.Sim, player: number, ids: { number }, x: number, z: number)
 	local g = (sim.map :: any).grid
@@ -420,7 +427,7 @@ return function(t: RunAll.Context)
 		-- An empty Harpy lands on a Roost; team 2 has no income, so supply
 		-- stored minus spent only falls by what the rearm pays.
 		local function rearm(spent: boolean): (number, number, { number }, { number })
-			local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = MAP, defs = BASE })
+			local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = MAP, defs = AMMO_BASE })
 			Spawn.unit(sim, "chs_airpad", 2, 0, 0)
 			local harpy = Spawn.unit(sim, "chs_harpy", 2, 40, 0)
 			hold(sim, { harpy })
@@ -447,7 +454,7 @@ return function(t: RunAll.Context)
 			t.expect(landed ~= nil and done ~= nil, "landed and rearmed")
 			return (done :: number) - (landed :: number), before - after, mid, { sim.ew.flares[harpy], sim.ew.chaff[harpy] }
 		end
-		local harpy = Defs.load().units.chs_harpy
+		local harpy = AMMO_BASE.units.chs_harpy
 		local fullTicks, fullCost, _, fullEnd = rearm(false)
 		local ticks, cost, mid, final = rearm(true)
 		local cm = harpy.countermeasures :: any

@@ -18,8 +18,6 @@ return Templates.extend(Templates.Unit, {
 	movement = { maxSpeed = 48, accel = 34, brake = 44, turnRate = 195 },
 	sensors = { sight = 190, airSight = 250 },
 	weapons = { { def = "chs_rockets", turretPiece = "pylon", muzzle = "muzzle" } },
-	ammo = 10,
-	ammoCost = { supply = 6, power = 60 },
 	rearmTime = 0.6,
 	countermeasures = { flares = { charges = 4, chance = 0.55, refillSupply = 2 } },
 	pieces = { "base", "pylon", "muzzle" },

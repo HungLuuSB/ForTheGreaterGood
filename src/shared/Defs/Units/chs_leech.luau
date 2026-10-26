@@ -21,8 +21,6 @@ return Templates.extend(Templates.Unit, {
 	movement = { maxSpeed = 36, accel = 25, brake = 35, turnRate = 165 },
 	sensors = { sight = 180, airSight = 240, sonar = 150 },
 	weapons = { { def = "chs_asw_torpedo", turretPiece = "rack", muzzle = "muzzle" } },
-	ammo = 4,
-	ammoCost = { supply = 12, power = 120 },
 	rearmTime = 2,
 	pieces = { "base", "rack", "muzzle" },
 	model = "chs_leech",
