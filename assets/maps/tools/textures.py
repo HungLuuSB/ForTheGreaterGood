@@ -353,6 +353,22 @@ def bridge(n, rng):
     return alb, normal_map(height, 1.0), rgh
 
 
+def recolor(alb, rgb):
+    """The albedo scaled per channel so its mean is `rgb` (0-255): the pattern kept, the colour moved."""
+    mean = alb.reshape(-1, 3).mean(0)
+    return np.clip(alb * (np.asarray(rgb, float) / 255 / np.maximum(mean, 1e-3))[None, None, :], 0, 1)
+
+
+# per-map variants (BAR-pipeline maps, docs/design/maps.md): a base material in the colours of
+# the map's own BAR texture (its source/minimap.png, the mean per ground type, a little brighter
+# because the game lights it again). Supreme Strait (S-196): grey stone sea floors, paths and
+# strait, olive grass, dark brown-grey rock.
+VARIANTS = {
+    "strait_sand": ("sand", (104, 101, 93)),
+    "strait_grass": ("grass", (78, 95, 24)),
+    "strait_rock": ("rock", (78, 73, 62)),  # dark brown-grey cliffs (BAR's guide: rock reads dark), not the ore-tinted mean
+}
+
 MATERIALS = {"desert": desert, "redrock": redrock, "ground": ground, "cliff": cliff, "grass": grass, "rock": rock,
              "sand": sand, "road": road, "leafy": leafy, "bridge": bridge}
 
@@ -371,8 +387,11 @@ def main():
         del args[i:i + 2]
     sheet = []
     for name in args or list(MATERIALS):
-        rng = np.random.default_rng(sum(map(ord, name)) * 7919)  # fixed seed per material
-        alb, nor, rgh = MATERIALS[name](n, rng)
+        base, rgb = VARIANTS.get(name, (name, None))
+        rng = np.random.default_rng(sum(map(ord, base)) * 7919)  # fixed seed per material
+        alb, nor, rgh = MATERIALS[base](n, rng)
+        if rgb:
+            alb = recolor(alb, rgb)
         d = os.path.join(OUT, name)
         os.makedirs(d, exist_ok=True)
         png.write(os.path.join(d, f"{name}_ALB.png"), to8(alb))
