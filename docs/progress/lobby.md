@@ -14,6 +14,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - Fire now stays on across page changes, as the switch shows.
 - **Studio:** Seraph: the missile climbs to about 190 studs over the launcher, pitches over and bursts on the drone 230 studs out (`lobby_range_seraph_pitchover`, `lobby_range_seraph_intercept`). Halo: the IR missile flies straight out to the drone 80 studs away.
 - Lobby specs 64 / 64; the build check passes.
+- Ready to merge: `8bb573b7` (anti-air with the game's missile guidance, far drone; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-26: the Units showroom comes alive, L-22)
 
