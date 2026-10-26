@@ -76,7 +76,8 @@ export type UI = {
 	icons: Icons.Table,
 	menu: BuildMenu.Menu?,
 	tab: number,
-	armed: boolean, -- B pressed: the digits pick items
+	armed: boolean, -- B or a tab key pressed: the digits pick items, until the selection changes
+	armedFor: string, -- the selection the digits were armed for
 	key: string, -- what the drawn menu was built from
 	codes: { [number]: string },
 }
@@ -128,8 +129,9 @@ local function pick(ui: UI, api: Api.Api, i: number, many: boolean)
 	if #menu.factories > 0 and api.world.defs.units[defId].domain ~= "structure" then
 		api.actions.queueBuild(defId, if many then 5 else 1)
 	else
+		-- (the digits stay armed: the next one picks again, the user's report:
+		-- after one pick the digits went to control groups until B again)
 		api.actions.beginPlacement(defId)
-		ui.armed = false
 	end
 end
 
@@ -224,7 +226,7 @@ function BuildMenuUI.new(api: Api.Api): UI
 	Kit.skin(tipGui)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	tipGui.Parent = gui.Parent
-	local ui: UI = { gui = gui, panel = panel, tabRow = tabRow, grid = grid, tabButtons = {}, itemButtons = {}, itemGlyphs = {}, portraits = {}, tip = tip, tipTitle = tipTitle, tipBody = tipBody, hovered = nil, icons = Icons.table(api.world.defs), menu = nil, tab = 1, armed = false, key = "", codes = Icons.codes(api.world.defs) }
+	local ui: UI = { gui = gui, panel = panel, tabRow = tabRow, grid = grid, tabButtons = {}, itemButtons = {}, itemGlyphs = {}, portraits = {}, tip = tip, tipTitle = tipTitle, tipBody = tipBody, hovered = nil, icons = Icons.table(api.world.defs), menu = nil, tab = 1, armed = false, armedFor = "", key = "", codes = Icons.codes(api.world.defs) }
 	BuildMenuUI.active = ui
 	return ui
 end
@@ -283,7 +285,8 @@ function BuildMenuUI.capture(ui: UI, api: Api.Api, input: InputObject): boolean
 		return true
 	end
 	local d = DIGITS[input.KeyCode]
-	if ui.armed and d then
+	local ctrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+	if ui.armed and d and not ctrl then -- (Ctrl + digit still sets a control group)
 		pick(ui, api, d, shift())
 		return true
 	end
@@ -341,6 +344,12 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 	local world = api.world
 	local menu = BuildMenu.of(world, api.state.selection)
 	ui.menu = menu
+	-- another selection: the digits go back to control groups until B
+	local selKey = table.concat(api.state.selection, ",")
+	if selKey ~= ui.armedFor then
+		ui.armedFor = selKey
+		ui.armed = false
+	end
 	ui.panel.Visible = #menu.tabs > 0
 	if #menu.tabs == 0 then
 		ui.armed = false

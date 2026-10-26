@@ -97,7 +97,7 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 		else reachFor(world, ids)
 	for _, id in ids do
 		local list = wp.byUnit[id]
-		if list == nil or not intent.queue then
+		if list == nil or not (intent.queue or intent.front) then
 			list = {}
 			wp.byUnit[id] = list
 		end
@@ -118,7 +118,11 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 		else
 			point = { kind = kind, x = intent.x :: number, z = intent.z :: number, reach = reach }
 		end
-		table.insert(list, point)
+		if intent.front then
+			table.insert(list, 1, point) -- FRONT (S-199): first, the order under way after it
+		else
+			table.insert(list, point)
+		end
 		wp.idleSince[id] = nil
 	end
 end

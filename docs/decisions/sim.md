@@ -2765,6 +2765,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - **Starts:** the user's 8v8 spawn points (16 circles on the compiled render, point-symmetric).
   - The client's `SupremeStrait.feature` now names cells sea, beach, grass or mountain, from the compiled layers.
 - **Ground:** models-C re-bakes `ground.supreme_strait` from the new layers. The S-195 bake was of the hand-shaped version, which the user didn't approve.
+- **Orientation fix (models-C's finding, after the user saw the bake):** the compiler put the image's top row (BAR's north) at +z. The game camera at yaw 0 looks toward −z, so +z is the screen's bottom, and the map showed as BAR's mirrored top to bottom, with the seas north-east and south-west. Now an image's top row is −z: `map_compile` maps v to z directly (metal, starts and features too), and `map_features` writes v from −z. Supreme Strait recompiled: the seas are north-west and south-east on screen, as in BAR.
 - **Tests:** `SupremeStrait.spec`, rewritten for the compiled map:
   - point symmetry;
   - every land class reaches every start;
@@ -2773,3 +2774,82 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - each start has 2+ metal spots within 140 studs;
   - slow: four AIs build bases.
   - Plus `Base64.spec`.
+
+## S-197 — Map features: trees for power, rocks for supply, listed per map; Supreme Strait's metal is BAR's (the user) (2026-10-27)
+
+- **Asked:** "Introducing environmental resources. Each map features some environment probes: 1. Forests and trees (can be reclaimed for energy). 2. Rocks (can be reclaimed for orb). Each map defines its own list of these probes (type, position, value)." Choices: rocks block, trees don't; Supreme Strait first.
+- **Kinds** (`Shared/Defs/Features`):
+  - **tree:** 150 power, scenery units pass through, model "feature_tree".
+  - **rock:** 30 supply, solid: no ground or naval unit enters its cell and nothing is built there until it's reclaimed; model "feature_rock".
+- **Per map:**
+  - `Layers.features` = { kind, x, z, value? } in studs; value nil = the kind's default.
+  - Pipeline maps list them in `assets/maps/<name>/source/features.luau` as fractions, one side; `map_compile` adds the twins and checks the map with the rocks in place.
+  - `lune run map_features <name> [seed]` writes a first list: tree copses along the grass edges plus lone trees, rocks on islets and at cliff feet, clear of starts and metal. Edit it freely.
+  - Supreme Strait: 398 trees, 170 rocks.
+- **In the sim** (`Sim/Features`):
+  - At the start every feature becomes a reclaimable object on the wreck machinery: `Combat.addFeature`, with `wreckKind`, the amount in `wreckSupply`, `wreckFull`, and `wreckDef` 0.
+  - Reclaim orders and Smart Reclaim take them like wrecks; they're never resurrected.
+  - A tree pays power at `Build.POWER_RECLAIM_RATE` (1 power/s per point of build power, ten times supply's); a rock pays supply.
+  - A rock occupies its cell as `Passability.ROCK` (0xFFFF; unit IDs now end at 65534), and frees it when reclaimed.
+  - Each feature gets its own heading: the golden angle times its place in the list, so the headings spread evenly with no RNG. Clients turn the model by it, so a forest isn't one tree repeated.
+- **Wire, protocol 40:**
+  - WRECK gains `featureKind u8` (0 = a unit's wreck, 1 tree, 2 rock), 15 bytes.
+  - A feature's defIndex is 0, and its supply / fullSupply count its own resource (a tree's power).
+  - Every team knows the map's features from the start; only their removal needs sight, like a wreck's.
+- **Supreme Strait's metal:** the user sent BAR's metal map (white dots, 24 × 24).
+  - `metal.png` now holds its 89 spots: the six big ones on the strait at value 4, the rest 3. They were read off the image, its frame from the big dots' symmetry (centre at 406, 402 of 812 × 804).
+  - With point symmetry that's 90 deposits. The spot hidden under the image's "24 × 24" label is the twin of (120, 776), which the symmetry adds.
+  - The texture-derived spots had missed the six big ones and the islets'.
+- **For the streams:**
+  - client-B draws trees and rocks from WRECK `featureKind` (hover: power or supply left).
+  - models-C models "feature_tree" and "feature_rock".
+  - Drawing contract (models-C asked): a rock sits at its cell's centre and fills that one 8-stud cell; a tree is a point and blocks nothing. A tree's base fits about 4 studs: copses jitter ±22 studs, so trees can stand close. Make a few variants of each; the client picks one and a scale from the wreck ID and turns it by the wire heading.
+- **Tests:**
+  - `Features.spec`:
+    - Supreme Strait's features are there from the start;
+    - rocks occupy their cells, and nothing is built on one;
+    - reclaiming a tree pays power and a rock supply, freeing its cell;
+    - a client knows every feature without seeing it.
+  - `Schema.spec`: protocol 40's WRECK.
+
+## S-198 — Economy balance: extractors cost power, converters 1 supply / 1,200 power, share and convert levels on the resource bar (the user) (2026-10-27)
+
+- **Asked:**
+  1. "Orb deposit costs energy to run."
+  2. "Energy supply converter costs 1 orb and 1200 energy to build. Converts spare 70 energy to 1 orb."
+  3. "2 new thresholds (change with the slider on both resources bar)": the total energy stored (drag it down to share the rest fairly with all allies), the total orb stored (the same), and the converter threshold ("energy stored past this point can be used by converters … If you have 80 spare, only 1 converter can use it").
+- **Extractor upkeep:**
+  - `extractor.upkeep` power per second: T1 3, T2 15.
+  - `Economy.step` pays it right after production. Short of power, extractors deliver the share of their supply that was paid for (`Account.extractRatio`).
+  - An extractor on bare ground extracts nothing and costs nothing.
+- **Converters:**
+  - Both factions: 1 supply and 1,200 power to build (60 / 1,200 before), 70 power a second into 1 supply (Chaos converted 60 : 1 before).
+  - They burn only power stored above `Account.convertAt` (default `CONVERTER_RESERVE`, 0.5). Each needs its whole 70 spare above that level, so 80 spare runs one, not two. Before, each burned whatever was above a fixed 50%, partially.
+- **Share levels:**
+  - `Resource.shareLevel` (default 1). Each economy window, what's stored above level × storage goes to the allies, split fairly. Each ally takes up to its own level, so nothing bounces back.
+  - What nobody takes stays; overflow above storage is still wasted when nobody takes it.
+- **Wire, protocol 40** (with S-197): command `ECO_LEVEL` 31.
+  - Its params, with no unit IDs, are `ecoLevel u8` (`Schema.EcoLevel` SUPPLY_SHARE 1, POWER_SHARE 2, CONVERT 3) and `value u8` (percent).
+  - It sets the sender's team's level.
+  - The Eco record adds `supplyShare, powerShare, convertAt` (u8 percent each), 44 bytes. That's what the client's sliders show.
+- **For client-B:** a slider on each resource bar for its share level, and a third on the power bar for the convert level. Each sends ECO_LEVEL; the Eco record shows each slider's current value.
+- **Tests:**
+  - `EcoLevels.spec`:
+    - extractors without power give nothing, and with it their full rate for 3 power a second;
+    - 80 spare runs one of two converters;
+    - share levels split fairly and respect the receivers' own levels;
+    - the converter's cost.
+  - `Economy.spec`: updated for the upkeep and the whole-chunk converter.
+  - `Schema.spec`: ECO_LEVEL and the Eco record's golden bytes.
+
+## S-199 — FRONT: an order to the head of the queue (the user, through client-B) (2026-10-27)
+
+- **Asked:** "Hold Space to insert command to the front of the queue." client-B asked for it as a command flag in protocol 40, so the protocol needn't move again.
+- **Wire:** `Schema.CmdFlag.FRONT` 8 (the flags mask is now 15). It applies to every order command: MOVE, FIGHT, PATROL, ATTACK, ATTACK_GROUND, GUARD, REPAIR, RECLAIM, RESURRECT, BUILD (mobile builders), AREA, DGUN. Other commands ignore it. With QUEUE as well, FRONT wins.
+- **In the sim** (`Orders.give(..., queued, front)`):
+  - The new order goes in at the head of each unit's queue, and the rest stays.
+  - The order under way stops: its work ends (`Build.commandIdle`; an unfinished frame keeps standing), and a move halts. It's marked not started, so it starts over once the new order is done. The builder walks back, finds its frame (`frameAt`) and finishes it rather than placing a new one. A patrol keeps its two ends.
+  - An automatic order (move state, S-34) isn't kept; FRONT replaces it, like any command.
+  - Factories: FRONT puts an order first on the list for new units. A factory's BUILD still appends to production.
+  - DGUN out of range: the walk goes first. When the bolt fires, the walk ends and the queue goes on (`Orders.endWalk`); without FRONT the Commander stops there, as before.
+- **Tests:** Orders.spec: a FRONT move goes first, then the interrupted move, then the queued one; a FRONT BUILD mid-build finishes first, then the builder finishes the same frame; a FRONT D-Gun walks, fires and goes on to its queued move. Schema.spec: the reserved-bit case moved to 16.

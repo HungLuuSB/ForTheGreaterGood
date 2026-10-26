@@ -27,6 +27,7 @@ local BuildState = require("./BuildState")
 local CheatsState = require("./CheatsState")
 local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
+local Features = require("./Features")
 local SensorsState = require("./SensorsState")
 local Stats = require("./Stats")
 local Alerts = require("./Alerts")
@@ -231,6 +232,7 @@ function Sim.new(config: Config): Sim
 		net = nil :: any,
 	}
 	sim.combat.friendlyFire = not (config.match and config.match.friendlyFire == false) -- a match option (S-73)
+	Features.spawn(sim) -- the map's trees and rocks (S-197)
 	sim.net = NetOut.new(sim)
 	if choose then
 		-- the pre-game (S-169): the scenario runs when it ends, on the picks

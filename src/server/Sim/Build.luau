@@ -25,6 +25,7 @@ local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local EW = require("./EW")
 local Economy = require("./Economy")
+local Features = require("./Features")
 local Lifecycle = require("./Lifecycle")
 local Match = require("./Match")
 local Nav = require("./Nav")
@@ -41,6 +42,7 @@ local Build = {}
 Build.DT = 1 / 15
 Build.START_HEALTH = 0.01 -- fraction of max health a new frame starts with
 Build.RECLAIM_RATE = 0.1 -- supply per second per point of build power
+Build.POWER_RECLAIM_RATE = 1 -- power per second per point of build power: trees (S-197; power is worth a tenth of supply)
 Build.EXIT_ROLL = 24 -- studs a new unit drives out of its factory
 -- Set by Orders (which requires this module): gives a produced unit its
 -- exit roll and its factory's rally order.
@@ -220,6 +222,9 @@ function Build.commandResurrect(sim: Types.Sim, ids: { number }, wreckId: number
 	local c = sim.combat
 	if c.wreckX[wreckId] == nil then
 		return
+	end
+	if c.wreckKind[wreckId] then
+		return -- a map feature: nothing to bring back (S-197)
 	end
 	local wd = sim.defs.unitByIndex[c.wreckDef[wreckId]]
 	if table.find(wd.categories, "COMMANDER") then
@@ -609,10 +614,19 @@ function Build.step(sim: Types.Sim)
 				b.reclaim[id] = 0
 			elseif inRange(sim, id, wx, c.wreckZ[wreck], Grid.CELL_SIZE / 2) then
 				halt(sim, id)
-				local amount = math.min(c.wreckSupply[wreck], bp * Build.RECLAIM_RATE * DT)
+				-- a tree pays power, at POWER_RECLAIM_RATE (S-197); wrecks and rocks supply
+				local resource = Features.resource(sim, wreck)
+				local rate = if resource == "power" then Build.POWER_RECLAIM_RATE else Build.RECLAIM_RATE
+				local amount = math.min(c.wreckSupply[wreck], bp * rate * DT)
 				c.wreckSupply[wreck] -= amount
-				eco.accounts[w.team[id]].supply.reclaimed += amount
+				local acc = eco.accounts[w.team[id]]
+				if resource == "power" then
+					acc.power.reclaimed += amount
+				else
+					acc.supply.reclaimed += amount
+				end
 				if c.wreckSupply[wreck] <= 1e-9 then
+					Features.cleared(sim, wreck) -- (a rock frees its cell)
 					Combat.removeWreck(c, wreck)
 					b.reclaim[id] = 0
 					Combat.addEvent(c, { kind = "RECLAIMED", tick = sim.tick, unit = id, other = wreck })

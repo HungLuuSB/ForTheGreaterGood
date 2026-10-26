@@ -10,6 +10,7 @@
 --   S                        stop (BAR style; the camera pans with the arrow keys)
 --   D, then left click       D-Gun with a Commander selected (S-194, G5), else resurrect
 --   Ctrl + D                 self-destruct the selection (6 s; again to stop, G13)
+--   Space (held)             orders go to the head of the queue; the one under way resumes after (FRONT, S-199)
 --   A / F / M / Z / G, then left click: attack (an enemy unit, or the ground:
 --                            how a nuke silo fires, C-57) / fight / move / patrol to the
 --                            point / guard a unit (C-68, Api.commandAt); Shift keeps the
@@ -312,6 +313,18 @@ function Controls.bind(api: Api.Api): Controls
 		return p ~= nil and world.defs.unitByIndex[p.defIndex].extractor ~= nil
 	end
 
+	-- Space held: FRONT (S-199), whatever else takes the key
+	UserInputService.InputBegan:Connect(function(input)
+		if input.KeyCode == Enum.KeyCode.Space then
+			api.state.front = true
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.KeyCode == Enum.KeyCode.Space then
+			api.state.front = false
+		end
+	end)
+
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if processed or not world.joined then
 			return
@@ -537,6 +550,11 @@ function Controls.bind(api: Api.Api): Controls
 			else
 				local ground = Controls.groundAt(cam(), mouse.X, mouse.Y)
 				local id = pickAt(world, Controls.projector(cam()), mouse.X, mouse.Y)
+				if id == nil and api.state.depositHint and api.actions.buildHint(shift()) then
+					-- a free deposit under the mouse: its extractor (C-244)
+					rightStart, self.lineFrom, self.lineTo = nil, nil, nil
+					return
+				end
 				if ground or id then
 					local p = ground or Vector3.zero
 					api.actions.smartOrder(p.X, p.Z, id, shift(), ctrl())

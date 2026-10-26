@@ -13,8 +13,12 @@
 --   metal   every red pixel is a deposit (full red = metalValue), at its cell;
 --           spots closer than 3 cells merge
 --   point symmetry (mapinfo.symmetry = "point"): every cell matches its twin
---           (heights averaged, the rest from the south-west twin), deposits
---           come from the south-west half and are mirrored
+--           (heights averaged, the rest from the twin first in cell order),
+--           deposits come from that half and are mirrored
+--
+--   features (features.luau, optional; S-197): { { kind, u, v, value? } },
+--           trees and rocks (Defs/Features) as map fractions; with point
+--           symmetry list one side, the twins are added
 --
 -- The checks (it exits 1 if one fails): every start on dry, open, passable
 -- ground; every start and deposit reachable from start 1 by every land move
@@ -45,10 +49,12 @@ local heightImg = Png.decode(fs.readFile(dir .. "height.png"))
 local typeImg = Png.decode(fs.readFile(dir .. "type.png"))
 local metalImg = Png.decode(fs.readFile(dir .. "metal.png"))
 
--- cell (cx, cz) ↔ image fractions: u from the west edge, v from the north
--- edge (north = +z, so v runs against cz)
+-- cell (cx, cz) ↔ image fractions: u from the image's left edge, v from its
+-- top (BAR's north). The image's top is -z: the game camera at yaw 0 looks
+-- toward -z, so the top of the image is the top of the screen (S-196, models-C:
+-- with the top at +z the map showed as BAR's, mirrored top to bottom)
 local function cellBox(cx: number, cz: number): (number, number, number, number)
-	return cx / n, 1 - (cz + 1) / n, (cx + 1) / n, 1 - cz / n
+	return cx / n, cz / n, (cx + 1) / n, (cz + 1) / n
 end
 
 -- the height map averaged over cell (cx, cz), in studs
@@ -88,7 +94,7 @@ end
 local function twin(cx: number, cz: number): (number, number)
 	return n - 1 - cx, n - 1 - cz
 end
--- the south-west twin of a pair (its cells come first in row order from the south)
+-- the twin of a pair that comes first in cell order (lower cz, then cx)
 local function canonical(cx: number, cz: number): boolean
 	local tx, tz = twin(cx, cz)
 	return cz < tz or (cz == tz and cx <= tx)
@@ -121,14 +127,14 @@ for cz = 0, n - 1 do
 	end
 end
 
--- deposits: red pixels → cells, south-west half mirrored when point-symmetric
+-- deposits: red pixels → cells, one half mirrored when point-symmetric
 local spots: { { number } } = {}
 for y = 0, metalImg.height - 1 do
 	for x = 0, metalImg.width - 1 do
 		local r = Png.sample(metalImg, x, y, 1)
 		if r > 0.2 then
 			local cx = math.clamp(math.floor((x + 0.5) / metalImg.width * n), 0, n - 1)
-			local cz = math.clamp(n - 1 - math.floor((y + 0.5) / metalImg.height * n), 0, n - 1)
+			local cz = math.clamp(math.floor((y + 0.5) / metalImg.height * n), 0, n - 1)
 			if point and not canonical(cx, cz) then
 				cx, cz = twin(cx, cz)
 			end
@@ -188,7 +194,7 @@ end
 local starts = {}
 for k, s in info.starts do
 	local cx0 = math.clamp(math.floor(s[1] * n), 0, n - 1)
-	local cz0 = math.clamp(n - 1 - math.floor(s[2] * n), 0, n - 1)
+	local cz0 = math.clamp(math.floor(s[2] * n), 0, n - 1)
 	local found = nil
 	for r = 0, 24 do
 		for dz = -r, r do
@@ -229,6 +235,21 @@ while i < grid.cellCount do
 	i = j
 end
 
+-- features (S-197): fractions → studs, twins added
+local features = {}
+local featureSource = if fs.isFile(dir .. "features.luau") then (require)(`../{dir}features`) :: any else nil
+if featureSource then
+	local size = n * CELL
+	for _, f in featureSource do
+		local x = math.floor((f[2] - 0.5) * size * 4 + 0.5) / 4
+		local z = math.floor((f[3] - 0.5) * size * 4 + 0.5) / 4
+		table.insert(features, { f[1], x, z, f[4] })
+		if point then
+			table.insert(features, { f[1], -x, -z, f[4] })
+		end
+	end
+end
+
 local compiled: CompiledMap.Compiled = {
 	name = info.name,
 	cells = n,
@@ -239,12 +260,24 @@ local compiled: CompiledMap.Compiled = {
 	deposits = deposits,
 	starts = starts,
 	sideSplits = info.sideSplits,
+	features = if #features > 0 then features else nil,
 }
 
 -- the checks
 local layers = CompiledMap.build(compiled)
 Layers.expandDeposits(layers)
 local pm = Passability.build(layers)
+-- rocks block their cell (S-197): check the map with them in place
+local rocks = 0
+for _, f in features do
+	if f[1] == "rock" then
+		local cx, cz = grid:cellAt(f[2], f[3])
+		if grid:inBounds(cx, cz) and Passability.occupant(pm, grid:index(cx, cz)) == 0 then
+			Passability.setOccupied(pm, cx, cz, 1, Passability.ROCK)
+			rocks += 1
+		end
+	end
+end
 local failures = 0
 local function fail(msg: string)
 	failures += 1
@@ -300,7 +333,7 @@ local wet = 0
 for _, d in deposits do
 	wet += if Layers.getWater(layers, grid:index(d[1], d[2])) > 0 then 1 else 0
 end
-print(`{info.name}: {n} × {n} cells, {#starts} starts, {#deposits} deposits ({wet} under water), {math.floor(water / grid.cellCount * 100 + 0.5)}% sea, {math.floor(rock / grid.cellCount * 100 + 0.5)}% rock`)
+print(`{info.name}: {n} × {n} cells, {#starts} starts, {#deposits} deposits ({wet} under water), {math.floor(water / grid.cellCount * 100 + 0.5)}% sea, {math.floor(rock / grid.cellCount * 100 + 0.5)}% rock, {#features - rocks} trees, {rocks} rocks`)
 
 -- the module
 local lines = {
@@ -329,6 +362,14 @@ local function list(rows: { { number } }): string
 end
 table.insert(lines, `\tstarts = {list(starts)},`)
 table.insert(lines, `\tdeposits = {list(deposits)},`)
+if #features > 0 then
+	local parts = {}
+	for _, f in features do
+		local value = if f[4] then ", " .. tostring(f[4]) else ""
+		table.insert(parts, "{ " .. string.format("%q", f[1]) .. ", " .. tostring(f[2]) .. ", " .. tostring(f[3]) .. value .. " }")
+	end
+	table.insert(lines, "\tfeatures = { " .. table.concat(parts, ", ") .. " },")
+end
 table.insert(lines, `\tterrain = "{compiled.terrain}",`)
 table.insert(lines, `\theight = "{compiled.height}",`)
 table.insert(lines, "}")

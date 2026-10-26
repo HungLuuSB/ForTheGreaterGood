@@ -164,7 +164,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 		elseif kind == EK.WRECK then
 			local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 			local id = e.wreckId :: number
-			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0), supply = e.supply or 0, fullSupply = e.fullSupply or 0, rez = 0 }
+			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0), supply = e.supply or 0, fullSupply = e.fullSupply or 0, rez = 0, feature = if (e.featureKind or 0) > 0 then e.featureKind else nil }
 			table.insert(world.wreckAdded, id)
 		elseif kind == EK.ALERT then
 			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0; a full

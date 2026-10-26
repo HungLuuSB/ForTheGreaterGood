@@ -48,7 +48,8 @@ return function(t: RunAll.Context)
 		t.equal(#layers.starts, 16)
 		for i = 1, 8 do
 			local a, b = layers.starts[i], layers.starts[i + 8]
-			t.expect(a[1] + a[2] < 0 and b[1] == -a[1] and b[2] == -a[2], `hint {i} south-west, its twin {i + 8} north-east`)
+			-- (north is the screen's top, -z: south-west is x < 0 or z > 0)
+			t.expect(a[1] - a[2] < 0 and b[1] == -a[1] and b[2] == -a[2], `hint {i} south-west, its twin {i + 8} north-east`)
 		end
 		local symmetric = true
 		for cz = 0, n - 1 do
@@ -84,14 +85,14 @@ return function(t: RunAll.Context)
 		end
 		-- each sea: one big body of SHIP water, the two not joined
 		local size = g.sizeX
-		local nw = reach("SHIP", -0.25 * size, 0.3 * size) -- the north-west bay
-		local se = reach("SHIP", 0.25 * size, -0.3 * size)
+		local nw = reach("SHIP", -0.25 * size, -0.3 * size) -- the north-west bay (north = -z)
+		local se = reach("SHIP", 0.25 * size, 0.3 * size)
 		local count = 0
 		for _ in nw do
 			count += 1
 		end
 		t.expect(count > 2000, `the north-west sea is big ({count} cells)`)
-		t.expect(not nw[g:index(g:cellAt(0.25 * size, -0.3 * size))], "the seas are apart: the strait is land")
+		t.expect(not nw[g:index(g:cellAt(0.25 * size, 0.3 * size))], "the seas are apart: the strait is land")
 		local _ = se
 	end)
 

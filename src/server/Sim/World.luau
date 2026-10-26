@@ -16,7 +16,7 @@ local bor = bit32.bor
 
 local World = {}
 
-World.MAX_ID = 65535
+World.MAX_ID = 65534 -- (65535 is a map rock's occupancy: Passability.ROCK, S-197)
 World.REUSE_DELAY_TICKS = 150 -- 10 s at 15 Hz
 
 -- Dirty bits: which replicated fields changed since NetOut last looked.

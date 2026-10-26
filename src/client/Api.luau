@@ -6,6 +6,7 @@
 
 local Alerts = require("./Core/Alerts")
 local Orders = require("./Core/Orders")
+local Commands = require("./Core/Commands")
 local Placement = require("./Core/Placement")
 local Schema = require("@shared/Net/Schema")
 local Selection = require("./Core/Selection")
@@ -43,8 +44,9 @@ export type State = {
 	camera: { x: number, z: number, zoom: number, strategic: boolean, rect: { number }, corners: { number }? },
 	hover: { unit: number?, x: number, z: number }?,
 	hoverWreck: number?, -- the wreck under the mouse when no unit is (the unit panel shows it, G2)
+	depositHint: { defId: string, defIndex: number, x: number, z: number }?, -- an extractor the selected builders could put on the free deposit under the mouse (C-244): drawn as a ghost, right-click orders it
 	placement: PlacementState?,
-	economy: { supply: Res, power: Res, wind: number }?,
+	economy: { supply: Res, power: Res, wind: number, supplyShare: number, powerShare: number, convertAt: number }?, -- the levels: percent of storage (S-198)
 	alerts: { Alerts.Alert }, -- recent alerts, newest last (C-68)
 	-- the command a left click gives (C-68): "attack", "fight", "move",
 	-- "patrol" or "guard"; nil = normal selection clicks
@@ -54,6 +56,7 @@ export type State = {
 	fireState: number?,
 	moveState: number?,
 	retreat: number?, -- the first selected aircraft's Schema.RetreatAt (protocol 39)
+	front: boolean, -- Space held: orders go to the head of the queue (FRONT, protocol 40; set by Input/Controls)
 	selfDestructing: boolean, -- a selected unit counts down to self-destruct
 	factoryQueues: { [number]: { number } }, -- own factory → its queue on the server (def indices, the head in production; S-61)
 }
@@ -102,6 +105,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		fireState = nil,
 		retreat = nil,
 		selfDestructing = false,
+		front = false,
 		moveState = nil,
 		factoryQueues = {},
 	}
@@ -109,6 +113,9 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 	state.alerts = alertState.list
 
 	local function issue(intent: Orders.Intent, ids: { number }?): (boolean, string?)
+		if state.front and Orders.FRONTABLE[intent.cmdType] then
+			intent.front = true -- Space held (FRONT, S-199)
+		end
 		local targets = ids or sel.ids
 		if #targets == 0 then
 			return false, "nothing selected"
@@ -202,6 +209,14 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 
 	function actions.setMoveState(n: number)
 		return issue({ cmdType = CT.SET_MOVE_STATE, queue = false, value = n })
+	end
+
+	-- A resource bar's slider (ECO_LEVEL, S-198): the supply or power share
+	-- level (stored above it goes to the allies, fairly) or the converters'
+	-- level (power stored above it may be converted), `percent` 0..100.
+	function actions.setEcoLevel(level: number, percent: number)
+		api.send(Commands.encode({ cmdType = CT.ECO_LEVEL, flags = 0, unitIds = {}, ecoLevel = level, value = math.clamp(math.floor(percent + 0.5), 0, 100) }))
+		return true
 	end
 
 	-- Aircraft: the health below which they fly to a rearm pad to heal
@@ -300,6 +315,9 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			-- RESURRECT the same way (S-168, C-216: workers with canResurrect)
 			local best, bestD2 = nil, 24 * 24
 			for wid, w in world.wrecks do
+				if kind == "resurrect" and w.feature then
+					continue -- trees and rocks don't come back (S-197)
+				end
 				local d2 = (w.x - x) ^ 2 + (w.z - z) ^ 2
 				if d2 < bestD2 then
 					best, bestD2 = wid, d2
@@ -504,6 +522,51 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		return placed > 0, if placed == 0 then "no extractor spot there" else nil
 	end
 
+	-- The extractor the selected builders would put on a free deposit (the
+	-- user's QoL, C-244): T2 when a selected builder can build the advanced
+	-- one, else T1 (Commanders, T1 builders). Nil with no builder selected.
+	function actions.hintExtractor(): any?
+		local best = nil
+		for _, id in sel.ids do
+			local u = world.units[id]
+			local def = u and World.def(world, u)
+			for _, opt in (def and def.buildOptions) or {} do
+				local d = defOf(opt)
+				if d and d.extractor and (best == nil or (Upgrades.isUpgrade(world.defs, d) and not Upgrades.isUpgrade(world.defs, best))) then
+					best = d
+				end
+			end
+		end
+		return best
+	end
+
+	-- The free deposit near (x, z) the selected builders could take: the
+	-- extractor and its spot, or nil (no builder, no free deposit there, an
+	-- own extractor already on it).
+	function actions.depositHintAt(x: number, z: number): { defId: string, defIndex: number, x: number, z: number }?
+		local def = actions.hintExtractor()
+		if def == nil then
+			return nil
+		end
+		-- (a deposit patch is 16 studs across: the mouse anywhere on it finds it)
+		local spots = Placement.area(world, def, x, z, 24, x, z, Placement.planned(world, api.waypoints.byUnit))
+		local r = spots[1]
+		if r == nil or (r.replaces or 0) ~= 0 then
+			return nil -- (an upgrade in place stays the Upgrade command's, C-121)
+		end
+		return { defId = def.id, defIndex = def.index, x = r.x, z = r.z }
+	end
+
+	-- Orders the hinted extractor (right-click on a free deposit, C-244);
+	-- `queue` (Shift) appends it.
+	function actions.buildHint(queue: boolean?): (boolean, string?)
+		local h = state.depositHint
+		if h == nil then
+			return false, "no deposit there"
+		end
+		return issue({ cmdType = CT.BUILD, queue = queue == true, x = h.x, z = h.z, defIndex = h.defIndex, facing = 0 }, buildersOf(h.defId))
+	end
+
 	-- The "Upgrade extractors" area command (C-121): the selected builders'
 	-- best upgrading extractor (Upgrades.upgraderFor) onto every own
 	-- extractor it upgrades within `radius` of (cx, cz), nearest first.
@@ -584,7 +647,7 @@ function Api.frame(api: Api, now: number)
 	if world.economy ~= api.seenEconomy then
 		api.seenEconomy = world.economy
 		local e = world.economy
-		state.economy = if e then { supply = res(e.supply), power = res(e.power), wind = e.wind / 255 } else nil
+		state.economy = if e then { supply = res(e.supply), power = res(e.power), wind = e.wind / 255, supplyShare = e.supplyShare or 100, powerShare = e.powerShare or 100, convertAt = e.convertAt or 50 } else nil
 		api.changed.economy:Fire(state.economy)
 	end
 	-- own factories' queues and the selection's states, from the server (S-61)
