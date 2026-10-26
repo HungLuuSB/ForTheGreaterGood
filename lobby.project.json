@@ -105,6 +105,9 @@
       },
       "MeshMaterials": {
         "$path": "place/MeshMaterials.model.json"
+      },
+      "Vfx": {
+        "$path": "place/Vfx.model.json"
       }
     },
     "ServerScriptService": {
