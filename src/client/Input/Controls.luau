@@ -91,6 +91,7 @@ local DIGITS = {
 export type Controls = {
 	boxFrame: Frame,
 	placeFrom: Vector3?, -- left-drag start on the ground while placing (row preview)
+	placeTo: Vector3?, -- the row's far end while dragging one (PlacementGhost previews it, G14)
 	lineFrom: Vector3?, -- right-drag start on the ground, while dragging
 	lineTo: Vector3?,
 	areaFrom: Vector3?, -- an area drag's center (extractor placement, Upgrade extractors; C-121)
@@ -249,7 +250,7 @@ function Controls.bind(api: Api.Api): Controls
 	hint.Parent = gui
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 
-	local self: Controls = { boxFrame = box, placeFrom = nil, lineFrom = nil, lineTo = nil, areaFrom = nil, areaTo = nil, areaMode = nil, attacking = false }
+	local self: Controls = { boxFrame = box, placeFrom = nil, placeTo = nil, lineFrom = nil, lineTo = nil, areaFrom = nil, areaTo = nil, areaMode = nil, attacking = false }
 	local leftStart: Vector2? = nil
 	local boxing = false
 	local rightStart: Vector2? = nil
@@ -305,7 +306,7 @@ function Controls.bind(api: Api.Api): Controls
 		end
 		local placing = api.state.placement ~= nil
 		if placing and input.UserInputType == Enum.UserInputType.MouseButton1 then
-			self.placeFrom = Controls.groundAt(cam(), mouse.X, mouse.Y)
+			self.placeFrom, self.placeTo = Controls.groundAt(cam(), mouse.X, mouse.Y), nil
 			self.areaFrom = if placingExtractor() then self.placeFrom else nil
 			leftStart, boxing = mouse, false
 			return
@@ -414,6 +415,9 @@ function Controls.bind(api: Api.Api): Controls
 		if self.areaFrom and leftStart and (mouse - leftStart).Magnitude > Controls.DRAG_PIXELS then
 			self.areaTo = Controls.groundAt(cam(), mouse.X, mouse.Y)
 		end
+		if self.placeFrom and not self.areaFrom and leftStart and (mouse - leftStart).Magnitude > Controls.DRAG_PIXELS then
+			self.placeTo = Controls.groundAt(cam(), mouse.X, mouse.Y)
+		end
 		if self.placeFrom or self.areaFrom then
 			return -- placing or an area: no selection box
 		end
@@ -443,7 +447,7 @@ function Controls.bind(api: Api.Api): Controls
 			elseif to then
 				api.actions.place(to.X, to.Z, shift(), shift())
 			end
-			self.placeFrom, self.areaFrom, self.areaTo, leftStart = nil, nil, nil, nil
+			self.placeFrom, self.placeTo, self.areaFrom, self.areaTo, leftStart = nil, nil, nil, nil, nil
 			return
 		end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 and self.areaFrom and self.areaMode then

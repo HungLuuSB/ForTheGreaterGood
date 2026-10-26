@@ -4,7 +4,8 @@
 -- client-only pieces. Moving, they walk: models-C's stride pose and its
 -- mirror alternate, one stride per STRIDE seconds. Arms swing against the
 -- legs, the torso twists, the pelvis dips. Stopped, everything eases back
--- to rest. They have no weapon; building is the default script's.
+-- to rest. Building, assisting, repairing or reclaiming, the torso turns
+-- toward the work (G4); a weapon turns it while it fights.
 
 local Default = require("./Default")
 
@@ -63,6 +64,17 @@ function Commander.StopMoving(u: any)
 	end
 	u:Turn("torso", "y", 0, 30)
 	u:Move("base", "y", 0, 2)
+end
+
+Commander.WORK_SPEED = 120 -- degrees per second: the torso turning to its work
+
+-- The work's bearing from the hull (degrees), or nil: back to the front.
+function Commander.Work(u: any, yaw: number?)
+	if yaw then
+		u:Turn("torso", "y", yaw, Commander.WORK_SPEED)
+	else
+		u:Turn("torso", "y", 0, Commander.WORK_SPEED / 2)
+	end
 end
 
 Commander.Create = Default.Create

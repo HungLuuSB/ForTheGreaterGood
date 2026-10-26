@@ -27,7 +27,7 @@ World.MAX_QUEUED_EVENTS = 1024 -- combat events kept until the renderer drains t
 -- Unit state bits (net.md section 3), shared with the sim (S-6).
 World.State = Schema.UnitState
 
-export type Snap = { tick: number, x: number, z: number, alt: number, heading: number }
+export type Snap = { tick: number, x: number, z: number, alt: number, heading: number, y: number? } -- y: absolute height, filled in by Interp.height
 
 export type Aim = { yaw: number, pitch: number } -- radians; yaw relative to the hull
 
@@ -74,6 +74,7 @@ export type Unit = {
 	chaff: number?,
 	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn
 	rx: number?,
+	rheading: number?, -- the hull's drawn heading this frame (a locked turret holds its world aim against it, G9)
 	ry: number?,
 	rz: number?,
 }
@@ -357,6 +358,15 @@ function World.floats(def: any): boolean
 	end
 	local mc = def.moveClass and (MoveClasses :: any)[def.moveClass]
 	return mc ~= nil and (mc.surface == "amphib" or mc.surface == "hover")
+end
+
+-- The sim's own ground height at (x, z): the height of the cell it's in,
+-- flat (Layers.heightAt, as Combat.groundHeight), not the smooth or the
+-- drawn surface. What an aircraft's `alt` is measured from (G16: with the
+-- smooth surface the heights zigzagged by the cells' steps every tick).
+function World.simGroundY(world: World, x: number, z: number): number
+	local layers = world.layers
+	return if layers then Layers.heightAt(layers, x, z) else 0
 end
 
 -- The drawn ground's height at (x, z): the smooth surface between cell

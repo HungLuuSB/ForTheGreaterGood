@@ -84,4 +84,52 @@ function Interp.sample(unit: World.Unit, t: number): (number, number, number, nu
 	return last.x, last.z, last.alt, last.heading
 end
 
+-- Absolute height of an aircraft at render tick `t` (G16, the user's
+-- playtest: planes snapped crossing a mountain). The wire's `alt` is above
+-- the ground under the aircraft, so ground(x(t)) + alt(t) jumps where a
+-- cliff passes under it between two snapshots: the ground term steps at a
+-- point in space, the altitude the other way at a snapshot tick. Each
+-- snapshot's own height, ground(snapshot) + alt with the sim's ground
+-- (`ground`, World.simGroundY), is what the sim flew; interpolating those
+-- is smooth (the sim climbs at most 2.67 studs a tick).
+local function heightOf(s: World.Snap, ground: (number, number) -> number): number
+	local y = s.y
+	if y == nil then
+		y = ground(s.x, s.z) + s.alt
+		s.y = y
+	end
+	return y :: number
+end
+function Interp.height(unit: World.Unit, t: number, ground: (number, number) -> number): number
+	local snaps = unit.snaps
+	local n = #snaps
+	if n == 0 then
+		return ground(unit.x, unit.z) + unit.alt
+	end
+	local first = snaps[1]
+	if t <= first.tick then
+		return heightOf(first, ground)
+	end
+	local last = snaps[n]
+	if t < last.tick then
+		for i = n - 1, 1, -1 do
+			local a = snaps[i]
+			if a.tick <= t then
+				local b = snaps[i + 1]
+				local k = (t - a.tick) / (b.tick - a.tick)
+				local ya = heightOf(a, ground)
+				return ya + (heightOf(b, ground) - ya) * k
+			end
+		end
+	end
+	local over = t - last.tick
+	local yl = heightOf(last, ground)
+	if n >= 2 and over > 0 and bit32.band(unit.state, World.State.MOVING) ~= 0 then
+		local prev = snaps[n - 1]
+		local k = math.min(over, Interp.MAX_EXTRAPOLATE) / (last.tick - prev.tick)
+		return yl + (yl - heightOf(prev, ground)) * k
+	end
+	return yl
+end
+
 return Interp

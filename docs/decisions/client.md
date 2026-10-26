@@ -2088,3 +2088,37 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - If random maps ever reach players, the bone grid is the way to go.
 
 **Why:** S-192, the user: "From now on, maybe switch to mesh terrain instead of Roblox terrain."
+
+### C-237 — Aircraft heights interpolated as flown (2026-10-26, playtest G16)
+
+- The user: "Air unit still snap to the height violently" (Twin Lakes, a plane crossing the mountain).
+- Cause: the wire's `alt` is above the ground under the aircraft. The client drew ground(x(t)) + alt(t). The ground term steps where a cliff passes under the plane, alt steps the other way at a snapshot tick, and the two don't line up: a 36-stud jump in a tenth of a tick in the spec. Also, the sim measures alt from the cell's flat height (`Layers.heightAt`, as `Combat.groundHeight`), not the smooth surface, so even well-timed heights zigzagged by the cells' steps every tick.
+- Fix: `Interp.height` interpolates each snapshot's own absolute height, ground(snapshot) + alt, using `World.simGroundY` (= `Layers.heightAt`). UnitRenderer uses it for tactical aircraft in flight. Landed or off camera, aircraft are drawn as before.
+- Specs (`FlightHeight.spec`): over a 40-stud cliff the height holds steady, where the old way jumped 36 studs. A sim Falcon over Twin Lakes' highest peak, drawn from the wire: at most 0.58 studs per sixth of a tick (the sim's climb plus the whole-stud wire altitude is 0.61), against 6.0 the old way. Studio, the same flight: worst frame 60 studs/s, down from 370–451.
+
+### C-238 — A locked turret holds its world aim (2026-10-26, playtest G9)
+
+- The user: "the turret need to hold its lock on the target, and don't drift away with the body."
+- The wire's yaw is relative to the newest tick's hull, but the hull is drawn two ticks behind. So while engaged (AIMING or READY), the turret is drawn at yaw + (newest heading − drawn heading). Each frame the turret's track moves by the change in that lag, carried with the hull at once, and its goal is yaw + lag, turned toward at the turret's own rate (`PieceAnim.holdWorldAim`). `UnitRenderer` stores the drawn heading in `u.rheading`.
+- Spec: with the hull swinging 0.6 rad, the drawn turret stays on its world aim.
+- Studio, a Lancer firing while it turns: the drawn turret follows the sim's aim. But the sim's turret itself drifted up to 52° off its target while the hull turned faster than the turret's yaw rate. That part is the sim's (sent to sim-A).
+
+### C-239 — Wreck information in the unit panel (2026-10-26, playtest G2)
+
+- The user: "When hover over a wreck, show the wreck info in the unit stats panel (it's current metal / energy left), remove the current black bar."
+- `Api.state.hoverWreck` is the wreck under the mouse when no unit is. The unit panel shows it ahead of the selection, as a hovered enemy: the unit's portrait, "<name> wreck", a white bar of the supply it still holds, "Supply left N / M", and the resurrect progress. The floating label (`Render/WreckInfo`'s hover) is gone.
+- Wrecks carry only supply on the wire, so no power is shown.
+- Studio: a Juggernaut wreck, "Supply left 140 / 140" (`debug_out/screens/2026-10-26-g2-wreck-panel.jpg`).
+
+### C-240 — Row preview; planned buildings highlighted on top (2026-10-26, playtest G14, G15)
+
+- G14, "show preview of planned buildings" while dragging a row: `Controls.placeTo` is the drag's far end. `PlacementGhost` draws a ghost on every spot `Placement.row` gives (up to 40), checked as `placeRow` checks them. They go in two models with one Highlight each, green and red, and stand in for the single ghost.
+- G15, "use Highlight AlwaysOnTop… the indication of planned actions": the placement ghost, the row's ghosts and the queued builds (`QueuedBuilds`, one Highlight over all copies) draw on top of hills and units. Four Highlights in all.
+- Studio: a dragged row of solar arrays (`debug_out/screens/2026-10-26-g14-row-preview.jpg`).
+
+### C-241 — The Commander faces its work (2026-10-26, playtest G4)
+
+- The user: "Commander should rotate its upper part of the body toward the current task."
+- `PieceAnim.drive` takes builder → work target (the nano spray's, `Core/BuildTargets`). A script with a `Work` hook gets the target's bearing from the hull, in degrees, or nil, whenever it changes; while a weapon is engaged, `AimWeapon` has the torso instead. `Commander.Work` turns the torso there at 120°/s, and back to the front after.
+- Studio: building a vehicle plant behind it, the torso turned 106° off the hull to face it (`debug_out/screens/2026-10-26-g4-commander-torso.jpg`).
+- The work target is the client's guess from the order queue: the server doesn't send it. The same guess gives G7's stale nano spray, so the wire target is asked of sim-A.
