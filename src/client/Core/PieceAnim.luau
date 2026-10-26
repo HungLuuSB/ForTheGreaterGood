@@ -17,6 +17,11 @@
 --   Retract(u, retracted, instant)   a retractable tower (def.retract, S-96) was
 --                                    switched off (TOGGLED_ON clear: retracted)
 --                                    or on (C-112); `instant` the first time
+--   Work(u, yaw)                     a builder's work target (G4): the
+--                                    target's bearing from the hull in
+--                                    degrees, or nil when it stops working
+--                                    (called on a change; not while a
+--                                    weapon is engaged, AimWeapon has it)
 --   AimWeapon(u, slot, yaw, pitch, active)
 --                                    the replicated aim changed, or every
 --                                    REAIM seconds while the weapon is
@@ -89,6 +94,8 @@ export type Unit = {
 	lod: Lod,
 	-- what the driver last saw
 	seenAim: { [number]: { number } }, -- slot → { yaw, pitch } (radians)
+	aimLag: { [number]: number }, -- slot → the hull lag a locked turret was last shifted by (G9)
+	workKey: string?, -- the work target Work was last called with ("" none)
 	lastAimCall: { [number]: number }, -- slot → scheduler time
 	moving: boolean,
 	landed: boolean,
@@ -184,6 +191,34 @@ local function trackOf(u: Unit, name: string, kind: number, axisName: Axis): Tra
 	local p = u.pieces[name]
 	local axis = AXES[axisName]
 	return if p and axis then p.tracks[(kind - 1) * 3 + axis] else nil
+end
+
+-- A locked turret holds its aim in the world while the hull turns under it
+-- (G9, the user: "the turret need to hold its lock on the target, and don't
+-- drift away with the body"). The wire's yaw is relative to the newest
+-- tick's hull; the hull is drawn Interp.DELAY_TICKS behind, still turning
+-- toward that heading, so the turret is drawn at yaw + (newest heading -
+-- drawn heading) (the sim's world aim = heading + yaw). Each frame the
+-- turret's track moves by the change in that lag (with the hull, at once),
+-- and its goal is the wire's yaw plus the lag, turned toward at the
+-- turret's own rate as before.
+local function holdWorldAim(u: Unit, slot: number, piece: string, yaw: number, lag: number)
+	local tr = trackOf(u, piece, 1, "y")
+	if tr == nil then
+		return
+	end
+	local d = (lag - (u.aimLag[slot] or 0) + math.pi) % (2 * math.pi) - math.pi
+	u.aimLag[slot] = lag
+	tr.cur += d
+	tr.goal = tr.cur + (yaw + lag - tr.cur + math.pi) % (2 * math.pi) - math.pi
+	local s = u.sched
+	if tr.speed <= 0 then
+		tr.cur = tr.goal
+	elseif tr.cur ~= tr.goal then
+		s.active[tr] = true
+	end
+	write(tr.piece, tr.kind, tr.axis, tr.cur)
+	markDirty(s, tr.piece)
 end
 
 local function spawn(u: Unit, mask: number, fn: (...any) -> (), ...: any)
@@ -332,6 +367,7 @@ function PieceAnim.add(s: Sched, id: number, def: any, script: any): Unit
 		pieces = {},
 		lod = "near",
 		seenAim = {},
+		aimLag = {},
 		lastAimCall = {},
 		moving = false,
 		landed = false,
@@ -380,7 +416,8 @@ end
 
 -- Calls the hooks the replicated state asks for (guide 14.3). `shots` are
 -- this frame's { unitId, slot } shots (Core/Effects).
-function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } })
+-- `work`: builder → the unit it works on now (Core/BuildTargets; G4).
+function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } }, work: { [number]: number }?)
 	local eco = world.economy
 	local ownRatio = if eco then eco.power.ratio / 255 else 1
 	local myTeam = world.me and world.me.team
@@ -449,6 +486,28 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } })
 				PieceAnim.call(u, "Deploy", phase, first)
 			end
 		end
+		-- the upper body toward the work (G4, the user: "Commander should rotate
+		-- its upper part of the body toward the current task"); a weapon in
+		-- action turns it instead
+		if u.lod == "near" and u.script and u.script.Work then
+			local engaged = false
+			for slot in wu.aim do
+				local st = Schema.weaponStateAt(wu.weapon or 0, slot)
+				engaged = engaged or st == WS.AIMING or st == WS.READY
+			end
+			local tid = work and work[id]
+			local t = if tid and not engaged then world.units[tid] else nil
+			local yaw: number? = nil
+			if t then
+				local rel = math.atan2(t.x - wu.x, t.z - wu.z) - (wu.rheading or wu.heading)
+				yaw = math.deg((rel + math.pi) % (2 * math.pi) - math.pi)
+			end
+			local key = if yaw then string.format("%d:%d", tid :: number, math.floor((yaw :: number) / 3)) else ""
+			if key ~= (u.workKey or "") then
+				u.workKey = key
+				PieceAnim.call(u, "Work", yaw)
+			end
+		end
 		for slot, a in wu.aim do
 			local seen = u.seenAim[slot]
 			local state = Schema.weaponStateAt(wu.weapon or 0, slot)
@@ -459,6 +518,13 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } })
 				u.seenAim[slot] = { a.yaw, a.pitch }
 				u.lastAimCall[slot] = s.now
 				PieceAnim.call(u, "AimWeapon", slot, math.deg(a.yaw), math.deg(a.pitch), active)
+			end
+			local slotDef = u.def.weapons[slot]
+			local drawn = wu.rheading
+			if active and drawn and slotDef and slotDef.turretPiece then
+				holdWorldAim(u, slot, slotDef.turretPiece, a.yaw, (wu.heading - drawn + math.pi) % (2 * math.pi) - math.pi)
+			else
+				u.aimLag[slot] = nil
 			end
 		end
 	end

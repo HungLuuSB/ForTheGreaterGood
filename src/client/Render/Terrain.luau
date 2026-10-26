@@ -51,8 +51,9 @@ export type Stats = { seconds: number, cpu: number, voxels: number, chunks: numb
 -- terrain types or the map's features (Core/Terrain.material). Returns nil
 -- when the place has terrain of its own (left alone).
 -- `waterOnly`: the ground is drawn by baked mesh tiles (Render/MeshGround,
--- C-167): only the water goes into the terrain.
-function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature?, waterOnly: boolean?): Stats?
+-- C-167): only the water goes into the terrain. `noWater`: the water is
+-- drawn as mesh planes (Render/Ground, C-236): only the ground goes in.
+function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature?, waterOnly: boolean?, noWater: boolean?): Stats?
 	local terrain = workspace.Terrain
 	if terrain:GetAttribute(MARKER) then
 		terrain:Clear() -- ours, from an earlier map
@@ -87,7 +88,7 @@ function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature
 				for k = 1, cz do
 					local z = g.originZ + (bz + k - 1) * VOXEL + VOXEL / 2
 					local ground = CoreTerrain.groundY(layers, x, z)
-					local water = CoreTerrain.waterY(layers, x, z)
+					local water = if noWater then nil else CoreTerrain.waterY(layers, x, z)
 					local mat = MATERIAL[CoreTerrain.material(layers, x, z, feature)] or Enum.Material.Grass
 					for j = 1, ny do
 						local vy = y0 + (j - 1) * VOXEL

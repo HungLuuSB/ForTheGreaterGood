@@ -177,6 +177,62 @@ return function(t: any)
 		t.expect(swings - before <= 60 * PieceAnim.SPIN_LIMIT, `but at most a frame's worth per step ({swings - before})`)
 	end)
 
+	t.test("a Commander turns its torso toward its work, and back after (G4)", function()
+		local sim = Sim.new({ seed = 7, players = { { id = 1, team = 1 } }, mapId = "flat:48", scenario = "empty" })
+		local def = sim.defs.units.ord_sovereign
+		local s = PieceAnim.new(sim.defs.weaponByIndex)
+		local u = PieceAnim.add(s, 1, def, Registry.forDef(def))
+		local commander: any = { aim = {}, weapon = 0, heading = 0, rheading = 0, state = 0, team = 1, x = 0, z = 0 }
+		local frame: any = { aim = {}, weapon = 0, heading = 0, state = 0, team = 1, x = 10, z = 10 } -- 45° to its right
+		local world: any = { units = { [1] = commander, [2] = frame }, me = nil, economy = nil }
+		local function run(work: any, seconds: number)
+			for _ = 1, math.floor(seconds * 60) do
+				PieceAnim.drive(s, world, {}, work)
+				PieceAnim.step(s, 1 / 60)
+			end
+		end
+		run({ [1] = 2 }, 1.5)
+		local torso = u.pieces.torso
+		t.expect(torso ~= nil and math.abs(torso.rot[2] - math.rad(45)) < 1e-6, `facing its work ({torso and math.deg(torso.rot[2])})`)
+		run({}, 2)
+		t.expect(math.abs(torso.rot[2]) < 1e-6, "back to the front when the work ends")
+	end)
+
+	t.test("a locked turret holds its world aim while the hull turns under it (G9)", function()
+		local sim = Sim.new({ seed = 7, players = { { id = 1, team = 1 } }, mapId = "flat:48", scenario = "empty" })
+		local def = sim.defs.units.ord_lancer
+		local piece = def.weapons[1].turretPiece
+		local s = PieceAnim.new(sim.defs.weaponByIndex)
+		local u = PieceAnim.add(s, 1, def, Registry.forDef(def))
+		-- the newest tick: hull at 1.0 rad, turret 0.3 right of it (world 1.3);
+		-- the hull is drawn behind, at 0.4, turning toward 1.0
+		local wu: any = { aim = { [1] = { yaw = 0.3, pitch = 0 } }, weapon = Schema.WeaponState.READY, heading = 1.0, rheading = 0.4, state = 0, team = 1 }
+		local world: any = { units = { [1] = wu }, me = nil, economy = nil }
+		local function drawnWorldYaw(): number
+			PieceAnim.drive(s, world, {})
+			PieceAnim.step(s, 1 / 60)
+			return wu.rheading + u.pieces[piece].rot[2]
+		end
+		for _ = 1, 180 do
+			drawnWorldYaw() -- three seconds: the turret turns from rest onto its target
+		end
+		local worst = 0
+		for f = 0, 30 do
+			wu.rheading = 0.4 + 0.6 * f / 30 -- the drawn hull swings 0.6 rad over half a second
+			local first = drawnWorldYaw()
+			if f >= 1 then
+				worst = math.max(worst, math.abs(first - 1.3))
+			end
+		end
+		print(string.format("    drawn turret off its world aim by at most %.4f rad while the hull swung 0.6", worst))
+		t.expect(worst < 1e-6, `the turret stays on its target ({worst})`)
+		-- not engaged: no hold, the turret follows the hull to its aim again
+		wu.weapon = Schema.WeaponState.IDLE
+		wu.rheading = 0.4
+		PieceAnim.drive(s, world, {})
+		t.equal(u.aimLag[1], nil, "an idle weapon holds nothing")
+	end)
+
 	t.test("the default script keeps turrets within a tick of the server's aim in a duel", function()
 		local sim = Sim.new({ seed = 7, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:48", scenario = "duel_test" })
 		local world = World.new(sim.defs)

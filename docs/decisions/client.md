@@ -2069,3 +2069,56 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Studio: three Lancers at the ridge's foot (x −972 to −956, z −1580) sit on the drawn grass and slope; screenshot `debug_out/screens/2026-10-26-lakelands-ridge-foot.jpg`. The ground's 402 pieces took about 160 s to load on the first run of a session and about 55 s once cached. The first figure is past the loading screen's 115 s hold.
 
 **Why:** models-C's note with the bake: on coarsened maps the mesh and Core/Terrain's heights differ on slopes.
+
+### C-236 — Mesh water; mesh ground for unbaked maps (2026-10-26, S-192)
+
+**Water as mesh planes.** `Ground.WATER = "mesh"` is the default; Studio's `Invoke("water", "terrain")` brings back terrain water to compare.
+- `Core/Terrain.waterRects(layers)` merges the water cells of each surface level into rectangles that never overlap. Two see-through planes over one cell would show a darker seam.
+- Dry cells next to water join at their highest water neighbour's level: a shore band one cell wide. The ground crosses the surface inside that band, so the plane runs on under the shore and the ground draws the waterline. Rectangles: Coastline 17, The Lakelands 118, Normandy 261 (its river steps down in 14 levels).
+- `Render/Ground` draws each rectangle as a thin Glass plane, transparency 0.32, which catches the sun. Under it go two darker planes, 2.5 and 7 studs down. The ground hides them where the water is shallower, so deep water reads darker, as terrain water did.
+- Ripples: a tileable pattern of bright crests drawn once into a 256² EditableImage, which is small next to the editable budget. It's laid twice on every surface, aligned to world coordinates so planes meet without seams. The two layers scroll two ways on endless tweens; each loop moves whole tiles, so it never jumps, and nothing runs per frame. Without EditableImage (C-214) the water stays plain.
+- Voxel terrain gets no water when mesh water is on. `RenderTerrain.build` gained a 4th parameter, `noWater`; its other parameters are unchanged, so lobby-D's mount still works.
+- Studio, Coastline at 14:00: `debug_out/screens/2026-10-26-water-*.jpg` (terrain, plain mesh, mesh with ripples, the RTS view). Terrain water still has real waves and foam. Mesh water has no LOD and no voxels, and its ripples are a repeating pattern. Not yet looked at on a baked map's shore.
+
+**Mesh ground for maps without a bake: not built.** Options looked at:
+- An EditableMesh at load: over budget. The device's editable memory ran out at about 7,600 vertices (C-213's note). A 128-cell map at 8 studs needs 16,600 vertices, a 256-cell map 66,000, and The Canyon at full detail 160,000.
+- One uploaded grid-patch mesh with a bone per vertex, tiled over the map, with the bones moved to the layers' heights at load. Feasible without editable memory. But a 256-cell map at 8 studs means 66,000 Bone instances (16,000 at 16 studs), plus one upload with the user's approval.
+- Wedge parts per triangle: hundreds of thousands of parts.
+- Keep the voxels for maps without a bake. **Chosen for now.** Players only reach the named maps through the lobby. Random `mapgen:` and `flat:`/`start:` maps are for development. So what players see in voxels is the named maps whose bakes aren't approved yet: The Plains (no bake), and Ridgeline, Coastline, Twin Lakes, Crossroads, Normandy and The Canyon (bakes in review). Approving those bakes, and models-C baking The Plains, moves every player-facing map to mesh ground with no client work.
+- If random maps ever reach players, the bone grid is the way to go.
+
+**Why:** S-192, the user: "From now on, maybe switch to mesh terrain instead of Roblox terrain."
+
+### C-237 — Aircraft heights interpolated as flown (2026-10-26, playtest G16)
+
+- The user: "Air unit still snap to the height violently" (Twin Lakes, a plane crossing the mountain).
+- Cause: the wire's `alt` is above the ground under the aircraft. The client drew ground(x(t)) + alt(t). The ground term steps where a cliff passes under the plane, alt steps the other way at a snapshot tick, and the two don't line up: a 36-stud jump in a tenth of a tick in the spec. Also, the sim measures alt from the cell's flat height (`Layers.heightAt`, as `Combat.groundHeight`), not the smooth surface, so even well-timed heights zigzagged by the cells' steps every tick.
+- Fix: `Interp.height` interpolates each snapshot's own absolute height, ground(snapshot) + alt, using `World.simGroundY` (= `Layers.heightAt`). UnitRenderer uses it for tactical aircraft in flight. Landed or off camera, aircraft are drawn as before.
+- Specs (`FlightHeight.spec`): over a 40-stud cliff the height holds steady, where the old way jumped 36 studs. A sim Falcon over Twin Lakes' highest peak, drawn from the wire: at most 0.58 studs per sixth of a tick (the sim's climb plus the whole-stud wire altitude is 0.61), against 6.0 the old way. Studio, the same flight: worst frame 60 studs/s, down from 370–451.
+
+### C-238 — A locked turret holds its world aim (2026-10-26, playtest G9)
+
+- The user: "the turret need to hold its lock on the target, and don't drift away with the body."
+- The wire's yaw is relative to the newest tick's hull, but the hull is drawn two ticks behind. So while engaged (AIMING or READY), the turret is drawn at yaw + (newest heading − drawn heading). Each frame the turret's track moves by the change in that lag, carried with the hull at once, and its goal is yaw + lag, turned toward at the turret's own rate (`PieceAnim.holdWorldAim`). `UnitRenderer` stores the drawn heading in `u.rheading`.
+- Spec: with the hull swinging 0.6 rad, the drawn turret stays on its world aim.
+- Studio, a Lancer firing while it turns: the drawn turret follows the sim's aim. But the sim's turret itself drifted up to 52° off its target while the hull turned faster than the turret's yaw rate. That part is the sim's (sent to sim-A).
+
+### C-239 — Wreck information in the unit panel (2026-10-26, playtest G2)
+
+- The user: "When hover over a wreck, show the wreck info in the unit stats panel (it's current metal / energy left), remove the current black bar."
+- `Api.state.hoverWreck` is the wreck under the mouse when no unit is. The unit panel shows it ahead of the selection, as a hovered enemy: the unit's portrait, "<name> wreck", a white bar of the supply it still holds, "Supply left N / M", and the resurrect progress. The floating label (`Render/WreckInfo`'s hover) is gone.
+- Wrecks carry only supply on the wire, so no power is shown.
+- Studio: a Juggernaut wreck, "Supply left 140 / 140" (`debug_out/screens/2026-10-26-g2-wreck-panel.jpg`).
+
+### C-240 — Row preview; planned buildings highlighted on top (2026-10-26, playtest G14, G15)
+
+- G14, "show preview of planned buildings" while dragging a row: `Controls.placeTo` is the drag's far end. `PlacementGhost` draws a ghost on every spot `Placement.row` gives (up to 40), checked as `placeRow` checks them. They go in two models with one Highlight each, green and red, and stand in for the single ghost.
+- G15, "use Highlight AlwaysOnTop… the indication of planned actions": the placement ghost, the row's ghosts and the queued builds (`QueuedBuilds`, one Highlight over all copies) draw on top of hills and units. Four Highlights in all.
+- Studio: a dragged row of solar arrays (`debug_out/screens/2026-10-26-g14-row-preview.jpg`).
+
+### C-241 — The Commander faces its work (2026-10-26, playtest G4)
+
+- The user: "Commander should rotate its upper part of the body toward the current task."
+- `PieceAnim.drive` takes builder → work target (the nano spray's, `Core/BuildTargets`). A script with a `Work` hook gets the target's bearing from the hull, in degrees, or nil, whenever it changes; while a weapon is engaged, `AimWeapon` has the torso instead. `Commander.Work` turns the torso there at 120°/s, and back to the front after.
+- Studio: building a vehicle plant behind it, the torso turned 106° off the hull to face it (`debug_out/screens/2026-10-26-g4-commander-torso.jpg`).
+- The work target is the client's guess from the order queue: the server doesn't send it. The same guess gives G7's stale nano spray, so the wire target is asked of sim-A.

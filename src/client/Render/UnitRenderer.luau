@@ -245,6 +245,9 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		return
 	end
 
+	local function simGround(gx: number, gz: number): number
+		return World.simGroundY(world, gx, gz)
+	end
 	local parts, frames = r.parts, r.frames
 	table.clear(parts)
 	table.clear(frames)
@@ -264,7 +267,13 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 			local air = d.def.domain == "air"
 			x, z, alt, heading = u.sx or u.x, u.sz or u.z, if air then (if (u.alt or 0) > 0 then u.alt :: number else UnitRenderer.AIR_ALT) else 0, u.heading
 		end
-		local y = World.groundY(world, x, z, d.floats) + alt
+		local y
+		if u.tier == "tactical" and d.def.domain == "air" and alt > 0 then
+			-- in flight: the snapshots' own heights, interpolated (G16)
+			y = Interp.height(u, t, simGround)
+		else
+			y = World.groundY(world, x, z, d.floats) + alt
+		end
 		local lift = UnitRenderer.lift
 		if lift then
 			y += lift(u, d.def, t) -- a Commander landing from the sky (C-218)
@@ -273,6 +282,7 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 			y += Attitude.waterOffset(d.def, u.state or 0, d.hullHeight)
 		end
 		u.rx, u.ry, u.rz = x, y, z
+		u.rheading = heading
 		if hidden then
 			continue
 		end

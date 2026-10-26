@@ -12,11 +12,16 @@
 -- side, and turning the placement (R) shows "Buildings set to face East"
 -- over it for a moment. The ghost turns as the built frame will (heading =
 -- facing × 90°, Core/Facing).
+-- A row being dragged (G14) shows every building it will place: a ghost on
+-- each spot, green where it can go and red where not, as Api's placeRow
+-- checks them. Planned buildings are highlighted on top of everything
+-- (Highlight AlwaysOnTop, G15), so hills and units don't hide them.
 
 local Players = game:GetService("Players")
 
 local Api = require("../Api")
 local Facing = require("../Core/Facing")
+local Placement = require("../Core/Placement")
 local Upgrades = require("../Core/Upgrades")
 local World = require("../Core/World")
 local Models = require("./Models")
@@ -33,6 +38,7 @@ export type Ghost = {
 	model: Model?,
 	defId: string?,
 	marks: Folder, -- upgrade target discs and the area circle (outside the ghost: shown without placing too)
+	row: { ok: Model, bad: Model, shown: { Model }, free: { Model }, defId: string?, key: string }, -- a dragged row's ghosts (G14)
 	discs: { Part },
 	area: Part,
 	grid: Folder, -- the build grid's line segments (outside the ghost: its Highlight would tint them)
@@ -84,7 +90,7 @@ function PlacementGhost.new(): Ghost
 	local highlight = Instance.new("Highlight")
 	highlight.FillTransparency = 0.45
 	highlight.OutlineTransparency = 0.2
-	highlight.DepthMode = Enum.HighlightDepthMode.Occluded
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	highlight.Parent = folder
 	local marks = Instance.new("Folder")
 	marks.Name = "UpgradeMarks"
@@ -140,7 +146,20 @@ function PlacementGhost.new(): Ghost
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 4)
 	corner.Parent = label
-	return { folder = folder, plate = plate, highlight = highlight, model = nil, defId = nil, marks = marks, discs = discs, area = area, grid = grid, lines = {}, gridKey = "", arrow = arrow, labelGui = labelGui, label = label, facing = nil, labelUntil = 0 }
+	-- a dragged row: its spots' ghosts in two models, one highlight each (green, red)
+	local function rowModel(name: string, color: Color3): Model
+		local m = Instance.new("Model")
+		m.Name = name
+		local h = Instance.new("Highlight")
+		h.FillColor, h.OutlineColor = color, color
+		h.FillTransparency, h.OutlineTransparency = 0.5, 0.2
+		h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		h.Parent = m
+		m.Parent = folder
+		return m
+	end
+	local row = { ok = rowModel("RowOk", VALID), bad = rowModel("RowBad", INVALID), shown = {}, free = {}, defId = nil, key = "" }
+	return { folder = folder, plate = plate, highlight = highlight, model = nil, defId = nil, marks = marks, discs = discs, area = area, grid = grid, lines = {}, gridKey = "", arrow = arrow, labelGui = labelGui, label = label, facing = nil, labelUntil = 0, row = row }
 end
 
 -- Lays the arrow on the exit side of a footprint `size` studs wide at
@@ -296,7 +315,68 @@ local function layGrid(g: Ghost, world: World.World, bx: number, bz: number)
 	end
 end
 
-function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vector3?, areaTo: Vector3?)
+PlacementGhost.ROW_MAX = 40 -- ghosts drawn for one row
+
+local function rowGhost(g: Ghost, def: any): Model
+	local m = table.remove(g.row.free)
+	if m == nil then
+		m = Models.template(def):Clone()
+		for _, d in (m :: Model):GetDescendants() do
+			if d:IsA("BasePart") then
+				d.Transparency = math.max(d.Transparency, 0.45)
+				d.CastShadow = false
+			end
+		end
+	end
+	return m :: Model
+end
+
+-- The row from `from` to `to` (Controls' drag; nil when not dragging one):
+-- a ghost on each spot Placement.row gives, checked as Api's placeRow does.
+-- Redrawn only when the row's spots change. True while a row shows.
+local function drawRow(g: Ghost, api: Api.Api, def: any, facing: number, from: Vector3?, to: Vector3?): boolean
+	local r = g.row
+	local world = api.world
+	local spots = if from and to then Placement.row(world, def, from.X, from.Z, to.X, to.Z) else {}
+	if #spots < 2 then
+		spots = {}
+	end
+	local n = math.min(#spots, PlacementGhost.ROW_MAX)
+	local keys = {}
+	for i = 1, n do
+		keys[i] = `{spots[i][1]},{spots[i][2]}`
+	end
+	local key = `{def.id}/{facing}/{table.concat(keys, ";")}`
+	if key == r.key then
+		return n > 0
+	end
+	r.key = key
+	for _, m in r.shown do
+		m.Parent = nil
+		table.insert(r.free, m)
+	end
+	table.clear(r.shown)
+	if r.defId ~= def.id then
+		for _, m in r.free do
+			m:Destroy() -- another structure: its ghosts are another model
+		end
+		table.clear(r.free)
+		r.defId = def.id
+	end
+	local planned = Placement.planned(world, api.waypoints.byUnit)
+	for i = 1, n do
+		local check = Placement.check(world, def, spots[i][1], spots[i][2], planned)
+		local m = rowGhost(g, def)
+		local y = World.groundY(world, check.x, check.z, World.floats(def))
+		local offset = (m:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity
+		m:PivotTo(CFrame.new(check.x, y, check.z) * CFrame.Angles(0, Facing.heading(facing) + math.pi, 0) * offset)
+		m.Parent = if check.ok then r.ok else r.bad
+		table.insert(r.shown, m)
+	end
+	return n > 0
+end
+
+function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vector3?, areaTo: Vector3?, rowFrom: Vector3?, rowTo: Vector3?)
 	marks(g, api, now or os.clock(), areaFrom, areaTo)
 	local p = api.state.placement
 	if p == nil or not PlacementGhost.GRID then
@@ -330,6 +410,10 @@ function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vec
 	local def = world.defs.unitByIndex[p.defIndex]
 	setModel(g, def)
 	local model = g.model :: Model
+	-- a dragged row: its ghosts stand in for the single one (G14)
+	local rowing = drawRow(g, api, def, p.facing, rowFrom, rowTo)
+	model.Parent = if rowing then nil else g.folder
+	g.plate.Transparency = if rowing then 1 else 0.6
 	local color = if p.valid then VALID else INVALID
 	local y = World.groundY(world, p.x, p.z, World.floats(def)) -- on the water for a water structure (C-192)
 	local size = def.footprint * 8
@@ -340,7 +424,6 @@ function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vec
 	g.highlight.OutlineColor = color
 	-- an upgrade sits on the old extractor: drawn through it, the plate over its base
 	local upgrading = p.valid and p.replaces ~= nil
-	g.highlight.DepthMode = if upgrading then Enum.HighlightDepthMode.AlwaysOnTop else Enum.HighlightDepthMode.Occluded
 	g.highlight.FillTransparency = if upgrading then 0.65 else 0.45
 	if upgrading then
 		g.plate.CFrame = CFrame.new(p.x, y + 0.35, p.z)

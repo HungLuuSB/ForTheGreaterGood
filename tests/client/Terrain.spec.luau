@@ -133,4 +133,59 @@ return function(t: any)
 			only(f, "redrock")
 		end
 	end)
+	t.test("water as flat rectangles: every water cell once at its level, a shore band, no overlaps (C-236)", function()
+		for _, id in { "map:coastline", "map:lakelands", "map:normandy" } do
+			local layers = assert(MapRegistry.load(id))
+			local g = layers.grid
+			local rects = Terrain.waterRects(layers)
+			-- each cell centre covered by at most one rectangle
+			local cover: { [number]: number } = {}
+			local overlaps, bad = 0, 0
+			for _, r in rects do
+				for cz = (r.z0 - g.originZ) // 8, (r.z1 - g.originZ) // 8 - 1 do
+					for cx = (r.x0 - g.originX) // 8, (r.x1 - g.originX) // 8 - 1 do
+						local i = cz * g.cellsX + cx
+						if cover[i] then
+							overlaps += 1
+						end
+						cover[i] = r.level
+					end
+				end
+			end
+			local water, missed, shore = 0, 0, 0
+			for cz = 0, g.cellsZ - 1 do
+				for cx = 0, g.cellsX - 1 do
+					local i = cz * g.cellsX + cx
+					local w = Layers.getWater(layers, i)
+					if w > 0 then
+						water += 1
+						local want = math.floor((Layers.getHeight(layers, i) + w) * 100 + 0.5) / 100
+						if cover[i] ~= want then
+							missed += 1
+						end
+					elseif cover[i] then
+						shore += 1
+						-- a shore cell touches water
+						local touches = false
+						for dz = -1, 1 do
+							for dx = -1, 1 do
+								local nx, nz = cx + dx, cz + dz
+								if nx >= 0 and nz >= 0 and nx < g.cellsX and nz < g.cellsZ and Layers.getWater(layers, nz * g.cellsX + nx) > 0 then
+									touches = true
+								end
+							end
+						end
+						if not touches then
+							bad += 1
+						end
+					end
+				end
+			end
+			print(string.format("    %s: %d water cells, %d shore cells, %d rectangles", id, water, shore, #rects))
+			t.equal(overlaps, 0, `{id}: no two planes over one cell`)
+			t.equal(missed, 0, `{id}: every water cell at its own surface`)
+			t.equal(bad, 0, `{id}: the band is one cell wide`)
+			t.expect(shore > 0, `{id}: the planes run on under the shore`)
+		end
+	end)
 end

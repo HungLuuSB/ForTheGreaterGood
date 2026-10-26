@@ -208,7 +208,7 @@ return function(t: any)
 		t.equal(#Ranges.enemyDefenses(world, known), 0)
 		-- 2. the scout drives up and sees it: its anti-air ring, at the Thorn
 		move(140, 60)
-		run(15 * 14)
+		run(15 * 24) -- (S-193: the scout 40% slower)
 		u = world.units[thorn]
 		t.expect(u ~= nil and u.tier == "tactical", "the Thorn is in sight")
 		local seen = Ranges.enemyDefenses(world, known)

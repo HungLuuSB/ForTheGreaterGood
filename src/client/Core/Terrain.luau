@@ -165,6 +165,93 @@ function Terrain.waterLevel(layers: Layers.Layers): number?
 	return nil
 end
 
+-- The map's water as flat rectangles (C-236, S-192: water drawn as mesh
+-- planes, not terrain voxels), world studs, `level` the surface. Water
+-- cells of one surface merge into rectangles that never overlap (two
+-- see-through planes over each other would show as a darker seam). Dry
+-- cells next to water (a shore band one cell wide) join the rectangles at
+-- their highest water neighbour's level: the smooth ground crosses the
+-- surface somewhere in that cell, so the plane runs on under the shore and
+-- the ground draws the waterline.
+export type WaterRect = { x0: number, z0: number, x1: number, z1: number, level: number }
+function Terrain.waterRects(layers: Layers.Layers): { WaterRect }
+	local g = layers.grid
+	local w, d = g.cellsX, g.cellsZ
+	local level: { [number]: number } = {}
+	for i = 0, g.cellCount - 1 do
+		local water = Layers.getWater(layers, i)
+		if water > 0 then
+			level[i] = math.floor((Layers.getHeight(layers, i) + water) * 100 + 0.5) / 100
+		end
+	end
+	local shore: { [number]: number } = {}
+	for cz = 0, d - 1 do
+		for cx = 0, w - 1 do
+			local i = cz * w + cx
+			if level[i] then
+				continue
+			end
+			local best: number? = nil
+			for dz = -1, 1 do
+				for dx = -1, 1 do
+					local nx, nz = cx + dx, cz + dz
+					if nx >= 0 and nz >= 0 and nx < w and nz < d then
+						local l = level[nz * w + nx]
+						if l and (best == nil or l > best) then
+							best = l
+						end
+					end
+				end
+			end
+			if best then
+				shore[i] = best
+			end
+		end
+	end
+	for i, l in shore do
+		level[i] = l
+	end
+	local rects: { WaterRect } = {}
+	local done: { [number]: boolean } = {}
+	local cell = CELL
+	for cz = 0, d - 1 do
+		for cx = 0, w - 1 do
+			local i = cz * w + cx
+			local l = level[i]
+			if l == nil or done[i] then
+				continue
+			end
+			-- grow right, then down, while the cells match
+			local ex = cx
+			while ex + 1 < w and level[cz * w + ex + 1] == l and not done[cz * w + ex + 1] do
+				ex += 1
+			end
+			local ez = cz
+			while ez + 1 < d do
+				local row = (ez + 1) * w
+				local ok = true
+				for x = cx, ex do
+					if level[row + x] ~= l or done[row + x] then
+						ok = false
+						break
+					end
+				end
+				if not ok then
+					break
+				end
+				ez += 1
+			end
+			for z = cz, ez do
+				for x = cx, ex do
+					done[z * w + x] = true
+				end
+			end
+			table.insert(rects, { x0 = g.originX + cx * cell, z0 = g.originZ + cz * cell, x1 = g.originX + (ex + 1) * cell, z1 = g.originZ + (ez + 1) * cell, level = l })
+		end
+	end
+	return rects
+end
+
 -- Lowest ground and highest ground or water surface (the terrain's y range).
 function Terrain.bounds(layers: Layers.Layers): (number, number)
 	local lo, hi = math.huge, -math.huge
