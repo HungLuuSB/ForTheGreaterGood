@@ -2,11 +2,20 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: four AI levels and team roles, F41)
+
+- Merged sim-A's `8713c298` (S-187): `LEVELS` = easy, normal, hard, hard_aggressive. Names: Easy, Normal, **Hard - Balanced** (the id stays `hard`), **Hard - Aggressive**.
+- **Pickers** (the room's AI editor, Skirmish) show the four as Easy · Normal · Hard · Bal. · Hard · Agg., to fit four in a row; seat chips and everything else use the full names. In the match an AI is named "AI 1 (hard aggressive)".
+- **Role badges:** two or more non-easy AIs on one side split the work. The AI chips show each one's role (Balanced, Air, Defense, Spam, Tech) with the sim's rule (`MatchConfig.aiRoles`; `AiLevels.spec` checks it against `Skirmish.roleOf` on the same match and keeps `Config.AI_ROLES` equal to `Skirmish.ROLES`).
+- Studio (`debug_out/screens/`): `lobby_room_ai_roles` (team 2: Balanced, Air, Defense, the easy AI without a badge), `lobby_room_ai_levels` (the AI editor), `lobby_skirmish_ai_levels`.
+- Lobby specs 63 / 63; the build check passes.
+
 ## Summary (2026-10-26: The Plains' side splits, S-186)
 
 - Merged sim-A's `9583455e`: maps may carry `layers.sideSplits`, and `StartAreas.sides` takes it as a third argument.
 - The room's default spawn boxes pass the map's splits. The server sends them with the map's shape as a list (`SpawnBoxes.splitList`: a table keyed by side counts has gaps, which a remote can drop), and `SpawnBoxes.defaults` rebuilds them.
 - With 3 sides on The Plains: side 1 is the west strip, sides 2 and 3 the two eastern corners. No box spans the map's middle any more (`lobby_room_plains_3_sides`).
+- Ready to merge: `b18634b3` (default boxes follow the map's side splits; includes the merge of sim-A's `9583455e`; touches only `src/lobby` and the lobby progress)
 - New spec: The Plains' 3-side defaults keep side 1 west and sides 2 and 3 east, apart. Lobby specs 61 / 61; the build check passes.
 
 ## Summary (2026-10-26: tracks on the ground; the Underwater place)

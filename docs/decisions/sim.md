@@ -2607,3 +2607,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Lasers cost energy (the user):** every laser and beam weapon draws power per shot (`shotCost`), and holds fire without it, as the Radiance and the Chaos beams did: Sentry 20, Guard 18, Twin Guard 12, Overwatch 15, Geryon 20, Bulwark laser 12, Beamer 6 a pulse, Glint 2, Dragon 8, Centurion 150 (about one generator's 20/s while a tower fires).
 - **Not run:** the balance checkpoint and the AI level reports (`lune run ailevels`, `faction_ai`) — on "run the balance checkpoint".
 - **Tests:** `AIRoles.spec` (four levels match MatchConfig; roles by player order, a lone AI balanced; slow: a 3v3 where the air AIs build airfields and fly aircraft, the defence AI out-turrets the balanced one and bot labs come up; generators on the block lattice), `Towers.spec` (a Sentry fires with power and holds without), and the slow suite's mirror tests (`Fairness.spec`: the Twin Lakes 2v2 mirror builds the same).
+
+## S-188 — Line moves end facing the line's front (F34, client-B's formation controls) (2026-10-26)
+
+- **Asked (client-B, from Studio):** the formation line's units spread into their slots exactly but kept their travel heading; BAR units turn to face the formation's front.
+- **Now:** a move with a line (LINE flag) gives each ground unit a facing (`Nav.face`): across the line, away from the group's centre when the order was given. Once a unit stands still on its slot it turns in place at its turn rate to that facing (Movement), then drops it. Any later move replaces it; it's dropped after 60 s regardless. Aircraft don't take one.
+- **Tests:** `LineFacing.spec` (six tanks on a north–south line coming from the west face east; a later plain move keeps its travel heading).

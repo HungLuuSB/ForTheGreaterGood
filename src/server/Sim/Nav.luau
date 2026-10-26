@@ -107,7 +107,14 @@ export type Nav = {
 	maxRadius: number,
 	issueWork: number, -- work units spent issuing orders since the last Pathing tick
 	stats: { fieldsBuilt: number, cacheHits: number, workUnits: number, directOrders: number },
+	-- line moves (S-188, F34): unit → the heading it turns to once arrived
+	-- (across the line, away from where the group came from), and until
+	-- which tick it still applies
+	face: { [number]: number },
+	faceUntil: { [number]: number },
 }
+
+Nav.FACE_TICKS = 15 * 60 -- a line's facing is dropped this long after the order
 
 function Nav.new(pm: Passability.PassMap, defs: Defs.DefSet): Nav
 	local profiles = {}
@@ -151,6 +158,8 @@ function Nav.new(pm: Passability.PassMap, defs: Defs.DefSet): Nav
 		maxRadius = maxRadius,
 		issueWork = 0,
 		stats = { fieldsBuilt = 0, cacheHits = 0, workUnits = 0, directOrders = 0 },
+		face = {},
+		faceUntil = {},
 	}
 	-- Quadtrees for every ground profile now, at map load, not in the tick
 	-- of the first order that needs one.
@@ -447,6 +456,24 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 		end
 		local backX, backZ = sumX / #members, sumZ / #members
 		local spacing = Formation.spacing(maxRadius)
+		-- (S-188) a line move's units face its front once there: across the
+		-- line, away from the group's centre; any other move drops a facing
+		local faceH: number? = nil
+		if lx ~= nil and lz ~= nil and not first.air then
+			local dx, dz = lx - tx, lz - tz
+			local nx, nz = -dz, dx
+			local mx, mz = (tx + lx) / 2, (tz + lz) / 2
+			if nx * (mx - backX) + nz * (mz - backZ) < 0 then
+				nx, nz = -nx, -nz
+			end
+			if nx * nx + nz * nz > 1e-9 then
+				faceH = math.atan2(nx, nz)
+			end
+		end
+		for _, id in members do
+			nav.face[id] = faceH
+			nav.faceUntil[id] = if faceH then tick + Nav.FACE_TICKS else nil
+		end
 
 		local order: Order = {
 			id = nav.nextOrderId,
