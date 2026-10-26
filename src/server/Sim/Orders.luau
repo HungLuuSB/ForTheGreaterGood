@@ -3,7 +3,9 @@
 -- docs/contracts/net.md 9; S-4).
 --
 -- Each mobile unit has a queue of orders, head first. A command replaces the
--- queue, or with the queue flag (shift) is appended to it. Every tick (at the
+-- queue, or with the queue flag (shift) is appended to it; with the front
+-- flag (space, S-199) it goes in at the head: the order under way stops (a
+-- frame keeps standing) and starts again once the new one is done. Every tick (at the
 -- end of the Commands system) the head order is started or checked:
 --   move     a Nav move; done on arrival (the Nav order ends).
 --   fight    attack-move: a move that holds (brakes, keeps the order) while
@@ -128,10 +130,12 @@ local function halt(sim: Types.Sim, id: number)
 end
 
 -- Gives `spec` to units `ids` (already checked as the sender's own). With
--- `queued`, appends; else replaces their queues. Factories keep the
--- orders for the units they produce instead (S-95).
-function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: boolean)
+-- `queued`, appends; with `front`, puts it first (S-199); else replaces
+-- their queues. Factories keep the orders for the units they produce
+-- instead (S-95).
+function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: boolean, front: boolean?)
 	local o = sim.orders
+	queued = queued or front == true
 	local batch = o.nextBatch
 	o.nextBatch += 1
 	if not queued then
@@ -158,7 +162,7 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 		if d.domain == "structure" and not (spec.kind == "attackGround" and (Air.isManualFire(sim, d) or Air.groundFires(sim, d))) then
 			if isFactory(d) and FACTORY_ORDERS[spec.kind] and (spec.x or spec.target) then
 				local list = if queued then o.rally[id] or {} else {}
-				table.insert(list, { kind = spec.kind, x = spec.x, z = spec.z, lx = spec.lx, lz = spec.lz, target = spec.target, gen = spec.gen })
+				table.insert(list, if front then 1 else #list + 1, { kind = spec.kind, x = spec.x, z = spec.z, lx = spec.lx, lz = spec.lz, target = spec.target, gen = spec.gen })
 				o.rally[id] = list
 			elseif spec.kind == "attack" and #d.weapons > 0 and spec.target then
 				-- an armed structure (a beam tower, a turret) takes an attack
@@ -170,14 +174,25 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 			continue
 		end
 		local q = o.queue[id]
-		if q == nil or not queued then
+		if q == nil or not queued or (front and q[1] ~= nil and q[1].auto) then
 			if q ~= nil and #q > 0 then
 				cancelCurrent(sim, id)
 			end
 			q = {}
 			o.queue[id] = q
 		end
-		table.insert(q, {
+		if front and q[1] ~= nil then
+			-- the order under way stops, to start over after the new one
+			local h = q[1]
+			if h.started then
+				cancelCurrent(sim, id)
+				if isMoveLike(h.kind) then
+					halt(sim, id)
+				end
+				h.started, h.nav, h.held, h.gx, h.gz, h.issued = false, 0, nil, nil, nil, -math.huge
+			end
+		end
+		table.insert(q, if front then 1 else #q + 1, {
 			kind = spec.kind,
 			batch = batch,
 			x = spec.x,
@@ -256,6 +271,18 @@ local function pop(sim: Types.Sim, id: number, q: { Order })
 	end
 end
 type Order = OrdersState.Order
+
+-- A D-Gun walk got in range and fired (S-194): the walk ends. With orders
+-- behind it (a FRONT D-Gun, S-199) they go on; else the unit stops there.
+function Orders.endWalk(sim: Types.Sim, id: number)
+	local q = sim.orders.queue[id]
+	if q ~= nil and #q > 1 and q[1].kind == "move" then
+		halt(sim, id)
+		pop(sim, id, q)
+	else
+		Orders.stopCommand(sim, id)
+	end
+end
 
 -- Attack-move holds (S-14, BAR): while some weapon has a target within
 -- the range it fires at (Weapons: center distance to the target's believed

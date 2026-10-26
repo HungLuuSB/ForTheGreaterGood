@@ -8,7 +8,8 @@
 -- Effects: fire state, move state, toggle (factories: repeat on / off);
 -- orders through Orders (S-4): MOVE, FIGHT, PATROL, ATTACK, GUARD,
 -- ATTACK_GROUND, REPAIR, RECLAIM and mobile builders' BUILD replace a unit's
--- queue, or append to it with the queue flag; STOP clears it. Orders given
+-- queue, or append to it with the queue flag, or go first with the front
+-- flag (S-199); STOP clears it. Orders given
 -- to a factory go on its order list for the units it produces (S-95); BUILD
 -- given to a factory queues the unit. ATTACK and GUARD need a target the
 -- sender's team knows.
@@ -49,11 +50,17 @@ local LOW_PRIORITY = World.State.LOW_PRIORITY
 local LINE = Schema.CmdFlag.LINE
 local QUEUE = Schema.CmdFlag.QUEUE
 local GROUP = Schema.CmdFlag.GROUP
+local FRONT = Schema.CmdFlag.FRONT
 
 local Commands = {}
 Commands.UNITS_PER_TICK = 200 -- unit IDs per player per tick (S-100)
 
 local KIND_OF: { [number]: string } = { [CT.MOVE] = "move", [CT.FIGHT] = "fight", [CT.PATROL] = "patrol" }
+
+-- Orders.give's queued and front arguments from a command's flags
+local function placing(cmd: Schema.Command): (boolean, boolean)
+	return band(cmd.flags, QUEUE) ~= 0, band(cmd.flags, FRONT) ~= 0
+end
 
 local function ownedUnits(w: World.World, player: number, unitIds: { number }): { number }
 	local out = {}
@@ -82,7 +89,7 @@ local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
 		lx, lz = g:decodeOnMap(cmd.cell2 :: number, cmd.offX2 :: number, cmd.offZ2 :: number)
 	end
 	local kind = KIND_OF[cmd.cmdType] :: any
-	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz, group = band(cmd.flags, GROUP) ~= 0 }, band(cmd.flags, QUEUE) ~= 0)
+	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz, group = band(cmd.flags, GROUP) ~= 0 }, placing(cmd))
 end
 
 -- ATTACK / GUARD / REPAIR / RECLAIM / RESURRECT: an order on a target. ATTACK
@@ -119,7 +126,7 @@ local function applyTargeted(sim: Types.Sim, player: number, cmd: Schema.Command
 		kind = if cmd.cmdType == CT.GUARD then "guard" else "repair"
 		gen = w.gen[t]
 	end
-	Orders.give(sim, units, { kind = kind :: any, target = t, gen = gen }, band(cmd.flags, QUEUE) ~= 0)
+	Orders.give(sim, units, { kind = kind :: any, target = t, gen = gen }, placing(cmd))
 end
 
 local function applyBuild(sim: Types.Sim, player: number, cmd: Schema.Command)
@@ -139,7 +146,7 @@ local function applyBuild(sim: Types.Sim, player: number, cmd: Schema.Command)
 		Build.commandBuild(sim, factories, cmd.defIndex :: number, x, z, cmd.facing :: number)
 	end
 	if #builders > 0 then
-		Orders.give(sim, builders, { kind = "build", x = x, z = z, defIndex = cmd.defIndex, facing = cmd.facing }, band(cmd.flags, QUEUE) ~= 0)
+		Orders.give(sim, builders, { kind = "build", x = x, z = z, defIndex = cmd.defIndex, facing = cmd.facing }, placing(cmd))
 	end
 end
 
@@ -164,7 +171,7 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 			return
 		end
 		local x, z = g:decodeOnMap(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
-		Orders.give(sim, ownedUnits(w, player, cmd.unitIds), { kind = "attackGround", x = x, z = z }, band(cmd.flags, QUEUE) ~= 0)
+		Orders.give(sim, ownedUnits(w, player, cmd.unitIds), { kind = "attackGround", x = x, z = z }, placing(cmd))
 		return
 	elseif cmdType == CT.DGUN then
 		-- (S-194, G5) Commanders fire their D-Gun at the point; out of range,
@@ -185,7 +192,8 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 			if range then
 				local far = (w.posX[id] - x) ^ 2 + (w.posZ[id] - z) ^ 2 > (range * 0.9) ^ 2
 				if far then
-					Orders.give(sim, { id }, { kind = "move", x = x, z = z }, false) -- (before the point: a new order drops it)
+					-- (before the point: a new order drops it; with FRONT the queue stays behind the walk)
+					Orders.give(sim, { id }, { kind = "move", x = x, z = z }, false, band(cmd.flags, FRONT) ~= 0)
 				end
 				sim.orders.dgunX[id], sim.orders.dgunZ[id] = x, z
 				sim.orders.dgunWalk[id] = if far then true else nil
@@ -236,7 +244,7 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 				table.insert(builders, id)
 			end
 		end
-		Orders.give(sim, builders, { kind = "area", x = x, z = z, areaOp = cmd.areaOp, radius = cmd.radius }, band(cmd.flags, QUEUE) ~= 0)
+		Orders.give(sim, builders, { kind = "area", x = x, z = z, areaOp = cmd.areaOp, radius = cmd.radius }, placing(cmd))
 		return
 	end
 	for _, id in cmd.unitIds do

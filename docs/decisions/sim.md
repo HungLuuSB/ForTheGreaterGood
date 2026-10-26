@@ -2841,3 +2841,15 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
     - the converter's cost.
   - `Economy.spec`: updated for the upkeep and the whole-chunk converter.
   - `Schema.spec`: ECO_LEVEL and the Eco record's golden bytes.
+
+## S-199 — FRONT: an order to the head of the queue (the user, through client-B) (2026-10-27)
+
+- **Asked:** "Hold Space to insert command to the front of the queue." client-B asked for it as a command flag in protocol 40, so the protocol needn't move again.
+- **Wire:** `Schema.CmdFlag.FRONT` 8 (the flags mask is now 15). It applies to every order command: MOVE, FIGHT, PATROL, ATTACK, ATTACK_GROUND, GUARD, REPAIR, RECLAIM, RESURRECT, BUILD (mobile builders), AREA, DGUN. Other commands ignore it. With QUEUE as well, FRONT wins.
+- **In the sim** (`Orders.give(..., queued, front)`):
+  - The new order goes in at the head of each unit's queue, and the rest stays.
+  - The order under way stops: its work ends (`Build.commandIdle`; an unfinished frame keeps standing), and a move halts. It's marked not started, so it starts over once the new order is done. The builder walks back, finds its frame (`frameAt`) and finishes it rather than placing a new one. A patrol keeps its two ends.
+  - An automatic order (move state, S-34) isn't kept; FRONT replaces it, like any command.
+  - Factories: FRONT puts an order first on the list for new units. A factory's BUILD still appends to production.
+  - DGUN out of range: the walk goes first. When the bolt fires, the walk ends and the queue goes on (`Orders.endWalk`); without FRONT the Commander stops there, as before.
+- **Tests:** Orders.spec: a FRONT move goes first, then the interrupted move, then the queued one; a FRONT BUILD mid-build finishes first, then the builder finishes the same frame; a FRONT D-Gun walks, fires and goes on to its queued move. Schema.spec: the reserved-bit case moved to 16.
