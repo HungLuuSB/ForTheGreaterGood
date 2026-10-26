@@ -20,6 +20,8 @@ Lasers.GLOW_TIP = 0.35
 Lasers.FLARE = 1.1 -- the muzzle flare's diameter
 Lasers.ORB = 1.3 -- the impact orb's diameter (its halo twice that)
 Lasers.THREAD = 0.14 -- a held beam's core width (ramp 0)
+-- weapons drawn wider (F11, the user: Sentry and Overwatch beams, both factions)
+Lasers.WIDER = table.freeze({ ord_sentry_laser = 1.8, chs_guard_laser = 1.8, ord_overwatch_laser = 1.8, chs_twin_laser = 1.8 }) :: { [string]: number }
 Lasers.FRINGE = 0.45 -- and its coloured fringe
 Lasers.CONE = 1.8 -- its impact cone's mouth, and length 1.4 times that
 Lasers.SPARKS = 10 -- flicker keypoints along a held beam's core
@@ -158,7 +160,7 @@ function Lasers.step(s: State, tracers: { any }, now: number)
 			continue
 		end
 		b.cone.Enabled = false
-		local scale = math.clamp(0.55 + 0.15 * (t.size or 1), 0.7, 1.3)
+		local scale = math.clamp(0.55 + 0.15 * (t.size or 1), 0.7, 1.3) * (Lasers.WIDER[t.weaponId or ""] or 1)
 		local k = math.clamp((now - t.born) / t.life, 0, 1)
 		local fade = math.max(0, k - 0.35) / 0.65
 		b.core.Width0, b.core.Width1 = Lasers.CORE * scale, Lasers.TIP * scale

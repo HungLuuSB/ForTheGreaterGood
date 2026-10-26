@@ -1981,3 +1981,12 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Checked in Studio (Crossroads, Teams: you and a Normal AI against an Easy AI): the panel with the ally's income and bank and its buttons, 300 supply given ("You gave AI (normal) 300 supply", the bank 1.0k → 701), a request ("You ask for power"); the panel hidden in the lobby. Specs: Share, SmartReclaim; Upgrades and Placement on patches. Nanoframe's pads for the new labs wait on models-C's registration after S-181 reaches main.
 
 **Why:** the user's playtest (F23, F42) and sim-A's phase 2.
+
+### C-227 — Playtest small items: Ctrl + wheel turns, rotation carries on, stock as a number, wider tower lasers (2026-10-26, F2, F14, F10, F11)
+
+- **F2:** Ctrl + wheel turns the camera, 7.5° a notch, within the ±45° limit (Q / C still turn).
+- **F14:** a placement's rotation carries on to every later placement (`Api` keeps the last facing; Facing.spec).
+- **F10:** a stockpile's row above the health bar is its count as a number and one bar filling with the missile being made (full when stocked up), instead of a pip per missile. Checked in Studio: an anti-nuke at "3", bar full.
+- **F11:** the Sentry, Guard, Overwatch and Twin Guard lasers draw 1.8× wider (`Lasers.WIDER`): in Studio core 0.69 / glow 2.14 studs (was 0.39 / 1.19).
+
+**Why:** the user's playtest (F2, F10, F11, F14).

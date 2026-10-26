@@ -6,6 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Small playtest items (C-227):** Ctrl + wheel turns the camera (F2); a building's rotation stays for the next ones (F14); stockpiles show their count as a number with a bar for the one being made (F10); Sentry and Overwatch lasers (both factions) are wider (F11).
 - **Team panel (C-226, F23):** bottom right, every player by team with a supply bar over a power bar (hover them for the numbers); on an ally: Units (click asks for units, double-click gives your selection), ■ / ϟ (click asks, drag up gives from your bank); gifts and requests show above it. **Smart Reclaim (F42):** in reclaim / repair / resurrect mode, drag a circle and the workers clear everything in it. Deposits are 2 × 2 patches and extractors snap to them; the pre-game says "Waiting for players to load".
 - Ready to merge: `5748408d` (C-223..C-226 with m-sim-2 676ddca merged; test_client 311 of 312: Nanoframe's pads for the new labs wait on models-C registering the S-181 blockouts after S-181 reaches main; test 561, build passed)
 - **Wind and tidal in the top bar (C-224):** a wind box after your sketch (the current in the middle over a see-through fan turning with the wind, min top right, max bottom right) and TIDAL.

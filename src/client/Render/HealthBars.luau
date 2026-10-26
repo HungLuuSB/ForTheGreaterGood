@@ -19,10 +19,10 @@ local RELOAD_H = 2
 local BACK_COLOR = Color3.fromRGB(20, 20, 20)
 local WRECK_SUPPLY_COLOR = Color3.fromRGB(40, 120, 55) -- a wreck's supply left (dark green, S-168; C-216)
 local REZ_COLOR = Color3.fromRGB(170, 90, 230) -- resurrect progress (purple)
--- missile stock (S-47, C-56): one pip per missile above the health bar,
--- filled while in stock; past MAX_PIPS a single bar instead
+-- missile stock (S-47, C-56) above the health bar: the count as a number
+-- and a bar for the missile being made (F10, the user; full when stocked up)
 local PIP_H = 3
-local MAX_PIPS = 10
+local COUNT_W = 14 -- pixels for the count
 local STOCK_COLOR = Color3.fromRGB(255, 200, 70)
 local EMPTY_COLOR = Color3.fromRGB(70, 60, 45)
 
@@ -72,8 +72,8 @@ local function newSlot(parent: ScreenGui): Slot
 	return { root = root, healthFill = healthFill, buildBack = buildBack, buildFill = buildFill, reloadBack = reloadBack, reloadFill = reloadFill, stockRow = stockRow, pips = {} }
 end
 
--- The stock row: `count` of `capacity` pips lit (or one bar past MAX_PIPS),
--- the next one filling with `progress` (S-49, C-59).
+-- The stock row: `count` as a number, then a bar filling with the next
+-- missile's `progress` (S-49, C-59), full once at `capacity` (F10).
 local function drawStock(slot: Slot, width: number, count: number?, capacity: number?, progress: number?)
 	local row = slot.stockRow
 	if count == nil or capacity == nil then
@@ -82,47 +82,34 @@ local function drawStock(slot: Slot, width: number, count: number?, capacity: nu
 	end
 	row.Visible = true
 	row.Size = UDim2.fromOffset(width, PIP_H)
-	local n = if capacity <= MAX_PIPS then capacity else 1
-	for i = 1, math.max(n, #slot.pips) do
-		local pip = slot.pips[i]
-		if i > n then
-			if pip then
-				pip.Visible = false
-			end
-			continue
-		end
-		if pip == nil then
-			pip = bar(row, "Pip", STOCK_COLOR)
-			slot.pips[i] = pip
-		end
-		pip.Visible = true
-		if capacity <= MAX_PIPS then
-			local gap = 1
-			local w = math.max(1, (width - gap * (capacity - 1)) / capacity)
-			pip.Position = UDim2.fromOffset(math.floor((i - 1) * (w + gap) + 0.5), 0)
-			pip.Size = UDim2.fromOffset(math.max(1, math.floor(w + 0.5)), PIP_H)
-			pip.BackgroundColor3 = if i <= count then STOCK_COLOR else EMPTY_COLOR
-			-- the missile being built fills its pip from the left
-			local fill = pip:FindFirstChild("Fill") :: Frame?
-			local building = i == count + 1 and progress ~= nil and progress > 0
-			if building and fill == nil then
-				local f = bar(pip, "Fill", STOCK_COLOR)
-				f.BackgroundTransparency = 0.35
-				fill = f
-			end
-			if fill then
-				fill.Visible = building
-				if building then
-					fill.Position = UDim2.fromOffset(0, 0)
-					fill.Size = UDim2.new(progress :: number, 0, 1, 0)
-				end
-			end
-		else
-			pip.Position = UDim2.fromOffset(0, 0)
-			pip.Size = UDim2.fromOffset(math.max(1, math.floor(width * (count + (progress or 0)) / capacity + 0.5)), PIP_H)
-			pip.BackgroundColor3 = STOCK_COLOR
-		end
+	local label = row:FindFirstChild("Count") :: TextLabel?
+	if label == nil then
+		local t = Instance.new("TextLabel")
+		t.Name = "Count"
+		t.AnchorPoint = Vector2.new(1, 0.5)
+		t.Position = UDim2.new(0, -2, 0.5, 0)
+		t.Size = UDim2.fromOffset(COUNT_W, 10)
+		t.BackgroundTransparency = 1
+		t.Font = Enum.Font.GothamBold
+		t.TextSize = 10
+		t.TextColor3 = STOCK_COLOR
+		t.TextStrokeTransparency = 0.4
+		t.TextXAlignment = Enum.TextXAlignment.Right
+		t.Parent = row
+		label = t
 	end
+	(label :: TextLabel).Text = tostring(count)
+	local back = slot.pips[1]
+	if back == nil then
+		back = bar(row, "Next", EMPTY_COLOR)
+		bar(back, "Fill", STOCK_COLOR)
+		slot.pips[1] = back
+	end
+	back.Position = UDim2.fromOffset(0, 0)
+	back.Size = UDim2.fromOffset(width, PIP_H)
+	local fill = back:FindFirstChild("Fill") :: Frame
+	local k = if count >= capacity then 1 else math.clamp(progress or 0, 0, 1)
+	fill.Size = UDim2.new(k, 0, 1, 0)
 end
 
 function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
