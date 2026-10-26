@@ -21,7 +21,7 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "patrol", label = "Patrol, then left click", group = "Orders", default = "Z" },
 	{ id = "guard", label = "Guard / assist, then left click", group = "Orders", default = "G" },
 	{ id = "reclaim", label = "Reclaim, then left click (builders)", group = "Orders", default = "E" },
-	{ id = "resurrect", label = "Resurrect, then left click (T1 workers)", group = "Orders", default = "D" },
+	{ id = "resurrect", label = "D-Gun (Commanders) / resurrect (T1 workers), then left click; with Ctrl: self-destruct", group = "Orders", default = "D" },
 	{ id = "stop", label = "Stop", group = "Orders", default = "S" },
 	{ id = "fireState", label = "Fire state", group = "Orders", default = "L" },
 	{ id = "moveState", label = "Move state", group = "Orders", default = "K" },

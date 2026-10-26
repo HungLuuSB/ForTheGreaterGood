@@ -1,8 +1,10 @@
 --!strict
 -- What each own builder is working on now, for its nano spray (C-193, the
 -- user: "Add nano-spray to the build so I know what they are building").
--- The server doesn't send a builder's target, so it comes from the
--- builder's own order line (Core/Waypoints): its queued build's frame once
+-- Since protocol 39 the server says (WORK: Schema.WorkKind and the unit or
+-- wreck, S-194; G7: the guess sprayed the previous structure while the
+-- server built the next). Without it (older recordings) the target comes
+-- from the builder's own order line (Core/Waypoints): its queued build's frame once
 -- that frame stands, its repair or reclaim target, or, assisting another
 -- builder (GUARD), what that builder works on. Only while the builder
 -- stands still within reach (build range plus the target's half size), as
@@ -53,14 +55,49 @@ local function aimOf(world: World.World, byUnit: { [number]: { any } }, id: numb
 	return nil, nil
 end
 
-export type Spray = { builder: number, target: number, kind: string }
+export type Spray = { builder: number, target: number, kind: string, wreck: boolean? } -- wreck: `target` is a wreck ID (reclaim, resurrect)
+
+local WK = Schema.WorkKind
+
+-- The server's word: the unit or wreck builder `u` works on, or nil.
+local function served(world: World.World, u: World.Unit, depth: number): (number?, string?, boolean?)
+	local kind, target = u.workKind, u.workTarget
+	if kind == nil or kind == WK.NONE or target == nil then
+		return nil, nil, nil
+	end
+	if kind == WK.RECLAIM or kind == WK.RESURRECT then
+		if world.wrecks[target] == nil then
+			return nil, nil, nil
+		end
+		return target, if kind == WK.RECLAIM then "reclaim" else "resurrect", true
+	end
+	local t = world.units[target]
+	if t == nil then
+		return nil, nil, nil
+	end
+	if kind == WK.ASSIST and not (t.build and t.build < 1) and depth > 0 then
+		-- assisting a builder: what that builder works on
+		return served(world, t, depth - 1)
+	end
+	return target, "build", false
+end
 
 -- Every own builder spraying now: builder → its target and kind ("build"
 -- or "reclaim").
 function BuildTargets.list(world: World.World, byUnit: { [number]: { any } }, out: { Spray }): { Spray }
 	table.clear(out)
 	for id, u in world.units do
-		if u.team ~= world.me.team or byUnit[id] == nil then
+		if u.team ~= world.me.team then
+			continue
+		end
+		if u.workKind ~= nil then
+			local target, kind, wreck = served(world, u, 2)
+			if target and kind then
+				table.insert(out, { builder = id, target = target, kind = kind, wreck = wreck })
+			end
+			continue
+		end
+		if byUnit[id] == nil then
 			continue
 		end
 		local def = World.def(world, u)

@@ -32,6 +32,9 @@ local ACTIVE = Kit.COLOR.selected
 local GREEN, YELLOW, RED = Color3.fromRGB(90, 210, 90), Color3.fromRGB(230, 200, 60), Color3.fromRGB(220, 70, 60)
 local FIRE = { [0] = { "Hold fire", RED }, [1] = { "Return fire", YELLOW }, [2] = { "Fire at will", GREEN } }
 local MOVE = { [0] = { "Hold pos", RED }, [1] = { "Maneuver", YELLOW }, [2] = { "Roam", GREEN } }
+-- aircraft retreat (S-194, G17): Schema.RetreatAt → label; the segments light 30 / 40 / 50
+local RETREAT = { [0] = "No retreat", [1] = "Retreat 30%", [2] = "Retreat 40%", [3] = "Retreat 50%" }
+local RETREAT_NEXT = { [1] = 2, [2] = 3, [3] = 0, [0] = 1 }
 local COLS = 5
 local W, H = 64, 24
 local SEG_W, SEG_H, SEG_GAP = 9, 2, 2 -- a state segment's size and spacing (C-210)
@@ -61,12 +64,16 @@ end
 -- BAR's order: states, then orders.
 local ORDER = CommandSet.ORDER
 -- each button's key action (Core/Keybinds; rebindable, C-159)
-local ACTION = { move = "move", fight = "fight", attack = "attack", patrol = "patrol", guard = "guard", stop = "stop", fire = "fireState", movestate = "moveState", ["repeat"] = "repeat", toggle = "toggle", cancel = "cancel", alert = "lastAlert", reclaim = "reclaim", resurrect = "resurrect" }
+local ACTION = { move = "move", fight = "fight", attack = "attack", patrol = "patrol", guard = "guard", stop = "stop", fire = "fireState", movestate = "moveState", ["repeat"] = "repeat", toggle = "toggle", cancel = "cancel", alert = "lastAlert", reclaim = "reclaim", resurrect = "resurrect", dgun = "resurrect" }
 local function keyOf(name: string): string
+	if name == "selfdestruct" then
+		local k = SettingsMenu.binds.resurrect
+		return if k then `Ctrl+{k}` else ""
+	end
 	local id = ACTION[name]
 	return if id then SettingsMenu.binds[id] or "" else ""
 end
-local STATES = { fire = true, movestate = true, ["repeat"] = true, toggle = true, priority = true }
+local STATES = { fire = true, movestate = true, retreat = true, ["repeat"] = true, toggle = true, priority = true }
 local LOW_PRIORITY = 128 -- Schema.UnitState.LOW_PRIORITY (S-156)
 
 -- Whether any selected unit runs at low resource priority (S-156, C-196).
@@ -82,7 +89,7 @@ end
 
 local function act(api: Api.Api, name: string)
 	local a = api.actions
-	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" or name == "repair" or name == "reclaim" or name == "resurrect" or name == "upgrade" then
+	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" or name == "repair" or name == "reclaim" or name == "resurrect" or name == "upgrade" or name == "dgun" then
 		a.setCommandMode(if api.state.commandMode == name then nil else name)
 	elseif name == "stop" then
 		a.stop()
@@ -90,6 +97,10 @@ local function act(api: Api.Api, name: string)
 		a.setFireState(((api.state.fireState or 1) + 1) % 3)
 	elseif name == "movestate" then
 		a.setMoveState(((api.state.moveState or 1) + 1) % 3)
+	elseif name == "retreat" then
+		a.setRetreat(RETREAT_NEXT[api.state.retreat or 1] or 1)
+	elseif name == "selfdestruct" then
+		a.selfDestruct()
 	elseif name == "repeat" then
 		local _, anyRepeat = selected(api)
 		a.setRepeat(not anyRepeat)
@@ -245,6 +256,9 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		repair = "Repair",
 		reclaim = "Reclaim",
 		resurrect = "Resurrect", -- T1 workers (S-168, C-216)
+		dgun = "D-Gun", -- Commanders (S-194, G5)
+		retreat = RETREAT[api.state.retreat or 1] or "Retreat",
+		selfdestruct = if api.state.selfDestructing then "Stop self-d" else "Self-destruct",
 		upgrade = "Upgrade", -- Upgrade extractors (C-121)
 	}
 	-- each state button's segments, left to right, and the lit one (0: none)
@@ -254,6 +268,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		["repeat"] = { colors = { RED, GREEN }, lit = if #factories == 0 then 0 elseif anyRepeat then 2 else 1 },
 		toggle = { colors = { RED, GREEN }, lit = if not switchable then 0 elseif anyOn then 2 else 1 },
 		priority = { colors = { RED, GREEN }, lit = if low then 1 else 2 },
+		retreat = { colors = { RED, YELLOW, GREEN }, lit = api.state.retreat or 1 }, -- 30% red … 50% green; never: none lit
 	}
 	local mouse = game:GetService("UserInputService"):GetMouseLocation()
 	local inset = game:GetService("GuiService"):GetGuiInset()

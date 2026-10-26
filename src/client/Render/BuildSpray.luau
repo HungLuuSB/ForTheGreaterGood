@@ -74,9 +74,12 @@ function BuildSpray.step(b: BuildSpray, world: World.World, renderer: UnitRender
 	local n = 0
 	if not hidden then
 		for _, s in BuildTargets.list(world, byUnit, b.list) do
-			local u, t = world.units[s.builder], world.units[s.target]
-			local tdef = t and World.def(world, t)
-			if u == nil or t == nil or tdef == nil then
+			-- a unit, or a wreck being reclaimed or resurrected (protocol 39)
+			local u = world.units[s.builder]
+			local t = if s.wreck then nil else world.units[s.target]
+			local w = if s.wreck then world.wrecks[s.target] else nil
+			local tdef = if t then World.def(world, t) elseif w then world.defs.unitByIndex[w.defIndex] else nil
+			if u == nil or (t == nil and w == nil) or tdef == nil then
 				continue
 			end
 			n += 1
@@ -86,16 +89,23 @@ function BuildSpray.step(b: BuildSpray, world: World.World, renderer: UnitRender
 			-- the far end sweeps over the target's top, at the height it has reached
 			local half = tdef.footprint * 4
 			local ox, oz = Nanoframe.sprayPoint(s.builder % 4 + 1, 4, now, half, half)
-			local tModel = UnitRenderer.modelOf(renderer, s.target)
+			local tModel = if t then UnitRenderer.modelOf(renderer, s.target) else nil
 			local top
-			if tModel then
+			if t and tModel then
 				local cf, size = tModel:GetBoundingBox()
 				local progress = if t.build and t.build < 1 then t.build else 1
 				top = cf.Position.Y - size.Y / 2 + size.Y * math.max(0.15, progress)
-			else
+			elseif t then
 				top = (t.ry or World.groundY(world, t.x, t.z)) + 2
+			else
+				top = World.groundY(world, (w :: any).x, (w :: any).z) + 2 -- a wreck: low on the ground
 			end
-			local tx, tz = t.rx or t.x, t.rz or t.z
+			local tx, tz
+			if t then
+				tx, tz = t.rx or t.x, t.rz or t.z
+			else
+				tx, tz = (w :: any).x, (w :: any).z
+			end
 			local to = Vector3.new(tx + ox, top, tz + oz)
 			local reclaim = s.kind == "reclaim"
 			-- a reclaim stream flows from the target back to the builder

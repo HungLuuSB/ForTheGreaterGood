@@ -191,7 +191,7 @@ return function(t: any)
 				PieceAnim.step(s, 1 / 60)
 			end
 		end
-		run({ [1] = 2 }, 1.5)
+		run({ [1] = { frame.x, frame.z } }, 1.5)
 		local torso = u.pieces.torso
 		t.expect(torso ~= nil and math.abs(torso.rot[2] - math.rad(45)) < 1e-6, `facing its work ({torso and math.deg(torso.rot[2])})`)
 		run({}, 2)
