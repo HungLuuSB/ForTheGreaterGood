@@ -6,6 +6,14 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Protocol 39 (C-242):**
+  - Commanders fire their D-Gun with D then a click: a big glowing bolt that burns through everything on its path.
+  - Any unit can self-destruct (button, or Ctrl+D), with the seconds counting down in red over it.
+  - Aircraft have a retreat setting (30 / 40 / 50% / never), and the ammo line is gone.
+  - The nano spray now follows what the server says each builder works on.
+  - Supreme Strait's cells have their ground looks.
+  - A unit model that no longer fits its def now draws a stand-in instead of breaking all drawing (the Commanders were invisible on main).
+- Ready to merge: `cce2c4c3` (C-242; main c829d2a7 merged in. test_client 319 / 322: the 3 failures are models-C's Commander blockout and mesh data, already asked of C; test 584 / 584; build passed. Studio, Supreme Strait: D-Gun, countdown, card, laser)
 - Ready to merge: `4d8a474d` (main b5c48c8f, S-193, merged in. Supersedes f53717fe: three specs re-timed for the slower units, and aircraft heights at cell edges fixed. test_client 321 / 321, test 575 / 575, build passed)
 - **Playtest round 2 (G2, G4, G9, G14, G15, G16):**
   - Planes no longer snap crossing mountains; they climb and dip smoothly.
