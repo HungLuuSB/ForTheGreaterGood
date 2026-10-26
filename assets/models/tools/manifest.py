@@ -173,6 +173,12 @@ APPROVED = {
     "ord_advbotlab", "chs_advbotlab", "ord_artisan", "chs_tinker", "ord_lazarus", "chs_graverobber", "ord_glint", "chs_skitter",
     "ord_mace", "chs_thug", "ord_kestrel", "chs_needle", "ord_fatboy", "chs_tzar", "chs_centurion", "chs_dragon",
     "ord_liche",
+    # 2026-10-26: the rest (ships v2, T2 structures, defences, Shepherd / Griffin), with wrecks
+    "chs_barracuda", "chs_wrecker", "ord_sentry", "ord_tidewright", "chs_talos", "ord_gauntlet", "chs_griffin", "ord_shepherd",
+    "chs_corsair", "chs_kraken", "chs_leviathan", "chs_reaver", "chs_siren", "ord_crusader", "ord_dominion", "ord_harbormaster",
+    "ord_sanctuary", "chs_advairfield", "chs_advshipyard", "chs_advvehplant", "chs_allseer", "chs_augur", "chs_basilisk", "chs_blackout",
+    "chs_bulwark", "chs_deepear", "chs_fusion", "chs_seekerspire", "chs_wyvern", "ord_advairfield", "ord_advshipyard", "ord_advvehplant",
+    "ord_aegis", "ord_beacon", "ord_choir", "ord_fusion", "ord_sanctum", "ord_tribunal", "ord_veilspire", "ord_witness",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -204,6 +210,12 @@ APPROVED_WRECKS = {
     "ord_advbotlab", "chs_advbotlab", "ord_artisan", "chs_tinker", "ord_lazarus", "chs_graverobber", "ord_glint", "chs_skitter",
     "ord_mace", "chs_thug", "ord_kestrel", "chs_needle", "ord_fatboy", "chs_tzar", "chs_centurion", "chs_dragon",
     "ord_liche",
+    # 2026-10-26: the rest (ships v2, T2 structures, defences, Shepherd / Griffin), with wrecks
+    "chs_barracuda", "chs_wrecker", "ord_sentry", "ord_tidewright", "chs_talos", "ord_gauntlet", "chs_griffin", "ord_shepherd",
+    "chs_corsair", "chs_kraken", "chs_leviathan", "chs_reaver", "chs_siren", "ord_crusader", "ord_dominion", "ord_harbormaster",
+    "ord_sanctuary", "chs_advairfield", "chs_advshipyard", "chs_advvehplant", "chs_allseer", "chs_augur", "chs_basilisk", "chs_blackout",
+    "chs_bulwark", "chs_deepear", "chs_fusion", "chs_seekerspire", "chs_wyvern", "ord_advairfield", "ord_advshipyard", "ord_advvehplant",
+    "ord_aegis", "ord_beacon", "ord_choir", "ord_fusion", "ord_sanctum", "ord_tribunal", "ord_veilspire", "ord_witness",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
