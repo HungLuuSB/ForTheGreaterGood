@@ -2,6 +2,19 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: anti-air with the game's missiles)
+
+- **The user:** anti-air missiles must use the game's missile system (vertical launch), and the target must be far away so the missile shows in action.
+- **Missiles fly the game's guidance** (`Shared/Combat/Guidance`, as the server's Projectiles):
+  - **Vertical launchers** (radar SAMs, missile batteries) fire straight up, climb their `climbHeight`, pitch over (`Guidance.vertical`), then navigate by proportional navigation. Their turret stays at rest (S-42).
+  - **Other missiles** leave along the launcher's aim and navigate (`Guidance.pn`), against the drone's real velocity.
+  - **Hits** are judged on each tick's path: a 9-stud fuse for the drone.
+- **The drone** flies far out, a fifth of the weapon's range (70 to 220 studs), 25 to 60 studs up, making passes across the view. It is three times bigger, with a blinking red beacon. The haze thins while the range is up.
+- **The camera** frames a box round the unit, its targets and the top of the climb (1.8 × climbHeight, which the pitch-over overshoots).
+- Fire now stays on across page changes, as the switch shows.
+- **Studio:** Seraph: the missile climbs to about 190 studs over the launcher, pitches over and bursts on the drone 230 studs out (`lobby_range_seraph_pitchover`, `lobby_range_seraph_intercept`). Halo: the IR missile flies straight out to the drone 80 studs away.
+- Lobby specs 64 / 64; the build check passes.
+
 ## Summary (2026-10-26: the Units showroom comes alive, L-22)
 
 The user's three ideas for the Units tab:

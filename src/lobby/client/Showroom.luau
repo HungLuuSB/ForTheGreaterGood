@@ -266,6 +266,12 @@ local function applyLight()
 	if focus then
 		focus.Enabled = not open
 	end
+	-- the firing range's far targets: thinner haze while it's up
+	local air = Lighting:FindFirstChild("LobbyAtmosphere") :: Atmosphere?
+	if air and open and firing then
+		air.Density = math.min(air.Density, 0.12)
+		air.Haze = math.min(air.Haze, 0.4)
+	end
 	-- under the surface the sea's own colour, whatever the light
 	local grade = Lighting:FindFirstChild("LobbyGrade") :: ColorCorrectionEffect?
 	if grade and open and placeNow == "underwater" then
@@ -381,19 +387,20 @@ local function layout()
 	local reach: Vector3? = nil
 	if firing and shown[1] and shown[1].model then
 		local points = Range.setFiring(true, shown[1].base, placeInfo())
-		local far = 0
-		local sum = Vector3.zero
-		for _, p in points do
-			far = math.max(far, (Vector3.new(p.X, center.Y, p.Z) - center).Magnitude)
-			sum += p
-		end
 		if #points > 0 then
-			-- the unit and its targets, from their middle
-			span = math.max(span, far + radius)
-			reach = sum / #points
+			-- a box round the unit, its targets and its missiles' climb: the
+			-- camera looks at its middle from far enough for its width or height
+			local lo, hi = center - Vector3.one * radius, center + Vector3.new(radius, top, radius)
+			for _, p in points do
+				lo, hi = lo:Min(p), hi:Max(p)
+			end
+			local size = hi - lo
+			span = math.max(span, Vector2.new(size.X, size.Z).Magnitude, size.Y * 1.6)
+			reach = (lo + hi) / 2
 		end
 	end
-	fitDistance = math.max(14, span / 2 / math.tan(math.rad(FOV / 2)) * 1.5)
+	-- (with targets out, the whole scene matters more than a margin round the unit)
+	fitDistance = math.max(14, span / 2 / math.tan(math.rad(FOV / 2)) * (if reach then 1.1 else 1.5))
 	-- aircraft: their middle; on the ground a little below the top;
 	-- underwater the middle of what's below the surface
 	if placeNow == "underwater" and low < math.huge then
@@ -402,8 +409,7 @@ local function layout()
 		target = center + Vector3.new(0, if placeNow == "sky" then top - (top - 4) / 2 else math.max(2, top * 0.45), 0)
 	end
 	if reach then
-		-- between the unit and its targets (a drone's height too)
-		target = target:Lerp(Vector3.new(reach.X, math.max(target.Y, reach.Y + 2), reach.Z), 0.5)
+		target = reach
 	end
 end
 
@@ -464,6 +470,9 @@ function Showroom.setFiring(on: boolean)
 		Range.setFiring(false)
 	end
 	layout()
+	if open then
+		applyLight() -- the haze thins for the range, and back
+	end
 end
 
 -- How many of a unit's weapons the firing range shows (0: Fire is off).
@@ -608,8 +617,7 @@ function Showroom.leave()
 		return
 	end
 	open = false
-	firing = false
-	Range.stop()
+	Range.stop() -- (Fire stays as the switch says: back on the page, the range comes back)
 	folder.Parent = nil
 	Scene.setAway(false)
 	Scene.relight()

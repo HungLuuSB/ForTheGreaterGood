@@ -16,11 +16,16 @@
 -- (at most RELOAD_MAX seconds), salvos included, and its shots fly like the
 -- match's: the effect records of Core/Effects (shells, missiles, tracers,
 -- beams, lasers, bursts) drawn by the match's own Render/Effects. Shells
--- follow the weapon's speed and gravity (Shared/Combat/Ballistics), missiles
--- steer at the weapon's turn rate, bombs fall, torpedoes run under the
--- surface. Anti-missile and strategic weapons aren't shown.
+-- follow the weapon's speed and gravity (Shared/Combat/Ballistics), bombs
+-- fall, torpedoes run under the surface. Missiles fly the game's own
+-- guidance (Shared/Combat/Guidance, as the server's Projectiles): a
+-- vertical launch goes straight up its climb height, pitches over and
+-- navigates; others leave along the launcher's aim and navigate. The
+-- anti-air drone flies far out, a fifth of the weapon's range, so the
+-- whole flight shows. Anti-missile and strategic weapons aren't shown.
 
 local Ballistics = require("@shared/Combat/Ballistics")
+local Guidance = require("@shared/Combat/Guidance")
 local Codex = require("../shared/Codex")
 local Effects = require("@client/Core/Effects")
 local PieceAnim = require("@client/Core/PieceAnim")
@@ -35,16 +40,17 @@ Range.RELOAD_MAX = 4 -- seconds between shots at most (a long reload waits less)
 Range.RELOAD_MIN = 0.12
 Range.FIRST_SHOT = 1.2 -- seconds before the first shot (the turret turns first)
 Range.AIM_EVERY = 0.2 -- seconds between aim updates
-Range.TARGET_SIZE = Vector3.new(7, 5, 7)
+Range.PASS_RATE = 0.3 -- radians a second: the drone's passes
 
 export type Target = {
 	kind: string, -- "ground" | "air" | "sub"
 	model: Model,
-	center: Vector3, -- ground and sub targets stand here; the drone circles round it
-	radius: number, -- the drone's circle
-	height: number, -- the drone's height above `center`
+	center: Vector3, -- ground and sub targets stand here; the drone's passes cross it
+	radius: number, -- half the drone's pass
+	axis: Vector3, -- the drone's pass runs along it
 	phase: number,
 	pos: Vector3, -- now
+	vel: Vector3, -- now (missiles navigate against it)
 	flashUntil: number,
 }
 
@@ -85,7 +91,7 @@ local groundAt: (Vector3) -> number = function(_p)
 end
 
 -- Shells on the move: our own state; Effects' projectile records are drawn.
-type Shot = { proj: any, target: Target, steer: number?, aimY: number?, groundY: number, floor: number? }
+type Shot = { proj: any, target: Target, homing: boolean, vertical: boolean, turned: boolean, maxTurn: number, groundY: number, floor: number? }
 local shots: { [number]: Shot } = {}
 
 function Range.init(allDefs: any, parent: Instance)
@@ -172,9 +178,16 @@ local function targetModel(kind: string, onWater: boolean): Model
 	m.Name = `Target_{kind}`
 	local steel = Color3.fromRGB(70, 74, 80)
 	if kind == "air" then
-		local body = part(m, { Name = "Body", Size = Vector3.new(1.6, 1.2, 5), Material = Enum.Material.Metal, Color = steel })
-		part(m, { Name = "Wing", Size = Vector3.new(8, 0.2, 1.6), CFrame = CFrame.new(0, 0.2, 0.2), Material = Enum.Material.Metal, Color = Color3.fromRGB(196, 60, 52) })
-		part(m, { Name = "Tail", Size = Vector3.new(3, 0.2, 0.9), CFrame = CFrame.new(0, 0.3, 2.2), Material = Enum.Material.Metal, Color = Color3.fromRGB(196, 60, 52) })
+		-- big, with a beacon: it flies far out
+		local body = part(m, { Name = "Body", Size = Vector3.new(4.8, 3.6, 15), Material = Enum.Material.Metal, Color = steel })
+		part(m, { Name = "Wing", Size = Vector3.new(24, 0.6, 4.8), CFrame = CFrame.new(0, 0.6, 0.6), Material = Enum.Material.Metal, Color = Color3.fromRGB(196, 60, 52) })
+		part(m, { Name = "Tail", Size = Vector3.new(9, 0.6, 2.7), CFrame = CFrame.new(0, 0.9, 6.6), Material = Enum.Material.Metal, Color = Color3.fromRGB(196, 60, 52) })
+		local beacon = part(m, { Name = "Beacon", Shape = Enum.PartType.Ball, Size = Vector3.one * 1.6, CFrame = CFrame.new(0, 2.4, 0), Material = Enum.Material.Neon, Color = Color3.fromRGB(255, 70, 60) })
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(255, 80, 70)
+		light.Range = 30
+		light.Brightness = 3
+		light.Parent = beacon
 		m.PrimaryPart = body
 	elseif kind == "sub" then
 		local hull = part(m, { Name = "Hull", Shape = Enum.PartType.Cylinder, Size = Vector3.new(12, 3.4, 3.4), Material = Enum.Material.Metal, Color = steel })
@@ -274,20 +287,22 @@ function Range.setFiring(on: boolean, base: CFrame?, place: Place?): { Vector3 }
 	for kind, range in need do
 		local t: Target
 		if kind == "air" then
-			local d = distanceFor(range, 24, 40)
-			local center = origin + Vector3.new(0, if place.sky then base.Y else place.floor, 0)
-			t = { kind = kind, model = targetModel("air", false), center = center, radius = d, height = if place.sky then 10 else 20, phase = 0, pos = center, flashUntil = 0 }
+			-- far out and high, flying passes across the view
+			local d = math.clamp(range * 0.2, 70, 220)
+			local h = math.clamp(range * 0.06, 25, 60)
+			local center = origin + forward * d + Vector3.new(0, (if place.sky then base.Y else place.floor) + h, 0)
+			t = { kind = kind, model = targetModel("air", false), center = center, radius = d * 0.45, axis = right, phase = 0, pos = center, vel = Vector3.zero, flashUntil = 0 }
 		elseif kind == "sub" then
 			local d = distanceFor(range, 24, 40)
 			local y = ((place.water or 0) + (place.seabed or ((place.water or 0) - 30))) / 2
 			local p = origin + forward * d + right * d * 0.35
-			t = { kind = kind, model = targetModel("sub", true), center = Vector3.new(p.X, y, p.Z), radius = 0, height = 0, phase = 0, pos = Vector3.new(p.X, y, p.Z), flashUntil = 0 }
+			t = { kind = kind, model = targetModel("sub", true), center = Vector3.new(p.X, y, p.Z), radius = 0, axis = right, phase = 0, pos = Vector3.new(p.X, y, p.Z), vel = Vector3.zero, flashUntil = 0 }
 		else
 			local d = distanceFor(range, 22, 40)
 			local p = origin + forward * d + right * d * 0.35
 			local onWater = water and not place.underwater
 			local y = if place.sky then groundAt(p) elseif onWater then (place.water :: number) else place.floor
-			t = { kind = kind, model = targetModel("ground", onWater), center = Vector3.new(p.X, y, p.Z), radius = 0, height = 0, phase = 0, pos = Vector3.new(p.X, y, p.Z), flashUntil = 0 }
+			t = { kind = kind, model = targetModel("ground", onWater), center = Vector3.new(p.X, y, p.Z), radius = 0, axis = right, phase = 0, pos = Vector3.new(p.X, y, p.Z), vel = Vector3.zero, flashUntil = 0 }
 		end
 		-- the board faces the unit
 		local look = CFrame.lookAt(t.center, Vector3.new(origin.X, t.center.Y, origin.Z))
@@ -296,9 +311,11 @@ function Range.setFiring(on: boolean, base: CFrame?, place: Place?): { Vector3 }
 		table.insert(targets, t)
 		byKind[kind] = t
 		if not (place.sky and kind == "ground") then
-			table.insert(points, if kind == "air" then t.center + Vector3.new(t.radius, t.height, 0) else t.center)
 			if kind == "air" then
-				table.insert(points, t.center + Vector3.new(-t.radius, t.height, 0))
+				table.insert(points, t.center + t.axis * t.radius)
+				table.insert(points, t.center - t.axis * t.radius)
+			else
+				table.insert(points, t.center)
 			end
 		end
 	end
@@ -307,6 +324,10 @@ function Range.setFiring(on: boolean, base: CFrame?, place: Place?): { Vector3 }
 			local weapon = defs.weaponByIndex[w.weaponIndex]
 			local kind = Range.targetKind(weapon, water)
 			local t = kind and byKind[kind]
+			if t and weapon.launch == "vertical" then
+				-- the top of the climb shows too (it overshoots while pitching over)
+				table.insert(points, origin + Vector3.new(0, place.floor + (weapon.climbHeight or 0) * 1.8, 0))
+			end
 			if t then
 				table.insert(u.slots, { slot = slot, weapon = weapon, target = t, nextAt = clock + Range.FIRST_SHOT + slot * 0.3, queue = {}, lastAim = -math.huge, shots = 0 })
 			end
@@ -459,8 +480,9 @@ local function fire(u: Unit, s: Slot, now: number)
 		local fall = math.sqrt(math.max(2 * math.max(from.Y - to.Y, 1) / gravity, 0.05))
 		v = dirFlat * (dist / fall)
 	elseif w.type == "HOMING" then
-		-- up and out of the launcher, then it turns onto the target
-		v = (dirFlat + Vector3.new(0, 0.9, 0)).Unit * speed
+		-- as the server launches it: straight up (a vertical launch), else
+		-- along the launcher's aim; guidance takes over from there
+		v = if w.launch == "vertical" then Vector3.new(0, speed, 0) elseif d.Magnitude > 1e-6 then d.Unit * speed else dirFlat * speed
 		gravity = 0
 	elseif w.type == "TORPEDO" then
 		v = if d.Magnitude > 1e-6 then d.Unit * speed else dirFlat * speed
@@ -483,7 +505,10 @@ local function fire(u: Unit, s: Slot, now: number)
 	shots[nextProj] = {
 		proj = proj,
 		target = t,
-		steer = if w.type == "HOMING" then math.rad(w.turnRate or 120) * DT else nil,
+		homing = w.type == "HOMING",
+		vertical = w.launch == "vertical",
+		turned = false,
+		maxTurn = math.rad(w.turnRate or 120) * DT,
 		groundY = groundAt(from),
 		-- what counts as falling short: the target's own level, deep under
 		-- a submarine target, else the place's ground
@@ -503,18 +528,35 @@ local function stepShots(now: number)
 		local p = s.proj
 		local g = p.weapon.gravity or 0
 		local to = aimPoint(s.target)
-		if s.steer then
-			p.vx, p.vy, p.vz = Ballistics.steer(p.vx, p.vy, p.vz, to.X - p.x, to.Y - p.y, to.Z - p.z, s.steer)
+		if s.homing then
+			-- the game's guidance (Shared/Combat/Guidance), as the server's Projectiles
+			local tv = s.target.vel
+			if s.vertical then
+				local climbLeft = Guidance.climbLeft(p.weapon, p.y, s.groundY)
+				p.vx, p.vy, p.vz, s.turned = Guidance.vertical(p.x, p.y, p.z, p.vx, p.vy, p.vz, to.X, to.Y, to.Z, tv.X, tv.Y, tv.Z, s.maxTurn, DT, s.turned, climbLeft)
+				p.turned = s.turned
+			else
+				p.vx, p.vy, p.vz = Guidance.pn(p.x, p.y, p.z, p.vx, p.vy, p.vz, to.X, to.Y, to.Z, tv.X, tv.Y, tv.Z, s.maxTurn, DT)
+			end
 		end
 		local nx, ny, nz, nvx, nvy, nvz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, g, DT)
 		p.ttl -= 1
-		local hitTarget = (Vector3.new(nx, ny, nz) - to).Magnitude <= math.max(3, Vector3.new(p.vx, p.vy, p.vz).Magnitude * DT)
+		-- a hit: the tick's path passes the target close enough (a missile's
+		-- fuse, a shell's hull)
+		local a, b = Vector3.new(p.x, p.y, p.z), Vector3.new(nx, ny, nz)
+		local ab = b - a
+		local k = if ab:Dot(ab) > 1e-9 then math.clamp((to - a):Dot(ab) / ab:Dot(ab), 0, 1) else 1
+		local closest = a + ab * k
+		local hitTarget = (closest - to).Magnitude <= (if s.target.kind == "air" then 9 else 3)
+		if hitTarget then
+			nx, ny, nz = closest.X, closest.Y, closest.Z
+		end
 		local floor = s.floor or groundAt(Vector3.new(nx, 0, nz))
 		local down = ny <= floor and nvy < 0
 		if hitTarget or down or p.ttl <= 0 then
 			fx.projectiles[id] = nil
 			shots[id] = nil
-			local at = if hitTarget then to else Vector3.new(nx, math.max(ny, floor), nz)
+			local at = if hitTarget then Vector3.new(nx, ny, nz) else Vector3.new(nx, math.max(ny, floor), nz)
 			burst(at.X, at.Y, at.Z, Effects.impactSize(p.weapon), "impact", Effects.EXPLOSION_SECONDS, now, Vector3.new(p.vx, p.vy, p.vz))
 			if hitTarget then
 				flash(s.target)
@@ -530,15 +572,22 @@ end
 local function stepTargets(dt: number)
 	for _, t in targets do
 		if t.kind == "air" then
-			t.phase += dt * 0.35
-			local p = t.center + Vector3.new(math.cos(t.phase) * t.radius, t.height + math.sin(t.phase * 2.3) * 2, math.sin(t.phase) * t.radius)
-			local ahead = t.center + Vector3.new(math.cos(t.phase + 0.1) * t.radius, t.height, math.sin(t.phase + 0.1) * t.radius)
+			-- back and forth across the view, banking at each end
+			t.phase += dt * Range.PASS_RATE
+			local s, c = math.sin(t.phase), math.cos(t.phase)
+			local p = t.center + t.axis * (s * t.radius) + Vector3.new(0, math.sin(t.phase * 2.3) * 2, 0)
+			t.vel = t.axis * (c * t.radius * Range.PASS_RATE)
 			t.pos = p
-			t.model:PivotTo(CFrame.lookAt(p, ahead) * CFrame.Angles(0, 0, -0.35))
+			local dir = if c >= 0 then t.axis else -t.axis
+			t.model:PivotTo(CFrame.lookAt(p, p + dir) * CFrame.Angles(0, 0, -0.5 * s * (if c >= 0 then 1 else -1)))
 		end
 		local lit = clock < t.flashUntil
+		local beacon = t.model:FindFirstChild("Beacon")
+		if beacon and beacon:IsA("BasePart") then
+			beacon.Transparency = if clock % 1 < 0.5 then 0 else 0.8 -- blinks
+		end
 		for _, d in t.model:GetDescendants() do
-			if d:IsA("BasePart") then
+			if d:IsA("BasePart") and d.Name ~= "Beacon" then
 				d.Material = if lit then Enum.Material.Neon else (if d.Name == "Board" or d.Name == "Ring" or d.Name == "Band" then Enum.Material.SmoothPlastic else Enum.Material.Metal)
 			end
 		end
@@ -549,7 +598,7 @@ local function stepFiring(dt: number, now: number)
 	for _, u in units do
 		for _, s in u.slots do
 			-- aim (the piece script turns the turret and barrel)
-			if clock - s.lastAim >= Range.AIM_EVERY then
+			if clock - s.lastAim >= Range.AIM_EVERY and s.weapon.launch ~= "vertical" then -- vertical launchers stay at rest (S-42)
 				s.lastAim = clock
 				local yaw, pitch = aimAngles(u, s, aimPoint(s.target))
 				PieceAnim.call(u.anim, "AimWeapon", s.slot, yaw, pitch, true)
