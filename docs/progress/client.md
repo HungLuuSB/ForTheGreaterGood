@@ -7,6 +7,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 ## Summary (2026-10-26, pre-game and automatic colours)
 
 - **The bots walk (C-231):** the new bots step on their legs like the Commanders (Fatboy short heavy steps, Centurion long strides, Skitter scuttling on four legs), and the Dragon's fans turn. All client specs pass again.
+- Ready to merge: `39f70870` (C-231 with m-models 4f6f268f; test_client 315 / 315, build passed)
 - **Everything loads first (C-230):** in a lobby match every model and texture loads during the loading screen (twice as fast as before: 24.5 s in Studio), and the pick clock only starts once you're loaded. The loading screen's text has dark outlines so it reads over the art.
 - Ready to merge: `8fd37e1d` (C-230; src/client; test_client 313 of 314, Nanoframe passes once models-C's 6c93cc9e is in; build passed)
 - Ready to merge: `e6121b44` (LOAD_HOLD 115 s to match the sim's LOAD_WAIT 120; build passed)
