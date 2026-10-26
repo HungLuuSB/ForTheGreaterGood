@@ -78,8 +78,8 @@ function Match.validate(config: MatchState.Config, players: { [number]: Types.Pl
 		if players[pid] == nil then
 			error(`Match: ai names unknown player {tostring(pid)}`, 3)
 		end
-		if level ~= "easy" and level ~= "normal" and level ~= "hard" then
-			error(`Match: ai level must be "easy", "normal" or "hard", got {tostring(level)}`, 3)
+		if level ~= "easy" and level ~= "normal" and level ~= "hard" and level ~= "hard_aggressive" then
+			error(`Match: ai level must be "easy", "normal", "hard" or "hard_aggressive", got {tostring(level)}`, 3)
 		end
 	end
 	-- no unit cap unless the config sets one (S-170, the user: remove the
