@@ -181,6 +181,8 @@ APPROVED = {
     "ord_sanctuary", "chs_advairfield", "chs_advshipyard", "chs_advvehplant", "chs_allseer", "chs_augur", "chs_basilisk", "chs_blackout",
     "chs_bulwark", "chs_deepear", "chs_fusion", "chs_seekerspire", "chs_wyvern", "ord_advairfield", "ord_advshipyard", "ord_advvehplant",
     "ord_aegis", "ord_beacon", "ord_choir", "ord_fusion", "ord_sanctum", "ord_tribunal", "ord_veilspire", "ord_witness",
+    # 2026-10-26: the S-166 naval SAM platforms and advanced rearm pads
+    "ord_pharos", "chs_scylla", "ord_empyrean", "chs_rookery",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -225,6 +227,8 @@ APPROVED_WRECKS = {
     "ord_judgement", "ord_paladin", "ord_seraph", "ord_veil", "ord_warden", "chs_condor", "chs_leech", "ord_tidewatch",
     "ord_zenith", "chs_carapace", "chs_hailstorm", "chs_inferno", "ord_lumen", "ord_phalanx", "ord_radiance", "chs_ragnarok",
     "ord_citadel", "ord_reckoning",
+    # 2026-10-26: the S-166 naval SAM platforms and advanced rearm pads
+    "ord_pharos", "chs_scylla", "ord_empyrean", "chs_rookery",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
