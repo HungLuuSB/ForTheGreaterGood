@@ -43,6 +43,7 @@ export type State = {
 	camera: { x: number, z: number, zoom: number, strategic: boolean, rect: { number }, corners: { number }? },
 	hover: { unit: number?, x: number, z: number }?,
 	hoverWreck: number?, -- the wreck under the mouse when no unit is (the unit panel shows it, G2)
+	depositHint: { defId: string, defIndex: number, x: number, z: number }?, -- an extractor the selected builders could put on the free deposit under the mouse (C-244): drawn as a ghost, right-click orders it
 	placement: PlacementState?,
 	economy: { supply: Res, power: Res, wind: number }?,
 	alerts: { Alerts.Alert }, -- recent alerts, newest last (C-68)
@@ -502,6 +503,51 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			actions.cancelPlacement()
 		end
 		return placed > 0, if placed == 0 then "no extractor spot there" else nil
+	end
+
+	-- The extractor the selected builders would put on a free deposit (the
+	-- user's QoL, C-244): T2 when a selected builder can build the advanced
+	-- one, else T1 (Commanders, T1 builders). Nil with no builder selected.
+	function actions.hintExtractor(): any?
+		local best = nil
+		for _, id in sel.ids do
+			local u = world.units[id]
+			local def = u and World.def(world, u)
+			for _, opt in (def and def.buildOptions) or {} do
+				local d = defOf(opt)
+				if d and d.extractor and (best == nil or (Upgrades.isUpgrade(world.defs, d) and not Upgrades.isUpgrade(world.defs, best))) then
+					best = d
+				end
+			end
+		end
+		return best
+	end
+
+	-- The free deposit near (x, z) the selected builders could take: the
+	-- extractor and its spot, or nil (no builder, no free deposit there, an
+	-- own extractor already on it).
+	function actions.depositHintAt(x: number, z: number): { defId: string, defIndex: number, x: number, z: number }?
+		local def = actions.hintExtractor()
+		if def == nil then
+			return nil
+		end
+		-- (a deposit patch is 16 studs across: the mouse anywhere on it finds it)
+		local spots = Placement.area(world, def, x, z, 24, x, z, Placement.planned(world, api.waypoints.byUnit))
+		local r = spots[1]
+		if r == nil or (r.replaces or 0) ~= 0 then
+			return nil -- (an upgrade in place stays the Upgrade command's, C-121)
+		end
+		return { defId = def.id, defIndex = def.index, x = r.x, z = r.z }
+	end
+
+	-- Orders the hinted extractor (right-click on a free deposit, C-244);
+	-- `queue` (Shift) appends it.
+	function actions.buildHint(queue: boolean?): (boolean, string?)
+		local h = state.depositHint
+		if h == nil then
+			return false, "no deposit there"
+		end
+		return issue({ cmdType = CT.BUILD, queue = queue == true, x = h.x, z = h.z, defIndex = h.defIndex, facing = 0 }, buildersOf(h.defId))
 	end
 
 	-- The "Upgrade extractors" area command (C-121): the selected builders'

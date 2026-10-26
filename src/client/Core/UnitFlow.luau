@@ -16,6 +16,7 @@
 
 local Layers = require("@shared/Grid/Layers")
 local PlacementRules = require("@shared/Grid/PlacementRules")
+local Schema = require("@shared/Net/Schema")
 local World = require("./World")
 
 local UnitFlow = {}
@@ -28,9 +29,24 @@ export type Context = {
 	ratio: number?, -- 0..1, the slower of the team's supply / power stall ratios
 }
 
--- The own unfinished frame a builder `u` is working on (nearest within its
--- range), or nil.
+-- The own unfinished frame a builder `u` is working on, or nil: the
+-- server's WORK when it sends it (protocol 39; the user: "why the commander
+-- shows -8.3 while its idling": the nearest frame in range was taken as its
+-- work though another builder raised it), else the nearest within its range.
+local WK = Schema.WorkKind
 function UnitFlow.buildTarget(world: World.World, u: World.Unit, def: any): World.Unit?
+	if u.workKind ~= nil then
+		if u.workKind ~= WK.BUILD and u.workKind ~= WK.REPAIR and u.workKind ~= WK.ASSIST then
+			return nil -- idle, reclaiming or resurrecting: no building cost
+		end
+		local t = u.workTarget and world.units[u.workTarget]
+		if t and u.workKind == WK.ASSIST and not (t.build and t.build < 1) then
+			-- assisting a builder: its frame
+			local tdef = World.def(world, t)
+			return if tdef then UnitFlow.buildTarget(world, t, tdef) else nil
+		end
+		return if t and t.build and t.build < 1 then t else nil
+	end
 	local range = (def.buildRange or 0) + UnitFlow.REACH
 	local best, bestD = nil, range * range
 	for _, s in world.units do

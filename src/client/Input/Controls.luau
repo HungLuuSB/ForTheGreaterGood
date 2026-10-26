@@ -537,6 +537,11 @@ function Controls.bind(api: Api.Api): Controls
 			else
 				local ground = Controls.groundAt(cam(), mouse.X, mouse.Y)
 				local id = pickAt(world, Controls.projector(cam()), mouse.X, mouse.Y)
+				if id == nil and api.state.depositHint and api.actions.buildHint(shift()) then
+					-- a free deposit under the mouse: its extractor (C-244)
+					rightStart, self.lineFrom, self.lineTo = nil, nil, nil
+					return
+				end
 				if ground or id then
 					local p = ground or Vector3.zero
 					api.actions.smartOrder(p.X, p.Z, id, shift(), ctrl())

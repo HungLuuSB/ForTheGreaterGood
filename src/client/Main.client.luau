@@ -64,6 +64,7 @@ local HealthBars = require("./Render/HealthBars")
 local SensorFxRender = require("./Render/SensorFx")
 local WreckInfo = require("./Render/WreckInfo")
 local Overlay = require("./Render/Overlay")
+local Placement = require("./Core/Placement")
 local PlacementGhost = require("./Render/PlacementGhost")
 local DepositsRender = require("./Render/Deposits")
 local MissileViewRender = require("./Render/MissileView")
@@ -984,6 +985,18 @@ if RunService:IsStudio() then
 				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 			end
 			return Ground.last
+		elseif query == "hint" then
+			-- Invoke("hint", x, z): the deposit hint's steps there (C-244 checks)
+			local x, z = ...
+			local def = api.actions.hintExtractor()
+			if def == nil then
+				return { extractor = "none", selected = #api.state.selection }
+			end
+			local r = Placement.check(world, def, x, z, Placement.planned(world, api.waypoints.byUnit))
+			local spots = Placement.area(world, def, x, z, 12, x, z, Placement.planned(world, api.waypoints.byUnit))
+			local g = Controls.hover()
+			local atMouse = if g then api.actions.depositHintAt(g.X, g.Z) else nil
+			return { extractor = def.id, ok = r.ok, reason = r.reason, spots = #spots, replaces = spots[1] and spots[1].replaces, hint = api.state.depositHint, mouseGround = g and { g.X, g.Z }, hoverUnit = Controls.hoverUnit(world), atMouse = atMouse, placing = api.state.placement ~= nil, mode = api.state.commandMode }
 		elseif query == "act" then
 			-- Invoke("act", "smartOrder", x, z, unitId?, queue?): an API action, as the UI would call it
 			local name = (...)
@@ -1220,6 +1233,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		local ground = if hu then nil else Controls.hover()
 		local w = if ground then ReclaimZones.wreckAt(world, ground.X, ground.Z) else nil
 		api.state.hoverWreck = if w then w.id else nil
+		-- a free deposit under the mouse with builders selected: its extractor's ghost (C-244)
+		api.state.depositHint = if ground and api.state.placement == nil and api.state.commandMode == nil then api.actions.depositHintAt(ground.X, ground.Z) else nil
 	end
 	if api.state.placement then
 		local hover = Controls.hover()
