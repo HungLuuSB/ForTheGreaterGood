@@ -163,7 +163,6 @@ export type Proj = {
 	weapon: any,
 	target: number,
 	ttl: number, -- ticks left (fallback; IMPACT normally ends it)
-	born: number?, -- the sim tick it spawned on (a D-Gun bolt's flight so far, S-194)
 	size: number,
 	launch: { number }?, -- launched early (C-27): the server's state at its spawn tick { tick, x, y, z, vx, vy, vz }, taken as is on that step
 	nextState: { number }?, -- the prediction one tick on { x, y, z, vx, vy, vz, dvx, dvy, dvz } (dv: this tick's steering): frames draw the curve between (C-38)
@@ -838,10 +837,6 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		if early then
 			fx.launches.n += 1
 		end
-		-- (the server announces a D-Gun bolt again after each unit it burns
-		-- through: the same bolt keeps its spawn tick)
-		local was = fx.projectiles[e.projId]
-		local born = if was and was.weapon == weapon and weapon.bolt then was.born else e.tick or fx.tick
 		fx.projectiles[e.projId] = {
 			id = e.projId,
 			x = x,
@@ -855,7 +850,6 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			oz = oz,
 			blend = blend,
 			age = 0,
-			born = born,
 			ovx = 0,
 			ovy = 0,
 			ovz = 0,
@@ -882,18 +876,12 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			warn(fx, p, e.projId, x, y, z, now)
 		end
 	elseif kind == EK.IMPACT then
+		-- (a D-Gun bolt's only IMPACT is its range's end: the units it burns
+		-- through show as their DEATHs, S-194)
 		local p = fx.projectiles[e.projId]
-		-- a D-Gun bolt burns through what it passes (S-194): the server sends an
-		-- IMPACT for each unit, and the last at the end of its range. IMPACT
-		-- doesn't say which, so one well short of the range is a unit: the bolt
-		-- bursts there and flies on
-		local w = p and p.weapon
-		local through = p ~= nil and w.bolt ~= nil and (e.tick or fx.tick) - (p.born or 0) < w.range / math.max(w.projectileSpeed or 1, 1) / DT - 1.5
-		if not through then
-			fx.projectiles[e.projId] = nil
-			if p then
-				p.gone = true
-			end
+		fx.projectiles[e.projId] = nil
+		if p then
+			p.gone = true
 		end
 		local x, y, z = pos(world, e)
 		local r = if p then Effects.impactSize(p.weapon) else 2

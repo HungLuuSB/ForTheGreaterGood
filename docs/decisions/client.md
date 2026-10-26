@@ -2141,4 +2141,5 @@ The watchdog's WARN / INFO lines (S-140) stay on.
   - the Commander's laser; the D-Gun bolt firing (power 1.0k → 506);
   - a Lancer's countdown and blast; the new card buttons;
   - the mesas in red rock (`debug_out/screens/2026-10-26-dgun-bolt.jpg`, `…-supreme-strait-laser-card.jpg`).
-- A D-Gun point up a mesa's slope was never fired, and the order stayed pending (sent to sim-A).
+- A D-Gun point up a mesa's slope was never fired, and the order stayed pending. sim-A fixed it in S-194: the D-Gun aims in yaw only. Checked in Studio: the same shot fires and burns a Ravager on its path.
+- Follow-up: the server now sends only the bolt's end IMPACT. The units it burns through show as their DEATHs, so the client's flight-time check and spawn-tick bookkeeping are gone, and the bolt ends at its own IMPACT. Spec: one IMPACT; three tanks seen dying on the client.
