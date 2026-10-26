@@ -64,6 +64,13 @@ return function(t: any)
 		t.equal(#dots, 1, "the Command Vehicle")
 		t.expect(dots[1].selected and dots[1].kind == "unit")
 		t.equal(dots[1].id, cv, "each dot names its unit (the minimap draws its icon, C-122)")
+		-- past the edge (an aircraft out to Grid.OVERFLY, S-189): on the minimap's edge
+		local u = world.units[cv]
+		local x, z, rx, rz, sx, sz = u.x, u.z, u.rx, u.rz, u.sx, u.sz
+		u.x, u.z, u.rx, u.rz, u.sx, u.sz = world.grid.originX + world.grid.sizeX + 300, world.grid.originZ - 200, nil, nil, nil, nil
+		local out = Minimap.dots(world, api.selection.set)[1]
+		t.deepEqual({ out.u, out.v }, { 1, 0 }, "pinned to the minimap's edge")
+		u.x, u.z, u.rx, u.rz, u.sx, u.sz = x, z, rx, rz, sx, sz
 		local u0, v0, u1, v1 = Minimap.cameraBox(world.grid, { 0, 0, 47, 47 })
 		t.deepEqual({ u0, v0, u1, v1 }, { 0, 0, 1, 1 })
 		-- the economy: a full bar at the start
