@@ -6,6 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- Ready to merge: `0a4efb1b` (main 3f393dec and sim 1e96cf5e merged in; the D-Gun bolt ends at its own IMPACT. test_client 322 / 322, test 585 / 585, build passed. Studio, Supreme Strait: the D-Gun fires up the mesa slope and burns a Ravager; Commanders drawn with C's meshes; no errors)
 - **Protocol 39 (C-242):**
   - Commanders fire their D-Gun with D then a click: a big glowing bolt that burns through everything on its path.
   - Any unit can self-destruct (button, or Ctrl+D), with the seconds counting down in red over it.
