@@ -183,6 +183,8 @@ APPROVED = {
     "ord_aegis", "ord_beacon", "ord_choir", "ord_fusion", "ord_sanctum", "ord_tribunal", "ord_veilspire", "ord_witness",
     # 2026-10-26: the S-166 naval SAM platforms and advanced rearm pads
     "ord_pharos", "chs_scylla", "ord_empyrean", "chs_rookery",
+    # 2026-10-27: the S-197 map features, every variant
+    "feature_tree", "feature_rock",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "

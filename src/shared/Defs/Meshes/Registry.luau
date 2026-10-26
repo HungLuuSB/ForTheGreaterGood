@@ -506,7 +506,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				RGH = "rbxassetid://76099319120108",
 			},
 			model = "rbxassetid://96458438323323",
-			note = "map feature (S-197): pick a variant and a +-15% scale from the wreck ID, turn it by the wire heading; a rock fills its 8-stud cell, a tree is a point",
 			pieces = {
 				base = {
 					center = { 0.102, 2.1585, 0.0803 },
@@ -514,7 +513,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 7.4802, 5.5171, 6.5158 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 			},
@@ -539,7 +538,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 7.4802, 5.5171, 6.5158 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
@@ -564,7 +563,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 7.2543, 4.4172, 6.788 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
@@ -589,7 +588,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 7.9206, 6.7178, 6.6709 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
@@ -609,7 +608,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				RGH = "rbxassetid://133956165433238",
 			},
 			model = "rbxassetid://89028753019651",
-			note = "map feature (S-197): pick a variant and a +-15% scale from the wreck ID, turn it by the wire heading; a rock fills its 8-stud cell, a tree is a point",
 			pieces = {
 				base = {
 					center = { 0.2496, 8.1476, -0.2152 },
@@ -617,7 +615,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 6.9748, 16.9149, 7.0859 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 			},
@@ -642,7 +640,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 6.9748, 16.9149, 7.0859 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
@@ -667,7 +665,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 7.5542, 11.6725, 7.4121 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
@@ -692,7 +690,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 9.7763, 11.514, 9.0231 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
@@ -717,7 +715,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 7.4023, 10.1388, 8.043 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
