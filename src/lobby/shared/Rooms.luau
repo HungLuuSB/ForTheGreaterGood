@@ -18,7 +18,7 @@ local SpawnBoxes = require("./SpawnBoxes")
 
 local Rooms = {}
 
-export type MapInfo = { id: string, name: string, starts: number, geo: SpawnBoxes.Geometry? }
+export type MapInfo = { id: string, name: string, starts: number, geo: SpawnBoxes.Geometry?, size: string?, cells: number? } -- size: "small" | "medium" | "large" (F4)
 
 export type Member = {
 	user: number,

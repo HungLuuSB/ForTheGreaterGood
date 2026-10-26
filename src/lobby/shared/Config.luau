@@ -61,6 +61,13 @@ Config.LEVEL_SHORT = table.freeze({
 Config.AI_ROLES = table.freeze({ "balanced", "air", "defense", "spam", "tech" })
 Config.AI_ROLE_NAMES = table.freeze({ balanced = "Balanced", air = "Air", defense = "Defense", spam = "Spam", tech = "Tech" })
 
+-- Map sizes (F4, S-189: MapRegistry.sizeClass), in the pickers' order.
+Config.MAP_SIZES = table.freeze({
+	{ id = "small", name = "Small", note = "256 cells or fewer a side" },
+	{ id = "medium", name = "Medium", note = "up to 512 cells a side" },
+	{ id = "large", name = "Large", note = "up to 1024 cells a side" },
+})
+
 Config.NAME_MIN = 3 -- room name, characters
 Config.NAME_MAX = 32
 Config.PASSWORD_MAX = 32

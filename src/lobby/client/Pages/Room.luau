@@ -594,8 +594,13 @@ function Room.new(frame: Frame, _router: any): any
 		Ui.clear(rules)
 		local canEdit = host and setup
 		local mapOptions = {}
+		-- (the server lists small maps first, then medium, then large: F4)
+		local sizeName = {}
+		for _, z in Config.MAP_SIZES do
+			sizeName[z.id] = z.name
+		end
 		for _, m in Net.maps or {} do
-			table.insert(mapOptions, { m.id, `{m.name} ({m.starts})` })
+			table.insert(mapOptions, { m.id, `{m.name} ({m.starts}) · {sizeName[m.size] or "Small"}` })
 		end
 		local function choice(label: string, order2: number, opts: { { string } }, value: string, shown: string, key: string)
 			local cell = Ui.field(rules, label, order2, RULE_H)
