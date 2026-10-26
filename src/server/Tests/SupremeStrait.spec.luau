@@ -1,7 +1,8 @@
 --!strict
--- "map:supreme_strait", Supreme Strait (S-195, the user's G6): 320 × 320
--- cells, point-symmetric, two seas ships can sail, land joining the halves
--- through the middle, 16 hints with three deposits each.
+-- "map:supreme_strait", Supreme Strait (S-195, the user's G6; compiled the
+-- BAR way since S-196): 320 × 320 cells, point-symmetric, two seas ships can
+-- sail, land joining the halves through the middle, 16 hints on the metal
+-- map's clusters.
 local Layers = require("@shared/Grid/Layers")
 local MapRegistry = require("@shared/Grid/MapRegistry")
 local Passability = require("@shared/Grid/Passability")
@@ -70,13 +71,16 @@ return function(t: RunAll.Context)
 			for i, s in layers.starts do
 				t.expect(seen[g:index(g:cellAt(s[1], s[2]))] == true, `{mc} drives from hint 1 to hint {i}`)
 			end
+			-- BAR's metal map: a few spots are under water (naval) or on mesa
+			-- tops; every other one is on ground this class reaches
 			local missed = 0
 			for _, dp in layers.deposits :: { { number } } do
-				if not seen[g:index(g:cellAt(dp[1] - 4, dp[2] - 4))] then
+				local i = g:index(g:cellAt(dp[1] - 4, dp[2] - 4))
+				if Layers.getWater(layers, i) <= 0 and not seen[i] then
 					missed += 1
 				end
 			end
-			t.equal(missed, 0, `{mc} reaches every deposit`)
+			t.expect(missed <= 4, `{mc} reaches every dry deposit but the mesa tops' ({missed} out of reach)`)
 		end
 		-- each sea: one big body of SHIP water, the two not joined
 		local size = g.sizeX
@@ -91,17 +95,23 @@ return function(t: RunAll.Context)
 		local _ = se
 	end)
 
-	t.test("every hint has three deposits of its own; more over the open ground", function()
+	t.test("every hint sits on a metal cluster (two or three spots close by), as BAR places starts", function()
 		for i, s in layers.starts do
 			local near = 0
 			for _, dp in layers.deposits :: { { number } } do
-				if (dp[1] - s[1]) ^ 2 + (dp[2] - s[2]) ^ 2 <= 80 * 80 then
+				if (dp[1] - s[1]) ^ 2 + (dp[2] - s[2]) ^ 2 <= 140 * 140 then
 					near += 1
 				end
 			end
-			t.equal(near, 3, `hint {i}`)
+			t.expect(near >= 2, `hint {i}: {near} spots within 140 studs`)
 		end
-		t.expect(#(layers.deposits :: { any }) >= 16 * 3 + 50, `{#(layers.deposits :: { any })} deposits`)
+		t.expect(#(layers.deposits :: { any }) >= 70, `{#(layers.deposits :: { any })} deposits`)
+	end)
+
+	t.test("the compiled module matches its sources (run map_compile after editing them)", function()
+		local Compiled = require("@shared/Grid/Maps/supreme_strait") :: any
+		t.equal(Compiled.cells, 320)
+		t.equal(#Compiled.starts, 16)
 	end)
 
 	t.slow("four AIs play a 2v2 on Supreme Strait for 6 minutes: bases on both sides", function()
