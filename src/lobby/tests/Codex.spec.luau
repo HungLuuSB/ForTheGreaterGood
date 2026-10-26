@@ -130,4 +130,25 @@ return function(t: RunAll.Context)
 			end
 		end
 	end)
+
+	t.test("the article's bars: each stat's maximum is the game's biggest, and the cards' words", function()
+		local max = Codex.maxima(codex)
+		local seraph = Codex.stats(codex, "ord_seraph")
+		for _, id in { "ord_paladin", "ord_seraph", "chs_juggernaut", "ord_mason" } do
+			local s = Codex.stats(codex, id)
+			t.expect(s.health <= max.health and s.supply <= max.supply and s.power <= max.power, id)
+			for _, w in s.weapons do
+				t.expect(w.dps <= max.wDps and w.alpha <= max.wAlpha and w.range <= max.wRange, `{id} {w.id}`)
+			end
+		end
+		t.expect(max.health > seraph.health, "the Seraph isn't the toughest")
+		local sam = seraph.weapons[1]
+		t.equal(sam.launch, "vertical")
+		t.equal(sam.stock, 15)
+		t.expect(sam.stockSeconds ~= nil and sam.stockPower ~= nil and sam.speed ~= nil, "stockpile and speed")
+		t.equal(Codex.word("reload", 3.7), "slow")
+		t.equal(Codex.word("alpha", 1150), "very heavy")
+		t.equal(Codex.word("aoe", 20), "large")
+		t.equal(Codex.word("range", 1100), "very long")
+	end)
 end
