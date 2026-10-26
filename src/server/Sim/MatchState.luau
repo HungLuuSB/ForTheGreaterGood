@@ -8,7 +8,7 @@ local MatchState = {}
 
 export type Mode = "FFA" | "TEAM"
 export type WinCondition = "COMMAND_ENDS" | "ANNIHILATION"
-export type AiLevel = "easy" | "normal" | "hard"
+export type AiLevel = "easy" | "normal" | "hard" | "hard_aggressive" -- (hard_aggressive: S-187)
 
 -- Match options (guide 16.1–16.4). Absent → no rules: nobody is ever
 -- eliminated and there is no unit cap (tests and sandboxes).
