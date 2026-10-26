@@ -2,6 +2,14 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: main e43b5726, the Vfx templates)
+
+- Merged main `e43b5726`: C's death explosion Vfx (F27), the F18/F6 and S-181 meshes with wrecks, and The Lakelands' baked ground.
+- **`lobby.project.json`** mounts `place/Vfx.model.json` at `ReplicatedStorage.Vfx`, as the match's project files do. The client's `Render/Vfx` reads its saved templates (Death) from there. The live sync picked it up without a reconnect.
+- **New meshes:** the S-181 bot meshes (Fatboy, Mace, Kestrel, Glint, Tzar, ...) are `status = "review"`, so the showroom draws their blockouts, as a match does, until they're approved. The Fatboy's blockout faces its board and fires at it.
+- Lobby specs 65 / 65; the build check passes.
+- Ready to merge: `c0462bec` (the Vfx mount; includes the merge of main `e43b5726`; touches only `lobby.project.json` and the lobby progress)
+
 ## Summary (2026-10-26: firing range fixes)
 
 The user's four quirks in the Units tab's firing range:
