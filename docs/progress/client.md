@@ -7,6 +7,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 ## Summary (2026-10-26, pre-game and automatic colours)
 
 - **Team panel (C-226, F23):** bottom right, every player by team with a supply bar over a power bar (hover them for the numbers); on an ally: Units (click asks for units, double-click gives your selection), ■ / ϟ (click asks, drag up gives from your bank); gifts and requests show above it. **Smart Reclaim (F42):** in reclaim / repair / resurrect mode, drag a circle and the workers clear everything in it. Deposits are 2 × 2 patches and extractors snap to them; the pre-game says "Waiting for players to load".
+- Ready to merge: `5748408d` (C-223..C-226 with m-sim-2 676ddca merged; test_client 311 of 312: Nanoframe's pads for the new labs wait on models-C registering the S-181 blockouts after S-181 reaches main; test 561, build passed)
 - **Wind and tidal in the top bar (C-224):** a wind box after your sketch (the current in the middle over a see-through fan turning with the wind, min top right, max bottom right) and TIDAL.
 - **Bomb carpets (C-225):** in attack mode, selected bombers show a blast ring where each of their three bombs will land.
 - **sim phase 2 merged (C-223):** the new bot and air units have icons (borrowing the closest existing ones for now), plasma shots glow in their colour, the Dragon breathes a fire stream, and the Centurion's beam runs to its full range. Two scenes wait on sim-A (decoys) and the new labs' build pads on models-C.
