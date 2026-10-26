@@ -247,16 +247,13 @@ function Lobby.apply(s: State, maps: { Map }, msg: any, from: number?): (string?
 	return nil, "unknown op"
 end
 
--- The Sim config for the lobby: slot i is player i, its faction gives its
--- team's parity (Order odd, Chaos even; Scenarios.standard_start), its
--- ally team is its own in a free-for-all, else the slot's.
+-- The Sim config for the lobby: slot i is player i with team i and the
+-- slot's faction (S-174); its ally team is its own in a free-for-all, else
+-- the slot's.
 function Lobby.config(s: State, seed: number): any
 	local players, ai = {}, {}
-	local nextTeam = { order = 1, chaos = 2 }
 	for i, sl in s.slots do
-		local team = nextTeam[sl.faction]
-		nextTeam[sl.faction] += 2
-		table.insert(players, { id = i, team = team, allyTeam = if s.mode == "FFA" then i else sl.ally })
+		table.insert(players, { id = i, team = i, allyTeam = if s.mode == "FFA" then i else sl.ally, faction = sl.faction })
 		if sl.kind == "ai" then
 			ai[i] = sl.level
 		end
@@ -326,7 +323,7 @@ function Lobby.results(s: State, sim: any, startTick: number, stats: { [number]:
 			user = if sl then sl.user else nil,
 			name = name,
 			human = sl ~= nil and sl.kind == "human",
-			faction = if p.team % 2 == 1 then "Order" else "Chaos",
+			faction = if p.faction == "chaos" then "Chaos" else "Order",
 			team = p.team, -- its team color (the statistics panel, C-105)
 			allyTeam = p.allyTeam,
 			won = sim.match.over and p.allyTeam == sim.match.winner,

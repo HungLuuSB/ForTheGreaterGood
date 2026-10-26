@@ -194,7 +194,7 @@ export type Burst = { x: number, y: number, z: number, radius: number, born: num
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
-export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string?, deflect: { number }?, pulseAt: number?, pulseMass: number?, weaponId: string?, laser: { number }?, ramp: number? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak; deflect: where a beam stopped by a shield glances to (C-129)
+export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string?, deflect: { number }?, pulseAt: number?, pulseMass: number?, weaponId: string?, laser: { number }?, ramp: number?, flame: { number }? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak; deflect: where a beam stopped by a shield glances to (C-129)
 
 export type Fx = {
 	projectiles: { [number]: Proj },
@@ -272,6 +272,7 @@ end
 -- radar SAMs' heavy warheads) explode this much bigger than their blast
 -- radius alone gives (C-52).
 Effects.LARGE_IMPACT = 1.8
+Effects.FLAME_SECONDS = 0.35 -- a flame stream's life (S-181)
 function Effects.impactSize(weapon: any): number
 	local impact = weapon and weapon.fx and weapon.fx.impact
 	local large = type(impact) == "string" and string.find(impact, "_large", 1, true) ~= nil
@@ -290,6 +291,22 @@ local function shotTracer(world: World.World, weapon: any, faction: string?, x0:
 		local c = fxDef.color -- { r, g, b } (0..255, S-157)
 		t.laser = if c then { c.r or c[1] or 255, c.g or c[2] or 255, c.b or c[3] or 255 } else { 255, 255, 255 }
 		t.life = Effects.LASER_SECONDS
+	end
+	-- a flame (S-181, the Dragon): a short thick stream in the weapon's colour
+	if fxDef and fxDef.trail == "flame" then
+		local c = fxDef.color
+		t.flame = if c then { c.r or 255, c.g or 120, c.b or 20 } else { 255, 120, 20 }
+		t.life = Effects.FLAME_SECONDS
+	end
+	-- a beam that runs on through its whole line (S-181, the Centurion's
+	-- `fullLength`): drawn out to the weapon's range past the target
+	if weapon and weapon.fullLength and weapon.range then
+		local dx, dy, dz = x1 - x0, y1 - y0, z1 - z0
+		local len = math.sqrt(dx * dx + dy * dy + dz * dz)
+		if len > 1e-3 and len < weapon.range then
+			local k = weapon.range / len
+			t.x1, t.y1, t.z1 = x0 + dx * k, y0 + dy * k, z0 + dz * k
+		end
 	end
 	if isBeam and not hit then
 		Effects.glance(world, weapon, t, now)

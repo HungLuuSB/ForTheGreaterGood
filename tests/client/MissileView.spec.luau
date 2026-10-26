@@ -150,7 +150,8 @@ return function(t: any)
 		-- overkill-aware targeting (S-29) fires fewer missiles at the jets, and
 		-- at the Thorn's 165 studs (S-62) a flight lasts ~5 ticks, so few are
 		-- still flying 5 ticks after a prediction (8 in this scene)
-		t.expect(n >= 6, `plenty of predictions checked ({n})`)
+		-- (4 since S-178's sharper air turns end the flights sooner)
+		t.expect(n >= 3, `plenty of predictions checked ({n})`)
 		-- the targets circle, and the prediction flies them straight on; at
 		-- 165 studs every 5-tick prediction ends in the turning end game
 		-- (missiles fly 28 studs a tick), so the median spreads too (6.7 since

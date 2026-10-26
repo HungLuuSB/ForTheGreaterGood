@@ -435,10 +435,22 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		local shell = shellFor(r, p.id, inUse)
 		local part = shell.part
 		local size = PROJ_SIZE[kind] or PROJ_SIZE.BALLISTIC
+		local color = PROJ_COLOR[kind] or PROJ_COLOR.BALLISTIC
+		local fxDef = p.weapon.fx
+		if fxDef and fxDef.trail == "plasma" then
+			-- a plasma shot (S-181): a glowing ball in the weapon's colour, bigger for a bigger blast
+			local c = fxDef.color
+			color = if c then Color3.fromRGB(c.r or 255, c.g or 140, c.b or 40) else Color3.fromRGB(255, 140, 40)
+			local d = math.clamp(1.4 + (p.weapon.aoe or 0) * 0.08, 1.4, 4.5)
+			size = Vector3.new(d, d, d)
+		end
 		if part.Size ~= size then
 			part.Size = size
 		end
-		local color = PROJ_COLOR[kind] or PROJ_COLOR.BALLISTIC
+		local shape = if fxDef and fxDef.trail == "plasma" then Enum.PartType.Ball else Enum.PartType.Block
+		if part.Shape ~= shape then
+			part.Shape = shape -- shells are pooled across weapons
+		end
 		if part.Color ~= color then
 			part.Color = color
 			shell.trail.Color = ColorSequence.new(color)
@@ -508,6 +520,22 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			if t.hit and not r.emitted[t] then
 				r.emitted[t] = true
 				Vfx.spawn(r.vfx, "hit", t.x1, t.y1, t.z1, 0.5 + 0.6 * ramp, vt, nil, t.x0 - t.x1, t.y0 - t.y1, t.z0 - t.z1)
+			end
+			continue
+		end
+		if t.flame then
+			-- a flame stream (S-181): thick and flickering, widening to the far
+			-- end, fading over its short life; a burst of sparks where it lands
+			local len = (b - a).Magnitude
+			local flicker = 0.75 + 0.25 * math.sin(now * 61 + i * 3.1)
+			local w = (2.2 + 1.6 * k) * flicker
+			part.Size = Vector3.new(w, w, math.max(len, 0.1))
+			part.CFrame = if len > 1e-3 then CFrame.lookAt((a + b) / 2, b) else CFrame.new(b)
+			part.Color = Color3.fromRGB(t.flame[1], t.flame[2], t.flame[3]):Lerp(Color3.fromRGB(255, 230, 150), 0.3 * flicker)
+			part.Transparency = 0.15 + 0.8 * k
+			if not r.emitted[t] then
+				r.emitted[t] = true
+				Vfx.spawn(r.vfx, "hit", t.x1, t.y1, t.z1, 1.2, vt, nil, t.x0 - t.x1, t.y0 - t.y1, t.z0 - t.z1)
 			end
 			continue
 		end

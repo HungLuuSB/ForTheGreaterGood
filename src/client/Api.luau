@@ -13,6 +13,7 @@ local Signal = require("./Core/Signal")
 local Waypoints = require("./Core/Waypoints")
 local Upgrades = require("./Core/Upgrades")
 local World = require("./Core/World")
+local CommandSet = require("./Core/CommandSet")
 
 local Api = {}
 
@@ -294,6 +295,29 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			actions.setCommandMode(nil)
 		end
 		return ok, why
+	end
+
+	-- Smart Reclaim / repair / resurrect (F42, S-183): every selected unit
+	-- that has `kind` ("reclaim", "repair", "resurrect") takes the targets
+	-- inside the circle one after another.
+	local AREA_OP = { reclaim = Schema.AreaOp.RECLAIM, repair = Schema.AreaOp.REPAIR, resurrect = Schema.AreaOp.RESURRECT }
+	function actions.areaOrder(kind: string, x: number, z: number, radius: number, queue: boolean?)
+		local op = AREA_OP[kind]
+		if op == nil then
+			return false, "no area order " .. kind
+		end
+		local ids = {}
+		for _, id in sel.ids do
+			local u = world.units[id]
+			local def = u and World.def(world, u)
+			if def and u.team == world.me.team and CommandSet.forDef(def, world.defs)[kind] then
+				table.insert(ids, id)
+			end
+		end
+		if #ids == 0 then
+			return false, "no selected unit can do that"
+		end
+		return issue({ cmdType = CT.AREA, queue = queue == true, x = x, z = z, areaOp = op, radius = radius }, ids)
 	end
 
 	function actions.toggle(on: boolean)

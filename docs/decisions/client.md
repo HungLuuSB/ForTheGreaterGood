@@ -1895,3 +1895,89 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Checked in Studio (Coastline skirmish): Lancers and Ravagers fought by the Commander; one Mason reclaimed (green bar under the wreck, the zone total falling), another resurrected (purple bar, power draining, then the Lancer back where its wreck lay with "Construction complete: Lancer"); the hover read "Ravager wreck · 65 supply · resurrect 77%"; the card shows Resurrect for Masons. Screenshots: `debug_out/screens/c216_*.jpg`.
 
 **Why:** the user's resurrect / reclaim feature (S-168, via sim-A).
+
+### C-217 — Colours by side, as the viewer sees them (2026-10-26, S-172)
+
+- `Render/TeamColors` now draws from `Shared/Match/TeamColors.forViewer` (the lobby uses the same function): you are Blue, your allies cold colours, enemies warm ones; spectators see ally team 1 as the cold side. The lobby's colour picks no longer reach the match (the `TeamColors` attribute and `MatchContract.teamColors` are gone).
+- The match server publishes every sim player as the Remotes folder's `Players` attribute, JSON `[{ id, team, allyTeam, name? }]`, on every path (lobby contract, the in-match lobby, Studio profiles); IDs are the contract's seat index, as in PREGAME events and the lobby's rooms (sim-A). Without it each team counts as one player (WELCOME's ally teams).
+- The module is a table now: `TeamColors.of(team)`, `TeamColors.ofPlayer(player)`, `TeamColors.players()`, `TeamColors.setViewer(player, team, teamAllies)` (Main, on every WELCOME), `TeamColors.version`.
+
+**Why:** the user, S-172: colours are assigned automatically.
+
+### C-218 — The pre-game screen (2026-10-26, S-169, S-171, S-174, protocols 36-37)
+
+- Every lobby match opens with the pre-game (`MatchContract.toSim`: `startMode = "choose"`, `host` = the host's seat (nil when the host spectates), the room's `startBoxes`; player i is seat i with team i and its own faction, S-174, which fixes the "team ... got 18" crash). The in-match lobby and profiles keep fixed starts unless the profile sets `startMode = "choose"` (then slot 1's human hosts). Results time the match from `sim.match.startTick`. MatchConfig v2 in the specs.
+- `World.pregame` (NetIn): picks and flags (PREGAME, with CHAOS and HOST), PICK_CLOCK, START_BOXES, COUNTDOWN (3..1, 255 clears, 0 starts and stamps `startedTick`), PREBUILD (kept for later). `Core/Pregame`: boxes from START_BOXES (the map's StartAreas defaults until they arrive), hints, `canPick` (own box, spacing; the server also checks the ground), faction / host / all-ready, the pick clock's text, the camera's focus and fit, the landing fraction, START_POS / READY / FACTION / START.
+- Laid out after BAR's start screen (the user's reference): the spawn areas filled on the ground (yours green, the others red; tiles laid on the ground under their corners), faint discs on the map's start hints, each pick showing that player's Commander (its faction's model, its colour) with the spacing disc and the name (✓ when ready), the cursor's spot green or red. No panel over the map (the user): a big Ready / Not ready right of centre, the host's Start under it (lit once everyone is ready), the pick clock; low in the middle the victory condition and what to do; "Starting in n" mid-screen; "Pick your faction" at the bottom with both Commanders' portraits (only while not ready). `/forcestart` (the host) forces the start.
+- The landing (`Render/Landing`, `UnitRenderer.lift`): for Schema.LANDING_TICKS after the start each Commander falls from 260 studs, slowing to the ground, in a white-gold star flare with a light and a trail, flashing out on touchdown. The camera opens fitted to the own area and jumps to the own Commander at the start.
+- Checked in Studio (FTGG Match, Coastline, you vs a Normal AI): click-pick, faction switch to Chaos, Ready, the host's Start, the 3 s countdown, the flare falling 240 → 25 studs over 1.4 s, /forcestart with an unplaced Commander (the game picked a spot). Simulated GUI clicks don't reach buttons in the Studio test harness, so Ready / Start / faction went through the same commands.
+- `Pregame.spec` (the real Sim: boxes, picks, ready, countdown, the Commander on its pick, the landing window; faction and the host's Start; cancel; spectators), MatchContract.spec and Lobby.spec through the pre-game and factions per player.
+- Not in yet: queued Commander builds before the match (PREBUILD ghosts, the build menu without a Commander).
+
+**Why:** the published beta had neither start picking nor automatic colours (sim-A); the user's playtest feedback and BAR reference.
+
+### C-219 — The build menu sits on the unit panel (2026-10-26)
+
+- `UI/BuildMenu` is anchored to the bottom, 4 px over the unit panel (120 high), and grows up towards the minimap; on short screens it still scrolls in the room between them.
+
+**Why:** the user: on a live server's tall screen it hung under the minimap with a gap down to the stats panel.
+
+### C-220 — Commander name labels (2026-10-26)
+
+- `Render/CommanderNames`: every drawn Commander shows its player's name (the `Players` attribute) in the player's colour, stacked over the idle tag; hidden at strategic zoom.
+
+**Why:** the user's playtest feedback.
+
+### C-221 — Match failures go back to the lobby with an error code (2026-10-26, F38)
+
+- `MatchContract.ERROR`: the match side's codes from lobby-D's table (match.md section 11): 201 no setup, 202 bad setup (detail: the validator's reason), 203 version mismatch, 204 game version mismatch (REJECT), 205 not in this match, 206 full, 207 already over, 208 players didn't arrive, 209 everyone left, 210 match server error (detail: the error), 299 other. `MatchContract.error(code, detail?)` cuts the detail to 200 characters; `MatchContract.refusal(raw, why)` picks 201 / 203 / 202 for a config the server can't run.
+- Every return teleport carries `{ matchId, error = { code, detail? } }` (`sendBack(list, err?)`; the match's own error otherwise; a retry after TeleportInitFailed sends the same). The result record has `error` for 201-203 and 208-210.
+- Paths: a refused config (201 / 202 / 203: record and everyone who arrives); a player not listed is sent back with 205 instead of kicked; arriving after the result, 207 (or the match's error); a stale client gets its REJECT, then goes back with 204 three seconds later; every player leaving, 209 in the record; no listed human 120 s after the config was read (`ARRIVE_SECONDS`), 208 and the record; a lobby match's sim throwing, 210 with the error (the sim stops stepping, everyone goes back). Without a readable config there's no lobby to return to: still a kick, with the code in its message. 206 has no path yet (seats come from the list).
+- MatchContract.spec: refusal codes, the detail cut, a record with `error` passing the lobby's check. Checked in Studio with the `contract` profile (FTGG Match): 203 (a v1 setup: "setup version 1, match place 2"), 204 (a HELLO with other defs: REJECT, then "match server: protocol 37, defs …"), 205 (not listed), 208 (no listed player in 120 s: the record and the return). 210 can't be forced from the Studio tool (its Luau runs in another VM); checked by review.
+- The `contract` Studio profile is a v2 setup now (`host`), and `UI/MatchLoading` calls `RunService:Set3dRenderingEnabled` through pcall: game scripts lack the capability, and the error aborted the client's frame when the loading screen showed and when the match started (the world keeps drawing behind the screen).
+
+**Why:** the user: "any failed attempt to connect to the game match must be displayed on the lobby when return with error code + description" (via sim-A and lobby-D's table).
+
+### C-222 — Playtest phase 1: unit flow made / used, builders keep their queue off camera, aircraft at the edge (2026-10-26, F9, F13, F3)
+
+- **F9:** the unit panel's flow is a line per resource with what the unit makes and what it uses apart (`UnitFlow.parts`): "■ +1.0 −26", "ϟ +20 −51", made green, used red (the user: green positive, red negative), a dim 0 for neither, instead of one net number per resource. `UnitFlow.of` stays the net.
+- **F13:** off camera a structure's record carries only its cell, so its spot sits up to half a cell from the order point. `Waypoints.buildDone` matched an own frame only within 1 stud, fell through to the placement check ("occupied: another structure took the spot") and dropped the queued build; the builder then sprayed nothing, or its stale first entry. Records outside the tactical tier now match within `World.CELL_SLACK` (4.5 studs), in `BuildTargets.frameAt` too. Checked in Studio: two vehicle plants queued, the camera away while the first finished; back, the list still held the second and the spray ran to it.
+- **F3:** in Studio (the air profile, Archons sent past the corner) no aircraft was drawn outside the map: 21 of 371 flying samples sat on the edge, 0.2 studs past it at most, the wire's clamp. Jets the sim lets overshoot while turning are sent at the edge cell and look pinned there. Handed to sim-A (keep flight inside by the turn radius); nothing to change in the client.
+
+- **The camera opens on the own Commander** in every match (the user): the first frame after a join with an own Commander, outside the pre-game (which jumps on its own), centres on it. Checked in Studio: a fixed-start skirmish opened at the Commander (−348, −124) instead of the map's centre.
+
+**Why:** the user's beta playtest (FTGG-FEEDBACK.txt items 3, 9, 13) and their camera request.
+
+### C-223 — sim phase 2 merged: specs, icons and looks for the new units (2026-10-26, S-175..S-182)
+
+- Merged m-sim-2 2b3ca0e (with ed06b01). Specs moved with the sim's balance: the shield's light-shell scene gives the Locust (55 studs since S-179) a target just inside the dome; the shell-timing and missile-view counts accept the smaller samples; the Wraith scene is on flat:128 with the spotter spawned where the drifting Wraith is; VerticalLaunch measures the climb only on missiles still guided (sim-A: a missile that loses its target in the boost corkscrews at once). Waiting: Effects' decoy scenes (sim-A retunes ew_test), Nanoframe's pads for the new labs (models-C).
+- **Icons:** the 19 new units borrow the closest existing icons, listed in the catalogue (`docs/art/icons/ftgg-unit-icons.html`), so the sheet needs no new upload: bot labs the (Adv.) Vehicle Plant, Artisan / Tinker / Lazarus / Graverobber the Ground Worker, Glint / Skitter the Scout, Mace / Thug the Light Tank, Kestrel / Needle the Mobile IR SAM, Fatboy / Tzar / Centurion the Main Battle Tank, Dragon the Attack Helicopter, Liche the Strategic Bomber. Own bot icons can come with the next sheet.
+- **Looks:** split weapon ids copy their originals' `fx`, and the client keys looks on `fx`, so they look as before. New: `fx.trail = "plasma"` shells are glowing balls in the weapon's colour (1.4..4.5 studs with the blast); `fx.trail = "flame"` hitscan shots are a thick flickering stream that widens and fades over 0.35 s with sparks where it lands (the Dragon); `fullLength` beams (the Centurion) are drawn on to the weapon's range past the target. Checked in Studio: Thug / Tzar plasma balls, the Dragon's flame drawn.
+
+**Why:** sim-A's phase 2 and new units (the user's playtest).
+
+### C-224 — Wind and tidal in the top bar (2026-10-26, S-177)
+
+- Right of power, as in BAR: WIND, what one of the player's faction's turbines makes now (the Eco record's wind × its `wind.max`), large, with the map's range under it (`layers.wind`, else the sim's default 0.1..0.9, both × the turbine's max; no randomness since S-177), and TIDAL, a tidal generator's output. `UnitFlow.generatorOutputs(defs, faction)`, `UnitFlow.WIND_DEFAULT` (a spec checks it is the sim's). The idle counts sit right of the wider bar (`ResourceBar.WIDTH`).
+- The wind box follows the user's sketch and correction: the current in the middle of a near-square box over a see-through three-bladed fan turning with the wind (`FAN_RPM` 40 at a turbine's max), the map's min top right and max bottom right.
+- Checked in Studio (Coastline, Order): wind 21 (min 3, max 27), the fan turning; TIDAL 25.
+
+**Why:** the user: "Wind should not be RNG … we have wind min/max current and tidal".
+
+### C-225 — Bombers' carpet in the attack preview (2026-10-26, S-178, F33)
+
+- Attack mode with bombers selected (a BOMB weapon with a salvo of 2+): a blast ring on each bomb's spot, joined along the run, the first on the cursor, the rest `salvo.delay` × the bomber's speed further along the line from the bomber through the spot (`AttackPreview.carpets`).
+- AttackPreview.spec against the server's run (an Absolution, 3 bombs): the first bomb 7.5 studs from the spot (blast 14), the next 42.5 on (previewed 40). The server's bomber turns away during its salvo, so bombs 2-3 curve off the straight line; sim-A asked to hold the heading until the salvo is out (the user's "line of bombs"), then the spec checks every spot.
+
+**Why:** the user's playtest F33.
+
+### C-226 — Team panel and sharing; Smart Reclaim; 2 × 2 deposits; pre-game loading (2026-10-26, F23, F42, S-176, S-183, S-184)
+
+- Merged m-sim-2 676ddca (allies' Eco records, AREA, 2 × 2 deposit patches, LOADING, the carpet holding its heading). Specs follow: deposits by patch, the heavy-shell shield scene with a target inside the dome's edge (Ravager 78 studs), the carpet spec checks all three bombs (worst 9.5 studs, blast 14).
+- **Team panel** (`UI/TeamPanel`, bottom right; F23): every player by ally team in its colour, with two thin bars stacked, supply over power, each stored / storage (the user: bars for a clearer look); hovering them shows income, stored and storage by the cursor (found by position, not MouseEnter); on each ally's row Units (one click asks the allies for units, two give the selection), ■ and ϟ (one click asks; click and drag up: a slider over the bank, given on release); the last gifts and requests above it for 8 s (`Core/Share`: SHARE_UNITS / SHARE_RESOURCE / REQUEST, SHARE lines). `World.teamEco` keeps every Eco record by team (the own one still drives the top bar). Hidden in the pre-game and the in-match lobby. The debug HUD (F3) starts off outside Studio, over the panel when shown.
+- **Smart Reclaim** (F42): in reclaim, repair or resurrect mode a drag is a zone (the area circle), a click the one target; the zone is one AREA command (`Api.actions.areaOrder`) for every selected unit that has the command, its order line ends in the circle until the server reports the builder idle.
+- **2 × 2 deposits** (S-184): the extractor ghost snaps to the nearest patch centre within 16 studs (`PlacementRules.depositNear`), the advanced one centred on the T1's patch; extractor drags take each patch once; deposit markers are one per patch at twice the size.
+- **Pre-game:** PICK_CLOCK's LOADING reads "Waiting for players to load".
+- Checked in Studio (Crossroads, Teams: you and a Normal AI against an Easy AI): the panel with the ally's income and bank and its buttons, 300 supply given ("You gave AI (normal) 300 supply", the bank 1.0k → 701), a request ("You ask for power"); the panel hidden in the lobby. Specs: Share, SmartReclaim; Upgrades and Placement on patches. Nanoframe's pads for the new labs wait on models-C's registration after S-181 reaches main.
+
+**Why:** the user's playtest (F23, F42) and sim-A's phase 2.

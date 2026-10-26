@@ -23,39 +23,82 @@ MatchContract.COLORS = MatchConfig.COLORS -- the palette (contract section 3): {
 -- The stats a results record carries (the sim's Stats.report names).
 MatchContract.STATS = table.freeze({ "unitsBuilt", "unitsLost", "unitsKilled", "damageDealt", "damageTaken", "supplyGathered", "powerGathered", "supplySpent", "powerSpent" })
 
+-- Why players went back to the lobby (docs/contracts/match.md section 11,
+-- F38, the user: every failed attempt shows in the lobby with a code and a
+-- description): the match side's codes. The lobby holds the titles and
+-- descriptions; the match sends { code, detail? } in the return teleport's
+-- data and the result record's `error`.
+MatchContract.ERROR = table.freeze({
+	NO_SETUP = 201, -- no server/<id> or config/<id>
+	BAD_SETUP = 202, -- the config failed the check (detail: the reason)
+	VERSION = 203, -- the config's version isn't this place's
+	GAME_VERSION = 204, -- the client's protocol or defs differ (REJECT)
+	NOT_LISTED = 205, -- not a player or spectator of this match
+	FULL = 206, -- no free seat
+	OVER = 207, -- the match ended before they arrived
+	NO_SHOW = 208, -- no listed human arrived in time: it never started
+	EVERYONE_LEFT = 209,
+	SERVER_ERROR = 210, -- the match server failed (detail: the error)
+	OTHER = 299,
+})
+MatchContract.DETAIL_MAX = 200 -- characters of `detail` the lobby keeps
+MatchContract.ARRIVE_SECONDS = 120 -- after the config is read, no listed human yet: NO_SHOW
+
+export type Error = { code: number, detail: string? }
+
+function MatchContract.error(code: number, detail: string?): Error
+	return { code = code, detail = if detail and #detail > 0 then string.sub(detail, 1, MatchContract.DETAIL_MAX) else nil }
+end
+
+-- The error for a config this server can't run: none found, another
+-- version, or failing the check (`why`, from validate).
+function MatchContract.refusal(raw: any, why: string): Error
+	local E = MatchContract.ERROR
+	if raw == nil then
+		return MatchContract.error(E.NO_SETUP)
+	elseif type(raw) == "table" and raw.version ~= MatchContract.VERSION then
+		return MatchContract.error(E.VERSION, `setup version {tostring(raw.version)}, match place {MatchContract.VERSION}`)
+	end
+	return MatchContract.error(E.BAD_SETUP, why)
+end
+
 -- Checks a config read back from MemoryStore. Returns nil, or what's wrong.
 function MatchContract.validate(c: any): string?
 	return MatchConfig.validate(c)
 end
 
--- The sim team of each player: faction parity, Order odd and Chaos even
--- (Scenarios.standard_start), numbered in player order (as Lobby.config).
-function MatchContract.teams(c: any): { number }
-	local out = {}
-	local nextTeam = { order = 1, chaos = 2 }
-	for i, p in c.players do
-		out[i] = nextTeam[p.faction]
-		nextTeam[p.faction] += 2
-	end
-	return out
-end
-
--- The Sim config (contract section 3, "To the sim config").
+-- The Sim config (contract section 3, "To the sim config"). Player i is
+-- seat i with its own team i and its faction (S-174: teams no longer encode
+-- the faction); the host's seat starts the match from the pre-game (nil
+-- when the host spectates); the host's spawn boxes, if drawn.
 function MatchContract.toSim(c: any): any
-	local teams = MatchContract.teams(c)
 	local players, ai = {}, {}
+	local host: number? = nil
 	for i, p in c.players do
-		table.insert(players, { id = i, team = teams[i], allyTeam = p.allyTeam })
+		table.insert(players, { id = i, team = i, allyTeam = p.allyTeam, faction = p.faction })
 		if p.ai then
 			ai[i] = p.ai
 		end
+		if p.user ~= nil and p.user == c.host then
+			host = i
+		end
+	end
+	-- JSON keeps the ally teams as string keys
+	local boxes: { [number]: { number } }? = nil
+	if type(c.startBoxes) == "table" then
+		local out = {}
+		for ally, b in c.startBoxes do
+			out[tonumber(ally) :: number] = b
+		end
+		boxes = out
 	end
 	return {
 		seed = c.seed,
 		players = players,
 		mapId = c.mapId,
 		scenario = "standard_start",
-		match = { mode = c.mode, win = c.win, ai = ai, friendlyFire = c.friendlyFire, cheats = c.cheats },
+		-- every match opens with the pre-game: starts picked in game (S-171, C-218)
+		match = { mode = c.mode, win = c.win, ai = ai, friendlyFire = c.friendlyFire, cheats = c.cheats, startMode = "choose", host = host, startBoxes = boxes },
 	}
 end
 
@@ -103,22 +146,12 @@ function MatchContract.seatOf(c: any, user: number): (number | string)?
 	return nil
 end
 
--- The colour index of each sim team (the client draws team colours from
--- the palette).
-function MatchContract.teamColors(c: any): { [string]: number }
-	local out = {}
-	local teams = MatchContract.teams(c)
-	for i, p in c.players do
-		out[tostring(teams[i])] = p.color
-	end
-	return out
-end
-
 -- The results record (contract section 5). `outcome`: "finished", "draw"
 -- or "abandoned"; `winner` the winning ally team ("finished"); `sim` and
 -- `stats` (Stats.report) give the rest when the match ran; `startTick` is
--- when it started; `now` is os.time().
-function MatchContract.result(c: any, outcome: string, sim: any?, stats: { [number]: any }?, startTick: number, now: number, reason: string?, winner: number?): any
+-- when it started; `now` is os.time(); `err` (optional) why the match
+-- failed (an ERROR code).
+function MatchContract.result(c: any, outcome: string, sim: any?, stats: { [number]: any }?, startTick: number, now: number, reason: string?, winner: number?, err: Error?): any
 	local players = {}
 	for i in c.players do
 		local p: any = { id = i, won = false }
@@ -150,6 +183,7 @@ function MatchContract.result(c: any, outcome: string, sim: any?, stats: { [numb
 		endedAt = now,
 		cheatsUsed = sim ~= nil and sim.cheats ~= nil and sim.cheats.used == true,
 		reason = reason,
+		error = err, -- why the match failed (section 11), for every returning player
 		players = players,
 	}
 end

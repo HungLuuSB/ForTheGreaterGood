@@ -56,7 +56,9 @@ return function(t: any)
 						upward += 1
 					end
 				end
-				if leveledAt[p] == nil and (p.vx ~= 0 or p.vz ~= 0) then
+				-- only missiles still guided at a target: one that lost its target
+				-- in the boost corkscrews at once (S-146; sharper air turns, S-178)
+				if leveledAt[p] == nil and (p.vx ~= 0 or p.vz ~= 0) and p.target ~= 0 and not p.lost then
 					leveledAt[p] = p.y - Layers.heightAt(world.layers :: any, p.x, p.z)
 				end
 				if p.turned and seen[p] ~= "turned" then

@@ -112,10 +112,12 @@ return function(t: any)
 	end)
 
 	t.test("the Wraith: its owner sees the Decoy Drone; an enemy's radar sees a strategic bomber until it sees it (S-109, C-183)", function()
-		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64", scenario = "empty" })
-		Spawn.unit(sim, "ord_beacon", 1, -200, 0, 0)
-		local wraith = Spawn.unit(sim, "chs_wraith", 2, 150, 0, 0)
-		local bomber = Spawn.unit(sim, "chs_behemoth", 2, 150, 120, 0)
+		-- (a big map: idle aircraft drift a long way while loitering, S-178's
+		-- sharper turns; out of the beacon's sight, inside its radar)
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "empty" })
+		Spawn.unit(sim, "ord_beacon", 1, -420, 0, 0)
+		local wraith = Spawn.unit(sim, "chs_wraith", 2, 300, 0, 0)
+		local bomber = Spawn.unit(sim, "chs_behemoth", 2, 300, 160, 0)
 		local function view(player: number): World.World
 			local world = World.new(sim.defs)
 			NetOut.join(sim, player)
@@ -144,7 +146,7 @@ return function(t: any)
 		t.expect(seen.tile ~= IconAtlas.byDef.chs_wraith.tile, "not the Decoy Drone")
 		t.equal(enemy.units[bomber].icon, 0, "(a real bomber never seen shows a blank blip)")
 		-- in sight it's identified
-		Spawn.unit(sim, "ord_herald", 1, 130, -20, 0)
+		Spawn.unit(sim, "ord_herald", 1, sim.world.posX[wraith] - 20, sim.world.posZ[wraith] - 20, 0)
 		for tick = 151, 170 do
 			Sim.step(sim)
 			NetIn.applyOutbox(enemy, sim.net.players[1].outbox, tick / 15)

@@ -64,15 +64,15 @@ local function structures(world: World.World): { { any } }
 	return out
 end
 
-Placement.DEPOSIT_SNAP = 12 -- studs: an extractor ghost this close to a deposit jumps onto it
+Placement.DEPOSIT_SNAP = 16 -- studs: an extractor ghost this close to a deposit patch's centre jumps onto it
 
--- Placement help for extractors: a deposit is one cell and the server wants
--- it under the extractor's center (Sim/Placement), so the ghost snaps to the
--- nearest deposit within DEPOSIT_SNAP of the cursor. Returns the point to
--- check: the deposit cell's center (odd footprints) or its min corner (even
--- footprints, whose center is a corner), or (x, z) unchanged. An own
--- extractor this one upgrades (Core/Upgrades) within Upgrades.SNAP wins: the
--- ghost sits on it (C-121).
+-- Placement help for extractors: a deposit is a 2 x 2 patch (S-184) and
+-- an extractor goes centred on it (the T1's footprint 2 exactly over it,
+-- the advanced one's 4 around it), so the ghost snaps to the nearest patch
+-- centre within DEPOSIT_SNAP of the cursor (PlacementRules.depositNear, the
+-- server's and the AI's rule), or (x, z) unchanged. An own extractor this
+-- one upgrades (Core/Upgrades) within Upgrades.SNAP wins: the ghost sits on
+-- it (C-121).
 function Placement.assist(world: World.World, def: any, x: number, z: number): (number, number)
 	local layers = world.layers
 	if def.extractor == nil or layers == nil then
@@ -82,29 +82,11 @@ function Placement.assist(world: World.World, def: any, x: number, z: number): (
 	if old then
 		return Upgrades.site(world, def, old)
 	end
-	local g = world.grid
-	local reach = math.ceil(Placement.DEPOSIT_SNAP / Grid.CELL_SIZE)
-	local cx, cz = g:cellAt(x, z)
-	local best, bestD = nil, Placement.DEPOSIT_SNAP ^ 2
-	for dz = -reach, reach do
-		for dx = -reach, reach do
-			local gx, gz = cx + dx, cz + dz
-			if g:inBounds(gx, gz) and Layers.getSupply(layers, g:index(gx, gz)) > 0 then
-				local wx, wz = g:cellCenter(gx, gz)
-				local d = (wx - x) ^ 2 + (wz - z) ^ 2
-				if d <= bestD then
-					best, bestD = { gx, gz, wx, wz }, d
-				end
-			end
-		end
-	end
-	if best == nil then
+	local px, pz = PlacementRules.depositNear(layers, x, z, Placement.DEPOSIT_SNAP)
+	if px == nil or pz == nil then
 		return x, z
 	end
-	if def.footprint % 2 == 1 then
-		return best[3], best[4]
-	end
-	return g.originX + best[1] * Grid.CELL_SIZE, g.originZ + best[2] * Grid.CELL_SIZE
+	return px, pz
 end
 
 -- A footprint in cells: its corner cell and size.
@@ -217,24 +199,16 @@ function Placement.area(world: World.World, def: any, cx: number, cz: number, ra
 	if def.extractor == nil or layers == nil then
 		return spots
 	end
-	local g = world.grid
-	local reach = math.ceil(radius / Grid.CELL_SIZE)
-	local ccx, ccz = g:cellAt(cx, cz)
 	local seen: { [string]: boolean } = {}
-	for dz = -reach, reach do
-		for dx = -reach, reach do
-			local gx, gz = ccx + dx, ccz + dz
-			if g:inBounds(gx, gz) and Layers.getSupply(layers, g:index(gx, gz)) > 0 then
-				local wx, wz = g:cellCenter(gx, gz)
-				if (wx - cx) ^ 2 + (wz - cz) ^ 2 <= radius * radius then
-					local px, pz = Placement.assist(world, def, wx, wz)
-					local r = Placement.check(world, def, px, pz, planned)
-					local key = `{r.x},{r.z}`
-					if r.ok and not seen[key] then
-						seen[key] = true
-						table.insert(spots, r)
-					end
-				end
+	for _, d in layers.deposits or {} do
+		-- every patch (S-184) whose centre is in the circle
+		if (d[1] - cx) ^ 2 + (d[2] - cz) ^ 2 <= radius * radius then
+			local px, pz = Placement.assist(world, def, d[1], d[2])
+			local r = Placement.check(world, def, px, pz, planned)
+			local key = `{r.x},{r.z}`
+			if r.ok and not seen[key] then
+				seen[key] = true
+				table.insert(spots, r)
 			end
 		end
 	end

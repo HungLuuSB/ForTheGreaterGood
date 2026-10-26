@@ -23,6 +23,7 @@ local KIND_COLOR: { [number]: Color3 } = {
 	[CT.REPAIR] = Color3.fromRGB(235, 220, 80),
 	[CT.RECLAIM] = Color3.fromRGB(200, 120, 235),
 	[CT.BUILD] = Color3.fromRGB(235, 220, 80),
+	[CT.AREA] = Color3.fromRGB(200, 120, 235), -- Smart Reclaim's zone (S-183), the reclaim colour
 }
 local FLASH_SECONDS = 0.6
 local LIFT = 0.15 -- studs above the ground
@@ -149,6 +150,9 @@ function Overlay.step(o: Overlay, api: Api.Api, now: number, lineFrom: Vector3?,
 				local color = KIND_COLOR[point.kind] or RING_COLOR
 				segment(o, from, to, color)
 				disc(take(o, "dot"), to.X, to.Y, to.Z, 1.4, color, 0.2)
+				if point.radius then
+					disc(take(o, "ring"), to.X, to.Y, to.Z, point.radius * 2, color, 0.85) -- Smart Reclaim's zone (S-183)
+				end
 				from = to
 			end
 		end

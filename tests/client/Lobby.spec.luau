@@ -99,7 +99,7 @@ return function(t: any)
 				local sim = Sim.new(Lobby.config(s, 7))
 				local brains = Skirmish.forMatch(sim)
 				t.equal(#brains, #s.slots - 1)
-				t.equal(sim.players[1].team % 2, 0) -- Chaos: an even team
+				t.equal(sim.players[1].faction, "chaos", "the slot's faction (S-174)")
 				if mode == "TEAM" then
 					t.equal(sim.players[1].allyTeam, 1)
 					t.equal(sim.players[2].allyTeam, 2)

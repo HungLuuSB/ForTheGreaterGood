@@ -104,7 +104,7 @@ local function redrawCharts(ui: UI)
 				if shown(ui, p) and ys and #ys > 0 then
 					any = true
 					local xs = table.move(series.t, 1, #ys, 1, {})
-					table.insert(lines, { xs = xs, ys = ys, color = TeamColors(p.team or p.id) })
+					table.insert(lines, { xs = xs, ys = ys, color = TeamColors.of(p.team or p.id) })
 				end
 			end
 			if not any then
@@ -148,7 +148,7 @@ local function fillOverview(ui: UI, actions: Actions, status: string?, saved: { 
 	for _, p in r.players or {} do
 		local st = p.stats or {}
 		local out = if p.won then "won" elseif p.outAt then `out {clock(p.outAt)}` else "standing"
-		local color = TeamColors(p.team or p.id)
+		local color = TeamColors.of(p.team or p.id)
 		local name = p.name .. (if p.user == ui.me then " (you)" else "")
 		table.insert(rows, {
 			function(cell: Frame)
@@ -262,10 +262,10 @@ local function fillChips(ui: UI)
 			mine = p
 		end
 		allies[p.allyTeam] = allies[p.allyTeam] or {}
-		table.insert(allies[p.allyTeam], TeamColors(p.team or p.id))
+		table.insert(allies[p.allyTeam], TeamColors.of(p.team or p.id))
 	end
 	if mine then
-		add("you", "You", { TeamColors(mine.team or mine.id) }, 2)
+		add("you", "You", { TeamColors.of(mine.team or mine.id) }, 2)
 	end
 	local teams = {}
 	for a in allies do
