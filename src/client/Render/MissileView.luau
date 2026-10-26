@@ -18,7 +18,6 @@
 local Effects = require("../Core/Effects")
 local MissileView = require("../Core/MissileView")
 local RadarAccuracy = require("../Core/RadarAccuracy")
-local Terrain = require("../Core/Terrain")
 local World = require("../Core/World")
 
 local RenderMissileView = {}
@@ -262,12 +261,11 @@ local function radarAccuracy(v: View, world: World.World)
 		anyTracked = anyTracked or r.tracked
 	end
 	v.readout.Text = RadarAccuracy.readout(acc, anyTracked)
-	local layers = world.layers
 	for i, r in rings do
 		if i > RenderMissileView.MAX_RINGS then
 			break
 		end
-		local y = (if layers then Terrain.surfaceY(layers, r.x, r.z) else World.groundY(world, r.x, r.z)) + 0.6
+		local y = World.groundY(world, r.x, r.z, true) + 0.6
 		local at = Vector3.new(r.x, y, r.z)
 		local color = if r.tracked then COLOR.trackRing else COLOR.radarRing
 		-- the outline stays visible from the RTS camera: a tenth of the radius, at least 0.3

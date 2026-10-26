@@ -6,7 +6,6 @@
 -- placeholders ("Needs my review").
 
 local Ghosts = require("../Core/Ghosts")
-local Terrain = require("../Core/Terrain")
 local World = require("../Core/World")
 local Models = require("./Models")
 local TeamColors = require("./TeamColors")
@@ -94,7 +93,7 @@ function Contacts.step(c: Contacts, world: World.World, now: number, hidden: boo
 			n += 1
 			local p = disc(c, n)
 			local size = if k.sonar then Contacts.SONAR_SIZE else Contacts.BLIP_SIZE
-			local y = Terrain.surfaceY(layers, k.x, k.z) + 0.4
+			local y = World.groundY(world, k.x, k.z, true) + 0.4
 			p.Size = Vector3.new(0.3, size, size)
 			p.CFrame = CFrame.new(k.x, y, k.z) * CFrame.Angles(0, 0, math.pi / 2)
 			local color = TeamColors.of(k.team)

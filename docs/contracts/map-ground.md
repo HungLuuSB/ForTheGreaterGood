@@ -28,6 +28,7 @@ In `src/shared/Defs/Meshes/Registry.luau` (the models stream's manifest), next t
 ground = {
 	canyon = {                        -- the map name (MapRegistry key)
 		status = "review",            -- "approved" shows it in game; "review" only with Invoke("groundanyway", true) in Studio
+		step = 8,                     -- optional: the bake's height sampling in studs when coarser than the export's 4 (`coarsen`, C-235)
 		tiles = {                     -- the ground surface, split so no mesh passes Roblox's triangle limit
 			{ mesh = "rbxassetid://…", center = { x, y, z }, size = { sx, sy, sz }, material = "desert" },
 			…
@@ -47,6 +48,7 @@ groundMaterials = {                   -- one per material key used above
 - **One material per tile.** A tile that crosses ground types is split into one mesh per type; the seams follow the type borders (smooth wavy lines cut through the triangles, M-35; the surface is unchanged). Rock detail can cover cliff seams.
 - **UVs in world space**, `u = x / 32`, `v = z / 32` (one texture repeat every 32 studs), so a texture tiles across tiles without seams.
 - **Surface:** within 0.25 studs of `heights` at every sample; flat (within DEPOSIT_LIFT, 0.35) over deposits and start plateaus.
+- **Coarser bakes (`step`, C-235):** a big map may keep only every k-th sample (`coarsen`; the Lakelands every 8 studs). Then each square between kept samples is two flat triangles split along its flatter diagonal (`abs(h00 - h11) <= abs(h10 - h01)`: 00–11, else 10–01), and the entry says `step`. The client places everything on that same surface (Core/Terrain.drawnY), because the sim's cell centres the bake skips can be 2 studs off it at a cliff's foot.
 - **Textures:** `lune run mesh_materials` writes a SurfaceAppearance `ground_<material>` per `groundMaterials` entry into `place/MeshMaterials.model.json`; the client clones it onto that material's tiles. Without one, the tile gets a plain Roblox material and colour (Render/MeshGround's fallbacks).
 - Uploads go to the user's account with the user's approval, as for unit meshes.
 
@@ -54,4 +56,4 @@ groundMaterials = {                   -- one per material key used above
 
 - **When it's used:** Render/Ground builds the mesh ground when the map has an `approved` entry (or `review` with the Studio switch). Roblox terrain then draws only the water. Maps without an entry keep the voxel terrain.
 - **Tiles:** built in parallel at the map load (CreateMeshPartAsync from the asset IDs, no editable memory), `RenderFidelity.Precise`, anchored, `CanCollide` off, `CastShadow` on. Tiles have `CanQuery` off and a box collision (C-209: a tile's box would catch clicks at mesa height; ground clicks march the sim's heights instead). Details get a convex-decomposition collision (`Default`, ~40 ms each) and `CanQuery` on, tagged `GroundDetail`: the fog of war blanket samples their real height (they stand above `heights` on mesas), and clicks look through them (C-213). When the mesh ground has finished loading, the blanket is rebuilt over it.
-- **Gameplay** never reads the meshes: heights come from the sim's layers (Core/Terrain), so a slightly wrong bake shows as units floating or sinking, nothing worse.
+- **Gameplay** never reads the meshes: heights come from the sim's layers (Core/Terrain), so a slightly wrong bake shows as units floating or sinking, nothing worse. On a coarser bake the client draws units on the bake's surface rebuilt from those layers (`World.groundY` with `world.drawnStep`, C-235), not on the meshes themselves.

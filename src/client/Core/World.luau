@@ -11,6 +11,7 @@ local Grid = require("@shared/Grid/Grid")
 local Layers = require("@shared/Grid/Layers")
 local MapRegistry = require("@shared/Grid/MapRegistry")
 local Schema = require("@shared/Net/Schema")
+local GroundMeshes = require("./GroundMeshes")
 local Terrain = require("./Terrain")
 
 local World = {}
@@ -158,6 +159,7 @@ export type World = {
 	layers: Layers.Layers?,
 	mapId: string?,
 	mapVersion: number, -- bumps when WELCOME brings another map (the renderer rebuilds the ground)
+	drawnStep: number?, -- the baked ground's height sampling when coarser than the sim's (C-235): what stands on the ground follows the mesh
 	defs: Defs.DefSet,
 	me: Me,
 	teamAllies: { [number]: number }, -- every team's ally team (WELCOME, protocol 30, S-129); empty before
@@ -247,6 +249,7 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 		world.grid = if layers then layers.grid else Grid.new(1, 1)
 		world.mapId = mapId
 		world.mapVersion += 1
+		world.drawnStep = GroundMeshes.drawnStep(mapId)
 	end
 	world.me = { player = rec.player :: number, team = rec.team :: number, allyTeam = rec.allyTeam :: number }
 	-- every team's ally team (protocol 30, S-129), indexed by team; 0 = not in the match
@@ -356,12 +359,21 @@ function World.floats(def: any): boolean
 	return mc ~= nil and (mc.surface == "amphib" or mc.surface == "hover")
 end
 
+-- The drawn ground's height at (x, z): the smooth surface between cell
+-- centres, or the baked mesh's on a coarser bake (C-235); `floats`: the
+-- water's surface where it's above the ground.
 function World.groundY(world: World, x: number, z: number, floats: boolean?): number
 	local layers = world.layers
 	if layers == nil then
 		return 0
 	end
-	return if floats then Terrain.surfaceY(layers, x, z) else Terrain.groundY(layers, x, z)
+	local step = world.drawnStep
+	if step == nil then
+		return if floats then Terrain.surfaceY(layers, x, z) else Terrain.groundY(layers, x, z)
+	end
+	local ground = Terrain.drawnY(layers, x, z, step)
+	local water = if floats then Terrain.waterY(layers, x, z) else nil
+	return if water and water > ground then water else ground
 end
 
 -- Moves what the bars show up to render tick `renderTick` (C-49): a health
