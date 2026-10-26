@@ -342,6 +342,10 @@ function Passability.clearOccupied(pm: PassMap, x0: number, z0: number, size: nu
 	Passability.updateRect(pm, x0, z0, x0 + size - 1, z0 + size - 1)
 end
 
+-- The occupancy a map rock holds (S-197): not a unit (unit IDs end at
+-- World.MAX_ID, 65534); always known, always solid.
+Passability.ROCK = 0xFFFF
+
 function Passability.occupant(pm: PassMap, index: number): number
 	return buffer.readu16(pm.occupancy, index * 2)
 end

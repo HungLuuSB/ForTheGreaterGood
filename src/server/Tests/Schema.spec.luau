@@ -311,7 +311,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 39, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 40, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -562,26 +562,37 @@ return function(t: RunAll.Context)
 			radarError = 0x0102,
 			trackError = 0x0304,
 			precision = 0x80,
+			supplyShare = 100,
+			powerShare = 90,
+			convertAt = 50,
 		}
-		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "03 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b 02 01 04 03 80") -- team first since protocol 9; radar accuracy since 32
+		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "03 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b 02 01 04 03 80 64 5a 32") -- team first since protocol 9; radar accuracy since 32; the sliders since 40 (S-198)
+		-- ECO_LEVEL (protocol 40, S-198): which slider, percent; no unit IDs
+		local level: Schema.Command = { cmdType = CT.ECO_LEVEL, flags = 0, unitIds = {}, ecoLevel = Schema.EcoLevel.CONVERT, value = 75 }
+		t.equal(hex(encodeOne(Schema.encodeCommand, level)), "1f 00 00 00 03 4b")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeCommand, level), Schema.decodeCommand)[1], level)
 	end)
 
 	t.test("wreck and sight events (protocol 10): golden bytes, round-trip, bad input, truncation", function()
 		local EK = Schema.EventKind
-		local wreck: Schema.Event = { kind = EK.WRECK, wreckId = 0x0102, defIndex = 0x0304, cell = 0x0506, offX = 7, offZ = 8, heading = 9, supply = 0x0a0b, fullSupply = 0x0c0d }
+		local wreck: Schema.Event = { kind = EK.WRECK, wreckId = 0x0102, defIndex = 0x0304, cell = 0x0506, offX = 7, offZ = 8, heading = 9, supply = 0x0a0b, fullSupply = 0x0c0d, featureKind = 0 }
+		-- a map tree (protocol 40, S-197): defIndex 0, its power in supply / fullSupply
+		local tree: Schema.Event = { kind = EK.WRECK, wreckId = 0x0103, defIndex = 0, cell = 0x0506, offX = 7, offZ = 8, heading = 9, supply = 150, fullSupply = 150, featureKind = 1 }
 		local gone: Schema.Event = { kind = EK.WRECK_GONE, wreckId = 0x0102 }
 		local state: Schema.Event = { kind = EK.WRECK_STATE, wreckId = 0x0102, supply = 0x0304, rez = 200 } -- (protocol 35, S-168)
-		t.equal(hex(encodeOne(Schema.encodeEvent, wreck)), "09 02 01 04 03 06 05 07 08 09 0b 0a 0d 0c") -- supply, fullSupply since protocol 35
+		t.equal(hex(encodeOne(Schema.encodeEvent, wreck)), "09 02 01 04 03 06 05 07 08 09 0b 0a 0d 0c 00") -- supply, fullSupply since protocol 35; featureKind since 40
+		t.equal(hex(encodeOne(Schema.encodeEvent, tree)), "09 03 01 00 00 06 05 07 08 09 96 00 96 00 01")
 		t.equal(hex(encodeOne(Schema.encodeEvent, gone)), "0a 02 01")
 		t.equal(hex(encodeOne(Schema.encodeEvent, state)), "1b 02 01 04 03 c8")
-		roundTrip(t, { wreck, gone, state }, Schema.encodeEvent, Schema.decodeEvent)
-		for _, e in { wreck, gone, state } do
+		roundTrip(t, { wreck, tree, gone, state }, Schema.encodeEvent, Schema.decodeEvent)
+		for _, e in { wreck, tree, gone, state } do
 			t.equal(buffer.len(encodeOne(Schema.encodeEvent, e)), Schema.EVENT_BYTES[e.kind], `size of event kind {e.kind}`)
 			t.equal(Schema.eventBytes(e), Schema.EVENT_BYTES[e.kind])
 			expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, e))
 		end
-		expectRejected(t, Schema.decodeEvent, { 9, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "wreckId 0 is reserved")
-		expectRejected(t, Schema.decodeEvent, { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "defIndex 0 is reserved")
+		expectRejected(t, Schema.decodeEvent, { 9, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "wreckId 0 is reserved")
+		expectRejected(t, Schema.decodeEvent, { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "a wreck with defIndex 0")
+		expectRejected(t, Schema.decodeEvent, { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3 }, "feature kind 3")
 		expectRejected(t, Schema.decodeEvent, { 27, 0, 0, 1, 0, 0 }, "wreckId 0 is reserved")
 
 		-- rows: 2 rows of 2 bytes; cells: one seen, one unseen
@@ -705,6 +716,9 @@ return function(t: RunAll.Context)
 			radarError = 65535,
 			trackError = 0,
 			precision = 255,
+			supplyShare = 100,
+			powerShare = 0,
+			convertAt = 75,
 		}
 		roundTrip(t, { eco }, Schema.encodeEco, Schema.decodeEco)
 		t.equal(buffer.len(encodeOne(Schema.encodeEco, eco)), Schema.ECO_BYTES)
@@ -797,10 +811,10 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 31, 0, 1, 0, 1, 0 }, "unknown cmdType 31") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36), 22 FACTION, 23 START, 24 SHARE_UNITS, 25 SHARE_RESOURCE, 26 REQUEST and 27 AREA (protocol 37)
+		expectRejected(t, cmd, { 32, 0, 1, 0, 1, 0 }, "unknown cmdType 32") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36), 22 FACTION, 23 START, 24 SHARE_UNITS, 25 SHARE_RESOURCE, 26 REQUEST and 27 AREA (protocol 37)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
-		expectRejected(t, cmd, { CT.STOP, 8, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137)
+		expectRejected(t, cmd, { CT.STOP, 16, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137), 8 FRONT since protocol 40 (S-199)
 		expectRejected(t, cmd, { CT.STOP, LINE, 1, 0, 1, 0 }, "LINE flag")
 		expectRejected(t, cmd, { CT.GUARD, 0, 0, 0 }, "unit count 0") -- (STOP may be empty since protocol 36: the pre-game)
 		expectRejected(t, cmd, { CT.GUARD, 0, 201, 0 }, "unit count 201")

@@ -50,9 +50,10 @@ export type PlayerNet = {
 export type Sight = { cells: buffer, version: number, changes: { number } }
 
 export type WreckKnowledge = {
-	known: { [number]: { number } }, -- wreck ID → { x, z, defIndex, heading, supply when learned (S-168) }
+	known: { [number]: { number } }, -- wreck ID → { x, z, defIndex, heading, supply when learned (S-168), feature kind (S-197; nil = a unit's wreck) }
 	list: { number }, -- known IDs, in the order the team learned of them
 	version: number,
+	featuresKnown: boolean?, -- the map's features were added (from the start, S-197)
 }
 
 export type NetState = {

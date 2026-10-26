@@ -11,6 +11,7 @@ local RunAll = require("./RunAll")
 
 local CT = Schema.CmdType
 local QUEUE = Schema.CmdFlag.QUEUE
+local FRONT = Schema.CmdFlag.FRONT
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
 
 local function submit(sim: Sim.Sim, player: number, cmd: Schema.Command)
@@ -588,5 +589,96 @@ return function(t: RunAll.Context)
 		at(sim, CT.MOVE, 1, { leader }, 300, 300)
 		steps(sim, 15 * 20)
 		t.expect(dist(sim.world, helper, sim.world.posX[leader], sim.world.posZ[leader]) < 120, "and follows its leader again")
+	end)
+
+	t.test("FRONT (space): the order goes first, the one under way resumes after it, then the rest (S-199)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:64" })
+		local w = sim.world
+		local tank = Spawn.unit(sim, "ord_lancer", 1, -150, -150)
+		at(sim, CT.MOVE, 1, { tank }, 150, -150)
+		at(sim, CT.MOVE, 1, { tank }, 150, 150, true)
+		steps(sim, 30)
+		local g = (sim.map :: any).grid
+		local cell, ox, oz = g:encode(-150, 150)
+		submit(sim, 1, { cmdType = CT.MOVE, flags = bit32.bor(FRONT, QUEUE), unitIds = { tank }, cell = cell, offX = ox, offZ = oz })
+		steps(sim, 2)
+		local q = sim.orders.queue[tank] :: any
+		t.equal(#q, 3, "nothing dropped")
+		t.equal(q[1].z, -150 + 300, "the new move first")
+		local order = {}
+		steps(sim, 2400, function()
+			for i, p in { { -150, 150 }, { 150, -150 }, { 150, 150 } } do
+				if order[#order] ~= i and dist(w, tank, p[1], p[2]) < 10 then
+					table.insert(order, i)
+				end
+			end
+			return sim.orders.queue[tank] == nil
+		end)
+		t.equal(table.concat(order, ","), "1,2,3", "the new point, then A, then B")
+	end)
+
+	t.test("FRONT BUILD mid-build: the frame keeps standing and the builder comes back to finish it (S-199)", function()
+		local sim = Sim.new({ seed = 6, players = PLAYERS, mapId = "flat:64" })
+		local w = sim.world
+		local mason = Spawn.unit(sim, "ord_mason", 1, 0, 0)
+		local gen = sim.defs.units.ord_generator.index
+		local g = (sim.map :: any).grid
+		local function build(x: number, z: number, flags: number)
+			local cell, ox, oz = g:encode(x, z)
+			submit(sim, 1, { cmdType = CT.BUILD, flags = flags, unitIds = { mason }, defIndex = gen, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		end
+		build(-60, 0, 0)
+		local frame = 0
+		steps(sim, 1500, function()
+			powered(sim)
+			local t0 = sim.build.target[mason] or 0
+			if t0 ~= 0 and w.buildProgress[t0] > 0.2 then
+				frame = t0
+				return true
+			end
+			return false
+		end)
+		t.expect(frame ~= 0, "a frame a fifth built")
+		build(80, 0, FRONT)
+		local done = {}
+		steps(sim, 4000, function()
+			powered(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "BUILD_DONE" then
+					table.insert(done, e.unit)
+				end
+			end
+			return #done >= 2
+		end)
+		t.equal(#done, 2, "both built")
+		t.expect(done[1] ~= frame, "the FRONT one first")
+		t.equal(done[2], frame, "then the frame it left, finished (not a new one)")
+	end)
+
+	t.test("a FRONT D-Gun: the Commander walks into range, fires, and goes on with its queue (S-199)", function()
+		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local com = Spawn.unit(sim, "ord_sovereign", 1, 0, 0)
+		World.setFireState(w, com, World.FireState.HOLD_FIRE)
+		at(sim, CT.MOVE, 1, { com }, 200, 0)
+		steps(sim, 2)
+		local g = (sim.map :: any).grid
+		local cell, ox, oz = g:encode(-420, 0)
+		submit(sim, 1, { cmdType = CT.DGUN, flags = FRONT, unitIds = { com }, cell = cell, offX = ox, offZ = oz })
+		local fired = false
+		steps(sim, 15 * 40, function()
+			sim.eco.accounts[1].power.stored = sim.eco.accounts[1].power.storage
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == com then
+					fired = true
+				end
+			end
+			return fired
+		end)
+		t.expect(fired, "it fired")
+		steps(sim, 15 * 60, function()
+			return sim.orders.queue[com] == nil
+		end)
+		t.expect(dist(w, com, 200, 0) < 12, "then went on to its queued move")
 	end)
 end

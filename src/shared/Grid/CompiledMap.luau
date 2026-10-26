@@ -9,12 +9,14 @@
 --   waterLevel             studs: cells below it are sea
 --   wind                   { min, max } fractions of a turbine's best, or nil
 --   height                 Base64 of an i16 per cell (Layers' raw steps,
---                          little-endian), rows south to north (cz)
+--                          little-endian), rows by cz from -z (the screen's
+--                          top, the source image's top row) to +z
 --   terrain                run-length "count:type," of Layers.Terrain per cell
 --   deposits               { { cx, cz, value } } (each a 2 × 2 patch's corner
 --                          cell once loaded: Layers.expandDeposits)
 --   starts                 { { x, z } } start hints, in studs
 --   sideSplits             optional, as Layers.sideSplits
+--   features               optional { { kind, x, z, value? } } in studs (S-197)
 
 local Base64 = require("../Util/Base64")
 local Grid = require("./Grid")
@@ -32,6 +34,7 @@ export type Compiled = {
 	deposits: { { number } },
 	starts: { { number } },
 	sideSplits: { [number]: { { number } } }?,
+	features: { { any } }?,
 }
 
 function CompiledMap.build(m: Compiled): Layers.Layers
@@ -67,6 +70,13 @@ function CompiledMap.build(m: Compiled): Layers.Layers
 	layers.starts = starts
 	layers.sideSplits = m.sideSplits
 	layers.wind = m.wind
+	if m.features then
+		local list = {}
+		for _, f in m.features do
+			table.insert(list, { kind = f[1] :: string, x = f[2] :: number, z = f[3] :: number, value = f[4] :: number? })
+		end
+		layers.features = list
+	end
 	return layers
 end
 
