@@ -571,7 +571,9 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 				end
 				table.insert(events, d)
 			end
-		elseif kind == "IMPACT" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
+		elseif kind == "IMPACT" and e.other ~= 0 and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
+			-- (an IMPACT without a projectile, a D-Gun bolt's pass-through,
+			-- isn't sent: projId 0 is reserved on the wire; S-194)
 			known[e.other] = nil
 			table.insert(events, withPos({ kind = Schema.EventKind.IMPACT, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
 		elseif kind == "SHIELD_FIELD" and known[e.other] and not sentNow[e.other] and c.pShield[e.other] == e.unit then
