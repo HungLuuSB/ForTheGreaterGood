@@ -1,8 +1,8 @@
 --!strict
 -- The D-Gun (S-194, the user's G5): a Commander fires it from the client
 -- API (D, then a left click), and the client draws its bolt with the
--- server's: through every unit it burns (an IMPACT each, the bolt flies on)
--- to the end of its range, riding 5 studs over the ground.
+-- server's to the end of its range (its one IMPACT), riding 5 studs over
+-- the ground; the units it burns through die on its way (their DEATHs).
 
 local Api = require("../../src/client/Api")
 local Commands = require("../../src/client/Core/Commands")
@@ -30,6 +30,10 @@ return function(t: any)
 		for i = 0, 2 do
 			table.insert(tanks, Spawn.unit(sim, "chs_ravager", 2, -10 + i * 30, 0, 0))
 		end
+		local burned: { [number]: boolean } = {}
+		for _, id in tanks do
+			burned[id] = false
+		end
 		local fx = Effects.new()
 		local tick = 0
 		local function step()
@@ -40,6 +44,11 @@ return function(t: any)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 			Api.frame(api, tick * DT)
 			Effects.update(fx, world, tick, tick * DT, 0, 0)
+			for _, d in world.died do
+				if burned[d.id] == false then
+					burned[d.id] = true
+				end
+			end
 			table.clear(world.died)
 		end
 		for _ = 1, 3 do
@@ -67,16 +76,20 @@ return function(t: any)
 				heightOff = math.max(heightOff, math.abs(p.y - (World.simGroundY(world, p.x, p.z) + Effects.BOLT_HEIGHT)))
 			end
 		end
-		local alive = 0
+		local alive, deaths = 0, 0
 		for _, id in tanks do
 			if sim.world.slot[id] then
 				alive += 1
 			end
+			if burned[id] then
+				deaths += 1
+			end
 		end
-		print(string.format("    bolt drawn %d ticks with the server's, at most %.2f studs off, %.2f off its riding height; %d IMPACTs; %d of 3 tanks left", flights, worst, heightOff, impacts, alive))
+		print(string.format("    bolt drawn %d ticks with the server's, at most %.2f studs off, %.2f off its riding height; %d IMPACT; %d of 3 tanks left, %d DEATHs on the client", flights, worst, heightOff, impacts, alive, deaths))
 		t.expect(bolt ~= nil, "the Sovereign fired its D-Gun")
 		t.equal(alive, 0, "every tank on its path burned")
-		t.expect(impacts >= 4, `an IMPACT per tank, and one at the end ({impacts})`)
+		t.equal(deaths, 3, "the client saw each tank die on the bolt's path")
+		t.equal(impacts, 1, "the bolt's one IMPACT, at the end of its range")
 		t.expect(flights >= 25, `drawn on through the tanks to the end of its range ({flights} ticks)`)
 		t.expect(worst < 1, `with the server's bolt ({worst})`)
 		t.expect(heightOff < 1e-6, "riding 5 studs over the ground")
