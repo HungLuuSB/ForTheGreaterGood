@@ -858,6 +858,7 @@ def render_preview(path, cam_from_roblox, look_at_roblox, size=(1280, 720), samp
     scene.render.resolution_x, scene.render.resolution_y = size
     cam_data = bpy.data.cameras.get("preview_cam") or bpy.data.cameras.new("preview_cam")
     cam_data.lens = lens
+    cam_data.clip_end = max(cam_data.clip_end, 10000.0)  # whole-map views of the big maps
     cam = bpy.data.objects.get("preview_cam") or bpy.data.objects.new("preview_cam", cam_data)
     if cam.name not in scene.collection.objects:
         scene.collection.objects.link(cam)
