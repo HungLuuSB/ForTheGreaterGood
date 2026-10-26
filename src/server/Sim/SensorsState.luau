@@ -18,6 +18,10 @@ export type State = {
 	originX: number,
 	originZ: number,
 	maps: { [number]: { [string]: buffer } }, -- team → kind → u16 counts
+	-- per team, per sensor row: u16 first and u16 last column whose sight
+	-- (los) may have changed since NetOut last diffed it (first > last: none),
+	-- so NetOut diffs only those (S-191); not hashed, a cache
+	losDirty: { [number]: buffer },
 	teams: { number },
 	-- per-unit stamp record (what is currently added to the maps)
 	stampCell: { [number]: number }, -- sensor cell index, absent = not stamped
@@ -47,7 +51,7 @@ export type State = {
 function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 	local g = grid or Grid.new(256, 256)
 	local width, depth = g.sensorX, g.sensorZ
-	local maps, vis, ghosts, ghostIds, tracked = {}, {}, {}, {}, {}
+	local maps, vis, ghosts, ghostIds, tracked, losDirty = {}, {}, {}, {}, {}, {}
 	for _, team in teams do
 		tracked[team] = {}
 		local m = {}
@@ -55,6 +59,11 @@ function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 			m[kind] = buffer.create(width * depth * 2)
 		end
 		maps[team] = m
+		local dirty = buffer.create(depth * 4)
+		for z = 0, depth - 1 do
+			buffer.writeu16(dirty, z * 4, 0xFFFF) -- clean
+		end
+		losDirty[team] = dirty
 		vis[team] = {}
 		ghosts[team] = {}
 		ghostIds[team] = {}
@@ -65,6 +74,7 @@ function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 		originX = g.originX,
 		originZ = g.originZ,
 		maps = maps,
+		losDirty = losDirty,
 		teams = table.clone(teams),
 		stampCell = {},
 		stampTeam = {},

@@ -165,13 +165,28 @@ task.spawn(function()
 			local entry = MapRegistry.NAMED[name] or MapRegistry.HANDMADE[name]
 			-- the shape the spawn box defaults need (F26): bounds, start hints and the map's own boxes, in studs
 			local geo = { bounds = StartAreas.bounds(layers.grid), starts = layers.starts, startBoxes = layers.startBoxes, splits = SpawnBoxes.splitList(layers.sideSplits) }
-			table.insert(list, { id = id, name = entry.name, starts = #layers.starts, geo = geo })
+			-- F4 (S-189): small (≤256 cells a side), medium (≤512), large
+			local size = MapRegistry.sizeClass(layers.grid.cellsX)
+			table.insert(list, { id = id, name = entry.name, starts = #layers.starts, geo = geo, size = size, cells = layers.grid.cellsX })
 			previews[id] = MapPreview.build(layers, 128)
 		else
 			warn(`[Lobby] map {id}: {layers}`)
 		end
 		task.wait()
 	end
+	-- small maps first, then medium, then large (each keeps its order)
+	local rank = { small = 1, medium = 2, large = 3 }
+	local order = {}
+	for i, m in list do
+		order[m] = i
+	end
+	table.sort(list, function(a, b)
+		local ra, rb = rank[a.size] or 4, rank[b.size] or 4
+		if ra ~= rb then
+			return ra < rb
+		end
+		return order[a] < order[b]
+	end)
 	Ctx.maps = list
 	mapsReady = true
 	print(`[Lobby] {#list} maps ready`)
@@ -188,7 +203,7 @@ getMaps.OnServerInvoke = function(_player: Player): any
 	local out = {}
 	for _, m in Ctx.maps do
 		local p = previews[m.id]
-		table.insert(out, { id = m.id, name = m.name, starts = m.starts, geo = m.geo, preview = p })
+		table.insert(out, { id = m.id, name = m.name, starts = m.starts, geo = m.geo, size = m.size, cells = m.cells, preview = p })
 	end
 	return { ready = true, maps = out }
 end

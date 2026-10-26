@@ -245,12 +245,34 @@ local function radiiOf(sim: Types.Sim, id: number): { number }
 	return radii
 end
 
+-- Marks columns cx - r .. cx + r of rows cz - r .. cz + r of `team`'s sight
+-- as possibly changed (S-191: NetOut diffs only marked spans).
+local function markSight(s: State, team: number, cx: number, cz: number, r: number)
+	local dirty = s.losDirty[team]
+	if dirty == nil then
+		return
+	end
+	local x0, x1 = math.max(cx - r, 0), math.min(cx + r, s.width - 1)
+	for z = math.max(cz - r, 0), math.min(cz + r, s.depth - 1) do
+		local o = z * 4
+		if readu16(dirty, o) > x0 then
+			writeu16(dirty, o, x0)
+		end
+		if readu16(dirty, o + 2) < x1 then
+			writeu16(dirty, o + 2, x1)
+		end
+	end
+end
+
 local function stampUnit(s: State, team: number, cell: number, radii: { number }, delta: number)
 	local m = s.maps[team]
 	if m == nil then
 		return
 	end
 	local cx, cz = cell % s.width, cell // s.width
+	if radii[1] > 0 then
+		markSight(s, team, cx, cz, spansOf(radii[1]).R)
+	end
 	for k, kind in Sensors.KINDS do
 		stampCircle(s, m[kind], cx, cz, radii[k], delta)
 	end
@@ -517,6 +539,9 @@ function Sensors.step(sim: Types.Sim)
 			if old ~= nil and m and s.stampTeam[id] == team and s.stampRadius[id] == radii and math.abs(ddx) <= 1 and math.abs(ddz) <= 1 then
 				-- one cell over: shift the circles
 				local ox, oz = old % width, old // width
+				if radii[1] > 0 then
+					markSight(s, team, ox, oz, spansOf(radii[1]).R + 1) -- the old circle and the new, one cell over
+				end
 				for k, kind in Sensors.KINDS do
 					shiftCircle(s, m[kind], ox, oz, radii[k], ddx, ddz)
 				end
@@ -747,6 +772,8 @@ function Sensors.reveal(sim: Types.Sim, team: number, delta: number)
 			writeu16(map, o, readu16(map, o) + delta)
 		end
 	end
+	local s = sim.sensors
+	markSight(s, team, 0, 0, math.max(s.width, s.depth))
 end
 
 -- Is point (x, z) in `team`'s line of sight? NetOut shows projectiles and
