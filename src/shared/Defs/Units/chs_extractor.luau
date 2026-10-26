@@ -9,7 +9,7 @@ return Templates.extend(Templates.Structure, {
 	faction = "chaos",
 	cost = { supply = 50, power = 500, buildTime = 1800 },
 	health = 450,
-	extractor = { rate = 0.5 },
+	extractor = { rate = 0.5, upkeep = 3 }, -- upkeep: power it costs to run (S-198)
 	model = "chs_extractor",
 	icon = "extractor",
 })

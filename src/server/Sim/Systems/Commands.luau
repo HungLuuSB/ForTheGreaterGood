@@ -192,6 +192,21 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 			end
 		end
 		return
+	elseif cmdType == CT.ECO_LEVEL then
+		-- a resource-bar slider (S-198): the sender's team's share or convert level
+		local acc = sim.eco.accounts[sim.players[player].team]
+		if acc then
+			local level = (cmd.value :: number) / 100
+			local which = cmd.ecoLevel
+			if which == Schema.EcoLevel.SUPPLY_SHARE then
+				acc.supply.shareLevel = level
+			elseif which == Schema.EcoLevel.POWER_SHARE then
+				acc.power.shareLevel = level
+			else
+				acc.convertAt = level
+			end
+		end
+		return
 	elseif cmdType == CT.CAMERA then
 		NetOut.setCamera(sim, player, cmd.minX :: number, cmd.minZ :: number, cmd.maxX :: number, cmd.maxZ :: number)
 		return

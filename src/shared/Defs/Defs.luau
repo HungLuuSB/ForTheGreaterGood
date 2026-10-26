@@ -86,7 +86,7 @@ export type UnitDef = {
 	spoof: string?, -- a def its untracked radar contacts pass for (S-109, the Wraith)
 	buildRange: number?,
 	production: { supply: number?, power: number? }?, -- per second while built
-	extractor: { rate: number }?, -- supply per second per deposit value
+	extractor: { rate: number, upkeep: number? }?, -- supply per second per deposit value; upkeep: power per second it costs to run (S-198)
 	wind: { max: number }?, -- power per second at full wind (guide 8.5 Wind Turbine)
 	converter: { power: number, supply: number }?, -- per second: power in, supply out (toggleable)
 	pinpointer: boolean?, -- raises its ally team's radar precision (Shared/Combat/Pinpoint, S-59)
@@ -350,7 +350,7 @@ local UNIT_SPEC: Spec = {
 			optional = true,
 			fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) },
 		},
-		extractor = { kind = "record", optional = true, fields = { rate = POSITIVE } },
+		extractor = { kind = "record", optional = true, fields = { rate = POSITIVE, upkeep = opt(NON_NEGATIVE) } },
 		wind = { kind = "record", optional = true, fields = { max = POSITIVE } },
 		converter = { kind = "record", optional = true, fields = { power = POSITIVE, supply = POSITIVE } },
 		pinpointer = { kind = "boolean", optional = true },

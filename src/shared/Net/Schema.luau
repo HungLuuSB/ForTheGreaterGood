@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 40 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174); SHARE_UNITS, SHARE_RESOURCE and REQUEST commands, SHARE events (S-176); AREA command: Smart Reclaim / repair / resurrect (S-183); 38: positions on a fixed wire grid (Grid: 64-stud wire cells, quarter-stud offsets, ±8,192 studs whatever the map), strategic records carry 3-bit offsets (8 studs), ALERT a full position, SIGHT_CELLS u24 entries, SIGHT_ROWS firstRow u16, CAMERA u16 cells: maps up to 1,024 cells, aircraft past the edge (S-189); 39: SET_RETREAT, SELF_DESTRUCT and DGUN commands, the STATES byte's retreat bits, the owner fields SELF_DESTRUCT and WORK (kind and target) (S-194); 40: WRECK carries featureKind (map trees and rocks, S-197)
+Schema.PROTOCOL_VERSION = 40 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174); SHARE_UNITS, SHARE_RESOURCE and REQUEST commands, SHARE events (S-176); AREA command: Smart Reclaim / repair / resurrect (S-183); 38: positions on a fixed wire grid (Grid: 64-stud wire cells, quarter-stud offsets, ±8,192 studs whatever the map), strategic records carry 3-bit offsets (8 studs), ALERT a full position, SIGHT_CELLS u24 entries, SIGHT_ROWS firstRow u16, CAMERA u16 cells: maps up to 1,024 cells, aircraft past the edge (S-189); 39: SET_RETREAT, SELF_DESTRUCT and DGUN commands, the STATES byte's retreat bits, the owner fields SELF_DESTRUCT and WORK (kind and target) (S-194); 40: WRECK carries featureKind (map trees and rocks, S-197); ECO_LEVEL command and the Eco record's share / convert levels (S-198)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -113,7 +113,12 @@ Schema.CmdType = table.freeze({
 	SET_RETREAT = 28, -- aircraft: value = Schema.RetreatAt, the health at which they fly back to a rearm pad to heal (S-194; protocol 39)
 	SELF_DESTRUCT = 29, -- value 1 starts the unit's countdown (SELF_DESTRUCT_SECONDS), 0 stops it (S-194)
 	DGUN = 30, -- pos: Commanders fire their D-Gun at the point (manual fire, S-194)
+	ECO_LEVEL = 31, -- level params, no unit IDs: one of the sender's team's resource-bar sliders (Schema.EcoLevel) to `value` percent (S-198; protocol 40)
 })
+-- ECO_LEVEL's sliders (S-198): the share levels (stored above them goes to
+-- the allies, fairly) and the converters' level (power stored above it may
+-- be converted)
+Schema.EcoLevel = table.freeze({ SUPPLY_SHARE = 1, POWER_SHARE = 2, CONVERT = 3 })
 -- SET_RETREAT values (S-194): never, or below 30 / 40 / 50% health
 Schema.RetreatAt = table.freeze({ NEVER = 0, AT_30 = 1, AT_40 = 2, AT_50 = 3 })
 Schema.RETREAT_SHARE = table.freeze({ [0] = 0, 0.3, 0.4, 0.5 }) -- RetreatAt → share of max health
@@ -205,6 +210,7 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.SET_RETREAT] = "value",
 	[CT.SELF_DESTRUCT] = "value",
 	[CT.DGUN] = "pos",
+	[CT.ECO_LEVEL] = "level",
 }
 Schema.AREA_MAX_RADIUS = 1024 -- studs
 -- commands that may carry no unit IDs besides CAMERA and CHEAT (S-169): the
@@ -262,6 +268,7 @@ export type Command = {
 	-- share (S-176; amount as cheat)
 	toPlayer: number?,
 	resource: number?, -- Schema.ShareKind.SUPPLY / POWER
+	ecoLevel: number?, -- ECO_LEVEL: Schema.EcoLevel (with `value`, 0..100 percent; S-198)
 	-- area (S-183; cell / offX / offZ as pos)
 	areaOp: number?, -- Schema.AreaOp (radius as cheat's)
 }
@@ -278,7 +285,7 @@ function Schema.encodeCommand(w: Writer, cmd: Command)
 		error("Schema: LINE flag only applies to position commands", 2)
 	end
 	local count = #cmd.unitIds
-	if kind == "camera" or kind == "share" then
+	if kind == "camera" or kind == "share" or kind == "level" then
 		if count ~= 0 then
 			error("Schema: CAMERA and SHARE_RESOURCE commands carry no unit IDs", 2)
 		end
@@ -353,6 +360,13 @@ function Schema.encodeCommand(w: Writer, cmd: Command)
 		w:writeU8(required(cmd.toPlayer, "toPlayer"))
 		w:writeU8(resource)
 		w:writeU32(required(cmd.amount, "amount"))
+	elseif kind == "level" then
+		local which, value = required(cmd.ecoLevel, "ecoLevel"), required(cmd.value, "value")
+		if which < 1 or which > 3 or value < 0 or value > 100 or value ~= math.floor(value) then
+			error(`Schema: eco level {which} at {value}%`, 2)
+		end
+		w:writeU8(which)
+		w:writeU8(value)
 	elseif kind == "cheat" then
 		local op, arg = required(cmd.cheatOp, "cheatOp"), cmd.cheatArg or 0
 		if op < 1 or op > CHEAT_OP_MAX or arg > CHEAT_ARG_MAX[op] then
@@ -386,7 +400,7 @@ function Schema.decodeCommand(r: Reader): Command
 	end
 
 	local count = r:readU16()
-	if kind == "camera" or kind == "share" then
+	if kind == "camera" or kind == "share" or kind == "level" then
 		if count ~= 0 then
 			fail(r, `{if kind == "camera" then "CAMERA" else "SHARE_RESOURCE"} with {count} unit IDs`)
 		end
@@ -458,6 +472,12 @@ function Schema.decodeCommand(r: Reader): Command
 		end
 		cmd.resource = resource
 		cmd.amount = r:readU32()
+	elseif kind == "level" then
+		local which, value = r:readU8(), r:readU8()
+		if which < 1 or which > 3 or value > 100 then
+			fail(r, `eco level {which} at {value}%`)
+		end
+		cmd.ecoLevel, cmd.value = which, value
 	elseif kind == "cheat" then
 		local op, arg = r:readU8(), r:readU8()
 		if op < 1 or op > CHEAT_OP_MAX or arg > CHEAT_ARG_MAX[op] then
@@ -1998,9 +2018,9 @@ end
 --------------------------------------------------------------------------------
 
 export type EcoResource = { stored: number, storage: number, income: number, demand: number, ratio: number }
-export type Eco = { team: number, supply: EcoResource, power: EcoResource, wind: number, radarError: number?, trackError: number?, precision: number? }
+export type Eco = { team: number, supply: EcoResource, power: EcoResource, wind: number, radarError: number?, trackError: number?, precision: number?, supplyShare: number?, powerShare: number?, convertAt: number? }
 
-Schema.ECO_BYTES = 41
+Schema.ECO_BYTES = 44 -- (41 before protocol 40: the three levels, S-198)
 
 local function writeResource(w: Writer, r: EcoResource)
 	w:writeU32(r.stored)
@@ -2025,6 +2045,10 @@ function Schema.encodeEco(w: Writer, rec: Eco)
 	w:writeU16(rec.radarError or 0)
 	w:writeU16(rec.trackError or 0)
 	w:writeU8(rec.precision or 0)
+	-- the team's sliders, percent (S-198; protocol 40): share levels, convert level
+	w:writeU8(rec.supplyShare or 100)
+	w:writeU8(rec.powerShare or 100)
+	w:writeU8(rec.convertAt or 50)
 end
 
 function Schema.decodeEco(r: Reader): Eco
@@ -2035,7 +2059,9 @@ function Schema.decodeEco(r: Reader): Eco
 	end
 	local supply = readResource(r)
 	local power = readResource(r)
-	return { team = team, supply = supply, power = power, wind = r:readU8(), radarError = r:readU16(), trackError = r:readU16(), precision = r:readU8() }
+	local rec: Eco = { team = team, supply = supply, power = power, wind = r:readU8(), radarError = r:readU16(), trackError = r:readU16(), precision = r:readU8() }
+	rec.supplyShare, rec.powerShare, rec.convertAt = r:readU8(), r:readU8(), r:readU8()
+	return rec
 end
 
 --------------------------------------------------------------------------------

@@ -314,6 +314,10 @@ local function ecoRecord(sim: Types.Sim, team: number): Schema.Eco?
 		radarError = tenths(s.radarError[ally]),
 		trackError = tenths(s.trackError[ally]),
 		precision = math.clamp(math.floor(p * 255 + 0.5), 0, 255),
+		-- the team's resource-bar sliders, percent (S-198)
+		supplyShare = math.floor((acc.supply.shareLevel or 1) * 100 + 0.5),
+		powerShare = math.floor((acc.power.shareLevel or 1) * 100 + 0.5),
+		convertAt = math.floor((acc.convertAt or Economy.CONVERTER_RESERVE) * 100 + 0.5),
 	}
 end
 

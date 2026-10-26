@@ -827,8 +827,8 @@ Homing corrections (D102) cost about 45 B/s per homing projectile in view (14 B 
 
 | Resource | BAR equivalent | Sources | Main uses |
 |---|---|---|---|
-| **Supply** | Metal | Extractors on deposits, converters, reclaiming wrecks | Building everything, rearming aircraft, reloading missiles |
-| **Power** | Energy | Generators, solar, wind, tidal, fusion | Building, radar/jammer upkeep, DIRCM, energy weapons |
+| **Supply** | Metal | Extractors on deposits, converters, reclaiming wrecks and rocks | Building everything, reloading missiles |
+| **Power** | Energy | Generators, solar, wind, tidal, fusion, reclaiming trees | Building, extractor upkeep, radar/jammer upkeep, DIRCM, energy weapons |
 
 ### 8.2 Streaming model
 
@@ -868,7 +868,14 @@ end
 
 **Two resources at once:** a consumer that needs both progresses at `min(supplyRatio, powerRatio)` and actually uses less of the other resource. Do two passes: compute both ratios, then let each consumer advance at its effective ratio while summing what it actually used. Refund the unused part.
 
-**Fixed order:** production → converters (power → supply) → consumers → overflow sharing.
+**Fixed order:** production → extractor upkeep → converters (power → supply) → consumers → sharing.
+
+**Balance (S-198, the user):**
+- **Extractors run on power:** 3 power a second for a T1 extractor, 15 for a T2, paid right after production. Short of power, they extract only the share they could pay for; one on bare ground costs nothing.
+- **Converters** cost 1 supply and 1,200 power to build and turn 70 power a second into 1 supply. They run only on power stored above the team's **convert level**, and each needs its whole 70 spare above it: 80 spare runs one converter, not two.
+- **The resource bar's three sliders** (the ECO_LEVEL command, sent back in the Eco record):
+  - the **supply share level** and the **power share level**: what's stored above them goes to the allies, fairly, each ally taking up to its own share level. The default is 100%, where only overflow above storage is shared, as before;
+  - the **convert level**: 50% by default.
 
 **Resource priority (S-156, the user):** every consumer is high or low priority (the PRIORITY command; high by default). In a stall the high consumers share what's on offer first: missile refills take their share (S-66), then every other high consumer. Low consumers share what's left, so with nothing left they stop. It applies to:
 - a builder's or factory's build power (an assisted frame splits by builder);

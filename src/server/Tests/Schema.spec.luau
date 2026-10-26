@@ -562,8 +562,15 @@ return function(t: RunAll.Context)
 			radarError = 0x0102,
 			trackError = 0x0304,
 			precision = 0x80,
+			supplyShare = 100,
+			powerShare = 90,
+			convertAt = 50,
 		}
-		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "03 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b 02 01 04 03 80") -- team first since protocol 9; radar accuracy since 32
+		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "03 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b 02 01 04 03 80 64 5a 32") -- team first since protocol 9; radar accuracy since 32; the sliders since 40 (S-198)
+		-- ECO_LEVEL (protocol 40, S-198): which slider, percent; no unit IDs
+		local level: Schema.Command = { cmdType = CT.ECO_LEVEL, flags = 0, unitIds = {}, ecoLevel = Schema.EcoLevel.CONVERT, value = 75 }
+		t.equal(hex(encodeOne(Schema.encodeCommand, level)), "1f 00 00 00 03 4b")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeCommand, level), Schema.decodeCommand)[1], level)
 	end)
 
 	t.test("wreck and sight events (protocol 10): golden bytes, round-trip, bad input, truncation", function()
@@ -709,6 +716,9 @@ return function(t: RunAll.Context)
 			radarError = 65535,
 			trackError = 0,
 			precision = 255,
+			supplyShare = 100,
+			powerShare = 0,
+			convertAt = 75,
 		}
 		roundTrip(t, { eco }, Schema.encodeEco, Schema.decodeEco)
 		t.equal(buffer.len(encodeOne(Schema.encodeEco, eco)), Schema.ECO_BYTES)
@@ -801,7 +811,7 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 31, 0, 1, 0, 1, 0 }, "unknown cmdType 31") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36), 22 FACTION, 23 START, 24 SHARE_UNITS, 25 SHARE_RESOURCE, 26 REQUEST and 27 AREA (protocol 37)
+		expectRejected(t, cmd, { 32, 0, 1, 0, 1, 0 }, "unknown cmdType 32") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36), 22 FACTION, 23 START, 24 SHARE_UNITS, 25 SHARE_RESOURCE, 26 REQUEST and 27 AREA (protocol 37)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
 		expectRejected(t, cmd, { CT.STOP, 8, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137)
