@@ -65,7 +65,7 @@ return function(t: RunAll.Context)
 	t.slow("in a 3v3 the air AI builds an airfield early, the defence AI twice the turrets, and bot labs come into play", function()
 		local sim = teamMatch({ "hard", "hard", "hard", "hard_aggressive", "hard_aggressive", "hard_aggressive" })
 		local brains = Skirmish.forMatch(sim)
-		run(sim, brains, 15 * 60 * 10)
+		run(sim, brains, 15 * 60 * 14) -- (14 min: S-193 slowed units and the bot lab waits for an established base)
 		t.expect(owned(sim, 2, "airfield") + owned(sim, 5, "airfield") >= 1, "an air role built an airfield")
 		local airUnits = 0
 		for _, id in sim.world.ids do
@@ -101,5 +101,32 @@ return function(t: RunAll.Context)
 		end
 		t.expect(n >= 4, `generators built ({n})`)
 		t.expect(onLattice >= n - 1, `in rows behind the base ({onLattice} of {n})`)
+		-- (S-193, G3) the lanes between them are two cells wide: every
+		-- footprint-2 unit fits through
+		t.expect(Skirmish.GEN_GAP - 16 >= 16, "16-stud lanes")
+	end)
+
+	t.test("Hard - Aggressive starts on one factory type: no bot lab before its economy stands, never two (S-193, G1)", function()
+		local sim = teamMatch({ "hard_aggressive", "hard" }, "map:ridgeline")
+		local brains = Skirmish.forMatch(sim)
+		local most, early = 0, 0
+		for tick = 1, 15 * 60 * 7 do
+			for _, b in brains do
+				Skirmish.tick(b)
+			end
+			Sim.step(sim)
+			if sim.match.over then
+				break
+			end
+			if tick % 15 == 0 then
+				local labs = owned(sim, 1, "botlab") -- frames and finished labs
+				most = math.max(most, labs)
+				if tick < 15 * 60 * 3 and labs > 0 then
+					early += 1
+				end
+			end
+		end
+		t.expect(most <= 1, `at most one bot lab ({most})`)
+		t.equal(early, 0, "none in the first 3 minutes")
 	end)
 end

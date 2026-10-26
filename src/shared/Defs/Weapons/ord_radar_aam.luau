@@ -4,7 +4,7 @@ return {
 	id = "ord_radar_aam",
 	type = "HOMING",
 	range = 396, -- faction pass, tuned (S-62)
-	reload = 2.4, -- faction pass, tuned (S-62)
+	reload = 4.4, -- 2.4 + the 2 s rearm per round it no longer flies home for (S-194, G17: no ammo)
 	projectileSpeed = 520,
 	accuracy = 0.5,
 	turnRate = 160,

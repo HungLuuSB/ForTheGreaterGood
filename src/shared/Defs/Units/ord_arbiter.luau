@@ -16,7 +16,7 @@ return Templates.extend(Templates.Unit, {
 	moveClass = "WHEELED",
 	cost = { supply = 160, power = 2400, buildTime = 4800 },
 	health = 420,
-	movement = { maxSpeed = 36, accel = 14, brake = 30, turnRate = 120 },
+	movement = { maxSpeed = 21.6, accel = 14, brake = 30, turnRate = 120 },
 	sensors = { sight = 130, track = 450, trackError = 6, trackDrain = 25 },
 	model = "ord_arbiter",
 	icon = "tracking",

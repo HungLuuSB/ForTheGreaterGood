@@ -16,7 +16,7 @@ return Templates.extend(Templates.TankT1, {
 	footprint = 2,
 	cost = { supply = 260, power = 2600, buildTime = 7000 },
 	health = 1300, -- tier rebalance (S-157, the user): was 1100
-	movement = { maxSpeed = 22, accel = 7, brake = 16, turnRate = 60 },
+	movement = { maxSpeed = 13.2, accel = 7, brake = 16, turnRate = 60 },
 	sensors = { sight = 160 },
 	weapons = { { def = "chs_siege_mortar", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "barrel", "muzzle" },

@@ -88,7 +88,9 @@ local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
 local Icons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
+local WK = Schema.WorkKind
 local Combat = require("./Combat/Combat")
+local SelfDestruct = require("./SelfDestruct")
 local Stockpile = require("./Stockpile")
 local Tick = require("@shared/Net/Tick")
 local NetState = require("./NetState")
@@ -394,6 +396,22 @@ local function inRect(g: Grid.Grid, cam: { number }, x: number, z: number, margi
 	return cx >= minX and cx <= maxX and cz >= minZ and cz <= maxZ
 end
 
+-- An aircraft's altitude as sent: its height over the ground at the wire's
+-- rounded position, not its own, so the client's ground(x, z) + alt is its
+-- true height (S-194, client-B: a quarter-stud rounding across a cell edge
+-- put it 12 studs off over a cliff). Whole studs, 0..255.
+local function wireAlt(sim: Types.Sim, g: Grid.Grid, id: number, cell: number, ox: number, oz: number): number
+	local w = sim.world
+	local alt = w.alt[id]
+	if alt <= 0 then
+		return 0
+	end
+	local c = sim.combat
+	local wx, wz = g:decode(cell, ox, oz)
+	local y = Combat.groundHeight(c, w.posX[id], w.posZ[id]) + alt
+	return math.clamp(math.floor(y - Combat.groundHeight(c, wx, wz) + 0.5), 0, 255)
+end
+
 local function enterEvent(sim: Types.Sim, g: Grid.Grid, id: number): Schema.Event
 	local w = sim.world
 	local def = sim.defs.unitByIndex[w.defIndex[id]]
@@ -407,7 +425,7 @@ local function enterEvent(sim: Types.Sim, g: Grid.Grid, id: number): Schema.Even
 		offX = ox,
 		offZ = oz,
 		heading = NetOut.headingU8(w.heading[id]),
-		alt = math.clamp(math.floor(w.alt[id] + 0.5), 0, 255),
+		alt = wireAlt(sim, g, id, cell, ox, oz),
 		health = healthU8(w.health[id], def.health),
 		build = math.floor(w.buildProgress[id] * 255),
 		state = band(w.state[id], 0xFFFF),
@@ -1062,14 +1080,14 @@ function NetOut.step(sim: Types.Sim)
 			local dirty = w.dirty[id]
 			if band(dirty, MOVED) ~= 0 then
 				local cell, ox, oz = g:encode(w.posX[id], w.posZ[id])
-				local alt = w.alt[id]
+				local alt = if w.alt[id] > 0 then wireAlt(sim, g, id, cell, ox, oz) else nil
 				table.insert(tactical, {
 					unitId = id,
 					cell = cell,
 					offX = ox,
 					offZ = oz,
 					heading = NetOut.headingU8(w.heading[id]),
-					alt = if alt > 0 then math.clamp(math.floor(alt + 0.5), 0, 255) else nil,
+					alt = alt,
 				})
 			end
 			if band(dirty, CHANGED) ~= 0 then
@@ -1164,15 +1182,20 @@ function NetOut.step(sim: Types.Sim)
 			end
 			local d = sim.defs.unitByIndex[w.defIndex[id]]
 			local q = sim.build.queue[id]
-			local qSig, sSig, aSig, cSig = "", "", "", ""
+			local qSig, sSig, aSig, cSig, dSig, wSig = "", "", "", "", "", ""
 			local progress = 0
 			if q then
 				progress = math.clamp(math.floor((sim.build.progress[id] or 0) * 255), 0, 255)
 				qSig = table.concat(q, ",") .. "@" .. math.floor((sim.build.progress[id] or 0) * Stockpile.WIRE_STEPS)
 			end
 			local hasStates = d.domain ~= "structure" or #d.weapons > 0
+			local retreat = sim.air.retreat[id] or 0 -- aircraft (S-194)
 			if hasStates then
-				sSig = tostring(w.fireState[id] * 4 + w.moveState[id])
+				sSig = tostring(w.fireState[id] * 4 + w.moveState[id] + retreat * 16)
+			end
+			local sdLeft = SelfDestruct.secondsLeft(sim, id) -- (S-194)
+			if sdLeft then
+				dSig = tostring(sdLeft)
 			end
 			local ammo = sim.air.ammo[id]
 			if ammo ~= nil then
@@ -1187,7 +1210,23 @@ function NetOut.step(sim: Types.Sim)
 				chaff = if cm and cm.chaff then sim.ew.chaff[id] or 0 else 0
 				cSig = flares .. "/" .. chaff
 			end
-			local now = { qSig, sSig, aSig, cSig }
+			-- a builder's nano-spray target (S-194, G7, G4): what it builds,
+			-- repairs or assists, and the wreck it reclaims or resurrects
+			local workKind, workTarget = WK.NONE, 0
+			if d.buildPower then
+				local b = sim.build
+				local unit = b.target[id] or 0
+				if unit ~= 0 and w.slot[unit] ~= nil then
+					workTarget = unit
+					workKind = if b.assist[id] then WK.ASSIST elseif b.repair[id] then WK.REPAIR else WK.BUILD
+				elseif (b.reclaim[id] or 0) ~= 0 then
+					workKind, workTarget = WK.RECLAIM, b.reclaim[id]
+				elseif (b.resurrect[id] or 0) ~= 0 then
+					workKind, workTarget = WK.RESURRECT, b.resurrect[id]
+				end
+				wSig = workKind .. ":" .. workTarget
+			end
+			local now = { qSig, sSig, aSig, cSig, dSig, wSig }
 			ownerNow[id] = now
 			local before = if entered[id] then nil else sentOwner[id]
 			local rec: Schema.State? = nil
@@ -1210,6 +1249,14 @@ function NetOut.step(sim: Types.Sim)
 			if hasStates and (before == nil or before[2] ~= sSig) then
 				local r = record()
 				r.fireState, r.moveState = w.fireState[id], w.moveState[id]
+				r.retreat = if retreat > 0 then retreat else nil
+			end
+			if (sdLeft and (before == nil or before[5] ~= dSig)) or (sdLeft == nil and before ~= nil and before[5] ~= "") then
+				record().selfDestruct = if sdLeft then math.clamp(sdLeft, 1, 255) else 0 -- 0: stopped
+			end
+			if d.buildPower and (before == nil or before[6] ~= wSig) and (before ~= nil or workKind ~= WK.NONE) then
+				local r = record()
+				r.workKind, r.workTarget = workKind, workTarget
 			end
 			if ammo ~= nil and (before == nil or before[3] ~= aSig) then
 				local r = record()

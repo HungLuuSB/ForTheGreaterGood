@@ -458,6 +458,14 @@ Ground units don't send height: the client looks it up from its own copy of the 
 
 ### 5.4 Map authoring pipeline
 
+**Ground rendering (S-192, the user, 2026-10-26): mesh terrain, not Roblox terrain.**
+- Every map's ground is drawn as baked mesh tiles: the models stream's bake from `lune run export_ground` (C-167, `docs/contracts/map-ground.md`), drawn by the client's `Render/MeshGround`.
+- A new named map isn't done until its ground is baked and approved.
+- Roblox Terrain voxels are only a fallback while a map has no approved bake: random `mapgen:` and test maps, and bakes still in review.
+- Water is still drawn by Roblox Terrain for now. Replacing it, and drawing ground for maps without a bake, are the client's open work.
+- The sim never reads the drawn ground: its heights come from the map layers. The client stands units on the drawn surface (C-235).
+- The steps below are the original plan (a Studio bake into `MapData/`). Maps are now generated or built in code, then exported and meshed.
+
 1. Build the map with Roblox Terrain + structure props in Studio.
 2. Run a **bake plugin/script in Studio** (not at runtime): raycast each cell for height, water, slope and material; mark supply deposits and start positions from tagged parts.
 3. Compute `passMask` and `clearance` for every move class.
@@ -494,7 +502,8 @@ Ground units don't send height: the client looks it up from its own copy of the 
   - **Badlands:** rough ground (ROCK) round the two mesa belts, north-west and south-east, sits 3 studs above the canyon floor. The floor between them is open, hard-packed ground (GRASS, drawn as desert) running from the north-east to the south-west. Small rock outcrops (impassable) dot it.
   - **Deposits ("glitter"):** many small value-2 deposits on a jittered grid about every 20 cells, plus four of value 4 round each start: 92 deposits in all.
   - **For drawing:** `Canyon.feature(cx, cz)` names each cell (mesa, cliff, apron, badlands, boulder, floor).
-- **The Plains** (S-173, the user): `map:plains` (`Shared/Grid/Plains`), a flat, open 256 × 256-cell (2048 × 2048-stud, the wire's largest) grass map for 8v8, bigger than The Canyon. Gently rolling (under 2°), no water, roads east–west through the middle and north–south at x = ±520. Mirror-symmetric west ↔ east. 16 start hints (1–8 west, 9–16 east, in north and south groups of four), each with three value-3 deposits of its own; value-2 deposits on a jittered grid over the middle and the flanks, at least 120 studs from any hint.
+- **The Plains** (S-173, the user): `map:plains` (`Shared/Grid/Plains`), a flat, open 256 × 256-cell (2048 × 2048-stud, the largest before S-189) grass map for 8v8, bigger than The Canyon. Gently rolling (under 2°), no water, roads east–west through the middle and north–south at x = ±520. Mirror-symmetric west ↔ east. 16 start hints (1–8 west, 9–16 east, in north and south groups of four), each with three value-3 deposits of its own; value-2 deposits on a jittered grid over the middle and the flanks, at least 120 studs from any hint.
+- **Supreme Strait** (S-195, the user's G6): `map:supreme_strait` (`Shared/Grid/SupremeStrait`), after BAR's 24 × 24 map: 320 × 320 cells (2,560 studs, medium) for ground, air and naval play. Point-symmetric: two seas bite in from the north-west and south-east corners (ships sail each), and a land strait joins the south-west and north-east plateaus through the middle. Rocky mountains in the other two corners, a crater with a pond and two mesas per half. 16 start hints, 1–8 south-west and their twins north-east, each with three value-3 deposits; value-2 deposits over the open ground.
 
 ---
 

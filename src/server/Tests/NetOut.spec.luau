@@ -13,6 +13,7 @@ local World = require("../Sim/World")
 local Client = require("./Support/Client")
 local Combat = require("../Sim/Combat/Combat")
 local Skirmish = require("../Sim/AI/Skirmish")
+local AmmoDefs = require("./Support/AmmoDefs") -- the aircraft with ammo, as before S-194
 local RunAll = require("./RunAll")
 
 local L = Sensors.Level
@@ -345,7 +346,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("own units' factory queue, fire / move state, ammo and countermeasure charges reach their owner only, exactly (S-61, S-63)", function()
-		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:64" })
+		local sim = Sim.new({ defs = AmmoDefs.load(), seed = 8, players = PLAYERS, mapId = "flat:64" })
 		local g = (sim.map :: any).grid
 		local w = sim.world
 		local plant = Spawn.unit(sim, "ord_vehplant", 1, -60, 0, 0)

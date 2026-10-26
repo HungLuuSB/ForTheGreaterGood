@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 140, power = 2200, buildTime = 4200 },
 	health = 420,
-	movement = { maxSpeed = 36, accel = 14, brake = 28, turnRate = 130 },
+	movement = { maxSpeed = 21.6, accel = 14, brake = 28, turnRate = 130 },
 	sensors = { sight = 120, jam = 300, jamDrain = 20 },
 	pieces = { "base", "array" },
 	model = "ord_veil",

@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 220, power = 2400, buildTime = 6200 },
 	health = 1850, -- tier rebalance (S-157, the user): was 1550
-	movement = { maxSpeed = 30, accel = 12, brake = 24, turnRate = 100 },
+	movement = { maxSpeed = 18, accel = 12, brake = 24, turnRate = 100 },
 	sensors = { sight = 190 },
 	weapons = { { def = "chs_light_cannon", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "muzzle" },

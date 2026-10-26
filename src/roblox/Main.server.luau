@@ -1014,8 +1014,16 @@ if RunService:IsStudio() then
 		elseif query == "spawn" then
 			local defId, playerId, x, z, heading, count, spacing = ...
 			local ids = {}
+			local g = sim.map and sim.map.layers.grid
+			local def = sim.defs.units[defId]
 			for i = 0, (count or 1) - 1 do
-				table.insert(ids, Spawn.unit(sim, defId, playerId, x + i * (spacing or 12), z, heading or 0))
+				local sx = x + i * (spacing or 12)
+				-- only aircraft may be off the map: a ground unit there stops the sim (Movement reads its cell)
+				if g and def and def.domain ~= "air" and (sx < g.originX or z < g.originZ or sx >= g.originX + g.sizeX or z >= g.originZ + g.sizeZ) then
+					warn(`[Entry] debug spawn: ({sx}, {z}) is off the map; skipped`)
+					continue
+				end
+				table.insert(ids, Spawn.unit(sim, defId, playerId, sx, z, heading or 0))
 			end
 			return ids
 		elseif query == "hold" then

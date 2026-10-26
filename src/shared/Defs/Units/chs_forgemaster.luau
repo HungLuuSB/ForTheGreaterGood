@@ -15,7 +15,7 @@ return Templates.extend(Templates.Builder, {
 	footprint = 1,
 	cost = { supply = 280, power = 3600, buildTime = 7300 },
 	health = 940, -- faction pass (S-62)
-	movement = { maxSpeed = 32, accel = 11, brake = 22, turnRate = 100 },
+	movement = { maxSpeed = 19.2, accel = 11, brake = 22, turnRate = 100 },
 	sensors = { sight = 120 },
 	buildPower = 180, -- faction pass (S-62)
 	buildRange = 45, -- 70% of 64 (client request 7, S-19)

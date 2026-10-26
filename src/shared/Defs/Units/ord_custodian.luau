@@ -18,7 +18,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 420, power = 6000, buildTime = 9000 },
 	health = 900,
-	movement = { maxSpeed = 30, accel = 10, brake = 22, turnRate = 100 },
+	movement = { maxSpeed = 18, accel = 10, brake = 22, turnRate = 100 },
 	sensors = { sight = 150 }, -- no radar needed: it spots strategic missiles anywhere (the user, S-111)
 	weapons = { { def = "ord_mobile_interceptor", muzzle = "muzzle" } },
 	pieces = { "base", "launcher", "muzzle" }, -- (a turning "radar" is client-only)

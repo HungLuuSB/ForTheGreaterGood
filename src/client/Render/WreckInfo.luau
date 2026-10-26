@@ -1,8 +1,8 @@
 --!strict
 -- Wreck information (C-216, S-168; Core/ReclaimZones decides what): with
 -- only workers selected, each reclaim zone as a thin green ring on the
--- ground with "+N supply" on its far edge; and the wreck under the mouse
--- named with its supply left ("Lancer wreck · 45 supply"). Labels are a
+-- ground with "+N supply" on its far edge (the wreck under the mouse is
+-- the unit panel's since G2: UI/UnitPanel). Labels are a
 -- screen-space layer like IdleMarks (no BillboardGuis); rings are pooled
 -- CylinderHandleAdornments. Zones are looked up a few times a second.
 
@@ -115,13 +115,8 @@ function WreckInfo.step(s: State, world: World.World, selection: { number }, cam
 	for i = #s.zones + 1, #s.labels do
 		s.labels[i].Visible = false
 	end
-	-- the wreck under the mouse
-	local w = if mouse then ReclaimZones.wreckAt(world, mouse.X, mouse.Z) else nil
-	s.hover.Visible = w ~= nil
-	if w then
-		s.hover.Text = ReclaimZones.label(world, w)
-		s.hover.Position = UDim2.fromOffset(mousePx.X + 14, mousePx.Y - 6)
-	end
+	-- the wreck under the mouse: the unit panel shows it (G2; its label here is gone)
+	s.hover.Visible = false
 end
 
 return WreckInfo

@@ -13,7 +13,9 @@
 -- as BAR's selection panel (C-157): the type's portrait, its icon bottom
 -- right and how many are selected top left (C-191); a click keeps only that
 -- type, Shift-click drops it, Ctrl-click selects every own unit of that type
--- on screen. Reads only the client API's state.
+-- on screen. A hovered wreck (no unit under the mouse) shows here too
+-- (G2): its unit's portrait, "<name> wreck", a bar of the supply it still
+-- holds and what it's worth. Reads only the client API's state.
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -33,6 +35,8 @@ local TeamColors = require("../Render/TeamColors")
 local UnitPanel = {}
 
 local BG = Kit.COLOR.panel
+local HEALTH = Color3.fromRGB(80, 200, 90)
+local SUPPLY = Color3.fromRGB(235, 235, 235) -- the supply bar's white (Kit's ■)
 local TILE = Color3.fromRGB(58, 62, 70)
 local WIDTH = 460 -- wide enough for a stat line at a glance (C-76)
 
@@ -109,7 +113,7 @@ function UnitPanel.new(api: Api.Api): UI
 	health.BorderSizePixel = 0
 	health.Parent = panel
 	local fill = Instance.new("Frame")
-	fill.BackgroundColor3 = Color3.fromRGB(80, 200, 90)
+	fill.BackgroundColor3 = HEALTH
 	fill.BorderSizePixel = 0
 	fill.Parent = health
 	-- the economy flow, a line per resource (its mark white / yellow, the
@@ -182,6 +186,7 @@ local function one(ui: UI, api: Api.Api, id: number)
 	ui.cornerGlyph.root.Visible = def ~= nil
 	ui.portraitGlyph.root.Visible = def == nil
 	ui.health.Visible = sheet.health ~= nil
+	ui.healthFill.BackgroundColor3 = HEALTH
 	if sheet.health and sheet.maxHealth then
 		ui.healthFill.Size = UDim2.fromScale(math.clamp(sheet.health / sheet.maxHealth, 0, 1), 1)
 	end
@@ -250,6 +255,31 @@ local function one(ui: UI, api: Api.Api, id: number)
 	ui.stats.Text = table.concat(lines, "\n")
 end
 
+-- A wreck (G2, the user: "show the wreck info in the unit stats panel (its
+-- current metal / energy left)"): what's left to reclaim, as a bar of the
+-- supply the wreck started with.
+local function wreck(ui: UI, api: Api.Api, w: World.Wreck)
+	local world = api.world
+	local def = world.defs.unitByIndex[w.defIndex]
+	if def then
+		Portrait.set(ui.portraitView, def, 0)
+	end
+	ui.portraitView.frame.Visible = def ~= nil
+	ui.cornerGlyph.root.Visible = false
+	ui.portraitGlyph.root.Visible = false
+	ui.flowSupply.Visible, ui.flowPower.Visible = false, false
+	ui.health.Visible = w.fullSupply > 0
+	ui.healthFill.BackgroundColor3 = SUPPLY
+	ui.healthFill.Size = UDim2.fromScale(if w.fullSupply > 0 then math.clamp(w.supply / w.fullSupply, 0, 1) else 0, 1)
+	ui.name.Text = `{if def then def.name else "Unknown"} wreck`
+	ui.role.Text = "Reclaim with a builder for its supply"
+	local lines = { string.format("Supply left %d / %d", w.supply, w.fullSupply) }
+	if w.rez > 0 then
+		table.insert(lines, string.format("Resurrecting %d%%", math.floor(w.rez * 100)))
+	end
+	ui.stats.Text = table.concat(lines, "\n")
+end
+
 -- The unit the panel describes alone: a hovered enemy (BAR: hover shows
 -- its info), else a hovered unit with nothing selected, else the one
 -- selected unit; nil for a multi-selection or nothing.
@@ -267,11 +297,24 @@ end
 function UnitPanel.step(ui: UI, api: Api.Api)
 	local sel = api.state.selection
 	local subject = UnitPanel.subject(api)
-	ui.panel.Visible = #sel > 0 or subject ~= nil
+	local world = api.world
+	-- a hovered wreck wins over the selection, as a hovered enemy does
+	local hoverUnit = api.state.hover and api.state.hover.unit
+	local w = if hoverUnit == nil and api.state.hoverWreck then world.wrecks[api.state.hoverWreck] else nil
+	ui.panel.Visible = #sel > 0 or subject ~= nil or w ~= nil
 	if not ui.panel.Visible then
 		return
 	end
-	local world = api.world
+	if w then
+		for _, f in { ui.portrait, ui.health, ui.name, ui.role, ui.stats } :: { GuiObject } do
+			f.Visible = true
+		end
+		ui.types.Visible = false
+		wreck(ui, api, w)
+		ui.health.Visible = w.fullSupply > 0
+		ui.key = ""
+		return
+	end
 	local single = subject ~= nil
 	for _, f in { ui.portrait, ui.health, ui.name, ui.role, ui.stats, ui.flowSupply, ui.flowPower } :: { GuiObject } do
 		f.Visible = single

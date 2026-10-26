@@ -28,6 +28,7 @@
 -- IDs), and after the tick's commands runs the countdown and the start.
 
 local Schema = require("@shared/Net/Schema")
+local Air = require("../Air")
 local Build = require("../Build")
 local Cheats = require("../Cheats")
 local Orders = require("../Orders")
@@ -37,6 +38,7 @@ local Sensors = require("../Sensors")
 local Nav = require("../Nav")
 local NetOut = require("../NetOut")
 local Replay = require("../Replay")
+local SelfDestruct = require("../SelfDestruct")
 local Types = require("../Types")
 local World = require("../World")
 
@@ -164,6 +166,32 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 		local x, z = g:decodeOnMap(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
 		Orders.give(sim, ownedUnits(w, player, cmd.unitIds), { kind = "attackGround", x = x, z = z }, band(cmd.flags, QUEUE) ~= 0)
 		return
+	elseif cmdType == CT.DGUN then
+		-- (S-194, G5) Commanders fire their D-Gun at the point; out of range,
+		-- they walk toward it first
+		local g = if sim.map then (sim.map :: any).grid else nil
+		if g == nil then
+			return
+		end
+		local x, z = g:decodeOnMap(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
+		for _, id in ownedUnits(w, player, cmd.unitIds) do
+			local range = nil
+			for _, slot in sim.defs.unitByIndex[w.defIndex[id]].weapons do
+				local wd = sim.defs.weapons[slot.def]
+				if wd.bolt then
+					range = wd.range
+				end
+			end
+			if range then
+				local far = (w.posX[id] - x) ^ 2 + (w.posZ[id] - z) ^ 2 > (range * 0.9) ^ 2
+				if far then
+					Orders.give(sim, { id }, { kind = "move", x = x, z = z }, false) -- (before the point: a new order drops it)
+				end
+				sim.orders.dgunX[id], sim.orders.dgunZ[id] = x, z
+				sim.orders.dgunWalk[id] = if far then true else nil
+			end
+		end
+		return
 	elseif cmdType == CT.CAMERA then
 		NetOut.setCamera(sim, player, cmd.minX :: number, cmd.minZ :: number, cmd.maxX :: number, cmd.maxZ :: number)
 		return
@@ -223,8 +251,13 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 			elseif not Build.cancelFrame(sim, id) then
 				Build.cancelQueued(sim, id, cmd.value :: number)
 			end
+		elseif cmdType == CT.SET_RETREAT then
+			Air.setRetreat(sim, id, cmd.value :: number) -- aircraft only (S-194)
+		elseif cmdType == CT.SELF_DESTRUCT then
+			SelfDestruct.set(sim, id, cmd.value == 1) -- (S-194, G13)
 		elseif cmdType == CT.STOP then
 			Orders.stopCommand(sim, id) -- (drops the manual target too, S-115)
+			sim.orders.dgunX[id], sim.orders.dgunZ[id], sim.orders.dgunWalk[id] = nil, nil, nil
 		end
 	end
 end

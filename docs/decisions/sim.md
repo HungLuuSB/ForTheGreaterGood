@@ -2638,3 +2638,109 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Change:** `SensorsState.losDirty`, per ally team and sensor row, the first and last column whose sight may have changed since NetOut's last diff (u16 pairs, not hashed). Sensors marks the bounding square of every sight stamp and unstamp, both circles of a one-cell shift, and the whole map for the reveal cheat. `NetOut.updateSight` reads only marked spans and clears them; the first diff still reads the whole map. The output (changes in cell order) is the same as before.
 - **Measured in Lune:** the empty preview on The Lakelands goes from 1.50 to 0.03 ms per tick. Four hard AIs on The Lakelands for 4 minutes: NetOut 0.548 → 0.155 ms per tick on average (peak 4.31 → 3.67).
 - **Tests:** `NetOut.spec`: two hard AIs on Coastline for 90 s, with the reveal cheat on and off: every sensor tick, every cell of both teams' diffed sight equals the sensor map. Marking one cell too few around a shift fails it, and fails the existing fog test.
+
+## S-192 — Mesh terrain for every map's ground, not Roblox terrain (the user) (2026-10-26)
+
+- **Asked:** "From now on, maybe switch to mesh terrain instead of Roblox terrain."
+- **Decision:** each map's ground is drawn from the models stream's baked mesh tiles (C-167, `Render/MeshGround`). A new named map ships only with an approved bake. Roblox Terrain voxels are only a fallback for maps without an approved bake, and for water until the client replaces it. Recorded in the guide, section 5.4.
+- **State at the decision:** baked grounds for Ridgeline, Coastline, Twin Lakes, Crossroads, Normandy, The Canyon (4-stud, in review) and The Lakelands (8-stud, approved); none for The Plains. Random `mapgen:` maps and test maps have no bake.
+- **Sim:** nothing changes. The sim's heights come from the map layers; the client stands units on the drawn surface (C-235).
+- **Asks:** models-C bakes The Plains, and bakes every new map as part of authoring it. Client-B makes mesh ground the default path, and looks into mesh water and mesh ground for unbaked maps (generated from the layers at load).
+
+## S-193 — Playtest feedback 2, first batch: slower units, Fatboy/Tzar shells, one factory type early, wider generator lanes, map details (G8, G10, G1, G3, G12) (2026-10-26)
+
+- **G8, "units are so fast: lower speed of all units by 40%":**
+  - Every unit def's `maxSpeed`, and `minSpeed` for jets, is × 0.6: 97 values in 85 files. A Lancer goes from 28 to 16.8, a Falcon from 240 to 144.
+  - Acceleration, braking and turn rates are unchanged. So units reach their (lower) top speed sooner, and jets turn tighter circles: turn radius = speed / turn rate.
+  - Projectiles are unchanged.
+- **G10, "Fatboy and Tzar projectile must be identical to the projectile of the tank (golden yellow shot)":**
+  - `ord_fatboy_cannon` and `chs_tzar_cannon` lose `fx.trail = "plasma"` and `fx.color`, so the client draws them as its normal shell.
+  - They gain `muzzle = "flash_large"`, and keep `impact = "explosion_huge"` and their big blasts (aoe 48 / 40).
+- **G1, "AI Hard Aggressive build a lot of factories instead of concentrate on 1 type early game (1 vehicle and 2 bot labs)":**
+  - The census now counts factories a builder has been ordered to build but not started: bot labs, advanced labs, airfields, shipyards, plants. Extractors were already counted this way (S-104).
+  - Before, a second builder ordered a second bot lab while the first still walked to its site.
+  - The bot lab also waits until the AI is established: 6 extractors, 6 army units, 200 supply stored, the same gate as the airfield. So every level and role opens on its vehicle plant alone.
+- **G3, "unit still try to get itself stuck inside a grid of generators":**
+  - The AI's generator block (S-187) placed 16-stud generators 24 studs apart, leaving 8-stud lanes.
+  - Since S-185 (F24), footprint-2 units need clearance 1, so they path into one-cell gaps that are narrower than they are, and wedge there. Clearance per cell can't tell a one-cell gap from a two-cell one.
+  - `Skirmish.GEN_GAP` is now 32: 16-stud, two-cell lanes they drive through.
+  - Still open: a player's own buildings with one-cell gaps can trap them the same way. The real fix is a "fits a 2 × 2 square" pass layer for even footprints, to do if it still shows.
+- **G12, map info for the lobby's panel:** `MapRegistry.details(mapId)` returns, built once and cached:
+  - the map's name, cells, studs, size class, starts and deposits;
+  - `windMin` / `windMax`: one Wind Turbine's power at the map's weakest and strongest wind;
+  - `tidal`: a Tidal Generator's power; 0 without water;
+  - `features`: "cliffs" (8+ studs between neighbouring dry cells), "flat" (no hills or cliffs), "hills" (12+ studs of dry height range), "roads", "water".
+  - The field names are lobby-D's.
+- **Tests:**
+  - `Orders.spec`: GUARD and ASSIST timed for the slower units.
+  - `NewUnits.spec`: Fatboy and Tzar draw as shells and keep their blasts.
+  - `AIRoles.spec`: Hard - Aggressive builds no bot lab in its first 3 minutes and never two; the generator lanes are 16 studs.
+  - `BigMaps.spec`: map details.
+
+## S-194 — Protocol 39: self-destruct, aircraft retreat to heal (no ammo), the Commanders' laser and D-Gun, turrets that hold their aim, builders' work on the wire (G13, G17, G5, G9, G7, G4) (2026-10-26)
+
+- **G13, self-destruct:**
+  - Command `SELF_DESTRUCT` 29: value 1 starts the unit's countdown (`Schema.SELF_DESTRUCT_SECONDS` 6 s), 0 stops it.
+  - When it runs out (`Sim/SelfDestruct`, run first in Damage), the unit dies at once, through god mode and armour, and leaves no wreck.
+  - Its death blast's damage and radius are × (1 + 0.25 × tier): T1 1.25, T2 1.5, T3 1.75 ("mostly T3 ... yield bigger explosion"). A frame under construction just goes, as before.
+  - The owner gets the seconds left in the new owner field SELF_DESTRUCT; 0 when it stops.
+- **G17, "remove the ammo things all the air", heal at a rearm pad:**
+  - The 13 aircraft lose `ammo` and `ammoCost`.
+  - Their weapons' reload gains the old per-round rearm time, so the trip home they no longer make doesn't make them fire faster. The Liche's bomb: 1 → 21 s; Falcon 1.4 → 3.4; Absolution 1.5 → 3.5.
+  - The two ASW torpedoes are shared with destroyers and are unchanged.
+  - Command `SET_RETREAT` 28 (`Schema.RetreatAt`: never, 30%, 40%, 50%; default 30%). An aircraft below that health flies to a rearm pad (its home base first), heals there for free in `Air.HEAL_SECONDS` 10 s from nothing to full (an advanced pad faster), and flies back to where it was going.
+  - An order doesn't launch a hurt aircraft on its way home; with no pad it keeps flying.
+  - The setting goes to the owner in the STATES byte's bits 4–5.
+  - The ammo mechanism stays in `Sim/Air` for any def that sets ammo. The tests of it run on `Support/AmmoDefs`, the aircraft as they were.
+- **G5, the Commander's laser gun and D-Gun:**
+  - `ord_sovereign` / `chs_warlord` get `*_laser` (HITSCAN, range 120, 10 power a shot, from the arm's `emitter`) and `*_dgun`, both turning with the `torso`.
+  - The D-Gun fires only on the new `DGUN` 30 command (a point). Out of range (90% of 160 studs), the Commander walks toward the point and stops when the bolt goes.
+  - Each shot costs 500 power. Any new order drops a shot not fired yet.
+  - The bolt (weapon field `bolt` = 7 studs) flies level along the ground, `BOLT_HEIGHT` 5 above it, at 70 studs/s for its range. It destroys every ground and naval unit and structure it passes within 7 studs of: the shooter excepted, allies included, aircraft in flight not.
+  - Those units leave no wreck. Commanders lose half their max health instead (`Combat.BOLT_COMMANDER`).
+- **G9, "the turret need to hold its lock on the target, and don't drift away with the body":**
+  - Turret yaw is relative to the hull, so a turning hull dragged the aim with it until the turret slewed back.
+  - Each weapon slot now keeps the hull heading its yaw was set against (`World.wHull`). While the weapon has a target, or still holds its aim, the turret counter-turns by the hull's turn since last tick (within its arc), then slews as usual.
+  - A Lancer turning about 60° while on a target now stays within 6° of it (22° before).
+- **G7 / G4, what a builder works on:**
+  - Until now the client guessed a builder's nano-spray target from its order line.
+  - The new owner field WORK sends, for own builders, `Schema.WorkKind` (BUILD, REPAIR, ASSIST with a unit ID; RECLAIM, RESURRECT with a wreck ID; NONE) and its target, whenever it changes (client-B asked for the kind).
+  - The client can draw the spray, and turn the Commander's torso (G4), from it.
+- **After S-193 (the race that merged it untested, see sim.md):**
+  - The AI's bot lab waits for 6 extractors and 4 army units, not `established`. The aggressive AIs never kept its 200 stored supply, so they built no bot lab at all.
+  - The slow full-match test allows 45 minutes (units are 40% slower); the 3v3 roles test runs 14.
+  - Movement clamps the terrain cell under a ground unit (one off the map stopped the sim; client-B).
+- **G16, at the source (client-B's finding):** an aircraft's wire `alt` is now its height over the ground at the wire's rounded position (`NetOut.wireAlt`), not at its own. Before, a quarter-stud rounding across a cell edge over a cliff put the client's ground + alt 12 studs off.
+- **Wire:** protocol 39. Commands 28–30; owner mask bits 32 (SELF_DESTRUCT u8) and 64 (WORK kind u8 + target u16); STATES bits 4–5. `docs/contracts/net.md` updated.
+- **Tests:**
+  - `Feedback2.spec`:
+    - the self-destruct countdown, no wreck, a bigger blast, and the stop;
+    - no ammo, and a hurt Falcon heals on a pad and flies back, but not when set to never;
+    - the turret holding its aim;
+    - the D-Gun: no shot without an order, three Juggernauts in a line destroyed with no wrecks, a Commander halved, a tank off its path untouched.
+  - `Schema.spec`: golden bytes for the new fields and commands.
+  - The ammo tests (Air, EW, Landing, NetOut) run on the old aircraft.
+
+## S-195 — Supreme Strait, a 320-cell map for ground, air and naval play (the user's G6) (2026-10-26)
+
+- **Asked:** "A new map Supreme Strait (24 x 24): a map that features ground, air, and oceans", with BAR's references: the height map, the dry texture, a 3D view and four screenshots.
+- **Built:** `map:supreme_strait`, `Shared/Grid/SupremeStrait`, a hand-made map like The Canyon (shapes in the reference image's coordinates).
+  - **Size:** 320 × 320 cells (2,560 studs), a medium map. At The Canyon's scale, BAR's 24 × 24 is about 310 cells.
+  - **Symmetry:** point-symmetric about the centre; each pair of twin cells is built from one of them, so they match exactly.
+  - **Seas:** two bays from the north-west and south-east corners, up to 16 studs deep, with sand beaches. Ships sail each bay; the bays don't join, because the land strait between their tips links the halves.
+  - **Plateaus:** green, about 10 studs above the sea.
+  - **Mountains:** rocky high ground with jagged cliffs in the north-east and south-west corners and on the edges.
+  - **Craters and mesas:** a crater (a rock rim round a pond) and two flat-topped mesas on each half.
+  - **Starts:** 16 hints, 1-8 in the south-west half and their twins in the north-east. Both seas lie between the sides.
+  - **Deposits:** three value-3 deposits per hint, and value-2 deposits on a jittered grid over open ground. They go only where wheeled units can drive from the hints, never in a pocket walled by rock.
+  - `SupremeStrait.feature(cx, cz)` names each cell for drawing: sea, beach, grass, mountain, crater, pond, mesa.
+- **For the streams:**
+  - Models-C bakes its ground (`lune run export_ground map:supreme_strait`; S-192: every map's ground is a mesh).
+  - The lobby lists it by itself (`MapRegistry.details`: medium; cliffs, hills, water).
+- **Tests:** `SupremeStrait.spec`:
+  - the size, the hints and their twins, and point symmetry;
+  - every land class drives from hint 1 to every hint and every deposit;
+  - the north-west sea is big and doesn't join the other;
+  - three deposits per hint;
+  - the map is the same every time;
+  - slow: four hard AIs build bases on it.

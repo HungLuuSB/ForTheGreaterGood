@@ -14,23 +14,29 @@ local Alerts = require("../Alerts")
 local Combat = require("../Combat/Combat")
 local Deploy = require("../Deploy")
 local Lifecycle = require("../Lifecycle")
+local SelfDestruct = require("../SelfDestruct")
 local Types = require("../Types")
 local World = require("../World")
 
 local dead: { number } = {}
 
 -- A def's death blast as the weapon table Combat.explode reads (S-70).
+-- A self-destruct's (S-194) is bigger: SelfDestruct.blastScale.
 local blastWeapon: { [any]: any } = setmetatable({}, { __mode = "k" }) :: any
-local function blastOf(def: any): any
-	local b = blastWeapon[def]
+local selfBlastWeapon: { [any]: any } = setmetatable({}, { __mode = "k" }) :: any
+local function blastOf(def: any, selfDestructed: boolean?): any
+	local cache = if selfDestructed then selfBlastWeapon else blastWeapon
+	local b = cache[def]
 	if b == nil then
 		local d = def.deathBlast
+		local k = if selfDestructed then SelfDestruct.blastScale(def) else 1
+		local damage = d.damage * k
 		b = {
-			damage = { LIGHT = d.damage, ARMORED = d.damage, STRUCTURE = d.damage, SHIP = d.damage, AIR = 0, SUB = 0 },
-			aoe = d.aoe,
+			damage = { LIGHT = damage, ARMORED = damage, STRUCTURE = damage, SHIP = damage, AIR = 0, SUB = 0 },
+			aoe = d.aoe * k,
 			edgeEffectiveness = d.edge,
 		}
-		blastWeapon[def] = b
+		cache[def] = b
 	end
 	return b
 end
@@ -47,6 +53,7 @@ end
 
 return function(sim: Types.Sim)
 	local c = sim.combat
+	SelfDestruct.step(sim) -- (S-194) countdowns that ran out: their units die now
 	local count = c.dmgCount
 	if count == 0 then
 		return
@@ -123,7 +130,9 @@ return function(sim: Types.Sim)
 		-- request 19); a landed one may leave one
 		local airborne = def.domain == "air" and bit32.band(w.state[id], World.State.LANDED) == 0
 		local frame = w.buildProgress[id] < 1
-		if severity <= Combat.WRECK_MAX_SEVERITY and not airborne and not frame then
+		local selfDestructed = c.selfDestructed[id] == true
+		-- (S-194) no wreck from a self-destruct or a D-Gun bolt
+		if severity <= Combat.WRECK_MAX_SEVERITY and not airborne and not frame and not selfDestructed and not c.noWreck[id] then
 			wreck = Combat.addWreck(c, w.posX[id], w.posZ[id], def, w.heading[id])
 		end
 		Combat.addEvent(c, {
@@ -144,9 +153,10 @@ return function(sim: Types.Sim)
 			-- applied next tick, so blasts can set each other off. Not for a
 			-- self-destruct (S-144) or a structure an upgrade frame stands on
 			local x, z = w.posX[id], w.posZ[id]
-			Combat.explode(c, w, x, Combat.groundHeight(c, x, z) + 4, z, blastOf(def), 0, 0, 0, w.owner[id])
+			Combat.explode(c, w, x, Combat.groundHeight(c, x, z) + 4, z, blastOf(def, selfDestructed), 0, 0, 0, w.owner[id])
 			Combat.addEvent(c, { kind = "BLAST", tick = sim.tick, unit = id, other = 0, x = x, z = z })
 		end
 		Lifecycle.remove(sim, id)
 	end
+	table.clear(c.noWreck)
 end

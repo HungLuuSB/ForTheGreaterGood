@@ -42,6 +42,7 @@ export type State = {
 	groups: { [number]: { number } },
 	camera: { x: number, z: number, zoom: number, strategic: boolean, rect: { number }, corners: { number }? },
 	hover: { unit: number?, x: number, z: number }?,
+	hoverWreck: number?, -- the wreck under the mouse when no unit is (the unit panel shows it, G2)
 	placement: PlacementState?,
 	economy: { supply: Res, power: Res, wind: number }?,
 	alerts: { Alerts.Alert }, -- recent alerts, newest last (C-68)

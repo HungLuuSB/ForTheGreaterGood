@@ -2,7 +2,9 @@
 -- Queued structures (C-23): every BUILD your own builders still have queued
 -- (Core/Waypoints) shows as a translucent copy of the structure on its spot,
 -- over a faint footprint, until its frame starts. Pooled per def; rebuilt
--- only when the set of queued builds changes.
+-- only when the set of queued builds changes. The copies share one
+-- Highlight drawn on top of everything (G15), so a plan behind a hill or
+-- under units still shows.
 
 local Facing = require("../Core/Facing")
 local Api = require("../Api")
@@ -18,6 +20,7 @@ local CT = Schema.CmdType
 
 export type Queued = {
 	folder: Folder,
+	planned: Model, -- the copies, under one Highlight
 	free: { [string]: { Model } },
 	shown: { Model },
 	plates: { BasePart },
@@ -27,8 +30,16 @@ export type Queued = {
 function QueuedBuilds.new(): Queued
 	local folder = Instance.new("Folder")
 	folder.Name = "Queued"
+	local planned = Instance.new("Model")
+	planned.Name = "Planned"
+	local h = Instance.new("Highlight")
+	h.FillColor, h.OutlineColor = Color3.fromRGB(235, 220, 80), Color3.fromRGB(235, 220, 80)
+	h.FillTransparency, h.OutlineTransparency = 0.8, 0.35
+	h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	h.Parent = planned
+	planned.Parent = folder
 	folder.Parent = workspace
-	return { folder = folder, free = {}, shown = {}, plates = {}, key = "" }
+	return { folder = folder, planned = planned, free = {}, shown = {}, plates = {}, key = "" }
 end
 
 local function take(q: Queued, def: any): Model
@@ -103,7 +114,7 @@ function QueuedBuilds.step(q: Queued, api: Api.Api)
 		local heading = Facing.heading(p.facing or 0) -- as the built frame turns (C-206)
 		local offset = (model:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity
 		;(model.PrimaryPart :: BasePart).CFrame = CFrame.new(p.x, y, p.z) * CFrame.Angles(0, heading + math.pi, 0) * offset
-		model.Parent = q.folder
+		model.Parent = q.planned
 		table.insert(q.shown, model)
 		local size = def.footprint * 8
 		local fp = plate(q, i)

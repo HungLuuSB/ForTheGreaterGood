@@ -18,7 +18,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 40, power = 200, buildTime = 900 },
 	health = 120,
-	movement = { maxSpeed = 200, minSpeed = 120, accel = 90, brake = 70, turnRate = 90 },
+	movement = { maxSpeed = 120, minSpeed = 72, accel = 90, brake = 70, turnRate = 90 },
 	sensors = { sight = 120, radarSignature = 1 },
 	spoof = "chs_behemoth",
 	weapons = {},

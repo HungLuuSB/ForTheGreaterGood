@@ -5,7 +5,7 @@ local Sim = require("../Sim/Sim")
 local Skirmish = require("../Sim/AI/Skirmish")
 local RunAll = require("./RunAll")
 
-local MAX_TICKS = 27000 -- 30 minutes
+local MAX_TICKS = 40500 -- 45 minutes (30 before S-193 made every unit 40% slower)
 
 type Result = {
 	sim: Sim.Sim,

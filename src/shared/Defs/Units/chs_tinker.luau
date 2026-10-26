@@ -13,7 +13,7 @@ return Templates.extend(Templates.Builder, {
 	categories = { "GROUND", "WORKER" },
 	cost = { supply = 90, power = 1050, buildTime = 2400 },
 	health = 420,
-	movement = { maxSpeed = 38, accel = 32, brake = 42, turnRate = 400 },
+	movement = { maxSpeed = 22.8, accel = 32, brake = 42, turnRate = 400 },
 	sensors = { sight = 95 },
 	buildPower = 70,
 	buildRange = 40,

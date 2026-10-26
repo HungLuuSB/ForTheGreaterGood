@@ -13,7 +13,7 @@ return Templates.extend(Templates.TankT1, {
 	categories = { "GROUND", "ARMORED" },
 	cost = { supply = 70, power = 800, buildTime = 2000 },
 	health = 500, -- tier rebalance (S-157, the user): was 600
-	movement = { maxSpeed = 45, accel = 20, brake = 34, turnRate = 140 },
+	movement = { maxSpeed = 27, accel = 20, brake = 34, turnRate = 140 },
 	sensors = { sight = 170 },
 	weapons = { { def = "chs_autocannon", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "barrel", "muzzle" },

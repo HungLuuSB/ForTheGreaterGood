@@ -4,7 +4,7 @@ return {
 	id = "ord_aam",
 	type = "HOMING",
 	range = 393, -- faction pass, tuned (S-62); +5% (S-112: the Falcon's standoff)
-	reload = 1.4, -- faction pass (S-62)
+	reload = 3.4, -- 1.4 + the 2 s rearm per round it no longer flies home for (S-194, G17: no ammo)
 	projectileSpeed = 480,
 	accuracy = 0.5,
 	turnRate = 200,

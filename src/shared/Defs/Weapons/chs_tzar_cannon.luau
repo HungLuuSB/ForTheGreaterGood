@@ -14,5 +14,5 @@ return {
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "STRUCTURE", "ARMORED", "GROUND" },
 	turret = { yawRate = 50, pitchRate = 30, tolerance = 2, minPitch = 0, maxPitch = 60, arc = 360 },
-	fx = { trail = "plasma", color = { r = 255, g = 225, b = 120 }, impact = "explosion_huge", sound = "plasma_heavy" }, -- the tank shell's colour (S-190)
+	fx = { muzzle = "flash_large", impact = "explosion_huge", sound = "plasma_heavy" }, -- a shell like the tanks' (S-193, G10); the big blast stays
 }

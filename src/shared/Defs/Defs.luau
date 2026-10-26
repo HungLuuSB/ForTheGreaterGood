@@ -160,6 +160,11 @@ export type WeaponDef = {
 	-- studs above the ordered spot and lands on it
 	strategic: boolean?,
 	manualFire: boolean?,
+	-- the D-Gun (S-194, G5): a bolt that rides the ground (no gravity, no
+	-- terrain contact) for its range and destroys every unit it passes within
+	-- `bolt` studs of, its shooter excepted; they leave no wreck. Commanders
+	-- lose a share of their health instead (Combat.BOLT_COMMANDER).
+	bolt: number?,
 	apex: number?,
 	-- HOMING: also targets enemy strategic missiles the team detects, before
 	-- anything else; a proximity burst destroys one with `chance` (S-48).
@@ -436,6 +441,7 @@ local WEAPON_SPEC: Spec = {
 		burnThrough = opt(FRACTION),
 		strategic = { kind = "boolean", optional = true },
 		manualFire = { kind = "boolean", optional = true },
+		bolt = opt(POSITIVE),
 		apex = opt(POSITIVE),
 		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION, tactical = { kind = "boolean", optional = true } } },
 		rocket = { kind = "boolean", optional = true },

@@ -7,7 +7,7 @@ return {
 	range = 800, -- acquisition radius; release is computed (D91)
 	canTargetRadar = true, -- radar contacts (wobbled position) and structure ghosts (D96)
 	salvo = { count = 3, delay = 0.2 }, -- a carpet: three bombs along the heading (S-178, F33)
-	reload = 1.5,
+	reload = 3.5, -- 1.5 + the 2 s rearm per round it no longer flies home for (S-194, G17: no ammo)
 	gravity = 60,
 	accuracy = 2,
 	damage = { LIGHT = 151, ARMORED = 137, STRUCTURE = 180, SHIP = 144, AIR = 0, SUB = 0 },

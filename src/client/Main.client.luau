@@ -35,6 +35,7 @@ local World = require("./Core/World")
 local RadarFill = require("./Core/RadarFill")
 local Hud = require("./Debug/Hud")
 local Controls = require("./Input/Controls")
+local ReclaimZones = require("./Core/ReclaimZones")
 local Bars = require("./Core/Bars")
 local Effects = require("./Core/Effects")
 local Follow = require("./Core/Follow")
@@ -260,6 +261,7 @@ local healthBars = HealthBars.new()
 local sensorFx = SensorFxRender.new()
 local wreckInfo = WreckInfo.new()
 local fog = FogBlanket.new()
+local workOf: { [number]: number } = {} -- builder → what it works on (the nano spray's targets; the Commander's torso, G4)
 local fogGround: any = nil -- the Ground.last whose finished mesh ground the blanket was rebuilt over (C-213)
 local radarCircles: { RadarFill.Circle }? = nil -- the radar layer's circles, nil while hidden (C-207)
 local radarAt = 0
@@ -951,6 +953,28 @@ if RunService:IsStudio() then
 				lods[u.lod] += 1
 			end
 			return { lods = lods, stats = anim.stats }
+		elseif query == "unit" then
+			-- Invoke("unit", id): what the client knows of a unit (tier, headings, aims, weapon states; G9)
+			local u = world.units[(...) :: number]
+			if u == nil then
+				return nil
+			end
+			local aims = {}
+			for slot, a in u.aim or {} do
+				aims[tostring(slot)] = { yaw = math.deg(a.yaw), pitch = math.deg(a.pitch), state = Schema.weaponStateAt(u.weapon or 0, slot) }
+			end
+			local au = anim.units[(...) :: number]
+			return { tier = u.tier, heading = math.deg(u.heading), drawn = u.rheading and math.deg(u.rheading), aim = aims, lod = au and au.lod, lag = au and au.aimLag[1] and math.deg(au.aimLag[1]) }
+		elseif query == "water" then
+			-- Invoke("water", "mesh" | "terrain"): draw the water that way and rebuild the ground (C-236)
+			local mode = ...
+			if mode == "mesh" or mode == "terrain" then
+				Ground.WATER = mode
+				if world.layers then
+					Ground.build(world.layers, nil, mapFeature(world.mapId), world.mapId)
+				end
+			end
+			return Ground.last
 		elseif query == "ground" then
 			-- Invoke("ground", "terrain" | "parts"?): rebuild the ground that way; Invoke("ground") the last build's stats
 			local mode = ...
@@ -1169,7 +1193,11 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	table.clear(meshReady)
 	Glow.shots(glow, fx.shots, now)
 	if not strategic then
-		PieceAnim.drive(anim, world, fx.shots)
+		table.clear(workOf)
+		for _, sp in buildSpray.list do
+			workOf[sp.builder] = sp.target
+		end
+		PieceAnim.drive(anim, world, fx.shots, workOf)
 		PieceAnim.step(anim, simDt)
 		UnitRenderer.applyPieces(renderer)
 		Glow.step(glow, renderer, world, now, workspace.CurrentCamera, camState.x, camState.z, camState.distance)
@@ -1185,6 +1213,9 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		local id = Controls.hoverUnit(world)
 		local hu = id and world.units[id]
 		api.state.hover = if hu then { unit = id, x = hu.x, z = hu.z } else nil
+		local ground = if hu then nil else Controls.hover()
+		local w = if ground then ReclaimZones.wreckAt(world, ground.X, ground.Z) else nil
+		api.state.hoverWreck = if w then w.id else nil
 	end
 	if api.state.placement then
 		local hover = Controls.hover()
@@ -1192,7 +1223,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 			api.actions.updatePlacement(hover.X, hover.Z)
 		end
 	end
-	PlacementGhost.step(ghost, api, now, controls.areaFrom, controls.areaTo)
+	PlacementGhost.step(ghost, api, now, controls.areaFrom, controls.areaTo, if controls.placeTo then controls.placeFrom else nil, controls.placeTo)
 	QueuedBuilds.step(queued, api)
 	t0 = os.clock()
 	RangeOverlay.step(ranges, api, now, knownEnemy)
