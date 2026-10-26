@@ -1,8 +1,10 @@
 --!strict
 -- The team panel (F23, the user; BAR's player list, bottom right): every
--- player by ally team in its colour, with its income and stored supply and
--- power where the client has them (World.teamEco: its own, allies' when the
--- server sends them, everyone's for a spectator). On each ally's row:
+-- player by ally team in its colour, with two thin bars stacked, supply over
+-- power, each its stored share of storage, where the client has them
+-- (World.teamEco: its own, allies', everyone's for a spectator); hovering
+-- the bars shows the numbers (income, stored / storage; the user: bars for
+-- a clearer look, numbers on hover). On each ally's row:
 --   Units   one click asks the allies for units; two clicks give the
 --           selected units to that ally
 --   ■ / ϟ   one click asks for supply / power; click and drag up: a slider
@@ -32,13 +34,15 @@ TeamPanel.NOTICE_SECONDS = 8
 local SUPPLY = Color3.fromRGB(235, 235, 235)
 local POWER = Color3.fromRGB(255, 214, 60)
 
-type Row = { frame: Frame, swatch: Frame, name: TextLabel, supply: TextLabel, power: TextLabel, buttons: Frame }
+type Row = { frame: Frame, swatch: Frame, name: TextLabel, bars: Frame, supply: Frame, power: Frame, buttons: Frame, team: number }
 export type Panel = {
 	gui: ScreenGui,
 	root: Frame,
 	list: Frame,
 	notices: TextLabel,
 	slider: TextLabel,
+	tip: TextLabel, -- the hovered bars' numbers
+	hovered: number?, -- the player whose bars are hovered
 	rows: { [number]: Row },
 	key: string,
 	nextUpdate: number,
@@ -115,8 +119,24 @@ function TeamPanel.new(api: Api.Api): Panel
 	slider.TextColor3 = Kit.COLOR.text
 	slider.Visible = false
 	slider.Parent = gui
+	local tip = Instance.new("TextLabel")
+	tip.Name = "Tip"
+	tip.AnchorPoint = Vector2.new(1, 1)
+	tip.AutomaticSize = Enum.AutomaticSize.XY
+	tip.Size = UDim2.fromOffset(0, 0)
+	tip.BackgroundColor3 = Kit.COLOR.box
+	tip.BackgroundTransparency = 0.05
+	tip.BorderSizePixel = 0
+	tip.FontFace = Kit.font(Enum.FontWeight.Medium)
+	tip.TextSize = 12
+	tip.TextColor3 = Kit.COLOR.text
+	tip.TextXAlignment = Enum.TextXAlignment.Left
+	tip.RichText = true
+	tip.Visible = false
+	Kit.pad(tip, 6, 4, 6, 4)
+	tip.Parent = gui
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	return { gui = gui, root = root, list = list, notices = notices, slider = slider, rows = {}, key = "", nextUpdate = 0, seenShares = 0, lines = {} }
+	return { gui = gui, root = root, list = list, notices = notices, slider = slider, tip = tip, hovered = nil, rows = {}, key = "", nextUpdate = 0, seenShares = 0, lines = {} }
 end
 
 local function label(parent: Instance, x: number, width: number, color: Color3, align: Enum.TextXAlignment): TextLabel
@@ -257,9 +277,31 @@ local function build(panel: Panel, api: Api.Api, players: { TeamColors.Player })
 		swatch.Size = UDim2.fromOffset(10, 10)
 		swatch.BorderSizePixel = 0
 		swatch.Parent = frame
-		local name = label(frame, 14, 104, Kit.COLOR.text, Enum.TextXAlignment.Left)
-		local supply = label(frame, 118, 74, SUPPLY, Enum.TextXAlignment.Right)
-		local power = label(frame, 194, 74, POWER, Enum.TextXAlignment.Right)
+		local name = label(frame, 14, 112, Kit.COLOR.text, Enum.TextXAlignment.Left)
+		-- supply over power: thin bars of stored / storage, numbers on hover
+		local bars = Instance.new("Frame")
+		bars.Name = "Bars"
+		bars.BackgroundTransparency = 1
+		bars.Position = UDim2.fromOffset(132, 0)
+		bars.Size = UDim2.fromOffset(136, TeamPanel.ROW)
+		bars.Parent = frame
+		local function bar(y: number, color: Color3): Frame
+			local back = Instance.new("Frame")
+			back.Position = UDim2.fromOffset(0, y)
+			back.Size = UDim2.new(1, 0, 0, 4)
+			back.BackgroundColor3 = Color3.fromRGB(45, 48, 54)
+			back.BorderSizePixel = 0
+			back.Parent = bars
+			local fill = Instance.new("Frame")
+			fill.Size = UDim2.fromScale(0, 1)
+			fill.BackgroundColor3 = color
+			fill.BorderSizePixel = 0
+			fill.Parent = back
+			return fill
+		end
+		local supply = bar(5, SUPPLY)
+		local power = bar(11, POWER)
+
 		local buttons = Instance.new("Frame")
 		buttons.BackgroundTransparency = 1
 		buttons.Position = UDim2.fromOffset(276, 0)
@@ -270,7 +312,7 @@ local function build(panel: Panel, api: Api.Api, players: { TeamColors.Player })
 			resourceButton(panel, api, small(buttons, "■", 34, 16, SUPPLY), p.id, "supply")
 			resourceButton(panel, api, small(buttons, "ϟ", 52, 16, POWER), p.id, "power")
 		end
-		panel.rows[p.id] = { frame = frame, swatch = swatch, name = name, supply = supply, power = power, buttons = buttons }
+		panel.rows[p.id] = { frame = frame, swatch = swatch, name = name, bars = bars, supply = supply, power = power, buttons = buttons, team = p.team }
 	end
 end
 
@@ -319,6 +361,7 @@ function TeamPanel.step(panel: Panel, api: Api.Api, now: number)
 		table.insert(texts, l.text)
 	end
 	panel.notices.Text = table.concat(texts, "\n")
+	TeamPanel.tip(panel, api)
 	if now < panel.nextUpdate then
 		return
 	end
@@ -347,14 +390,41 @@ function TeamPanel.step(panel: Panel, api: Api.Api, now: number)
 		r.swatch.BackgroundColor3 = TeamColors.ofPlayer(p.id)
 		r.name.Text = nameOf(p.id) .. (if p.id == world.me.player then " (you)" else "")
 		local eco = world.teamEco[p.team]
+		r.bars.Visible = eco ~= nil
 		if eco then
-			-- (the wire's income is in tenths per second, as Api reads it)
-			r.supply.Text = `+{short(eco.supply.income / 10)} · {short(eco.supply.stored)}`
-			r.power.Text = `+{short(eco.power.income / 10)} · {short(eco.power.stored)}`
-		else
-			r.supply.Text, r.power.Text = "", ""
+			r.supply.Size = UDim2.fromScale(if eco.supply.storage > 0 then math.clamp(eco.supply.stored / eco.supply.storage, 0, 1) else 0, 1)
+			r.power.Size = UDim2.fromScale(if eco.power.storage > 0 then math.clamp(eco.power.stored / eco.power.storage, 0, 1) else 0, 1)
 		end
 	end
+end
+
+-- The hovered bars' numbers by the cursor: income per second, stored /
+-- storage (the wire's income is in tenths per second, as Api reads it).
+function TeamPanel.tip(panel: Panel, api: Api.Api)
+	-- the row whose bars are under the cursor (by position: sturdier than
+	-- MouseEnter / MouseLeave across overlapping screens)
+	local m = UserInputService:GetMouseLocation()
+	local inset = game:GetService("GuiService"):GetGuiInset()
+	local mx, my = m.X, m.Y - inset.Y
+	panel.hovered = nil
+	for pid, row in panel.rows do
+		local p0, sz = row.bars.AbsolutePosition, row.bars.AbsoluteSize
+		if row.bars.Visible and mx >= p0.X and mx <= p0.X + sz.X and my >= p0.Y and my <= p0.Y + sz.Y then
+			panel.hovered = pid
+		end
+	end
+	local r = panel.hovered and panel.rows[panel.hovered]
+	local eco = r and api.world.teamEco[r.team]
+	if r == nil or eco == nil then
+		panel.tip.Visible = false
+		return
+	end
+	local function line(mark: string, color: string, res: any): string
+		return `<font color="{color}">{mark}</font>  +{short(res.income / 10)}/s   {short(res.stored)} / {short(res.storage)}`
+	end
+	panel.tip.Text = line("■", "#EBEBEB", eco.supply) .. "\n" .. line("ϟ", "#FFD63C", eco.power)
+	panel.tip.Position = UDim2.fromOffset(mx - 8, my - 8)
+	panel.tip.Visible = true
 end
 
 return TeamPanel
