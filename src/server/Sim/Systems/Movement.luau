@@ -188,6 +188,7 @@ return function(sim: Types.Sim)
 		end
 		exitOf[k] = exit or false
 		anyActive = anyActive or moving[k] or speed[id] > 0 or exitOf[k] ~= false -- (walking out of a footprint: S-133, S-155)
+			or nav.face[id] ~= nil -- (turning to a line's front: S-188)
 	end
 	if not anyActive then
 		-- Nothing is moving: nothing can start overlapping either. Aircraft
@@ -241,6 +242,24 @@ return function(sim: Types.Sim)
 				-- at its spot (or close enough and settled): brake to a stop
 				if nspeed[k] > 0 then
 					nspeed[k] = max(0, nspeed[k] - p.brake * DT)
+				else
+					-- stopped on a line move's slot: turn in place to face the
+					-- line's front (S-188, F34)
+					local face = nav.face[id]
+					if face ~= nil then
+						if tick > (nav.faceUntil[id] or 0) then
+							nav.face[id], nav.faceUntil[id] = nil, nil
+						else
+							local diff = (face - nheading[k] + math.pi) % (2 * math.pi) - math.pi
+							local turn = p.turnRate * DT
+							if math.abs(diff) <= turn then
+								nheading[k] = face
+								nav.face[id], nav.faceUntil[id] = nil, nil
+							else
+								nheading[k] += if diff > 0 then turn else -turn
+							end
+						end
+					end
 				end
 				continue
 			end
@@ -410,10 +429,11 @@ return function(sim: Types.Sim)
 		local x, z = nx[k], nz[k]
 		local tx, tz = x + sin(h) * v * DT, z + cos(h) * v * DT
 		if p.air then
-			-- aircraft stay over the map (S-183, F3; jets turn back first, Air.steerJet)
+			-- aircraft stay within Air.OVERFLY of the map (S-189; over it
+			-- before protocol 38, S-183; jets turn back first, Air.steerJet)
 			local g = nav.grid
-			tx = math.clamp(tx, g.originX + 1, g.originX + g.sizeX - 1)
-			tz = math.clamp(tz, g.originZ + 1, g.originZ + g.sizeZ - 1)
+			tx = math.clamp(tx, g.originX - Air.OVERFLY, g.originX + g.sizeX + Air.OVERFLY)
+			tz = math.clamp(tz, g.originZ - Air.OVERFLY, g.originZ + g.sizeZ + Air.OVERFLY)
 		end
 		local exit = exitOf[k]
 		if exit then

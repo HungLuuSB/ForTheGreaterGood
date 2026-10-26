@@ -31,6 +31,7 @@
 
 local Ballistics = require("../Combat/Ballistics")
 local Guidance = require("@shared/Combat/Guidance")
+local Grid = require("@shared/Grid/Grid")
 local Lofted = require("@shared/Combat/Lofted")
 local Combat = require("../Combat/Combat")
 local ContactGrid = require("../Combat/ContactGrid")
@@ -203,11 +204,11 @@ return function(sim: Types.Sim)
 			end
 		end
 		local grid = c.grid
-		if grid and (x1 < grid.originX or z1 < grid.originZ or x1 > grid.originX + grid.sizeX or z1 > grid.originZ + grid.sizeZ) then
-			-- off the map: nothing to hit out there; burst at the edge (client
-			-- request 15: positions past the edge can't go on the wire)
-			local ex = math.clamp(x1, grid.originX, grid.originX + grid.sizeX)
-			local ez = math.clamp(z1, grid.originZ, grid.originZ + grid.sizeZ)
+		local out = Grid.OVERFLY -- (S-189: at the edge itself before protocol 38, client request 15)
+		if grid and (x1 < grid.originX - out or z1 < grid.originZ - out or x1 > grid.originX + grid.sizeX + out or z1 > grid.originZ + grid.sizeZ + out) then
+			-- past the overfly margin: nothing to hit out there; burst at its edge
+			local ex = math.clamp(x1, grid.originX - out, grid.originX + grid.sizeX + out)
+			local ez = math.clamp(z1, grid.originZ - out, grid.originZ + grid.sizeZ + out)
 			Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = 0, other = id, x = ex, y = y1, z = ez })
 			Combat.removeProjectile(c, id)
 			continue
