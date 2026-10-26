@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	armorClass = "LIGHT",
 	cost = { supply = 50, power = 580, buildTime = 1400 },
 	health = 300,
-	movement = { maxSpeed = 72, accel = 64, brake = 72, turnRate = 500 },
+	movement = { maxSpeed = 43.2, accel = 64, brake = 72, turnRate = 500 },
 	sensors = { sight = 270 },
 	weapons = { { def = "chs_skitter_plasma", turretPiece = "torso", muzzle = "muzzle" } },
 	pieces = { "base", "torso", "muzzle" },

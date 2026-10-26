@@ -8,7 +8,7 @@
 -- In Studio the services are stand-ins (L-6): MemoryStore and DataStore in
 -- memory, TeleportService replaced by the in-process stand-in match.
 --   client -> server (Request):
---     { op = "create", name, privacy, password?, maxPlayers }
+--     { op = "create", name, privacy, password?, maxPlayers? }  maxPlayers only with authority (G11)
 --     { op = "join", roomId, password? }      { op = "leave" }   (a room on another lobby server: a hop, L-15)
 --     { op = "start", force? }                { op = "rejoin" }
 --     { op = "quick", mapId, faction, level, enemy? }  a skirmish against one AI, started at once
@@ -33,6 +33,7 @@ local RunService = game:GetService("RunService")
 local Chat = require("./Chat")
 local Config = require("../shared/Config")
 local Ctx = require("./Ctx")
+local Authority = require("./Authority")
 local Directory = require("./Directory")
 local Launcher = require("./Launcher")
 local Listing = require("../shared/Listing")
@@ -240,7 +241,7 @@ local function viewFor(player: Player): any
 	local rec = Profiles.get(user)
 	local online = Lobbies.online()
 	return {
-		me = { user = user, name = player.DisplayName },
+		me = { user = user, name = player.DisplayName, authority = Authority.has(player) },
 		studio = studio,
 		services = { store = Ctx.store.kind, teleport = Ctx.teleport.kind, profiles = Ctx.profiles.kind },
 		online = online,
@@ -349,7 +350,7 @@ local function handle(player: Player, msg: any): string?
 		if current and current.phase ~= "setup" then
 			return "Your room is in a match"
 		end
-		local room, cerr = Directory.create({ name = filtered, privacy = msg.privacy, password = msg.password, maxPlayers = msg.maxPlayers }, user, player.DisplayName, Ctx.maps)
+		local room, cerr = Directory.create({ name = filtered, privacy = msg.privacy, password = msg.password, maxPlayers = if Authority.has(player) then msg.maxPlayers else nil }, user, player.DisplayName, Ctx.maps) -- the cap: 16, AIs included, unless set with authority (G11)
 		if room == nil then
 			return cerr
 		end
@@ -410,7 +411,7 @@ local function handle(player: Player, msg: any): string?
 		if current and current.phase ~= "setup" then
 			return "Your room is in a match"
 		end
-		local room, err = Directory.create({ name = "Skirmish", privacy = "private", maxPlayers = 2 }, user, player.DisplayName, Ctx.maps)
+		local room, err = Directory.create({ name = "Skirmish", privacy = "private" }, user, player.DisplayName, Ctx.maps)
 		if room == nil then
 			return err
 		end

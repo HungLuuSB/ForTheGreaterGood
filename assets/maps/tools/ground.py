@@ -48,6 +48,8 @@ STYLES = {
     "ridgeline": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
     "coastline": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
     "twin_lakes": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
+    # the open grassland with its road grid: no rock to dress (S-192)
+    "plains": {"aim": ("material", "road")},
     # 512 cells (S-189): heights every 8 studs (`coarsen`), a quarter of the triangles: 4x the
     # area of the 256-cell maps at the same cost; its gentle hills lose nothing visible
     "lakelands": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock"), "coarsen": 2},
@@ -171,7 +173,9 @@ def material_weights(f, rng, keep_cells=False):
     banks, its 2-cell roads) aren't blurred away."""
     mats = f.mat.copy()
     counts = np.bincount(mats.ravel(), minlength=len(f.mat_pal))
-    small = [m for m in range(len(f.mat_pal)) if 0 < counts[m] < 0.005 * mats.size]
+    # `ground` (the deposit cells, always under the deposit models) joins its neighbours on every
+    # map, however many deposits it has (The Plains: 560 cells, 0.85%)
+    small = [m for m in range(len(f.mat_pal)) if 0 < counts[m] and (counts[m] < 0.005 * mats.size or f.mat_pal[m] == "ground")]
     for m in small:
         zs, xs = np.where(mats == m)
         for z, x in zip(zs, xs):

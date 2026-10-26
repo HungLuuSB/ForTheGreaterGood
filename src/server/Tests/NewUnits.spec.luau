@@ -63,6 +63,11 @@ return function(t: RunAll.Context)
 				t.deepEqual(wd.fx.color, { r = 255, g = 225, b = 120 }, `{id}: the tank shell's colour`)
 			end
 		end
+		for _, id in { "ord_fatboy_cannon", "chs_tzar_cannon" } do
+			local fx = defs.weapons[id].fx
+			t.expect(fx ~= nil and fx.trail == nil and fx.color == nil, `{id}: drawn as a tank shell (S-193, G10)`)
+			t.expect((defs.weapons[id].aoe or 0) > 20, `{id}: keeps its big blast`)
+		end
 		for _, shooter in { "chs_thug", "ord_mace" } do
 			local wd = defs.weapons[defs.units[shooter].weapons[1].def]
 			t.expect((wd.aoe or 0) == 0, `{shooter}: no blast`)

@@ -172,3 +172,13 @@ The user approved it (queue item 5). "Invite" in the room calls `SocialService:P
   - **Weapons** are cards: a coloured tile by kind, the name in capitals, the kind and a stock round's power cost. Then one row per figure: the number in red, what it is, and a word for how it reads (reload "slow", alpha "very heavy", aoe "large", range "very long": `Codex.word`). Last, a sentence on what it does and the damage per hit. The header folds the rows.
 - **Bars on a square-root scale:** linear against the biggest value (the strategic structures) would leave most units' bars a sliver.
 - **Icons are text glyphs** that Roblox's fallback fonts draw, checked in Studio; several, such as ✹ ➚ ↻ ◷ ⌖ ➤, show as empty boxes and are avoided. No image uploads needed.
+
+## L-25 (2026-10-26): a room holds 16 people, AIs included; only authority changes it (G11)
+
+- **Decision:** the user, from playtest 2. The create dialog's "Players and spectators" slider is gone, and every room holds `Config.DEFAULT_PLAYERS` = 16 people, AIs included (`Rooms.headcount`: members plus AI seats). Join, Add AI and the browser's "full" all count both. The skirmish room uses the same cap (it was 2, which an AI would now fill).
+- **Authority:** only someone with authority sets another cap: the experience's owner (rank `Config.ADMIN_RANK` = 254 and up for a group's experience), the user IDs in `Config.ADMINS`, and anyone in Studio (`server/Authority`). The view's `me.authority` shows them the slider, and the server ignores a cap sent by anyone else.
+
+## L-26 (2026-10-26): a map panel instead of the Map dropdown; no start markers (G12)
+
+- **Decision:** the user, from playtest 2. The room's Map row opens a panel: the maps grouped small to large, a big preview, and an information column (size and cells, starts and how many teams, then wind, tides and terrain features from the map's `info` once sim-A's MapRegistry sends them). The host chooses there; everyone else can look.
+- **No suggested landing points:** the room's map and the Skirmish preview drop the numbered start markers. Players pick their start in the match (S-171).

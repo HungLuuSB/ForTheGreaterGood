@@ -17,7 +17,7 @@ return Templates.extend(Templates.Unit, {
 	moveClass = "WHEELED",
 	cost = { supply = 105, power = 1350, buildTime = 3000 },
 	health = 440, -- faction pass (S-62)
-	movement = { maxSpeed = 40, accel = 16, brake = 32, turnRate = 140 },
+	movement = { maxSpeed = 24, accel = 16, brake = 32, turnRate = 140 },
 	sensors = { sight = 120, radar = 380, radarError = 16, radarDrain = 3 }, -- upkeep: S-72
 	model = "ord_oracle",
 	icon = "radar",

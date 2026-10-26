@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 305, power = 5750, buildTime = 9300 },
 	health = 880, -- faction pass, tuned (S-62)
-	movement = { maxSpeed = 310, minSpeed = 150, accel = 80, brake = 60, turnRate = 112 },
+	movement = { maxSpeed = 186, minSpeed = 90, accel = 80, brake = 60, turnRate = 112 },
 	sensors = { sight = 220, airSight = 440 },
 	weapons = { { def = "chs_heavy_aam", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "pylon", "muzzle" },

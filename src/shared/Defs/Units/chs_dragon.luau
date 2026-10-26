@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 3,
 	cost = { supply = 900, power = 16000, buildTime = 30000 },
 	health = 9000,
-	movement = { maxSpeed = 70, accel = 24, brake = 30, turnRate = 90 },
+	movement = { maxSpeed = 42, accel = 24, brake = 30, turnRate = 90 },
 	sensors = { sight = 220, airSight = 260 },
 	weapons = {
 		{ def = "chs_dragon_flame", turretPiece = "belly", muzzle = "flame" },
