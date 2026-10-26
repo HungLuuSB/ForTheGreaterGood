@@ -109,6 +109,28 @@ FACTIONS["neutral"] = {
               },
 }
 
+# Map features (S-197): trees and rocks, reclaimable scenery (assets/fx/features/). No
+# faction, no glow, no team. Trees: `paint` bark, `trim` foliage, `dark` its shade, `era`
+# its sunlit tips; rocks: `steel` stone (not metal here), `rubber` its shade, `radome` the
+# yellow lichen of BAR's rocks.
+FACTIONS["nature"] = {
+    "label": "BAR-style map features (S-197)",
+    "paint": (78, 60, 44),
+    "accent": (200, 200, 200),
+    "team_preview": (78, 96, 58),
+    "glow": _NEUTRAL_GLOW,
+    "variants": {"bar": {"type": "plain", "base": (78, 60, 44), "mottle": 0.3, "chip": (98, 80, 60), "grime": (52, 40, 30)}},
+    "specs": {**FACTIONS["neutral"]["specs"],
+              "paint": {"base": None, "roughness": 0.9, "metallic": 0.0, "edge_wear": 0.15, "ao": 0.6},  # bark
+              "trim": {"base": (46, 74, 34), "roughness": 0.85, "metallic": 0.0, "edge_wear": 0.1, "ao": 0.55},  # foliage
+              "dark": {"base": (28, 46, 26), "roughness": 0.9, "metallic": 0.0, "edge_wear": 0.0, "ao": 0.5},  # foliage in shade
+              "era": {"base": (84, 110, 44), "roughness": 0.85, "metallic": 0.0, "edge_wear": 0.1, "ao": 0.65},  # sunlit tips
+              "steel": {"base": (92, 88, 80), "roughness": 0.9, "metallic": 0.0, "edge_mode": "highlight", "edge_wear": 0.35, "ao": 0.6},  # stone
+              "rubber": {"base": (60, 57, 52), "roughness": 0.92, "metallic": 0.0, "edge_wear": 0.2, "ao": 0.55},  # stone in shade
+              "radome": {"base": (128, 120, 66), "roughness": 0.9, "metallic": 0.0, "edge_wear": 0.0, "ao": 0.7},  # lichen
+              },
+}
+
 UP = (0, 1, 0)
 
 # Wrecks (queue item 5, M-24; docs/contracts/fx.md "Wrecks"): FTGG_WRECK=1
