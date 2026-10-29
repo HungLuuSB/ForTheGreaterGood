@@ -10,7 +10,7 @@ round feet with steel toenails); an armored head low in front with ear
 plates (team), steel tusks and a segmented trunk; two exhaust stacks with
 hot rings and a reactor vent on the rump. On its back the `turret` (turns)
 carries the `barrels` (pitch): a mantlet with two long laser barrels in
-cooling shrouds, `muzzleL` / `muzzleR` at their lenses. Chaos reads heavy
+cooling shrouds, `muzzle1` (left) / `muzzle2` (right) at their lenses. Chaos reads heavy
 and brutal (M-14). Writes export/ through tools/unit.py.
 """
 
@@ -174,8 +174,8 @@ unit.run(__file__, "chs_mammoth", "chaos", footprint=2,
          + [leg_spec(k) for k in ("FL", "FR", "BL", "BR")]
          + [unit.PieceSpec("turret", "base", TURRET, build_turret, details_turret),
             unit.PieceSpec("barrels", "turret", (0.0, GUN_Y, GUN_Z), build_barrels, details_barrels)],
-         attachments={"muzzleL": {"parent": "barrels", "at": [-BARREL_X, GUN_Y, MUZZLE_Z]},
-                      "muzzleR": {"parent": "barrels", "at": [BARREL_X, GUN_Y, MUZZLE_Z]}},
+         attachments={"muzzle1": {"parent": "barrels", "at": [-BARREL_X, GUN_Y, MUZZLE_Z]},
+                      "muzzle2": {"parent": "barrels", "at": [BARREL_X, GUN_Y, MUZZLE_Z]}},
          budget=5000,
          previews=[("35", (-24, 19, -29), (0, 5.5, -0.5), 50),
                    ("side", (34, 7, 0), (0, 5.5, 0), 50),

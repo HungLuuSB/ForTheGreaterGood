@@ -129,7 +129,7 @@
     }
   },
   "attachments": {
-    "muzzleL": {
+    "muzzle1": {
       "parent": "barrels",
       "at": [
         -1.0,
@@ -137,7 +137,7 @@
         -6.75
       ]
     },
-    "muzzleR": {
+    "muzzle2": {
       "parent": "barrels",
       "at": [
         1.0,
