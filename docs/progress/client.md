@@ -1,11 +1,71 @@
 # Client progress
 
-Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studio-only place content and `docs/contracts/`. Branch `m-client-foundation`, worktree `FTGG-client`. This stream is the only one using the Studio connection. The headless simulation (`src/server`, the rest of `src/shared`, `.lune/`) is the sim stream's area; see [`sim.md`](sim.md).
+Progress of the client stream: `src/client`, `src/roblox`, Studio-only place content, `docs/contracts/` and the unit icons (`src/shared/Defs/Blockouts/` is models-C's now). Branch `m-client-foundation`, worktree `FTGG-client`. This stream is the only one using the Studio connection. The headless simulation (`src/server`, the rest of `src/shared`, `.lune/`) is the sim stream's area; see [`sim.md`](sim.md).
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
-## Summary (2026-10-26, pre-game and automatic colours)
+## Handover (2026-10-29): where the client stream stands and how to continue
 
+Written for a new session (the project is moving to another Claude account). Everything below is enough to carry on from this file, the decisions log and the repo.
+
+### Where it stands
+
+- Branch `m-client-foundation` (worktree `C:\Workspace\Projects\FTGG-client`) has main d8611b86 merged in: all of playtest 3, with C-248..C-253 integrated.
+  - Only this tidy-up and f2a949e5 (C-252's Studio note) aren't on main yet: see the Ready line in the 2026-10-29 summary.
+- Suites on the branch: `lune run test_client` 335 / 335, `lune run build` passed (877 scripts, 2457 requires).
+- The last decision is **C-253**; the next one is **C-254**, in [`../decisions/client.md`](../decisions/client.md).
+- **`src/roblox/MatchConfig.luau` has a local, uncommitted change that is the user's own test setting.** `ACTIVE = "skirmish"`, the `air` profile at speed 0.1, and two Radiances removed from one test scene. Never commit it and never revert it: leave it in the working tree. A lobby match ignores MatchConfig; it only sets what Play in Studio starts.
+
+### Open items (client-B's)
+
+- **Own icons for the 21 playtest-3 units (C-253).**
+  - Today they borrow existing tiles: Main Battle Tank, Vehicle Plant, Adv. Vehicle Plant, Supply Extractor, Power Generator, Supply Converter, Fusion Reactor and Storage.
+  - The sheet is full at 90 tiles, so own tiles need a new catalogue draft in `docs/art/icons/ftgg-unit-icons.html` and `node tools/icons/render.mjs`. That makes a second sheet `assets/icons/ftgg-icons-2.png`.
+  - The user must approve its upload to Roblox; its asset id then goes into `tools/icons/assets.json`.
+  - Every new unit ID must be in exactly one catalogue item's `defs`, or render.mjs fails and `IconAtlas.spec` / `Icons.spec` fail.
+- **H18 / H20, drawing under water:**
+  - Check in Studio that Commanders, Titan and Juggernaut walking the seafloor (AMPHIB_WALKER, S-210) are drawn on the seafloor, not on the water surface.
+  - Check that the offshore extractors (`ord_seaextractor` / `chs_seaextractor`) draw submerged.
+  - H19 needed nothing (submerged units come as sonar-only or hidden).
+- **H1:** a builder shows its nano stream while still far from the structure. sim-A was to check whether the wire sends the target before the builder is in range; if it does, the client should hide the stream until in range (`Render/BuildSpray`).
+- **H11:** the scouts' hit-scan laser should be hot yellow. Check that the client takes the weapon's colour (C-248 tints BEAM weapons from `fx.color`; a hit-scan laser goes through `Render/Lasers`).
+- **Pulse pieces (C-252):** the glow breathes; the scale half of rig.md's `pulse` isn't done.
+- **The 21 new units draw as models-C's blockouts.** When their meshes arrive, re-check the rigs in Studio: the Mammoth's legs, the bots' thighs, and the nano turret's `turret` / `nano` axes and signs.
+- **Not tested with a real mouse:** hovering and dragging the resource bars' share and converter markers (C-245). The Studio harness can't click GUI.
+- sim-A once suggested an orange-white core for `chs_korgoth_heatray`. Today the core is white lerped 30% toward the beam colour (C-248, `Render/BeamShots`).
+
+### How to work
+
+- **Ownership:**
+  - client-B owns `src/client`, `src/roblox`, Studio place content, `docs/contracts/` and the icons.
+  - Don't edit `src/server`, `src/shared/Net/Schema` or `src/shared/Defs/Blockouts` (now models-C's).
+  - The other streams: **sim-A** (branch `m-sim-2`, `../ForTheGreaterGood`; the headless sim and the integrator of main), **models-C** (`m-models`; meshes, blockouts, `assets/`), **lobby-D** (`m-lobby`, `../FTGG-lobby`; the lobby place and the Codex).
+- **Routine for each finished piece:**
+  - Run `lune run test_client` and `lune run build`.
+  - Commit with a decision entry `C-n` in `docs/decisions/client.md`.
+  - Add a summary line and a `Ready to merge: <hash>` line here in a follow-up commit.
+  - Push `m-client-foundation` and tell sim-A. sim-A merges into main through `../FTGG-integration`.
+  - After sim-A integrates, merge `origin/main` into this branch.
+  - Don't push or publish anything else without the user asking.
+- **Studio:**
+  - Use only **FTGG Match** (placeId 123800718230540). Never act on FTGG Art (136398726667571); FTGG Testplace isn't approved.
+  - The user runs the live sync: `lune run serve` plus `rojo serve serve.project.json`. Never start, stop or wipe it or `build/serve/`.
+  - To start a match in a playtest, from the Client: `ReplicatedStorage.Remotes.Lobby:FireServer({ op = "start" })`.
+  - Then `ReplicatedStorage.FtggClientDebug:Invoke(...)`:
+    - no arguments: a summary of the match;
+    - `"unit", id`;
+    - `"camera", x, z, ...`;
+    - `"act", <Api action>, ...`, for example `select`, `smartOrder`, `beginPlacement`, `place`;
+    - `"scene"`, `"fx"`, `"ranges"`, `"missiles"`.
+  - On the Server, `ServerStorage.FtggDebug:Invoke("spawn", defId, player, x, z, heading, count?, spacing?)` and `("damage", id, amount)`.
+  - An `execute_luau` call gives up before about 20 s, so keep waits short.
+- **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
+
+## Summary (2026-10-29, playtest 3: C-248..C-253)
+
+
+- **Snapshot parts and new icons (C-253, H36):** with sim-A's protocol 41, a far unit goes only when a whole strategic snapshot leaves it out, so a lost part no longer makes blips vanish or drops a far selection. The 21 new units show icons, borrowed from existing tiles until the sheet gets a second page.
+- Ready to merge: `ebb30463` (C-253, carries m-sim-2 f65a3b23 (protocol 41) and C-252; test_client 334 / 335, the 1 left is C's chs_gantry blockout; build passed. Studio, Coastline: 2-part snapshots, 212 far units held, none dropped)
 - **Rigs for the playtest-3 units (C-252, models-C's notes):** the Mammoth walks on four legs in diagonal pairs; the Titan and Juggernaut take long, heavy strides; missiles leave from the missile pods; construction turrets turn and pitch their emitter to their work; fusion cores, converter coils and capacitor cells breathe their glow. Keyed by def ID, ready for when sim-A's defs and models-C's models reach main.
 - Ready to merge: `5d938f5e` (C-252; test_client 335 / 335, build passed. Not yet in Studio: the units' defs and models aren't on main)
 - **Nano particles; the Commander faces its work (C-251):** builders and factories spray streams of glowing nano particles instead of light beams. The Commander turns its upper body to what it builds and keeps it there. Specs follow S-203 (generator retired, D-Gun range 80), and the server no longer times out building the lobby's map list.
@@ -24,6 +84,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
   - Beams take their weapon's colour, and hovering a resource-bar marker no longer shifts the bar.
 - Ready to merge: `df9c53ff` (C-248 with the health number in deep red in place of the bar; supersedes ba5d6b76. test_client 329 / 329, build passed (822 scripts, 2345 requires). Studio: 2224 in deep red on a hit Sovereign)
 - Ready to merge: `ba5d6b76` (C-248; test_client 329 / 329, build passed (822 scripts, 2345 requires). Studio, Coastline: digits, grid, footprint cells, highlighted orders, Commander rings, HP, tooltip. H16 not reproduced)
+
+## Summary (2026-10-27, Supreme Strait by day, protocol 40, nukes on units: C-243..C-247)
+
 - Ready to merge: `a8987295` (main 92b9147c merged in; AttackPreview.spec reads the silo's capacity from the def, as S-200 changed it. test_client 326 / 326, build passed)
 - **Trees and rocks textured (C-247):** the approved tree and rock models draw with their textures on Supreme Strait. Two of models-C's textures don't load yet; C is told.
 - Ready to merge: `efda9c36` (C-247; main 4f875faa merged in; test_client 326 / 326, build passed; Studio: 568 features textured)
@@ -44,6 +107,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `549938f5` (C-243; test_client 322 / 322, build passed; Studio: Supreme Strait at 13:00)
 - Ready to merge: `45299c5c` (main aafcba73 merged in: Supreme Strait rebuilt the BAR way, S-196, with its ground approved; plain looks for its three ground materials. test_client 322 / 322, test 587 / 587, build passed. Studio: Supreme Strait's ground, 346 pieces in about 50 s, mesh water and its new spawns)
 - Ready to merge: `0a4efb1b` (main 3f393dec and sim 1e96cf5e merged in; the D-Gun bolt ends at its own IMPACT. test_client 322 / 322, test 585 / 585, build passed. Studio, Supreme Strait: the D-Gun fires up the mesa slope and burns a Ravager; Commanders drawn with C's meshes; no errors)
+
+## Summary (2026-10-26, pre-game, automatic colours, bots, mesh water, playtest round 2: C-217..C-242)
+
 - **Protocol 39 (C-242):**
   - Commanders fire their D-Gun with D then a click: a big glowing bolt that burns through everything on its path.
   - Any unit can self-destruct (button, or Ctrl+D), with the seconds counting down in red over it.
