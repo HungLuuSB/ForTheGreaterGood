@@ -3,7 +3,8 @@
 -- each drawn model's glow parts (tag `Glow`, attributes GlowChannel and
 -- GlowStrength) are found once when the model is drawn, and their
 -- SurfaceAppearance.EmissiveStrength follows Core/Glow: power dims on an
--- energy stall, factories pulse while producing, weapons flash per shot,
+-- energy stall, factories pulse while producing, a `pulse` piece's glow
+-- (GlowPiece, Core/PieceMotion) breathes, weapons flash per shot,
 -- unfinished units stay dark. Only changed values are written.
 -- Headlights: a pool of shadowless SpotLights on the nearest on-screen
 -- vehicles with `head` glow parts, at close zoom or under the night and
@@ -12,6 +13,7 @@
 local CollectionService = game:GetService("CollectionService")
 
 local CoreGlow = require("../Core/Glow")
+local PieceMotion = require("../Core/PieceMotion")
 local Atmosphere = require("./Atmosphere")
 
 local Glow = {}
@@ -27,13 +29,29 @@ Glow.HEAD_RANGE = 36
 Glow.HEAD_ANGLE = 55
 Glow.RATIO_OVERRIDE = nil :: number? -- debug (Invoke("glowratio", r)): pretend the team's power ratio is r
 
-export type Part = { sa: SurfaceAppearance, channel: string, rest: number, shown: number }
+export type Part = { sa: SurfaceAppearance, channel: string, rest: number, shown: number, pulsing: boolean }
 
--- The glow parts of a model and its headlight parts (nil when it has
--- none: blockouts).
-function Glow.collect(model: Model): ({ Part }?, { BasePart }?)
+-- The `pulse` pieces of `def`, by name (nil: none).
+local function pulsePieces(def: any?): { [string]: boolean }?
+	if def == nil then
+		return nil
+	end
+	local out: { [string]: boolean }? = nil
+	for _, m in PieceMotion.forDef(def) do
+		if m.motion == "pulse" then
+			out = out or {}
+			(out :: any)[m.piece] = true
+		end
+	end
+	return out
+end
+
+-- The glow parts of a model of `def` and its headlight parts (nil when it
+-- has none: blockouts).
+function Glow.collect(model: Model, def: any?): ({ Part }?, { BasePart }?)
 	local out: { Part } = {}
 	local heads: { BasePart } = {}
+	local pulses = pulsePieces(def)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") and (CollectionService:HasTag(d, "Glow") or d:GetAttribute("GlowChannel") ~= nil) then
 			local sa = d:FindFirstChildOfClass("SurfaceAppearance")
@@ -41,7 +59,9 @@ function Glow.collect(model: Model): ({ Part }?, { BasePart }?)
 			if sa and type(channel) == "string" then
 				local rest = d:GetAttribute("GlowStrength")
 				local r = if type(rest) == "number" then rest else sa.EmissiveStrength
-				table.insert(out, { sa = sa, channel = channel, rest = r, shown = sa.EmissiveStrength })
+				local piece = d:GetAttribute("GlowPiece")
+				local pulsing = pulses ~= nil and type(piece) == "string" and pulses[piece] == true
+				table.insert(out, { sa = sa, channel = channel, rest = r, shown = sa.EmissiveStrength, pulsing = pulsing })
 				if channel == "head" then
 					table.insert(heads, d)
 				end
@@ -184,7 +204,7 @@ function Glow.step(state: State, renderer: any, world: any, now: number, camera:
 			c.phase = (id * 0.618) % 1
 			for _, p in glows do
 				parts += 1
-				local target = CoreGlow.strength(p.channel, p.rest, c)
+				local target = CoreGlow.strength(p.channel, p.rest, c, p.pulsing)
 				if CoreGlow.changed(p.shown, target) then
 					p.sa.EmissiveStrength = target
 					p.shown = target

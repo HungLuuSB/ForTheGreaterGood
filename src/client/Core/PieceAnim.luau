@@ -17,9 +17,11 @@
 --   Retract(u, retracted, instant)   a retractable tower (def.retract, S-96) was
 --                                    switched off (TOGGLED_ON clear: retracted)
 --                                    or on (C-112); `instant` the first time
---   Work(u, yaw)                     a builder's work target (G4): the
+--   Work(u, yaw, dist)               a builder's work target (G4): the
 --                                    target's bearing from the hull in
---                                    degrees, or nil when it stops working
+--                                    degrees and its distance in studs
+--                                    (a nano turret pitches its emitter
+--                                    by it), or nil when it stops working
 --                                    (called on a change; not while a
 --                                    weapon is engaged, AimWeapon has it)
 --   AimWeapon(u, slot, yaw, pitch, active)
@@ -498,15 +500,16 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } }, wo
 				engaged = engaged or st == WS.AIMING or st == WS.READY
 			end
 			local at = if work and not engaged then work[id] else nil
-			local yaw: number? = nil
+			local yaw: number?, dist: number? = nil, nil
 			if at then
 				local rel = math.atan2(at[1] - wu.x, at[2] - wu.z) - (wu.rheading or wu.heading)
 				yaw = math.deg((rel + math.pi) % (2 * math.pi) - math.pi)
+				dist = math.sqrt((at[1] - wu.x) ^ 2 + (at[2] - wu.z) ^ 2)
 			end
-			local key = if yaw then tostring(math.floor((yaw :: number) / 3)) else ""
+			local key = if yaw then `{math.floor((yaw :: number) / 3)}:{math.floor((dist :: number) / 8)}` else ""
 			if key ~= u.workKey then
 				u.workKey = key
-				PieceAnim.call(u, "Work", yaw)
+				PieceAnim.call(u, "Work", yaw, dist)
 			end
 		end
 		-- working, idle weapons leave their turret alone: the Commander's guns

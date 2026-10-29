@@ -103,6 +103,11 @@ return function(t: any)
 				Schema.encodeTickHeader(w, wireTick)
 			end
 		end
+		local function strategicHeader(wireTick: number): (any) -> ()
+			return function(w: any)
+				Schema.encodeStrategicHeader(w, wireTick) -- part 0 of 1 (S-212)
+			end
+		end
 		local lancer = sim.defs.units.ord_lancer.index
 		local plant = sim.defs.units.ord_vehplant.index
 		-- OWN_STATUS for unit 77, which the client hasn't heard of yet
@@ -111,14 +116,14 @@ return function(t: any)
 		t.equal(world.units[77], nil, "no unit yet")
 		t.expect(world.ownStatus[77] ~= nil, "kept by ID")
 		-- its strategic record arrives: the status applies
-		local st = Packer.chunk({ { unitId = 77, cell = 100, icon = plant, team = 1, flags = 0 } }, Schema.encodeStrategic, nil, header(11))
+		local st = Packer.chunk({ { unitId = 77, cell = 100, icon = plant, team = 1, flags = 0 } }, Schema.encodeStrategic, nil, strategicHeader(11))
 		t.expect(NetIn.apply(world, "Strategic", st[1], 0), "decoded")
 		local u = assert(world.units[77])
 		t.expect(math.abs((u.health or 0) - 128 / 255) < 1e-6, "its health")
 		t.equal(table.concat(u.queue or {}, ","), `{lancer},{lancer}`, "its queue")
 		t.expect(math.abs((u.queueProgress or 0) - 64 / 255) < 1e-6, "the head's progress")
 		-- a later snapshot keeps it (the record carries no health)
-		st = Packer.chunk({ { unitId = 77, cell = 100, icon = plant, team = 1, flags = 0 } }, Schema.encodeStrategic, nil, header(12))
+		st = Packer.chunk({ { unitId = 77, cell = 100, icon = plant, team = 1, flags = 0 } }, Schema.encodeStrategic, nil, strategicHeader(12))
 		NetIn.apply(world, "Strategic", st[1], 0)
 		t.expect(math.abs((world.units[77].health or 0) - 128 / 255) < 1e-6, "still after the next snapshot")
 		-- death drops it

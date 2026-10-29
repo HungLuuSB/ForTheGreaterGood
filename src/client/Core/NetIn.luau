@@ -369,32 +369,27 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 	end
 end
 
-local function applyStrategic(world: World.World, records: { Schema.Strategic }, wireTick: number, tick: number)
+local function applyStrategic(world: World.World, records: { Schema.Strategic }, h: Schema.StrategicHeader, tick: number)
+	local wireTick = h.tick
 	if world.strategicTick >= 0 and wireTick ~= world.strategicTick then
 		if not Tick.isNewer(wireTick, world.strategicTick) then
 			return -- an older snapshot arrived late
 		end
 	end
-	local before: { [number]: World.Unit } = {}
 	if wireTick ~= world.strategicTick then
-		-- a new snapshot replaces the non-tactical units, but one the last
-		-- snapshot listed stays through this one, missing or not (C-249): a
-		-- big snapshot comes in several unreliable parts, and a lost part
-		-- made its units vanish for a third of a second. That made blips
-		-- jump (H36) and dropped a far selected unit from the selection
-		-- (the user's nuke silo). A unit really gone goes one snapshot later.
-		local prev = world.strategicTick
+		-- a new snapshot: its records update units as they come (S-212)
 		world.strategicTick = wireTick
-		for id, u in world.units do
-			if u.tier ~= "tactical" then
-				before[id] = u
-				if u.snapTick == nil then
-					u.snapTick = prev -- (just left the camera area: one snapshot's grace too)
-				elseif u.snapTick ~= prev then
-					world.units[id] = nil
-				end
-			end
-		end
+		table.clear(world.strategicParts)
+		table.clear(world.strategicSeen)
+		world.strategicGot = 0
+	end
+	if world.strategicParts[h.part] then
+		return -- the same part twice
+	end
+	world.strategicParts[h.part] = true
+	world.strategicGot += 1
+	for _, r in records do
+		world.strategicSeen[r.unitId] = true
 	end
 	local g = world.grid
 	for _, r in records do
@@ -404,7 +399,7 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 		end
 		-- a wire cell and its offsets' top bits: the 8-stud square's centre (S-189)
 		local x, z = g:decode(r.cell, r.offX or 128, r.offZ or 128)
-		local old = before[r.unitId] or u
+		local old = u
 		-- own, allied and seen units keep their type and their last tactical
 		-- detail out of the camera area (C-161): still drawn, selectable and
 		-- buildable from; and their exact spot while they stay in its 8-stud
@@ -438,7 +433,6 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			snaps = {},
 			lastTick = tick,
 			movedTick = movedTick,
-			snapTick = wireTick,
 			health = if keep then keep.health else nil,
 			shownHealth = if keep then keep.shownHealth else nil,
 			build = if keep then keep.build else nil,
@@ -459,6 +453,18 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 		local status = world.ownStatus[r.unitId]
 		if status and r.team == world.me.team then
 			World.applyStatus(world.units[r.unitId], status) -- what OWN_STATUS said last (S-158)
+		end
+	end
+	if world.strategicGot == h.parts then
+		-- every part of it here: the non-tactical units it doesn't list are
+		-- gone (S-212). A big snapshot comes in several unreliable parts; with
+		-- one lost they stay till the next whole one, so a lost part no longer
+		-- makes blips vanish and jump (H36) or drops a far selected unit from
+		-- the selection (the user's nuke silo, C-249).
+		for id, u in world.units do
+			if u.tier ~= "tactical" and not world.strategicSeen[id] then
+				world.units[id] = nil
+			end
 		end
 	end
 end
@@ -498,11 +504,13 @@ function NetIn.apply(world: World.World, channel: string, msg: buffer, now: numb
 	if decode == nil then
 		return false
 	end
-	local ok, records, wireTick = pcall(Packer.readAll, msg, decode, Schema.decodeTickHeader)
-	if not ok or wireTick == nil then
+	-- Strategic's header also says which part of its snapshot it is (S-212)
+	local ok, records, header = pcall(Packer.readAll, msg, decode, if channel == "Strategic" then Schema.decodeStrategicHeader else Schema.decodeTickHeader)
+	if not ok or header == nil then
 		world.dropped += 1
 		return false
 	end
+	local wireTick = if channel == "Strategic" then (header :: any).tick else header
 	local tick = stamp(world, wireTick :: number, now)
 	if channel == "Events" then
 		applyEvents(world, records :: any, tick)
@@ -522,7 +530,7 @@ function NetIn.apply(world: World.World, channel: string, msg: buffer, now: numb
 	elseif channel == "State" then
 		applyState(world, records :: any, tick)
 	elseif channel == "Strategic" then
-		applyStrategic(world, records :: any, wireTick :: number, tick)
+		applyStrategic(world, records :: any, header :: any, tick)
 	elseif channel == "Projectiles" then
 		for _, r in records :: any do
 			(r :: any).kind = 0 -- homing correction, handled with the combat events

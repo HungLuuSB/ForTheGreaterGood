@@ -1504,13 +1504,16 @@ function NetOut.step(sim: Types.Sim)
 		outbox.Events = pack(events, Schema.encodeEvent, wireTick)
 		outbox.Tactical = pack(tactical, Schema.encodeTactical, wireTick)
 		outbox.State = pack(states, Schema.encodeState, wireTick)
-		outbox.Strategic = pack(strategic, Schema.encodeStrategic, wireTick)
+		outbox.Strategic = Packer.chunk(strategic, Schema.encodeStrategic, Packer.MAX_MESSAGE_BYTES, function(wr)
+			Schema.encodeStrategicHeader(wr, wireTick)
+		end)
 		if fullNow and #outbox.Strategic == 0 then
 			-- an empty snapshot still tells the client to drop old strategic units
-			local wr = Packer.Writer.new(2)
-			Schema.encodeTickHeader(wr, wireTick)
+			local wr = Packer.Writer.new(Schema.STRATEGIC_HEADER_BYTES)
+			Schema.encodeStrategicHeader(wr, wireTick)
 			outbox.Strategic = { wr:finish() }
 		end
+		Schema.numberStrategicParts(outbox.Strategic) -- part k of n (S-212)
 		pn.forceFull = false
 		for _, ch in NetState.CHANNELS do
 			for _, msg in outbox[ch] do

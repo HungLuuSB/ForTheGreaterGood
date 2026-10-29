@@ -7,8 +7,11 @@
 -- the bot's top speed, so short legs patter and long ones stride; the swing
 -- is scaled per bot (models-C: Fatboy short heavy steps, Centurion long
 -- strides). Skitter (four splayed legs) walks a diagonal gait: front-left
--- with back-right, then front-right with back-left. Stopped, the legs ease
--- back to rest.
+-- with back-right, then front-right with back-left; so does the Mammoth on
+-- its four whole legs (`legFL` .. `legBR`, hinged at the hip, models-C), an
+-- elephant's walk. The experimentals Titan and Juggernaut (chs_korgoth) use
+-- the leg kit ×2.1, on land and on the seafloor (AMPHIB_WALKER, S-210).
+-- Stopped, the legs ease back to rest.
 
 local Default = require("./Default")
 
@@ -17,8 +20,24 @@ local Bot = {}
 Bot.WALK = 1 -- signal mask of the walk thread
 Bot.STRIDE_HIPS = 2.9 -- ground per stride, in hip heights (the Commander's: 0.6 s at its speed)
 Bot.MIN_STRIDE, Bot.MAX_STRIDE = 0.25, 1.2 -- seconds per stride
-Bot.HIP = { ord_fatboy = 3.6, chs_centurion = 5.6, chs_skitter = 2.1 } :: { [string]: number } -- hip heights (models-C); others 2.5
-Bot.SCALE = { ord_fatboy = 0.5, chs_centurion = 1.15, chs_skitter = 0.7 } :: { [string]: number } -- swing scale; others 1
+-- hip heights (models-C); others 2.5
+Bot.HIP = {
+	ord_fatboy = 3.6,
+	chs_centurion = 5.6,
+	chs_skitter = 2.1,
+	ord_titan = 9.66,
+	chs_korgoth = 9.68,
+	chs_mammoth = 5.6,
+} :: { [string]: number }
+-- swing scale; others 1 (models-C: about 0.6 for the heavy, slow ones)
+Bot.SCALE = {
+	ord_fatboy = 0.5,
+	chs_centurion = 1.15,
+	chs_skitter = 0.7,
+	ord_titan = 0.6,
+	chs_korgoth = 0.6,
+	chs_mammoth = 0.6,
+} :: { [string]: number }
 Bot.DIP = 0.05 -- the pelvis's drop mid-step, in hip heights
 
 -- the Commander's stride, left leg forward; the other step mirrors it (degrees)
@@ -27,6 +46,9 @@ local LEGS = { "thighL", "shinL", "footL", "thighR", "shinR", "footR" }
 -- Skitter: the diagonal pairs' thighs and shins
 local QUAD = { thighFL = 1, thighBR = 1, thighFR = -1, thighBL = -1, shinFL = 1, shinBR = 1, shinFR = -1, shinBL = -1 }
 local QUAD_THIGH, QUAD_SHIN = 18, -12
+-- Mammoth: four whole legs, diagonal pairs in phase
+local TRUNKS = { legFL = 1, legBR = 1, legFR = -1, legBL = -1 }
+local TRUNK = 22
 
 local function mirror(name: string): string
 	if string.sub(name, -1) == "L" then
@@ -59,6 +81,24 @@ local function quad(u: any, first: boolean, seconds: number, scale: number, dip:
 	u:Move("base", "y", -dip, dip * 4 / seconds)
 end
 
+local function trunks(u: any, first: boolean, seconds: number, scale: number, dip: number)
+	for name, side in TRUNKS do
+		local angle = TRUNK * scale * (if first then side else -side)
+		u:Turn(name, "x", angle, math.abs(angle) * 2 / seconds + 10)
+	end
+	u:Move("base", "y", -dip, dip * 4 / seconds)
+end
+
+-- How a bot walks: "biped", "quad" (Skitter) or "trunks" (Mammoth).
+function Bot.gait(def: any): string
+	if def.id == "chs_skitter" then
+		return "quad"
+	elseif def.id == "chs_mammoth" then
+		return "trunks"
+	end
+	return "biped"
+end
+
 function Bot.StartMoving(u: any)
 	u:Signal(Bot.WALK)
 	u:SetSignalMask(Bot.WALK)
@@ -66,11 +106,13 @@ function Bot.StartMoving(u: any)
 	local half = Bot.stride(u.def) / 2
 	local scale = Bot.SCALE[id] or 1
 	local dip = Bot.DIP * (Bot.HIP[id] or 2.5)
-	local four = id == "chs_skitter"
+	local gait = Bot.gait(u.def)
 	local first = true
 	while true do
-		if four then
+		if gait == "quad" then
 			quad(u, first, half, scale, dip)
+		elseif gait == "trunks" then
+			trunks(u, first, half, scale, dip)
 		else
 			biped(u, first, half, scale, dip)
 		end
@@ -88,6 +130,9 @@ function Bot.StopMoving(u: any)
 	end
 	for name in QUAD do
 		u:Turn(name, "x", 0, 120)
+	end
+	for name in TRUNKS do
+		u:Turn(name, "x", 0, 60)
 	end
 	u:Move("base", "y", 0, 2)
 end

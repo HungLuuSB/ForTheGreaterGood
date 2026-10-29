@@ -899,6 +899,13 @@ Optionally store values as integers in thousandths so rounding never drifts over
 | Fusion Reactor | T2 | Large power; big explosion on death |
 | Supply Converter | T1/T2 | Converts power → supply at a fixed rate (toggleable) |
 | Supply Depot / Power Bank | T1 | +Storage |
+| Advanced Solar | T1 | +80 power, +100 power storage (S-209) |
+| Capacitor Bank / Accumulator | T1 | +6,000 power storage (S-209) |
+| Offshore Extractor | T1 naval | Extractor on a deposit under the sea; placed like a ship's yard (6+ studs of water) and submerged: only torpedoes reach it (S-209, S-211) |
+| Construction Turret ("nano") | T1 | Builds nothing of its own; 200 build power, 150-stud reach; never moves. Left alone it assists frames, then factories' production, then repairs, then reclaims, nearest first, in reach (S-211). Its death hurts only the nanos around it; self-destructed, none |
+| Advanced Fusion | T2 | +3,000 power, +9,000 storage; 6,000-damage blast on death (S-209) |
+| Advanced Converter | T2 | 600 power → 10.3 supply (S-209) |
+| Advanced Depot / Grid Reservoir, Great Accumulator | T2 | +10,000 supply / +60,000 power storage (S-209) |
 
 Implementation (DECISIONS D92):
 - Wind is a seeded, stateless value from 0 to 1 that changes every 30 s; turbine output is `wind.max × wind`.

@@ -2271,3 +2271,29 @@ The watchdog's WARN / INFO lines (S-140) stay on.
   - The generator is retired (H22), so `Placement.spec` and `Bars.spec` place solars.
   - The D-Gun's range is 80 (H5), so `Dgun.spec` puts the tanks 18, 36 and 54 studs out, aims at 75, and expects a flight from the weapon's range and speed.
   - All pass on main and on m-sim-2.
+
+### C-252 — Rigs for the playtest-3 units (models-C's notes) (2026-10-29)
+
+models-C's rig notes for the 21 units of S-209, approved by the user with their wrecks. The defs are still on m-sim-2 and the models on m-models, so these are keyed by def ID and checked with stand-in defs until both reach main.
+
+- **Mammoth (`chs_mammoth`):** four whole legs, `legFL` / `legFR` / `legBL` / `legBR`, hinged at the hip about X. `Bot.gait` gives it "trunks": diagonal pairs in phase (FL with BR, FR with BL), 22° × its swing scale, an elephant's walk. Hip 5.6, swing 0.6.
+- **Titan (`ord_titan`) and Juggernaut (`chs_korgoth`):** the bot leg kit ×2.1, so the plain Bot biped with hips 9.66 and 9.68 and swing 0.6. Their AMPHIB_WALKER walk is the same on land and on the seafloor (drawing them under water is H18/H19, waiting on sim-A).
+- **Missile pods:** a muzzle that is a piece, not an attachment (`missile_pod`, pivoted at the tube mouth), now gives its joint's position (`Part1.CFrame * C1`), so missiles start there.
+- **Mammoth guns:** `turret` / `barrels` and `muzzle1` / `muzzle2` already work through Default and the muzzle cycle (C-198).
+- **Construction turrets (`ord_nano` / `chs_nano`), `PieceScripts/NanoTurret`:** `Work` now also gets the work's distance. `turret` yaws to the work at 90°/s; `nano` pitches down to a point 3 studs up it from the lens (ord 10.4, chs 8 studs up; at most 60° down). Done, the head lifts level and the turret stays where it last looked. The spray already starts at `nano1`. The work key also buckets the distance (8 studs), so a new target at the same bearing re-aims the head.
+- **Pulse pieces:** rig.md's `pulse` (the advanced fusions' `core`, the advanced converters' `coil` / `crucible`, the advanced capacitor's and accumulator's `cells`) had no driver. Their glow parts (`GlowPiece`) now breathe 0.55–1.45 × their resting strength at 0.5 Hz, dimmed by a stall like the rest; none at the "low" glow level. The scale half of the pulse isn't done (welded MeshParts would have to be resized each frame).
+- **Already handled:** the sea extractors' `drill` (Ambient's powered turn) and the gantries' `buildpad` with `nano1..6` / `nano1..8` (FactoryFrames reads up to 8).
+
+### C-253 — Strategic snapshots in parts (H36, S-212); icons for the playtest-3 units (2026-10-29)
+
+- **Snapshot parts (sim-A's protocol 41, m-sim-2 f65a3b23 merged here):** a Strategic message's header is tick u16, part u8 (0-based), parts u8. `NetIn` reads it with `decodeStrategicHeader`.
+  - At a new tick, records update units as they come. The world keeps which parts of that tick it has (`strategicParts`, `strategicGot`) and which units they list (`strategicSeen`).
+  - Only when every part is in are the non-tactical units it doesn't list dropped. With a part lost they stay until the next whole snapshot. A repeated part counts once; a part of an older tick is ignored. An empty snapshot (part 0 of 1, header only) clears the far units.
+  - C-249's one-snapshot grace (`snapTick`) is gone: the part count makes it unnecessary. Selection's 10-second hold on a missing own unit stays.
+  - Studio, Coastline: 211 Lancers spawned, the camera moved away: Strategic came in 2 parts, all 212 units held in every sample over 8 s, no message dropped.
+- **Icons (sim-A's de7be455 on main):** the sheet is full at 90 tiles, so a new tile would need a second sheet uploaded. The 21 new units borrow existing tiles, as the bots did (S-181), each noted in the catalogue:
+  - Main Battle Tank: chs_mammoth, ord_titan, chs_korgoth.
+  - Vehicle Plant: ord_nano, chs_nano. Adv. Vehicle Plant: ord_gantry, chs_gantry.
+  - Supply Extractor: the offshore extractors. Power Generator: the advanced solars. Supply Converter: the advanced converters. Fusion Reactor: the advanced fusions.
+  - Storage: the capacitor and accumulator, the T2 depots, the T2 capacitor and accumulator.
+  - The generators are marked retired; chs_juggernaut's catalogue name is Goliath. The sheet image is unchanged (no upload); `UI/IconAtlas` carries the new mappings.
