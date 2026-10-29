@@ -19,6 +19,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
 local Kit = require("./Kit")
+local UiIcon = require("./UiIcon")
 local Share = require("../Core/Share")
 local TeamColors = require("../Render/TeamColors")
 
@@ -153,7 +154,7 @@ local function label(parent: Instance, x: number, width: number, color: Color3, 
 	return t
 end
 
-local function small(parent: Instance, text: string, x: number, width: number, color: Color3): TextButton
+local function small(parent: Instance, text: string, x: number, width: number, color: Color3, iconKey: string?): TextButton
 	local b = Instance.new("TextButton")
 	b.AutoButtonColor = true
 	b.Position = UDim2.fromOffset(x, 2)
@@ -164,6 +165,14 @@ local function small(parent: Instance, text: string, x: number, width: number, c
 	b.TextSize = 11
 	b.TextColor3 = color
 	b.Text = text
+	-- 2D-E's icon in place of the glyph once its atlas is uploaded (C-259)
+	local icon = if iconKey then UiIcon.make(iconKey, 12, color) else nil
+	if icon then
+		b.Text = ""
+		icon.AnchorPoint = Vector2.new(0.5, 0.5)
+		icon.Position = UDim2.fromScale(0.5, 0.5)
+		icon.Parent = b
+	end
 	local c = Instance.new("UICorner")
 	c.CornerRadius = UDim.new(0, 3)
 	c.Parent = b
@@ -309,8 +318,8 @@ local function build(panel: Panel, api: Api.Api, players: { TeamColors.Player })
 		buttons.Parent = frame
 		if me.player ~= 0 and p.allyTeam == me.allyTeam and p.id ~= me.player then
 			unitsButton(panel, api, small(buttons, "Units", 0, 32, Kit.COLOR.text), p.id)
-			resourceButton(panel, api, small(buttons, "■", 34, 16, SUPPLY), p.id, "supply")
-			resourceButton(panel, api, small(buttons, "ϟ", 52, 16, POWER), p.id, "power")
+			resourceButton(panel, api, small(buttons, "■", 34, 16, SUPPLY, "supply"), p.id, "supply")
+			resourceButton(panel, api, small(buttons, "ϟ", 52, 16, POWER, "power"), p.id, "power")
 		end
 		panel.rows[p.id] = { frame = frame, swatch = swatch, name = name, bars = bars, supply = supply, power = power, buttons = buttons, team = p.team }
 	end

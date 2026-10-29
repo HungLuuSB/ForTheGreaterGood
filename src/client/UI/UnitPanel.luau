@@ -24,6 +24,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
 local Kit = require("./Kit")
+local UiIcon = require("./UiIcon")
 local Icons = require("../Core/Icons")
 local Precision = require("../Core/Precision")
 local Selection = require("../Core/Selection")
@@ -152,22 +153,29 @@ function UnitPanel.new(api: Api.Api): UI
 	hp.Name = "HP"
 	hp.Position = UDim2.fromOffset(19, 65)
 	hp.Size = UDim2.fromOffset(53, 14)
-	-- its icon: a green cross before the number (two bars, no font glyph needed)
-	local cross = Instance.new("Frame")
+	-- its icon: 2D-E's health cross (C-259), else a green cross of two bars
+	-- until the UI icon atlas is uploaded
+	local cross: GuiObject
+	local icon = UiIcon.make("health", 12, HEALTH)
+	if icon then
+		cross = icon
+	else
+		cross = Instance.new("Frame")
+		cross.BackgroundTransparency = 1
+		for _, size in { UDim2.fromOffset(11, 3), UDim2.fromOffset(3, 11) } do
+			local bar = Instance.new("Frame")
+			bar.AnchorPoint = Vector2.new(0.5, 0.5)
+			bar.Position = UDim2.fromScale(0.5, 0.5)
+			bar.Size = size
+			bar.BackgroundColor3 = HEALTH
+			bar.BorderSizePixel = 0
+			bar.Parent = cross
+		end
+	end
 	cross.Name = "HealthIcon"
-	cross.BackgroundTransparency = 1
 	cross.Position = UDim2.fromOffset(5, 66)
 	cross.Size = UDim2.fromOffset(11, 11)
 	cross.Parent = hp.Parent
-	for _, size in { UDim2.fromOffset(11, 3), UDim2.fromOffset(3, 11) } do
-		local bar = Instance.new("Frame")
-		bar.AnchorPoint = Vector2.new(0.5, 0.5)
-		bar.Position = UDim2.fromScale(0.5, 0.5)
-		bar.Size = size
-		bar.BackgroundColor3 = HEALTH
-		bar.BorderSizePixel = 0
-		bar.Parent = cross
-	end
 	hp:GetPropertyChangedSignal("Visible"):Connect(function()
 		cross.Visible = hp.Visible -- shown and hidden with the number
 	end)

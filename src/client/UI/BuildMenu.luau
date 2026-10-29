@@ -21,6 +21,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
 local Kit = require("./Kit")
+local UiIcon = require("./UiIcon")
 local BuildMenu = require("../Core/BuildMenu")
 local Icons = require("../Core/Icons")
 local Glyph = require("./Glyph")
@@ -433,11 +434,20 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 			g.root.ZIndex = 4
 			ui.itemGlyphs[i] = g
 			local function costLabel(name: string, y: number, color: Color3): TextLabel
+				-- 2D-E's supply / power icon right of the number, once the UI
+				-- icon atlas is uploaded (C-259)
+				local icon = UiIcon.make(string.lower(name), 11, color)
+				if icon then
+					icon.AnchorPoint = Vector2.new(1, 1)
+					icon.Position = UDim2.new(1, -2, 1, y - 1)
+					icon.ZIndex = 4
+					icon.Parent = b
+				end
 				local l = Instance.new("TextLabel")
 				l.Name = name
 				l.BackgroundTransparency = 1
 				l.AnchorPoint = Vector2.new(1, 1)
-				l.Position = UDim2.new(1, -3, 1, y)
+				l.Position = UDim2.new(1, if icon then -15 else -3, 1, y)
 				l.Size = UDim2.new(1, -24, 0, 12)
 				l.Font = Enum.Font.GothamBold
 				l.TextSize = 11

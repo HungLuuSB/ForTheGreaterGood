@@ -45,7 +45,7 @@ return function(t: any)
 			local s = Icons.style(tbl, world, u, false)
 			t.equal(s.kind, "unit", def.id)
 			t.equal(s.tile, IconAtlas.byDef[def.id].tile, def.id)
-			t.expect(s.size >= Icons.BASE and s.size <= 30, `{def.id}: size {s.size}`)
+			t.expect(s.size >= Icons.BASE and s.size <= math.floor(Icons.BASE * 1.4 + 0.5), `{def.id}: size {s.size}`) -- up to the experimental mechs' 1.4 (draft 7)
 		end
 		t.expect(Icons.style(tbl, world, { id = 1, team = 1, defIndex = defs.units.ord_paladin.index, flags = 0, x = 0, z = 0, alt = 0 } :: any, false).size > Icons.BASE, "T2 drawn larger")
 		t.equal(IconAtlas.byDef.ord_lancer.tile, IconAtlas.byDef.chs_ravager.tile, "faction counterparts share an icon (the catalogue)")
