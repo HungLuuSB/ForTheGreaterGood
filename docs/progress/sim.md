@@ -786,8 +786,8 @@ Four Claude sessions work in parallel, one per stream. Each has its own git work
   - Run `integrate.sh` once per "Ready to merge" commit, strictly one after another (chained with `&&` in one background command, never in parallel).
   - After each push, tell the streams, and each merges `main` itself.
 - **Live sync:**
-  - Match place: `lune run serve` and `rojo serve serve.project.json` in this folder.
-  - Each Studio stream runs its own pair in its own worktree; D's is `lune run src/lobby/tools/sync serve` and `rojo serve lobby.project.json`.
+  - All three places: double-click `tools/studio/sync_all.cmd` (or run `tools/studio/sync_all.ps1 [match] [lobby] [art]`). It starts each place's converter and Rojo in its stream's worktree: match on 34872 from `FTGG-client`, art on 34873 from `FTGG-models`, lobby on 34874 from `FTGG-lobby` (`tools/studio/places.json`). A place whose port is already listening is skipped.
+  - By hand: `lune run serve` and `rojo serve serve.project.json --port <port>` in the worktree; D's pair is `lune run src/lobby/tools/sync serve` and `rojo serve lobby.project.json`.
   - Never wipe `build/serve/` while a sync runs.
 - **Messages between sessions:** SendMessage to the session name works only when both sessions run in the same permission mode (bypass so far). Otherwise use the progress files: "Ready to merge" lines, and each stream's Requests section.
 - **The user's standing rules for A:**
