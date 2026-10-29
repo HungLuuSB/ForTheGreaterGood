@@ -1,95 +1,84 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Animated pieces (M-27): 1844 triangles, glow share 5.0%",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 5920 triangles, glow share 1.9%",
   "bar": {
-    "model": "rbxassetid://98229801831237",
+    "model": "rbxassetid://101944120783402",
     "meshes": {
-      "armL": "rbxassetid://125958134940904",
-      "armL_glow_running": "rbxassetid://120844694970766",
-      "armL_glow_weapon": "rbxassetid://139259505436777",
-      "armR": "rbxassetid://79025790211394",
-      "armR_glow_running": "rbxassetid://112788200830523",
-      "armR_glow_weapon": "rbxassetid://70436073290802",
-      "base": "rbxassetid://111556404150487",
-      "base_glow_head": "rbxassetid://104067457910288",
-      "base_glow_running": "rbxassetid://76826621455100",
-      "trackL": "rbxassetid://110041737626201",
-      "trackR": "rbxassetid://90406320327921",
-      "turret": "rbxassetid://119491082504258",
-      "turret_glow_running": "rbxassetid://115703380289263"
+      "base": "rbxassetid://87163518733355",
+      "footL": "rbxassetid://124185581610300",
+      "footR": "rbxassetid://131537266772715",
+      "gunL": "rbxassetid://108195638040487",
+      "gunL_glow_running": "rbxassetid://86920540333060",
+      "gunL_glow_weapon": "rbxassetid://75049494843523",
+      "gunR": "rbxassetid://132007648180778",
+      "gunR_glow_running": "rbxassetid://85933781446222",
+      "gunR_glow_weapon": "rbxassetid://118818574092086",
+      "missile_pod": "rbxassetid://77086048474365",
+      "missile_pod_glow_running": "rbxassetid://120754892798783",
+      "missile_pod_glow_weapon": "rbxassetid://94174526091698",
+      "ray_arm": "rbxassetid://136825248196710",
+      "ray_arm_glow_head": "rbxassetid://83925074177679",
+      "ray_arm_glow_power": "rbxassetid://106798917254450",
+      "ray_arm_glow_weapon": "rbxassetid://116269039952886",
+      "shinL": "rbxassetid://105172968365674",
+      "shinL_glow_power": "rbxassetid://79630082444061",
+      "shinR": "rbxassetid://130019661960978",
+      "shinR_glow_power": "rbxassetid://72452670079463",
+      "thighL": "rbxassetid://70375278629772",
+      "thighL_glow_running": "rbxassetid://79202160995785",
+      "thighR": "rbxassetid://129210602751213",
+      "thighR_glow_running": "rbxassetid://128771360950990",
+      "torso": "rbxassetid://84212302184389",
+      "torso_glow_power": "rbxassetid://140240900329514",
+      "torso_glow_running": "rbxassetid://74927911304213"
     },
     "decals": {
-      "ALB": "rbxassetid://73285710295267",
-      "RGH": "rbxassetid://119712818627373",
-      "NOR": "rbxassetid://112261339992998",
-      "MTL": "rbxassetid://78802300811925",
-      "EMI": "rbxassetid://122541933358696"
+      "ALB": "rbxassetid://127098321893208",
+      "RGH": "rbxassetid://83754430856572",
+      "NOR": "rbxassetid://129320381629113",
+      "MTL": "rbxassetid://99273123213522",
+      "EMI": "rbxassetid://93143053297529"
     },
     "surfaceAppearance": {
-      "ALB": "rbxassetid://121805878728842",
-      "NOR": "rbxassetid://79850107131082",
-      "RGH": "rbxassetid://96588588716711",
-      "MTL": "rbxassetid://107738590716746",
-      "EMI": "rbxassetid://139821381842272"
+      "ALB": "rbxassetid://116245640470766",
+      "NOR": "rbxassetid://130526205698097",
+      "RGH": "rbxassetid://102397928749219",
+      "MTL": "rbxassetid://90881689268573",
+      "EMI": "rbxassetid://138492590336388"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_juggernaut_bar in FTGG Art"
-  },
-  "bar_1": {
-    "model": "rbxassetid://114402565517622",
-    "meshes": {
-      "armL": "rbxassetid://133403698041044",
-      "armL_glow_running": "rbxassetid://109380910494970",
-      "armL_glow_weapon": "rbxassetid://105295960678557",
-      "armR": "rbxassetid://73408287705270",
-      "armR_glow_running": "rbxassetid://138687794088102",
-      "armR_glow_weapon": "rbxassetid://140293176130570",
-      "base": "rbxassetid://135137819162120",
-      "base_glow_head": "rbxassetid://77411540574050",
-      "base_glow_running": "rbxassetid://92396899889296",
-      "turret": "rbxassetid://116021011093180",
-      "turret_glow_running": "rbxassetid://124392661287688"
-    },
-    "decals": {
-      "ALB": "rbxassetid://127126349659340",
-      "RGH": "rbxassetid://111010845086614",
-      "NOR": "rbxassetid://117472261964055",
-      "MTL": "rbxassetid://110083310328398",
-      "EMI": "rbxassetid://92444784699312"
-    },
-    "surfaceAppearance": {
-      "ALB": "rbxassetid://87982680658310",
-      "NOR": "rbxassetid://112329290586756",
-      "RGH": "rbxassetid://111422990287492",
-      "MTL": "rbxassetid://72914391888578",
-      "EMI": "rbxassetid://104842864265047"
-    },
-    "note": "2026-10-22, first BAR upload (M-15): 1844 triangles, glow share 5.0%"
+    "modelPath": "ReplicatedStorage.ModelReview.chs_korgoth_bar in FTGG Art"
   },
   "wreck": {
-    "model": "rbxassetid://121068576949343",
+    "model": "rbxassetid://137930038069805",
     "meshes": {
-      "armL": "rbxassetid://75650101529717",
-      "armR": "rbxassetid://91369894561446",
-      "base": "rbxassetid://93440512014265",
-      "trackL": "rbxassetid://124368803127811",
-      "trackR": "rbxassetid://103800926147089",
-      "turret": "rbxassetid://124354487827449"
+      "base": "rbxassetid://111745116035960",
+      "footL": "rbxassetid://76156305132255",
+      "footR": "rbxassetid://85302809941182",
+      "gunL": "rbxassetid://134307986289033",
+      "gunR": "rbxassetid://122067137363720",
+      "missile_pod": "rbxassetid://73915468253533",
+      "ray_arm": "rbxassetid://110959478979736",
+      "shinL": "rbxassetid://119320383663046",
+      "shinR": "rbxassetid://113493413503977",
+      "thighL": "rbxassetid://76440546019947",
+      "thighR": "rbxassetid://116108777393621",
+      "torso": "rbxassetid://119961412637905"
     },
     "decals": {
-      "ALB": "rbxassetid://90481259814782",
-      "RGH": "rbxassetid://103384636229258",
-      "NOR": "rbxassetid://94685440555967",
-      "MTL": "rbxassetid://127039362674776",
-      "EMI": "rbxassetid://81315591520989"
+      "ALB": "rbxassetid://131185082991731",
+      "RGH": "rbxassetid://134303724428220",
+      "NOR": "rbxassetid://92474673652165",
+      "MTL": "rbxassetid://138966976286207",
+      "EMI": "rbxassetid://140455457711669"
     },
     "surfaceAppearance": {
-      "ALB": "rbxassetid://73411305825157",
-      "NOR": "rbxassetid://107905618067578",
-      "RGH": "rbxassetid://130174483948394",
-      "MTL": "rbxassetid://91802887944409",
-      "EMI": "rbxassetid://70425434067777"
+      "ALB": "rbxassetid://92519482533090",
+      "NOR": "rbxassetid://133060555342485",
+      "RGH": "rbxassetid://130856975368733",
+      "MTL": "rbxassetid://115750019465407",
+      "EMI": "rbxassetid://99812338957837"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_juggernaut_wreck_bar in FTGG Art",
-    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1832 triangles"
+    "modelPath": "ReplicatedStorage.ModelReview.chs_korgoth_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 4344 triangles"
   }
 }

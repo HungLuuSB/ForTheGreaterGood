@@ -46,17 +46,18 @@ return function(t: RunAll.Context)
 		t.equal(codex.entries.chs_generator, nil)
 		t.expect(codex.entries.ord_sovereign ~= nil, "Command Vehicles show though nothing builds them")
 		local fake = { units = table.clone(defs.units), weapons = defs.weapons }
-		fake.units.ord_paladin = table.clone(defs.units.ord_paladin)
-		fake.units.ord_paladin.retired = true
+		fake.units.ord_titan = table.clone(defs.units.ord_titan)
+		fake.units.ord_titan.retired = true
 		local c = Codex.build(fake)
-		t.equal(c.entries.ord_paladin, nil, "a retired def on a build list still doesn't show")
+		t.equal(c.entries.ord_titan, nil, "a retired def on a build list still doesn't show")
 		t.equal(#c.entries.chs_juggernaut.counterparts, 0, "and isn't a counterpart")
 	end)
 
 	t.test("counterparts point at each other", function()
-		local p = codex.entries.ord_paladin
-		t.deepEqual(p.counterparts, { "chs_juggernaut" })
-		t.deepEqual(codex.entries.chs_juggernaut.counterparts, { "ord_paladin" })
+		t.deepEqual(codex.entries.ord_titan.counterparts, { "chs_juggernaut" })
+		t.deepEqual(codex.entries.chs_juggernaut.counterparts, { "ord_titan" })
+		t.equal(#codex.entries.ord_paladin.counterparts, 0, "no Chaos main battle tank (S-213)")
+		t.equal(codex.entries.chs_goliath, nil, "the retired Goliath")
 		t.deepEqual(codex.entries.ord_overwatch.counterparts, { "chs_twin_guard", "chs_geryon" })
 		t.deepEqual(codex.entries.chs_geryon.counterparts, { "ord_overwatch" })
 		t.equal(#codex.entries.ord_warden.counterparts, 0, "faction-only")
@@ -123,7 +124,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a comparison lists differences of 5% or more, biggest first", function()
-		local d = Codex.compare(codex, "ord_paladin", "chs_juggernaut")
+		local d = Codex.compare(codex, "ord_titan", "chs_juggernaut")
 		for i, x in d do
 			t.expect(math.abs(x.pct) >= 5, x.label)
 			if i > 1 then

@@ -2311,3 +2311,10 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 ### C-255 — Still water (2026-10-29)
 
 - The user: the water's moving texture looked odd. The two scrolling ripple Textures on every water surface (C-236) are gone, with their EditableImage and tweens; the water is the plain see-through planes over the darker depth planes.
+
+### C-256 — S-213 lands through the client branch: chs_juggernaut is the T3 bot, chs_goliath the T2 tank (2026-10-29)
+
+- sim-A's S-213 (748ddf25) swaps the Chaos ids: the T3 bot `chs_korgoth` is now `chs_juggernaut` (weapons `chs_juggernaut_heatray`, `_shotgun`, `_missiles`); the T2 tank once named Juggernaut is `chs_goliath` ("Goliath", `chs_goliath_cannon`), retired. Every stream keys on unit ids, so it lands as one merge from this branch: sim-A's commit, lobby-D's Codex (e4aef962, Ready 5b2a078d), models-C's Blockouts, Meshes, assets and MeshMaterials (a1030665, tip bfded620), and the client's part.
+- Client: the arms script `PieceScripts/chs_juggernaut` is renamed `chs_goliath`; the Bot gait's hip and scale tables, `PieceScripts/Registry` and `UI/IconAtlas` take the new ids (the T3 bot still borrows the Main Battle Tank tile until 2D-E's icons, request E1). The Deaths, PieceAnim, Ambient and PortraitStage specs follow.
+- The test scenes in `src/roblox/MatchConfig.luau` that spawned the T2 tank now spawn `chs_goliath` (committed from the file's committed version only; the user's local edits stay out).
+- Studio, Coastline: `chs_juggernaut` draws as the meshed T3 bot and walks on the Bot gait, `chs_goliath` as the meshed tank; no piece-script errors (`debug_out/screens/c256-juggernaut-t3.jpg`).

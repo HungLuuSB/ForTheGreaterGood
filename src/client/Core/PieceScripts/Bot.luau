@@ -9,7 +9,7 @@
 -- strides). Skitter (four splayed legs) walks a diagonal gait: front-left
 -- with back-right, then front-right with back-left; so does the Mammoth on
 -- its four whole legs (`legFL` .. `legBR`, hinged at the hip, models-C), an
--- elephant's walk. The experimentals Titan and Juggernaut (chs_korgoth) use
+-- elephant's walk. The experimentals Titan and Juggernaut (chs_juggernaut, S-213) use
 -- the leg kit ×2.1, on land and on the seafloor (AMPHIB_WALKER, S-210).
 -- Stopped, the legs ease back to rest.
 
@@ -26,7 +26,7 @@ Bot.HIP = {
 	chs_centurion = 5.6,
 	chs_skitter = 2.1,
 	ord_titan = 9.66,
-	chs_korgoth = 9.68,
+	chs_juggernaut = 9.68,
 	chs_mammoth = 5.6,
 } :: { [string]: number }
 -- swing scale; others 1 (models-C: about 0.6 for the heavy, slow ones)
@@ -35,7 +35,7 @@ Bot.SCALE = {
 	chs_centurion = 1.15,
 	chs_skitter = 0.7,
 	ord_titan = 0.6,
-	chs_korgoth = 0.6,
+	chs_juggernaut = 0.6,
 	chs_mammoth = 0.6,
 } :: { [string]: number }
 Bot.DIP = 0.05 -- the pelvis's drop mid-step, in hip heights

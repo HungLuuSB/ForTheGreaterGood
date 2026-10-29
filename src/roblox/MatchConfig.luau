@@ -84,7 +84,7 @@ local PROFILES = {
 		demoOrders = true,
 		restartAfter = 8,
 		spawns = {
-			{ def = "chs_juggernaut", player = 1, x = -140, z = -30, heading = math.pi / 2, count = 4, dz = 20 },
+			{ def = "chs_goliath", player = 1, x = -140, z = -30, heading = math.pi / 2, count = 4, dz = 20 },
 			{ def = "ord_lancer", player = 2, x = 140, z = -70, heading = -math.pi / 2, count = 8, dz = 20 },
 		},
 	},
@@ -383,7 +383,7 @@ local PROFILES = {
 			{ def = "chs_jackal", player = 2, x = 420, z = -500, count = 6, dz = 200, heading = -math.pi / 2 },
 			{ def = "chs_ravager", player = 2, x = 450, z = -540, count = 12, cols = 6, dz = 24, rowDx = 24, heading = -math.pi / 2 },
 			{ def = "chs_ravager", player = 2, x = 450, z = 420, count = 12, cols = 6, dz = 24, rowDx = 24, heading = -math.pi / 2 },
-			{ def = "chs_juggernaut", player = 2, x = 450, z = -98, count = 16, cols = 8, dz = 28, rowDx = 28, heading = -math.pi / 2 },
+			{ def = "chs_goliath", player = 2, x = 450, z = -98, count = 16, cols = 8, dz = 28, rowDx = 28, heading = -math.pi / 2 },
 			{ def = "chs_hornet", player = 2, x = 510, z = -450, count = 6, dz = 180, heading = -math.pi / 2 },
 			{ def = "chs_hydra", player = 2, x = 570, z = -300, count = 8, cols = 4, dz = 30, rowDx = 30, heading = -math.pi / 2 },
 			{ def = "chs_hellmouth", player = 2, x = 570, z = 210, count = 8, cols = 4, dz = 30, rowDx = 30, heading = -math.pi / 2 },
@@ -454,7 +454,7 @@ local PROFILES = {
 			{ def = "ord_mason", player = 1, x = -70, z = -60, count = 2, dx = 140, health = 50 },
 			{ def = "chs_locust", player = 2, x = -45, z = 40, count = 4, dx = 30, heading = math.pi },
 			{ def = "chs_ravager", player = 2, x = -60, z = 90, count = 4, dx = 40, heading = math.pi },
-			{ def = "chs_juggernaut", player = 2, x = -120, z = 110, count = 2, dx = 240, heading = math.pi },
+			{ def = "chs_goliath", player = 2, x = -120, z = 110, count = 2, dx = 240, heading = math.pi },
 			{ def = "chs_hellmouth", player = 2, x = -60, z = 200, count = 3, dx = 60, heading = math.pi, fireAt = { 0, -150 } },
 			{ def = "chs_hydra", player = 2, x = -40, z = 260, count = 2, dx = 80, heading = math.pi, fireAt = { 0, -150 } },
 			{ def = "chs_cyclops", player = 2, x = -50, z = 330, count = 2, dx = 100, heading = math.pi },
@@ -465,7 +465,7 @@ local PROFILES = {
 	-- (0, -150) with its fusion plant, a builder in the dome's core (72 studs)
 	-- as the target, and one Ravager to the north firing at it, its shells
 	-- crossing the dome's north face. Change the Ravager's def to try other
-	-- shells (in range of the builder: chs_juggernaut, chs_locust).
+	-- shells (in range of the builder: chs_goliath, chs_locust).
 	-- your shield dome against beam towers (C-140, the user): Radiances east,
 	-- west and south and an Inferno south-east, every beam fired at the dome's
 	-- middle so it ends on the dome and glances off (C-129), pulsing the
@@ -494,7 +494,7 @@ local PROFILES = {
 			{ def = "ord_radiance", player = 2, x = -260, z = -150, heading = math.pi / 2, fireAt = { 0, -150 } },
 			{ def = "ord_radiance", player = 2, x = 0, z = 110, heading = math.pi, fireAt = { 0, -150 } },
 			{ def = "chs_inferno", player = 2, x = 170, z = 0, heading = math.pi, fireAt = { 0, -150 } },
-			{ def = "chs_juggernaut", player = 2, x = -160, z = 20, count = 2, dx = 40, heading = math.pi, fireAt = { 0, -150 } },
+			{ def = "chs_goliath", player = 2, x = -160, z = 20, count = 2, dx = 40, heading = math.pi, fireAt = { 0, -150 } },
 			{ def = "chs_ravager", player = 2, x = 100, z = 60, count = 3, dx = 25, heading = math.pi, fireAt = { 0, -150 } },
 		},
 	},
