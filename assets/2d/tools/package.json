@@ -1,0 +1,13 @@
+{
+  "name": "ftgg-2d-tools",
+  "private": true,
+  "type": "module",
+  "description": "2D stream tools: exports the UI icon sheet (docs/art/icons/ftgg-ui-icons.html) to PNG tiles and checks them.",
+  "scripts": {
+    "export": "node ui_icons.mjs",
+    "check": "node ui_icons.mjs --check"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2"
+  }
+}

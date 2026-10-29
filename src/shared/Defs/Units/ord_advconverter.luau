@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_advconverter",
 	name = "Advanced Supply Converter",
-	description = "T2 converter. Turns 600 spare power a second into 10.3 supply (switch off with TOGGLE).",
+	description = "Advanced supply converter. Turns 600 spare power a second into 10.3 supply; switch it off with Toggle.",
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE" },

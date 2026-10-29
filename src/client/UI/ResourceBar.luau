@@ -20,12 +20,14 @@ local Api = require("../Api")
 local Schema = require("@shared/Net/Schema")
 local UnitFlow = require("../Core/UnitFlow")
 local Kit = require("./Kit")
+local UiIcon = require("./UiIcon")
 
 local ResourceBar = {}
 
 local BG = Kit.COLOR.panel
 local FILL = { Supply = Color3.fromRGB(200, 205, 215), Power = Color3.fromRGB(240, 210, 60) }
-local SYMBOL = { Supply = "■", Power = "ϟ" }
+local SYMBOL = { Supply = "■", Power = "ϟ" } -- until the UI icon atlas is uploaded (C-259)
+local ICON = { Supply = "supply", Power = "power" }
 local STALL = Color3.fromRGB(230, 70, 60)
 
 export type Marker = { handle: TextButton, level: number, block: string, help: string, dragging: number?, shown: number }
@@ -89,7 +91,14 @@ function ResourceBar.new(): Bar
 		local c = Instance.new("UICorner")
 		c.CornerRadius = UDim.new(0, 3)
 		c.Parent = b
-		text(b, 22, FILL[name], Enum.TextXAlignment.Center, UDim2.fromOffset(4, 6), UDim2.fromOffset(26, 26)).Text = SYMBOL[name]
+		local mark = text(b, 22, FILL[name], Enum.TextXAlignment.Center, UDim2.fromOffset(4, 6), UDim2.fromOffset(26, 26))
+		local icon = UiIcon.make(ICON[name], 24, FILL[name])
+		if icon then
+			icon.Position = UDim2.fromOffset(5, 7)
+			icon.Parent = b
+		else
+			mark.Text = SYMBOL[name]
+		end
 		local demand = text(b, 12, Color3.fromRGB(240, 90, 80), Enum.TextXAlignment.Left, UDim2.fromOffset(34, 4), UDim2.fromOffset(60, 14))
 		local income = text(b, 12, Color3.fromRGB(110, 220, 110), Enum.TextXAlignment.Left, UDim2.fromOffset(34, 20), UDim2.fromOffset(60, 14))
 		local stored = text(b, 17, Color3.new(1, 1, 1), Enum.TextXAlignment.Center, UDim2.fromOffset(96, 2), UDim2.fromOffset(100, 20))
@@ -123,7 +132,11 @@ function ResourceBar.new(): Bar
 		local scale = gui:FindFirstChild("SettingsScale")
 		local k = if scale and scale:IsA("UIScale") then scale.Scale else 1 -- (screen pixels → the scaled gui's)
 		tip.Text = line
-		tip.Position = UDim2.fromOffset((h.AbsolutePosition.X + h.AbsoluteSize.X / 2) / k, (root.AbsolutePosition.Y + root.AbsoluteSize.Y) / k + 4)
+		-- AbsolutePosition counts from below Roblox's top bar, this gui from the
+		-- screen's top (IgnoreGuiInset): add the inset back, or the tip sat a
+		-- top bar's height too high, over the box (the user, C-263)
+		local inset = game:GetService("GuiService"):GetGuiInset()
+		tip.Position = UDim2.fromOffset((h.AbsolutePosition.X + inset.X + h.AbsoluteSize.X / 2) / k, (root.AbsolutePosition.Y + inset.Y + root.AbsoluteSize.Y) / k + 4)
 		tip.Visible = true
 	end
 	local markers: { Marker } = {}

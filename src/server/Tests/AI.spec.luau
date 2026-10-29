@@ -52,6 +52,20 @@ local function owned(sim: Sim.Sim, player: number, defId: string): { number }
 	return out
 end
 
+-- The player's armed mobile units, Commander and scouts aside: tanks, bots
+-- and aircraft (S-216: bots and helicopters are in the army too).
+local function armyOf(sim: Sim.Sim, player: number): number
+	local w = sim.world
+	local n = 0
+	for _, id in w.ids do
+		local d = sim.defs.unitByIndex[w.defIndex[id]]
+		if w.owner[id] == player and d.domain ~= "structure" and #d.weapons > 0 and not table.find(d.categories, "COMMANDER") and d.id ~= "ord_herald" and d.id ~= "chs_jackal" then
+			n += 1
+		end
+	end
+	return n
+end
+
 return function(t: RunAll.Context)
 	t.test("the AI builds a radar tower early", function()
 		local sim = start(21)
@@ -205,7 +219,7 @@ return function(t: RunAll.Context)
 		-- the tanks-first rule gives way to generators while power stalls;
 		-- the economy grows and the army follows)
 		run(sim, { brain }, 900 * 8, false)
-		local army = #owned(sim, 1, "ord_lancer") + #owned(sim, 1, "ord_verdict")
+		local army = armyOf(sim, 1)
 		t.expect(#owned(sim, 1, "ord_solar") >= 4, `generators keep up with the plant ({#owned(sim, 1, "ord_solar")})`)
 		t.expect(army >= 8, `an army by 8 minutes ({army})`)
 		-- (0.5 since S-114: extractors alternate with generators from the
@@ -348,7 +362,9 @@ return function(t: RunAll.Context)
 			{ 1, "ord_advextractor" }, { 1, "ord_bastion" }, { 1, "ord_sanction" }, { 1, "ord_providence" }, { 1, "ord_reckoning" },
 			{ 2, "chs_advextractor" }, { 2, "chs_maw" }, { 2, "chs_scourge" }, { 2, "chs_cerberus" },
 		}
-		run(sim, brains, 900 * 30, true, function()
+		-- (40 min since S-216: Hard builds fusion while power stalls and its
+		-- gantry before the silo)
+		run(sim, brains, 900 * 40, true, function()
 			local all = brains[1].nukes > 0
 			for _, pair in want do
 				local id = pair[2] :: string

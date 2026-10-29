@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "ord_seraph",
 	name = "Seraph",
-	description = "Mobile radar SAM. Long-range anti-air with its own radar; can be jammed.",
+	description = "Mobile radar SAM. Long-range missiles against aircraft, guided by its own radar.",
 	faction = "order",
 	tier = 2,
 	domain = "ground",

@@ -3003,3 +3003,66 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 - **Other streams:** the client (icons, piece scripts, meshes) and the lobby Codex look units up by id, so B swaps `IconAtlas` and `PieceScripts`, C swaps the Blockouts and Meshes registry keys (`chs_juggernaut` → `chs_goliath`, `chs_korgoth` → `chs_juggernaut`), and D swaps the Codex rows. Main takes it in one merge through the last branch in the chain.
 - **Test:** `Playtest3Units.spec` checks the ids, the retirement, the gantry list and both walkers' longest range.
+
+## S-214 — Unit descriptions are "Role. What it does." (the user) (2026-10-29)
+
+- **Asked (the user):** rewrite every unit's short description like "Mobile SAM. …", keep it that way, and don't mention its pros and cons against its counterpart.
+- **Now:** all 203 unit defs read "Role. One line on what it does." Counterparts share the role (Sentry and Guard are both "Laser tower"), and most share the whole text. The line names the weapon or job, plus numbers a player needs (storage, output, power a shot). There are no comparisons ("than Order's", "shorter range than Gauntlet", "cheaper", "weak to splash", "fragile up close").
+- The unit panel shows the text before the first full stop as the role (`UnitPanel`), so a role has no full stop of its own.
+- **Kept that way by a test:** `Defs.spec` checks each description: a role of at most 40 characters, a full stop, one line ending in a full stop, and none of "than", "Order's", "Chaos's", "cheaper", "fragile".
+
+## S-215 — The power bar's demand counts extractor upkeep and converters (client-B, from the user's playtest) (2026-10-30)
+
+- **Asked (client-B):** the power bar showed "-0" with three extractors running. Upkeep (S-198) and converters' burn were paid into `spent`, but the Eco record's `demand` was construction's alone.
+- **Now:** `Economy` keeps `power.fixedRate`, what the team paid per second this window outside construction: extractor upkeep (times the share it could pay) plus each burning converter's rate. NetOut sends `demand + fixedRate`, so the bar's red number is everything spent per second. No protocol change; the client shows it as sent.
+- Converters' supply already showed as income (it is credited through `reclaimed`, S-183).
+- **Test:** `EcoLevels.spec`: one extractor reads 3 a second, and a burning converter adds its 70.
+
+## S-216 — The skirmish AI builds playtest 3's units (the user) (2026-10-30)
+
+- **Asked (the user):** the AI builds the 21 playtest-3 units: bot labs and bots in its mix, Construction Turrets next to its factories, the advanced economy as it grows, offshore extractors on water maps, and for Hard a gantry and a Titan or Juggernaut late. Mirror-match results on Supreme Strait and Coastline.
+- **Now (Normal and Hard; Easy unchanged):**
+  - **Bot Lab** beside the plant once 6 extractors and 4 army units stand. It was only in the aggressive level and the spam and tech roles (S-187). Its scouts, line bots, AA bots and helpers join the army.
+  - **Construction Turrets:** one per factory on Normal, two on Hard. Any finished factory counts: vehicle plants, bot labs, advanced plants and labs, airfields, gantries. They go behind the factory, at most `NANO_REACH` (120) studs from its centre, once 6 extractors and 4 army units stand and power isn't stalling. Left alone they assist and repair what is in reach (S-211). Turrets already ordered count, so two builders don't double up.
+  - **Advanced solar** instead of solar once 6 solars stand. For the generator rule it counts as 4 solars (80 / 20 power).
+  - **The T2 builder's economy jobs, in its list:**
+    1. **Fusion**, at most `FUSIONS` (2), first while power stalls.
+    2. The shield, as before.
+    3. **Advanced depot** when supply sits 90% full.
+    4. The Pinpointers and the T2 defences, as before.
+    5. **Advanced capacitor / accumulator** after the beam tower, for its charged shots.
+    6. Long-range radar, as before.
+    7. **Advanced converters** (at most 2) with power 80% stored and not stalling.
+    8. The anti-nuke, as before.
+    9. The silo and the Citadel, as before. The silo now needs 2,500 stored or 90% of storage, whichever is less (`NUKE_SUPPLY`); the advanced depot's 10,000 storage put 90% out of reach, and Order hard launched no nuke in 30 minutes.
+    10. **Advanced fusion** once a fusion stands and supply reaches 2,000 stored (or 80% of storage).
+    11. **Hard: the Experimental Gantry** at 2,500 stored (or 80%). It builds one Titan / Juggernaut at a time, and each joins the army.
+  - **Offshore extractors:** on a map with free deposits under the sea, the shipyard builds one naval worker (Tidewright / Wrecker). It builds an offshore extractor on each free sea deposit (`Skirmish.freeSeaDeposit`), then assists the shipyard.
+  - **Fix:** the Chaos advanced plant asked for `chs_juggernaut`, the T3 bot since S-213 and not on its list, so the order was refused and the plant built fewer tanks. The Tzar takes the Goliath's place in the mix until the user picks a Chaos T2 main battle tank.
+- **Follow-up, after the first mirror run (nothing past advanced solar in 25 minutes):**
+  - **Cause, older than S-216:** in a real match the AI spends supply as it comes in, so it stores 0 all game and power sits full and wasted. The tech steps wait for stored supply (900 for the advanced plant, 600 for the T2 builder), so they never came.
+  - **Tech by size:** the advanced plant also comes at `TECH_EXTRACTORS` (8) extractors with an 8-unit army. It also comes after `TECH_TICKS` (10 minutes) with 6 extractors, since Hard's safe deposits on a 1v1 map are 8 or 9. The T2 builder uses the same bars.
+  - **T1 converters**, up to `CONVERTERS` (3), while power sits 90% full, isn't stalling, and supply ran short.
+  - **The generator rule plans for the extractors' upkeep** (S-198). Each advanced extractor costs 15 a second, and each upgrade had stalled power.
+  - **While power stalls**, the T2 builder starts a fusion before more extractor upgrades.
+  - **Advanced fusion** comes once two fusions stand and power still stalls, or when rich.
+  - **Hard's gantry** also comes after `GANTRY_TICKS` (15 minutes) with `GANTRY_EXTRACTORS` (8) extractors.
+  - **A shipyard comes early** on a map with free offshore deposits; it no longer waits for "established", which needs 200 supply stored.
+  - **Hard's gantry comes right after the first shield,** ahead of the T2 defence list. In a match the T2 builder never reached the end of that list. While a gantry frame stands, the T1 builders help it before they help an advanced plant.
+  - **`AI.spec`'s T2-extras test runs 40 minutes** (it ran 30). Hard now builds fusion while power stalls and its gantry before the silo, so the nuke comes later: it launched at 32.2 minutes.
+  - **Still open:** in a 35-minute mirror match, the AI stalls on power and supply from about minute 8 (it builds at 27–48% speed). Advanced fusion, advanced converters, advanced storage and the gantry wait behind that stall.
+  - Coastline has no deposits deep enough for an offshore extractor (0 of 18). Supreme Strait has 6.
+- **Mirror results:** `lune run mirror_units` (report only, `debug_out/mirror_units.md`): one AI a side, both faction mirrors, Normal and Hard, on Supreme Strait (each AI on its side's front pick) and Coastline. It reports the wins and what each AI built.
+- **Tests:**
+  - `AI.spec`'s Normal economy test counts the whole army: bots and helicopters are in it now.
+  - `AIUnits.spec` (slow): two Normal Order AIs on Ridgeline by 14 minutes each have a Bot Lab, bots, advanced solar and a Construction Turret beside a factory.
+
+## S-217 — T3 walkers' blasts a third of a nuke's; the Solar Array costs 100 supply (the user) (2026-10-30)
+
+- **Asked (the user):** "Titan self-D range must be lower than nuke (35% nuke explosion range) and it can not insta-kill commander (deal like 15%)"; earlier: "Juggernaut explosion is almost as wide as a nuke explosion"; "solar array cost 100 metal, not 30".
+- **Now:**
+  - Titan and Juggernaut self-destruct with `{ damage = 480, aoe = 52, edge = 0.25 }`: 35% of the nuke's 150 studs, and 480 is 16% of the Sovereign's 3,000 health (14% of the Warlord's 3,400).
+  - Their death blast when killed is the same; it was the default (Titan 5,700 over 68 studs, which killed a Commander).
+  - The Juggernaut's was 12,000 over 220 studs ("almost a nuke", H40); the Titan's self-destruct was its default × 1.75 (9,975 over 119).
+  - Solar Array: 30 → 100 supply (both factions).
+- **Test:** `Playtest3Units.spec`: each walker self-destructs beside a Sovereign, which keeps over 80% health, and a tank 90 studs off is untouched.

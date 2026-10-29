@@ -10,17 +10,16 @@ Written for a new session (the project is moving to another Claude account). Eve
 
 ### Where it stands
 
-- Branch `m-client-foundation` (worktree `C:\Workspace\Projects\FTGG-client`) has main d06f303b merged in: all of playtest 3 and the handover, with C-248..C-253 integrated.
-  - C-254..C-256 (seafloor walkers, still water, the S-213 id swap) aren't on main yet: see the Ready line in the newest summary below.
-- Suites on the branch: `lune run test_client` 335 / 335, `lune run build` passed (877 scripts, 2457 requires).
-- The last decision is **C-256**; the next one is **C-257**, in [`../decisions/client.md`](../decisions/client.md).
+- Branch `m-client-foundation` (worktree `C:\Workspace\Projects\FTGG-client`) has main 7ac4df3f merged in: everything up to C-256 is integrated.
+  - C-258..C-261 (the new icons) aren't on main yet: see the Ready line in the newest summary below.
+- Suites on the branch: `lune run test_client` 339 / 339, `lune run build` passed (879 scripts, 2463 requires).
+- The last decision is **C-261**; the next one is **C-262**, in [`../decisions/client.md`](../decisions/client.md).
 - The live sync for the three places runs from `tools/studio/sync_all.cmd` (double-click; `sync_all.ps1`, ports in `places.json`, FTGG Match on 34872). Connect the Rojo plugin in FTGG Match to 34872.
 - **`src/roblox/MatchConfig.luau` has a local, uncommitted change that is the user's own test setting.** `ACTIVE = "skirmish"`, the `air` profile at speed 0.1, and two Radiances removed from one test scene. Never commit it and never revert it: leave it in the working tree. A lobby match ignores MatchConfig; it only sets what Play in Studio starts.
 
 ### Open items (client-B's)
 
-- **Own icons for the 21 playtest-3 units:** drawn by 2D-E (request E1 below). They borrow existing tiles (C-253) until E's icons arrive; then B renders them (`tools/icons/render.mjs`) and maps them in `UI/IconAtlas` (each unit ID in exactly one catalogue item's `defs`, or `IconAtlas.spec` / `Icons.spec` fail).
-- **Pulse pieces (C-252):** the glow breathes; the scale half of rig.md's `pulse` isn't done.
+- **Own icons for the 21 playtest-3 units:** done with 2D-E's set (C-258, C-261).
 - **Not tested with a real mouse:** hovering and dragging the resource bars' share and converter markers (C-245). The Studio harness can't click GUI; the user is testing them (2026-10-29).
 - sim-A once suggested an orange-white core for `chs_juggernaut_heatray` (named `chs_korgoth_heatray` before S-213). Today the core is white lerped 30% toward the beam colour (C-248, `Render/BeamShots`).
 
@@ -28,14 +27,7 @@ Written for a new session (the project is moving to another Claude account). Eve
 
 2D-E (`C:\Workspace\Projects\FTGG-2d`, branch `2d`) owns the 2D assets: the icon sheet source, unit pictures, command and resource icons, thumbnails. Requests to E go here, numbered E1, E2, ...; B renders and wires what E delivers.
 
-- **E1 (2026-10-29): icons for the 21 playtest-3 units.** Today they borrow tiles (C-253, `UI/IconAtlas`). The sheet is full at 90 tiles, so they need a second sheet; its Roblox upload needs the user's approval.
-  - Energy and storage: `ord_advsolar`, `chs_advsolar`; `ord_capacitor`, `chs_accumulator`; `ord_advcapacitor`, `chs_advaccumulator`; `ord_advdepot`, `chs_advdepot`.
-  - Converters and fusion: `ord_advconverter`, `chs_advconverter`; `ord_advfusion`, `chs_advfusion`.
-  - Builders and factories: `ord_nano`, `chs_nano` (construction turrets); `ord_gantry`, `chs_gantry` (experimental gantries).
-  - Offshore extractors: `ord_seaextractor`, `chs_seaextractor`.
-  - Units: `chs_mammoth` (T2 bot), `ord_titan` (T3 mech), `chs_juggernaut` (T3 bot; S-213 gave it this id, it was `chs_korgoth`).
-  - Retired, no new icon needed: `chs_goliath` (the T2 tank once named `chs_juggernaut`) keeps the Main Battle Tank tile.
-  - Each ID must sit in exactly one catalogue item's `defs`, or `render.mjs` fails.
+- **E1 (2026-10-29): icons for the 21 playtest-3 units.** Done: E's approved set (E-3, E-6) covers all 203 defs; rendered, uploaded and wired in C-258..C-261.
 
 ### How to work
 
@@ -63,6 +55,18 @@ Written for a new session (the project is moving to another Claude account). Eve
   - On the Server, `ServerStorage.FtggDebug:Invoke("spawn", defId, player, x, z, heading, count?, spacing?)` and `("damage", id, amount)`.
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
+
+## Summary (2026-10-29, new icons: C-258..C-261)
+
+- **2D-E's icon set is in the game (C-258, C-261):** every unit has its icon from E's approved set, on two uploaded sheets. The Commanders show their own heads, but enemy radar still shows them as a plain walker. A unit added later without an icon gets its type's placeholder (a "?") instead of a blank frame, and the icon build warns about it.
+- **Resource, stat and command icons (C-259..C-261):** E's crate and bolt replace ■ / ϟ in the resource bar, the team panel buttons and the build tiles' costs. The health number has E's cross, and every command button has its icon left of the label. Rich-text tooltips keep their text marks. `UI/UiIcons` holds all 47 keys for lobby-D's Codex too.
+- An image whose pixels change after its upload loses its id until it's uploaded again, so a stale sheet never ships.
+- Ready to merge: `35c808e7` (C-258..C-261; carries 2D-E's 2d up to ce90a346 (the icon set, E-7..E-10, the E-11 proposal) and main bfdf0c1d. test_client 339 / 339, build passed (879 scripts, 2463 requires). Studio, Coastline: the three images fetch; icons on the resource bar, build tiles, health, command card, and at strategic zoom with the Commander heads)
+
+## Summary (2026-10-29, pulse pieces swell: C-257)
+
+- **Pulsing cores grow and shrink (C-257, your request):** the advanced fusions' cores, the advanced converters' coils and the advanced capacitor and accumulator cells now swell and shrink by 4% with their glow's breath, once every two seconds; less on an energy stall, not at all out of power.
+- Ready to merge: `678dfe56` (C-257; test_client 336 / 336, build passed. Studio, Coastline: four pulse pieces swinging ±4% with their glow shells on them)
 
 ## Summary (2026-10-29, S-213 id swap: C-256)
 

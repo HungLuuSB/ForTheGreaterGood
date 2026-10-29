@@ -1,0 +1,1809 @@
+{
+	"tile": 126,
+	"sheets": [
+		{
+			"file": "ftgg-unit-pictures-1.png",
+			"size": [
+				1024,
+				1022
+			]
+		},
+		{
+			"file": "ftgg-unit-pictures-2.png",
+			"size": [
+				1024,
+				1022
+			]
+		},
+		{
+			"file": "ftgg-unit-pictures-3.png",
+			"size": [
+				1024,
+				1022
+			]
+		},
+		{
+			"file": "ftgg-unit-pictures-4.png",
+			"size": [
+				1024,
+				126
+			]
+		}
+	],
+	"units": {
+		"chs_accumulator": {
+			"sheet": 1,
+			"rect": [
+				0,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_advaccumulator": {
+			"sheet": 1,
+			"rect": [
+				128,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_advairfield": {
+			"sheet": 1,
+			"rect": [
+				256,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_advbotlab": {
+			"sheet": 1,
+			"rect": [
+				384,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_advconverter": {
+			"sheet": 1,
+			"rect": [
+				512,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_advdepot": {
+			"sheet": 1,
+			"rect": [
+				640,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_advextractor": {
+			"sheet": 1,
+			"rect": [
+				768,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_advfusion": {
+			"sheet": 1,
+			"rect": [
+				896,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_advshipyard": {
+			"sheet": 1,
+			"rect": [
+				0,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_advsolar": {
+			"sheet": 1,
+			"rect": [
+				128,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_advvehplant": {
+			"sheet": 1,
+			"rect": [
+				256,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_airfield": {
+			"sheet": 1,
+			"rect": [
+				384,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_airpad": {
+			"sheet": 1,
+			"rect": [
+				512,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_allseer": {
+			"sheet": 1,
+			"rect": [
+				640,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_augur": {
+			"sheet": 1,
+			"rect": [
+				768,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_banshee": {
+			"sheet": 1,
+			"rect": [
+				896,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_barracuda": {
+			"sheet": 1,
+			"rect": [
+				0,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_basilisk": {
+			"sheet": 1,
+			"rect": [
+				128,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_behemoth": {
+			"sheet": 1,
+			"rect": [
+				256,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_blackout": {
+			"sheet": 1,
+			"rect": [
+				384,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_botlab": {
+			"sheet": 1,
+			"rect": [
+				512,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_breaker": {
+			"sheet": 1,
+			"rect": [
+				640,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_bulwark": {
+			"sheet": 1,
+			"rect": [
+				768,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_carapace": {
+			"sheet": 1,
+			"rect": [
+				896,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_cataclysm": {
+			"sheet": 1,
+			"rect": [
+				0,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_centurion": {
+			"sheet": 1,
+			"rect": [
+				128,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_cerberus": {
+			"sheet": 1,
+			"rect": [
+				256,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_chimera": {
+			"sheet": 1,
+			"rect": [
+				384,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_condor": {
+			"sheet": 1,
+			"rect": [
+				512,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_converter": {
+			"sheet": 1,
+			"rect": [
+				640,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_corsair": {
+			"sheet": 1,
+			"rect": [
+				768,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_cyclops": {
+			"sheet": 1,
+			"rect": [
+				896,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_deepear": {
+			"sheet": 1,
+			"rect": [
+				0,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_depot": {
+			"sheet": 1,
+			"rect": [
+				128,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_dragon": {
+			"sheet": 1,
+			"rect": [
+				256,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_extractor": {
+			"sheet": 1,
+			"rect": [
+				384,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_eye": {
+			"sheet": 1,
+			"rect": [
+				512,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_fang": {
+			"sheet": 1,
+			"rect": [
+				640,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_forgemaster": {
+			"sheet": 1,
+			"rect": [
+				768,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_fusion": {
+			"sheet": 1,
+			"rect": [
+				896,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_gantry": {
+			"sheet": 1,
+			"rect": [
+				0,
+				640,
+				126,
+				126
+			]
+		},
+		"chs_geryon": {
+			"sheet": 1,
+			"rect": [
+				128,
+				640,
+				126,
+				126
+			]
+		},
+		"chs_gorgon": {
+			"sheet": 1,
+			"rect": [
+				256,
+				640,
+				126,
+				126
+			]
+		},
+		"chs_graverobber": {
+			"sheet": 1,
+			"rect": [
+				384,
+				640,
+				126,
+				126
+			]
+		},
+		"chs_griffin": {
+			"sheet": 1,
+			"rect": [
+				512,
+				640,
+				126,
+				126
+			]
+		},
+		"chs_guard": {
+			"sheet": 1,
+			"rect": [
+				640,
+				640,
+				126,
+				126
+			]
+		},
+		"chs_hailstorm": {
+			"sheet": 1,
+			"rect": [
+				768,
+				640,
+				126,
+				126
+			]
+		},
+		"chs_harpy": {
+			"sheet": 1,
+			"rect": [
+				896,
+				640,
+				126,
+				126
+			]
+		},
+		"chs_hellmouth": {
+			"sheet": 1,
+			"rect": [
+				0,
+				768,
+				126,
+				126
+			]
+		},
+		"chs_hornet": {
+			"sheet": 1,
+			"rect": [
+				128,
+				768,
+				126,
+				126
+			]
+		},
+		"chs_hydra": {
+			"sheet": 1,
+			"rect": [
+				256,
+				768,
+				126,
+				126
+			]
+		},
+		"chs_jackal": {
+			"sheet": 1,
+			"rect": [
+				384,
+				768,
+				126,
+				126
+			]
+		},
+		"chs_juggernaut": {
+			"sheet": 1,
+			"rect": [
+				512,
+				768,
+				126,
+				126
+			]
+		},
+		"chs_kraken": {
+			"sheet": 1,
+			"rect": [
+				640,
+				768,
+				126,
+				126
+			]
+		},
+		"chs_lamprey": {
+			"sheet": 1,
+			"rect": [
+				768,
+				768,
+				126,
+				126
+			]
+		},
+		"chs_leech": {
+			"sheet": 1,
+			"rect": [
+				896,
+				768,
+				126,
+				126
+			]
+		},
+		"chs_leviathan": {
+			"sheet": 1,
+			"rect": [
+				0,
+				896,
+				126,
+				126
+			]
+		},
+		"chs_listener": {
+			"sheet": 1,
+			"rect": [
+				128,
+				896,
+				126,
+				126
+			]
+		},
+		"chs_locust": {
+			"sheet": 1,
+			"rect": [
+				256,
+				896,
+				126,
+				126
+			]
+		},
+		"chs_mammoth": {
+			"sheet": 1,
+			"rect": [
+				384,
+				896,
+				126,
+				126
+			]
+		},
+		"chs_manticore": {
+			"sheet": 1,
+			"rect": [
+				512,
+				896,
+				126,
+				126
+			]
+		},
+		"chs_maw": {
+			"sheet": 1,
+			"rect": [
+				640,
+				896,
+				126,
+				126
+			]
+		},
+		"chs_minotaur": {
+			"sheet": 1,
+			"rect": [
+				768,
+				896,
+				126,
+				126
+			]
+		},
+		"chs_mire": {
+			"sheet": 1,
+			"rect": [
+				896,
+				896,
+				126,
+				126
+			]
+		},
+		"chs_nano": {
+			"sheet": 2,
+			"rect": [
+				0,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_needle": {
+			"sheet": 2,
+			"rect": [
+				128,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_plague": {
+			"sheet": 2,
+			"rect": [
+				256,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_ragnarok": {
+			"sheet": 2,
+			"rect": [
+				384,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_ravager": {
+			"sheet": 2,
+			"rect": [
+				512,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_reaver": {
+			"sheet": 2,
+			"rect": [
+				640,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_riptide": {
+			"sheet": 2,
+			"rect": [
+				768,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_rookery": {
+			"sheet": 2,
+			"rect": [
+				896,
+				0,
+				126,
+				126
+			]
+		},
+		"chs_scourge": {
+			"sheet": 2,
+			"rect": [
+				0,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_scrapper": {
+			"sheet": 2,
+			"rect": [
+				128,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_scylla": {
+			"sheet": 2,
+			"rect": [
+				256,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_seaextractor": {
+			"sheet": 2,
+			"rect": [
+				384,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_seekerspire": {
+			"sheet": 2,
+			"rect": [
+				512,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_shipyard": {
+			"sheet": 2,
+			"rect": [
+				640,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_shroud": {
+			"sheet": 2,
+			"rect": [
+				768,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_siren": {
+			"sheet": 2,
+			"rect": [
+				896,
+				128,
+				126,
+				126
+			]
+		},
+		"chs_skitter": {
+			"sheet": 2,
+			"rect": [
+				0,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_smog": {
+			"sheet": 2,
+			"rect": [
+				128,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_solar": {
+			"sheet": 2,
+			"rect": [
+				256,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_stalker": {
+			"sheet": 2,
+			"rect": [
+				384,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_talos": {
+			"sheet": 2,
+			"rect": [
+				512,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_thorn": {
+			"sheet": 2,
+			"rect": [
+				640,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_thug": {
+			"sheet": 2,
+			"rect": [
+				768,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_tidal": {
+			"sheet": 2,
+			"rect": [
+				896,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_tinker": {
+			"sheet": 2,
+			"rect": [
+				0,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_twin_guard": {
+			"sheet": 2,
+			"rect": [
+				128,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_tzar": {
+			"sheet": 2,
+			"rect": [
+				256,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_vehplant": {
+			"sheet": 2,
+			"rect": [
+				384,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_vulture": {
+			"sheet": 2,
+			"rect": [
+				512,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_warlord": {
+			"sheet": 2,
+			"rect": [
+				640,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_wasp": {
+			"sheet": 2,
+			"rect": [
+				768,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_watcher": {
+			"sheet": 2,
+			"rect": [
+				896,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_windmill": {
+			"sheet": 2,
+			"rect": [
+				0,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_wraith": {
+			"sheet": 2,
+			"rect": [
+				128,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_wrecker": {
+			"sheet": 2,
+			"rect": [
+				256,
+				512,
+				126,
+				126
+			]
+		},
+		"chs_wyvern": {
+			"sheet": 2,
+			"rect": [
+				384,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_absolution": {
+			"sheet": 2,
+			"rect": [
+				512,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_advairfield": {
+			"sheet": 2,
+			"rect": [
+				640,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_advbotlab": {
+			"sheet": 2,
+			"rect": [
+				768,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_advcapacitor": {
+			"sheet": 2,
+			"rect": [
+				896,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_advconverter": {
+			"sheet": 2,
+			"rect": [
+				0,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_advdepot": {
+			"sheet": 2,
+			"rect": [
+				128,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_advextractor": {
+			"sheet": 2,
+			"rect": [
+				256,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_advfusion": {
+			"sheet": 2,
+			"rect": [
+				384,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_advshipyard": {
+			"sheet": 2,
+			"rect": [
+				512,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_advsolar": {
+			"sheet": 2,
+			"rect": [
+				640,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_advvehplant": {
+			"sheet": 2,
+			"rect": [
+				768,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_aegis": {
+			"sheet": 2,
+			"rect": [
+				896,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_airfield": {
+			"sheet": 2,
+			"rect": [
+				0,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_airpad": {
+			"sheet": 2,
+			"rect": [
+				128,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_arbiter": {
+			"sheet": 2,
+			"rect": [
+				256,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_archangel": {
+			"sheet": 2,
+			"rect": [
+				384,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_architect": {
+			"sheet": 2,
+			"rect": [
+				512,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_archon": {
+			"sheet": 2,
+			"rect": [
+				640,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_artisan": {
+			"sheet": 2,
+			"rect": [
+				768,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_barrier": {
+			"sheet": 2,
+			"rect": [
+				896,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_bastion": {
+			"sheet": 2,
+			"rect": [
+				0,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_beacon": {
+			"sheet": 2,
+			"rect": [
+				128,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_beamer": {
+			"sheet": 2,
+			"rect": [
+				256,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_botlab": {
+			"sheet": 2,
+			"rect": [
+				384,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_capacitor": {
+			"sheet": 2,
+			"rect": [
+				512,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_choir": {
+			"sheet": 2,
+			"rect": [
+				640,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_citadel": {
+			"sheet": 2,
+			"rect": [
+				768,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_converter": {
+			"sheet": 2,
+			"rect": [
+				896,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_crusader": {
+			"sheet": 3,
+			"rect": [
+				0,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_curtain": {
+			"sheet": 3,
+			"rect": [
+				128,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_custodian": {
+			"sheet": 3,
+			"rect": [
+				256,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_depot": {
+			"sheet": 3,
+			"rect": [
+				384,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_dominion": {
+			"sheet": 3,
+			"rect": [
+				512,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_ear": {
+			"sheet": 3,
+			"rect": [
+				640,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_edict": {
+			"sheet": 3,
+			"rect": [
+				768,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_empyrean": {
+			"sheet": 3,
+			"rect": [
+				896,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_extractor": {
+			"sheet": 3,
+			"rect": [
+				0,
+				128,
+				126,
+				126
+			]
+		},
+		"ord_falcon": {
+			"sheet": 3,
+			"rect": [
+				128,
+				128,
+				126,
+				126
+			]
+		},
+		"ord_fatboy": {
+			"sheet": 3,
+			"rect": [
+				256,
+				128,
+				126,
+				126
+			]
+		},
+		"ord_fusion": {
+			"sheet": 3,
+			"rect": [
+				384,
+				128,
+				126,
+				126
+			]
+		},
+		"ord_gantry": {
+			"sheet": 3,
+			"rect": [
+				512,
+				128,
+				126,
+				126
+			]
+		},
+		"ord_gauntlet": {
+			"sheet": 3,
+			"rect": [
+				640,
+				128,
+				126,
+				126
+			]
+		},
+		"ord_glint": {
+			"sheet": 3,
+			"rect": [
+				768,
+				128,
+				126,
+				126
+			]
+		},
+		"ord_guardian": {
+			"sheet": 3,
+			"rect": [
+				896,
+				128,
+				126,
+				126
+			]
+		},
+		"ord_halo": {
+			"sheet": 3,
+			"rect": [
+				0,
+				256,
+				126,
+				126
+			]
+		},
+		"ord_harbormaster": {
+			"sheet": 3,
+			"rect": [
+				128,
+				256,
+				126,
+				126
+			]
+		},
+		"ord_herald": {
+			"sheet": 3,
+			"rect": [
+				256,
+				256,
+				126,
+				126
+			]
+		},
+		"ord_judgement": {
+			"sheet": 3,
+			"rect": [
+				384,
+				256,
+				126,
+				126
+			]
+		},
+		"ord_kestrel": {
+			"sheet": 3,
+			"rect": [
+				512,
+				256,
+				126,
+				126
+			]
+		},
+		"ord_lancer": {
+			"sheet": 3,
+			"rect": [
+				640,
+				256,
+				126,
+				126
+			]
+		},
+		"ord_lazarus": {
+			"sheet": 3,
+			"rect": [
+				768,
+				256,
+				126,
+				126
+			]
+		},
+		"ord_liche": {
+			"sheet": 3,
+			"rect": [
+				896,
+				256,
+				126,
+				126
+			]
+		},
+		"ord_lumen": {
+			"sheet": 3,
+			"rect": [
+				0,
+				384,
+				126,
+				126
+			]
+		},
+		"ord_mace": {
+			"sheet": 3,
+			"rect": [
+				128,
+				384,
+				126,
+				126
+			]
+		},
+		"ord_mason": {
+			"sheet": 3,
+			"rect": [
+				256,
+				384,
+				126,
+				126
+			]
+		},
+		"ord_moat": {
+			"sheet": 3,
+			"rect": [
+				384,
+				384,
+				126,
+				126
+			]
+		},
+		"ord_nano": {
+			"sheet": 3,
+			"rect": [
+				512,
+				384,
+				126,
+				126
+			]
+		},
+		"ord_oracle": {
+			"sheet": 3,
+			"rect": [
+				640,
+				384,
+				126,
+				126
+			]
+		},
+		"ord_overwatch": {
+			"sheet": 3,
+			"rect": [
+				768,
+				384,
+				126,
+				126
+			]
+		},
+		"ord_paladin": {
+			"sheet": 3,
+			"rect": [
+				896,
+				384,
+				126,
+				126
+			]
+		},
+		"ord_phalanx": {
+			"sheet": 3,
+			"rect": [
+				0,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_phantom": {
+			"sheet": 3,
+			"rect": [
+				128,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_pharos": {
+			"sheet": 3,
+			"rect": [
+				256,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_providence": {
+			"sheet": 3,
+			"rect": [
+				384,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_radiance": {
+			"sheet": 3,
+			"rect": [
+				512,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_rampart": {
+			"sheet": 3,
+			"rect": [
+				640,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_reckoning": {
+			"sheet": 3,
+			"rect": [
+				768,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_sanction": {
+			"sheet": 3,
+			"rect": [
+				896,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_sanctuary": {
+			"sheet": 3,
+			"rect": [
+				0,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_sanctum": {
+			"sheet": 3,
+			"rect": [
+				128,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_seaextractor": {
+			"sheet": 3,
+			"rect": [
+				256,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_sentry": {
+			"sheet": 3,
+			"rect": [
+				384,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_sentry_tower": {
+			"sheet": 3,
+			"rect": [
+				512,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_seraph": {
+			"sheet": 3,
+			"rect": [
+				640,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_shepherd": {
+			"sheet": 3,
+			"rect": [
+				768,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_shipyard": {
+			"sheet": 3,
+			"rect": [
+				896,
+				640,
+				126,
+				126
+			]
+		},
+		"ord_silence": {
+			"sheet": 3,
+			"rect": [
+				0,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_skywright": {
+			"sheet": 3,
+			"rect": [
+				128,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_solar": {
+			"sheet": 3,
+			"rect": [
+				256,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_sovereign": {
+			"sheet": 3,
+			"rect": [
+				384,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_tidal": {
+			"sheet": 3,
+			"rect": [
+				512,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_tideguard": {
+			"sheet": 3,
+			"rect": [
+				640,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_tidewatch": {
+			"sheet": 3,
+			"rect": [
+				768,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_tidewright": {
+			"sheet": 3,
+			"rect": [
+				896,
+				768,
+				126,
+				126
+			]
+		},
+		"ord_titan": {
+			"sheet": 3,
+			"rect": [
+				0,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_tribunal": {
+			"sheet": 3,
+			"rect": [
+				128,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_undertow": {
+			"sheet": 3,
+			"rect": [
+				256,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_vehplant": {
+			"sheet": 3,
+			"rect": [
+				384,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_veil": {
+			"sheet": 3,
+			"rect": [
+				512,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_veilspire": {
+			"sheet": 3,
+			"rect": [
+				640,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_verdict": {
+			"sheet": 3,
+			"rect": [
+				768,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_vigil": {
+			"sheet": 3,
+			"rect": [
+				896,
+				896,
+				126,
+				126
+			]
+		},
+		"ord_warden": {
+			"sheet": 4,
+			"rect": [
+				0,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_watchtower": {
+			"sheet": 4,
+			"rect": [
+				128,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_windmill": {
+			"sheet": 4,
+			"rect": [
+				256,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_witness": {
+			"sheet": 4,
+			"rect": [
+				384,
+				0,
+				126,
+				126
+			]
+		},
+		"ord_zenith": {
+			"sheet": 4,
+			"rect": [
+				512,
+				0,
+				126,
+				126
+			]
+		}
+	},
+	"missing": []
+}

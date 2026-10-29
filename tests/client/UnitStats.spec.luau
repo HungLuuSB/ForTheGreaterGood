@@ -122,7 +122,7 @@ return function(t: any)
 		t.expect(table.find(falcon.countermeasures, "Chaff max 2") ~= nil and table.find(falcon.countermeasures, "DIRCM") ~= nil, "countermeasures listed")
 		local lines = UnitStats.lines(own("ord_lancer"))
 		local gun = defs.weaponByIndex[defs.units.ord_lancer.weapons[1].weaponIndex]
-		t.expect(string.find(lines[1], "vs armored", 1, true) ~= nil and string.sub(lines[1], 1, 4) == "DPS ", `first line: {lines[1]}`)
+		t.expect(string.match(lines[1], "^DPS: [%d%.]+ ·") ~= nil and string.find(lines[1], " vs ", 1, true) == nil, `first line, just the number (C-263): {lines[1]}`)
 		t.expect(string.find(lines[1], `Range {gun.range}`, 1, true) ~= nil, lines[1])
 	end)
 

@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "chs_griffin",
 	name = "Griffin",
-	description = "Mobile point defence. Shoots down enemy missiles and rockets near it with a deep stock of interceptors; never fires at units.",
+	description = "Mobile point defence. Shoots down enemy missiles and rockets near it; never fires at units.",
 	faction = "chaos",
 	tier = 2,
 	domain = "ground",

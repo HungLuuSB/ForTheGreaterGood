@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "chs_cyclops",
 	name = "Cyclops",
-	description = "Siege mortar. Shells structures from beyond their reach; can't fire at units.",
+	description = "Siege mortar. Shells structures from long range; can't fire at units.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "GROUND", "ARMORED", "ARTILLERY" },

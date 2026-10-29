@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_tidal",
 	name = "Tide Mill",
-	description = "Tidal Generator. Steady power, water only.",
+	description = "Tidal generator. Makes steady power; built on water.",
 	faction = "chaos",
 	tier = 1,
 	categories = { "STRUCTURE" },

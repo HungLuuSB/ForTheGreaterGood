@@ -5,11 +5,11 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_solar",
 	name = "Sun Trap",
-	description = "Solar Array. Low steady power, cheap.",
+	description = "Solar array. Makes low, steady power.",
 	faction = "chaos",
 	tier = 1,
 	categories = { "STRUCTURE" },
-	cost = { supply = 30, power = 0, buildTime = 900 },
+	cost = { supply = 100, power = 0, buildTime = 900 }, -- (S-217, the user) was 30 supply
 	health = 250,
 	footprint = 2, -- size shows tech level (S-104)
 	icon = "solar",

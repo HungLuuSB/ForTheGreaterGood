@@ -7,6 +7,7 @@
 -- its name, and one row per figure: the number in red, what it is, and how
 -- it reads ("1.80 reload slow"), then a line on what it does.
 
+local UiIcons = require("@client/UI/UiIcons")
 local Codex = require("../shared/Codex")
 local Ui = require("./Ui")
 
@@ -62,15 +63,62 @@ StatBars.COLOR = {
 	stock = Color3.fromRGB(214, 218, 226),
 }
 
-local function glyphCell(parent: Instance, glyph: string, color: Color3, x: number): Frame
+-- A stat's mark, `size` pixels square: 2D-E's icon from the UI atlas
+-- (UiIcons, the match's marks too), tinted `color`; its text glyph while
+-- the atlas isn't uploaded or for a key the atlas lacks.
+local function mark(parent: Instance, key: string, color: Color3, size: number): GuiObject
+	local icon = UiIcons.icons[key]
+	if icon and UiIcons.image ~= "" then
+		local px = UiIcons.sizes[#UiIcons.sizes]
+		for _, s in UiIcons.sizes do
+			if s >= size then
+				px = s
+				break
+			end
+		end
+		local r = icon.rect[px]
+		local img = Instance.new("ImageLabel")
+		img.Name = "Mark"
+		img.BackgroundTransparency = 1
+		img.Image = UiIcons.image
+		img.ImageRectOffset = Vector2.new(r[1], r[2])
+		img.ImageRectSize = Vector2.new(r[3], r[4])
+		img.ImageColor3 = color
+		img.ScaleType = Enum.ScaleType.Fit
+		img.Size = UDim2.fromOffset(size, size)
+		img.Parent = parent
+		return img
+	end
+	local g = Kit.text(parent, StatBars.GLYPH[key] or "•", "label", color)
+	g.Name = "Mark"
+	g.Size = UDim2.fromOffset(size, size)
+	g.TextXAlignment = Enum.TextXAlignment.Center
+	g.TextSize = 14
+	return g
+end
+
+-- A mark in the middle of `cell`.
+local function centred(cell: Instance, key: string, color: Color3, size: number)
+	local m = mark(cell, key, color, size)
+	m.AnchorPoint = Vector2.new(0.5, 0.5)
+	m.Position = UDim2.fromScale(0.5, 0.5)
+end
+
+-- An icon's own tint (2D-E's), else `fallback`.
+local function tint(key: string, fallback: Color3): Color3
+	local icon = UiIcons.icons[key]
+	if icon and UiIcons.image ~= "" then
+		return Color3.fromRGB(icon.tint[1], icon.tint[2], icon.tint[3])
+	end
+	return fallback
+end
+
+local function glyphCell(parent: Instance, key: string, color: Color3, x: number): Frame
 	local cell = Ui.frame(parent, "Icon", UDim2.fromOffset(ICON_W, ROW_H), UDim2.fromOffset(x, 0))
 	cell.BackgroundColor3 = BAR_BACK
 	cell.BackgroundTransparency = 0
 	Ui.corner(cell, 3)
-	local g = Kit.text(cell, glyph, "label", color)
-	g.Size = UDim2.fromScale(1, 1)
-	g.TextXAlignment = Enum.TextXAlignment.Center
-	g.TextSize = 14
+	centred(cell, key, color, 18)
 	return cell
 end
 
@@ -101,7 +149,7 @@ function StatBars.bar(parent: Instance, label: string, key: string, value: numbe
 	l.TextXAlignment = Enum.TextXAlignment.Right
 	l.TextSize = 11
 	local color = StatBars.COLOR[key] or Kit.COLOR.text
-	glyphCell(row, StatBars.GLYPH[key] or "•", color, LABEL_W)
+	glyphCell(row, key, color, LABEL_W)
 	local x = LABEL_W + ICON_W + 4
 	local track = Ui.frame(row, "Bar", UDim2.new(1, -x, 1, 0), UDim2.fromOffset(x, 0))
 	track.BackgroundColor3 = BAR_BACK
@@ -188,10 +236,24 @@ function StatBars.weapon(parent: Instance, name: string, kind: string, kindName:
 	title.Position = UDim2.fromOffset(68, 10)
 	title.Size = UDim2.new(1, -96, 0, 20)
 	title.FontFace = Kit.font(Enum.FontWeight.SemiBold)
-	local sub = Kit.text(head, kindName .. (if cost then `   <font color="#F6BE50">⚡ {cost}</font>` else ""), "small", Kit.COLOR.dim)
-	sub.RichText = true
-	sub.Position = UDim2.fromOffset(68, 32)
-	sub.Size = UDim2.new(1, -96, 0, 18)
+	-- the kind, then the power a shot costs: "Cannon   ⚡ 120"
+	local sub = Ui.frame(head, "Sub", UDim2.new(1, -96, 0, 18), UDim2.fromOffset(68, 32))
+	local sl = Kit.list(sub, 4, true)
+	sl.VerticalAlignment = Enum.VerticalAlignment.Center
+	local kindText = Kit.text(sub, kindName, "small", Kit.COLOR.dim)
+	kindText.AutomaticSize = Enum.AutomaticSize.X
+	kindText.Size = UDim2.new(0, 0, 1, 0)
+	kindText.LayoutOrder = 1
+	if cost then
+		local amber = StatBars.COLOR.power
+		local m = mark(sub, "power", amber, 14)
+		m.LayoutOrder = 2
+		local c = Kit.text(sub, tostring(cost), "small", amber)
+		c.AutomaticSize = Enum.AutomaticSize.X
+		c.Size = UDim2.new(0, 0, 1, 0)
+		c.LayoutOrder = 3
+		kindText.Text = kindName .. "  "
+	end
 	local arrow = Kit.text(head, "▲", "small", Kit.COLOR.dim)
 	arrow.AnchorPoint = Vector2.new(1, 0)
 	arrow.Position = UDim2.new(1, -10, 0, 20)
@@ -208,9 +270,7 @@ function StatBars.weapon(parent: Instance, name: string, kind: string, kindName:
 		top.BackgroundColor3 = ROW_LINE
 		top.BackgroundTransparency = 0
 		local cell = Ui.frame(row, "Icon", UDim2.new(0, 36, 1, -1), UDim2.fromOffset(0, 1))
-		local g = Kit.text(cell, StatBars.GLYPH[line.key] or "•", "label", Kit.COLOR.dim)
-		g.Size = UDim2.fromScale(1, 1)
-		g.TextXAlignment = Enum.TextXAlignment.Center
+		centred(cell, line.key, tint(line.key, Kit.COLOR.dim), 20)
 		local div = Ui.frame(row, "Div", UDim2.new(0, 1, 1, -1), UDim2.fromOffset(36, 1))
 		div.BackgroundColor3 = ROW_LINE
 		div.BackgroundTransparency = 0

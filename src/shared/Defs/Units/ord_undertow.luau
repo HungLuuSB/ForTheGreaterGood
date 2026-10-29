@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_undertow",
 	name = "Undertow",
-	description = "Torpedo launcher with a short sonar.",
+	description = "Torpedo launcher. Fires torpedoes at ships and submarines, with a short sonar.",
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE" },

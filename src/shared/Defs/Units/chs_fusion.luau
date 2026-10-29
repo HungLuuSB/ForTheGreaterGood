@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_fusion",
 	name = "Hellforge",
-	description = "Fusion Reactor. Large power.",
+	description = "Fusion reactor. Makes a large amount of power.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE" },

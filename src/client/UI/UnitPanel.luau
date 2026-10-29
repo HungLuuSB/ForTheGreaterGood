@@ -24,6 +24,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
 local Kit = require("./Kit")
+local UiIcon = require("./UiIcon")
 local Icons = require("../Core/Icons")
 local Precision = require("../Core/Precision")
 local Selection = require("../Core/Selection")
@@ -143,6 +144,21 @@ function UnitPanel.new(api: Api.Api): UI
 	flowPower.Position = UDim2.fromOffset(4, 95)
 	flowPower.Size = UDim2.fromOffset(68, 15)
 	flowPower.RichText = true
+	-- 2D-E's supply / power icons left of the lines once the UI icon atlas is
+	-- uploaded (C-263); the rich text then has no mark of its own
+	for _, line in { { flowSupply, "supply", Color3.fromRGB(235, 235, 235) }, { flowPower, "power", Color3.fromRGB(255, 214, 60) } } do
+		local label = line[1] :: TextLabel
+		local mark = UiIcon.make(line[2] :: string, 16, line[3] :: Color3)
+		if mark then
+			mark.Position = UDim2.fromOffset(3, label.Position.Y.Offset - 1)
+			mark.Parent = panel
+			label.Position = UDim2.fromOffset(21, label.Position.Y.Offset)
+			label.Size = UDim2.fromOffset(51, 15)
+			label:GetPropertyChangedSignal("Visible"):Connect(function()
+				mark.Visible = label.Visible -- shown and hidden with its line
+			end)
+		end
+	end
 	local name = textLabel(panel, Enum.Font.GothamBold, 15, Color3.fromRGB(190, 228, 96)) -- yellow-green (reference 3, C-203)
 	name.Position = UDim2.fromOffset(72, 4)
 	name.Size = UDim2.new(1, -78, 0, 18)
@@ -152,22 +168,32 @@ function UnitPanel.new(api: Api.Api): UI
 	hp.Name = "HP"
 	hp.Position = UDim2.fromOffset(19, 65)
 	hp.Size = UDim2.fromOffset(53, 14)
-	-- its icon: a green cross before the number (two bars, no font glyph needed)
-	local cross = Instance.new("Frame")
-	cross.Name = "HealthIcon"
-	cross.BackgroundTransparency = 1
-	cross.Position = UDim2.fromOffset(5, 66)
-	cross.Size = UDim2.fromOffset(11, 11)
-	cross.Parent = hp.Parent
-	for _, size in { UDim2.fromOffset(11, 3), UDim2.fromOffset(3, 11) } do
-		local bar = Instance.new("Frame")
-		bar.AnchorPoint = Vector2.new(0.5, 0.5)
-		bar.Position = UDim2.fromScale(0.5, 0.5)
-		bar.Size = size
-		bar.BackgroundColor3 = HEALTH
-		bar.BorderSizePixel = 0
-		bar.Parent = cross
+	-- its icon: 2D-E's health cross (C-259) at its drawn 16 px (C-263: scaled
+	-- down it blurred), else a green cross of two bars until the UI icon
+	-- atlas is uploaded
+	local cross: GuiObject
+	local icon = UiIcon.make("health", 16, HEALTH)
+	if icon then
+		cross = icon
+		hp.Position = UDim2.fromOffset(21, 65)
+		hp.Size = UDim2.fromOffset(51, 14)
+	else
+		cross = Instance.new("Frame")
+		cross.BackgroundTransparency = 1
+		for _, size in { UDim2.fromOffset(11, 3), UDim2.fromOffset(3, 11) } do
+			local bar = Instance.new("Frame")
+			bar.AnchorPoint = Vector2.new(0.5, 0.5)
+			bar.Position = UDim2.fromScale(0.5, 0.5)
+			bar.Size = size
+			bar.BackgroundColor3 = HEALTH
+			bar.BorderSizePixel = 0
+			bar.Parent = cross
+		end
 	end
+	cross.Name = "HealthIcon"
+	cross.Position = if icon then UDim2.fromOffset(3, 64) else UDim2.fromOffset(5, 66)
+	cross.Size = if icon then UDim2.fromOffset(16, 16) else UDim2.fromOffset(11, 11)
+	cross.Parent = hp.Parent
 	hp:GetPropertyChangedSignal("Visible"):Connect(function()
 		cross.Visible = hp.Visible -- shown and hidden with the number
 	end)
@@ -225,7 +251,7 @@ local function one(ui: UI, api: Api.Api, id: number)
 		style.size = math.floor(style.size * 38 / Icons.BASE + 0.5)
 		Glyph.apply(ui.portraitGlyph, style, TeamColors.of(u.team))
 	end
-	ui.portraitView.frame.Visible = def ~= nil
+	Portrait.setVisible(ui.portraitView, def ~= nil) -- the picture or the model (C-262)
 	ui.cornerGlyph.root.Visible = def ~= nil
 	ui.portraitGlyph.root.Visible = def == nil
 	-- health as a number in place of the bar (H34, then the user: "replace the
@@ -243,8 +269,9 @@ local function one(ui: UI, api: Api.Api, id: number)
 		local eco = api.state.economy
 		local ratio = if eco then math.min(eco.supply.ratio, eco.power.ratio) else 1
 		local f = UnitFlow.parts(world, u, def, { queue = api.state.factoryQueues[id], wind = eco and eco.wind, ratio = ratio, powerRatio = eco and eco.power.ratio })
-		ui.flowSupply.Text = UnitFlow.rich('<font color="#EBEBEB">■</font>', f.supplyIn, f.supplyOut)
-		ui.flowPower.Text = UnitFlow.rich('<font color="#FFD63C">ϟ</font>', f.powerIn, f.powerOut)
+		local icons = UiIcon.ready() -- the marks are icons beside the lines (C-263)
+		ui.flowSupply.Text = UnitFlow.rich(if icons then "" else '<font color="#EBEBEB">■</font>', f.supplyIn, f.supplyOut)
+		ui.flowPower.Text = UnitFlow.rich(if icons then "" else '<font color="#FFD63C">ϟ</font>', f.powerIn, f.powerOut)
 	end
 	ui.name.Text = sheet.name
 	ui.role.Text = if def then string.match(def.description or "", "^[^%.]*") or "" else ""
@@ -311,7 +338,7 @@ local function wreck(ui: UI, api: Api.Api, w: World.Wreck)
 	if def then
 		Portrait.set(ui.portraitView, def, 0)
 	end
-	ui.portraitView.frame.Visible = def ~= nil
+	Portrait.setVisible(ui.portraitView, def ~= nil) -- the picture or the model (C-262)
 	ui.cornerGlyph.root.Visible = false
 	ui.portraitGlyph.root.Visible = false
 	ui.flowSupply.Visible, ui.flowPower.Visible = false, false

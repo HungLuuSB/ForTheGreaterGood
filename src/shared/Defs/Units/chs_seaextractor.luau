@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_seaextractor",
 	name = "Sunken Excavator",
-	description = "Supply extractor on a deposit under the sea. Only torpedoes can reach it.",
+	description = "Offshore extractor. Mines a supply deposit under the sea; only torpedoes reach it.",
 	faction = "chaos",
 	tier = 1,
 	categories = { "STRUCTURE", "SUB" },

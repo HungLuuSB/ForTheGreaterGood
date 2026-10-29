@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_depot",
 	name = "Depot",
-	description = "Depot. +1,000 supply and power storage.",
+	description = "Depot. Stores 1,000 supply and 1,000 power.",
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE" },

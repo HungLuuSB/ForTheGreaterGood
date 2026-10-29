@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_wyvern",
 	name = "Wyvern",
-	description = "Long-range radar SAM site. Own radar; can be jammed.",
+	description = "Long-range radar SAM site. Missiles against aircraft, guided by its own radar.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE", "ANTIAIR", "RADAR_EMITTER" },

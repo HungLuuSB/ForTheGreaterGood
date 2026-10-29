@@ -6,7 +6,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_guard",
 	name = "Guard",
-	description = "Laser tower. Cheap, quick red laser.",
+	description = "Laser tower. Fires a quick red laser.",
 	faction = "chaos",
 	tier = 1,
 	categories = { "STRUCTURE" },

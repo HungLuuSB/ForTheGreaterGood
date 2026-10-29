@@ -14,6 +14,10 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
   - The close guns are unchanged.
 - The client, the models and the Codex key on unit ids, so B, C and D swap their keys too. It lands as one merge, through the last of their branches.
 - `tools/studio/sync_all.cmd`: a double-click start for the three places' live syncs.
+- **S-216: the AI builds playtest 3's units:** bot labs and bots, Construction Turrets by its factories, advanced solar, fusion, advanced storage, converters and fusion, offshore extractors on sea maps; Hard a gantry and T3 walkers. Report: `lune run mirror_units`.
+- **S-217:** Titan and Juggernaut blasts are 480 over 52 studs (35% of a nuke's; a Commander survives); the Solar Array costs 100 supply.
+- **S-215 (client-B):** the power bar's demand now counts extractor upkeep and converters' burn.
+- **S-214: unit descriptions** are "Role. What it does." for all 203 units, with no comparison to the counterpart; `Defs.spec` keeps them that way.
 
 **The playtest 3 round:** the user's FTGG-FEEDBACK-3, items H1–H43. Owners and status are in `docs/progress/playtest-2026-10-28.md`.
 - Decisions: S-197..S-212.
@@ -669,6 +673,8 @@ Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E
 ## Integration notes
 
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
+
+- **2026-10-29, after the handover (all pushed, one integrate.sh each, in order):** sim 9ddcd870 (sync launcher) → 8e96e9b8; lobby eb326446 (L-27) → c3860618; client 95ad71d6 (C-254, C-255) → 5dec7e28; client 240444b3 (S-213 across streams: sim 748ddf25, models bfded620, lobby 5b2a078d, client C-256) → b3992f45; sim 27224945 → 7ac4df3f. Last checks: test 616/616, slow 11/11, client 335/335, lobby 67/67, build 877 scripts / 2,457 requires. S-213 renames ids every stream keys on, so C and D worked on the sim commit, B merged both with its own swap, and main took B's tip once.
 
 - **2026-10-29, playtest 3 (all pushed, one integrate.sh each, in this order):**
 

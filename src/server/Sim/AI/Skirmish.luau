@@ -44,6 +44,16 @@
 --      units and structures, turrets included) within DEFENSE_RADIUS of
 --      its target; until then it masses at the rally point. An army of
 --      MASS_SHARE of the unit cap (at most MASS_UNITS) goes anyway.
+--   3b. Playtest 3's units (S-216, the user): normal and hard build a Bot
+--      Lab beside the plant; Construction Turrets beside each factory (one
+--      per factory on normal, two on hard) once the economy and an army
+--      stand; advanced solar instead of solar from ADV_SOLAR_AFTER solars;
+--      on a sea map the shipyard's naval worker takes the offshore deposits.
+--      The T2 builder adds fusion while power stalls, an advanced depot when
+--      supply sits full, an advanced capacitor after the beam tower,
+--      advanced converters with power to spare, an advanced fusion when
+--      rich; hard then an Experimental Gantry, which builds Titans /
+--      Juggernauts for the waves.
 --   4. T2 (S-101, next.md item 7; normal and hard): once its advanced plant
 --      stands and supply passes ADV_BUILDER_SUPPLY, the plant builds one
 --      T2 builder (Architect / Forgemaster). It first upgrades its own T1
@@ -166,6 +176,7 @@ Skirmish.RETREAT_MARGIN = 1.2 -- the next wave needs this times the value it fle
 Skirmish.RETREAT_HOLD = 300 -- ticks no wave leaves after a retreat (S-92)
 Skirmish.NUKE_EVERY = 900 -- ticks between the AI's nuke launches (S-110)
 Skirmish.NUKE_RICH = 0.9 -- of supply storage stored before hard starts a silo (S-110)
+Skirmish.NUKE_SUPPLY = 2500 -- or this much stored, if less: an advanced depot (S-216) adds 10,000 storage
 Skirmish.SCOUT_EVERY = 1800 -- ticks between scouts: a new one at most this long after the last (S-105)
 Skirmish.SCOUT_RADIUS = 260 -- studs: the scout's loop round an enemy start (S-105)
 Skirmish.DEFENSE_RADIUS = 450 -- studs: known defence counted round a wave's target (S-105)
@@ -179,6 +190,18 @@ Skirmish.ADV_BUILDER_SUPPLY = 600 -- supply stored before the advanced plant bui
 Skirmish.PINPOINTERS = 2 -- Pinpointers the T2 builder raises (S-101)
 Skirmish.CITADEL_SUPPLY = 1500 -- supply stored (or 90% of storage, if less) before Order hard's Citadel (S-101)
 Skirmish.BARRIERS = 6 -- Barrier segments in Order hard's wall (S-101)
+Skirmish.TECH_EXTRACTORS = 8 -- (S-216) extractors that tech up without stored supply: a match-long AI spends every unit as it comes, and never stored the 900 / 600 the advanced plant and T2 builder wait for
+Skirmish.TECH_TICKS = 10 * 60 * 15 -- (S-216) or this long with 6 extractors: Hard's safe deposits on a 1v1 map are 8 or 9
+Skirmish.CONVERTERS = 3 -- (S-216) T1 converters it adds while power sits full and supply runs short
+Skirmish.GANTRY_TICKS = 15 * 60 * 15 -- (S-216) hard's gantry also comes after this long with GANTRY_EXTRACTORS extractors
+Skirmish.GANTRY_EXTRACTORS = 8
+Skirmish.ADV_SOLAR_AFTER = 6 -- solars before its power comes from advanced solar (S-216)
+Skirmish.ADV_SOLAR_EQ = 4 -- an advanced solar counts as this many solars (80 / 20 power)
+Skirmish.NANO_REACH = 120 -- studs: a Construction Turret this near a factory's centre serves it (its reach is 150 from its own edge)
+Skirmish.FUSIONS = 2 -- fusion reactors the T2 builder adds while power stalls, at most (S-216)
+Skirmish.ADV_CONVERTERS = 2
+Skirmish.ADV_FUSION_SUPPLY = 2000 -- supply stored (or 80% of storage, if less) before an advanced fusion (S-216)
+Skirmish.GANTRY_SUPPLY = 2500 -- supply stored (or 80% of storage, if less) before hard's Experimental Gantry (S-216)
 Skirmish.RALLY_GAP = 600 -- studs at least between two rally points: beyond artillery range (Verdict 480 since S-62) with room for the army's spread (S-57)
 
 export type Level = {
@@ -232,6 +255,11 @@ export type Level = {
 	attackMargin: number?, -- a wave leaves worth this times the known defence (default ATTACK_MARGIN)
 	raid: boolean?, -- small fast raids on enemy extractors between waves (aggressive)
 	teamwork: boolean?, -- joins an ally's wave, answers an ally's call for help
+	-- S-216 (the user): playtest 3's units
+	nanos: number?, -- Construction Turrets wanted beside each factory
+	advEco: boolean?, -- advanced solar; the T2 builder's fusion, storages, converters, advanced fusion
+	offshore: boolean?, -- the shipyard's naval worker takes offshore deposits
+	experimental: boolean?, -- an Experimental Gantry when rich, building Titans / Juggernauts
 }
 
 Skirmish.LEVELS = table.freeze({
@@ -295,6 +323,10 @@ Skirmish.LEVELS = table.freeze({
 		t2Builder = true,
 		scout = true,
 		outweigh = true,
+		botLab = true, -- (S-216)
+		nanos = 1,
+		advEco = true,
+		offshore = true,
 	},
 	hard = {
 		think = 10,
@@ -328,6 +360,11 @@ Skirmish.LEVELS = table.freeze({
 		scout = true,
 		outweigh = true,
 		nuke = true,
+		botLab = true, -- (S-216)
+		nanos = 2,
+		advEco = true,
+		offshore = true,
+		experimental = true,
 	},
 } :: { [string]: Level })
 
@@ -997,6 +1034,24 @@ function Skirmish.freeDeposit(brain: Brain, accept: ((number, number, number) ->
 	return nil
 end
 
+-- (S-216) A free deposit under the sea for an offshore extractor: the same
+-- list and claims as freeDeposit, placed as a seafloor extractor.
+function Skirmish.freeSeaDeposit(brain: Brain, builder: number?): number?
+	local sim = brain.sim
+	local pm = sim.map :: Passability.PassMap
+	local def = sim.defs.units[brain.prefix .. "seaextractor"]
+	for _, cell in brain.deposits do
+		if (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick then
+			local x, z = Skirmish.depositPoint(pm.grid, cell)
+			local ok, _, x0, z0 = Placement.check(sim, def, x, z, nil, brain.ally)
+			if ok and (builder == nil or reachable(sim, builder, def.footprint, x0, z0)) then
+				return cell
+			end
+		end
+	end
+	return nil
+end
+
 -- Is the deposit at (x, z) contested (S-97): nearer an enemy start than
 -- its own, or with known armed enemies within CONTESTED_RADIUS?
 function Skirmish.contested(brain: Brain, x: number, z: number): boolean
@@ -1193,6 +1248,14 @@ type Census = {
 	enemyArty: number, -- known enemy artillery (counters: fast raiders)
 	enemyLight: number, -- known enemy light ground units (counters: heavy, beams)
 	enemyExtractors: { { number } }, -- known enemy extractors' { x, z } (raids)
+	-- S-216
+	nanos: { { number } }, -- Construction Turrets' { x, z }: standing, framed or ordered
+	advSolars: number,
+	gantries: { number }, -- complete Experimental Gantries
+	gantryFrames: number,
+	gantryFrame: number, -- an unfinished gantry's ID (T1 builders help), or 0
+	navalBuilders: { number }, -- naval workers: offshore extractors
+	upkeep: number, -- power per second its extractors' upkeep costs (S-198), planned for by the generator rule (S-216)
 }
 
 local function census(brain: Brain): Census
@@ -1249,6 +1312,13 @@ local function census(brain: Brain): Census
 		enemyArty = 0,
 		enemyLight = 0,
 		enemyExtractors = {},
+		nanos = {}, -- (S-216) { x, z } of Construction Turrets, standing, framed or ordered
+		advSolars = 0,
+		gantries = {},
+		gantryFrames = 0,
+		gantryFrame = 0,
+		navalBuilders = {},
+		upkeep = 0,
 	}
 	local advPlant = faction(brain, "advvehplant", "advvehplant")
 	local generator = faction(brain, "solar", "solar")
@@ -1300,6 +1370,12 @@ local function census(brain: Brain): Census
 		end
 		if d.domain == "structure" then
 			c.built[d.id] = (c.built[d.id] or 0) + 1
+			if d.assistOnly then
+				table.insert(c.nanos, { w.posX[id], w.posZ[id] }) -- (S-216)
+			end
+			if d.extractor then
+				c.upkeep += d.extractor.upkeep or 0
+			end
 			if done and d.extractor and d.id == brain.prefix .. "extractor" then
 				table.insert(c.t1Extractors, id)
 			end
@@ -1310,7 +1386,15 @@ local function census(brain: Brain): Census
 		if bit32.band(d.categoryMask, BIT.COMMANDER) ~= 0 then
 			c.commander = id
 		elseif d.domain == "structure" then
-			if d.buildOptions then
+			if d.id == brain.prefix .. "gantry" then
+				-- (S-216) its own list: it builds only the T3 walker
+				if done then
+					table.insert(c.gantries, id)
+				else
+					c.gantryFrames += 1
+					c.gantryFrame = id
+				end
+			elseif d.buildOptions then
 				if d.id == brain.prefix .. "botlab" or d.id == brain.prefix .. "advbotlab" or d.id == brain.prefix .. "advairfield" then
 					-- (S-187) bot labs and the advanced airfield: their own lists
 					local adv = d.id == brain.prefix .. "advbotlab"
@@ -1345,6 +1429,8 @@ local function census(brain: Brain): Census
 				end
 			elseif d.id == generator then
 				c.generators += 1
+			elseif d.id == brain.prefix .. "advsolar" then
+				c.advSolars += 1 -- (S-216)
 			elseif d.shield then
 				c.shields += 1 -- (S-101)
 			elseif d.pinpointer then
@@ -1365,6 +1451,8 @@ local function census(brain: Brain): Census
 			elseif #d.weapons > 0 then
 				c.turrets += 1
 			end
+		elseif d.buildOptions and d.domain == "naval" then
+			table.insert(c.navalBuilders, id) -- (S-216) offshore extractors
 		elseif d.buildOptions and d.tier >= 2 then
 			table.insert(c.t2Builders, id) -- (S-101) its own jobs, below
 		elseif d.buildOptions then
@@ -1404,7 +1492,9 @@ local function census(brain: Brain): Census
 				local framed = k == 1 and order.started and (sim.build.target[id] or 0) ~= 0
 				if order.kind == "build" and not framed then
 					local od = sim.defs.unitByIndex[order.defIndex :: number]
-					if od.extractor then
+					if od.assistOnly then
+						table.insert(c.nanos, { order.x :: number, order.z :: number }) -- (S-216)
+					elseif od.extractor then
 						c.extractors += 1
 					-- factories too (S-193, G1: a second builder ordered a second
 					-- bot lab while the first still walked to its site)
@@ -1504,7 +1594,9 @@ local function think(brain: Brain)
 	-- hard: builders only assisting a factory leave it for these (the
 	-- airfield and shipyard are the Command Vehicle's to build)
 	local wantAir = cfg.air and #c.factories > 0 and (established or (cfg.earlyAir and c.extractors >= 2)) and #c.airfields + c.airFrames == 0
-	local wantNaval = cfg.naval and brain.seaX ~= nil and #c.factories > 0 and established and #c.shipyards + c.shipFrames == 0
+	-- (S-216) a sea map with free offshore deposits wants the shipyard early: its naval worker takes them
+	local offshoreWanted = cfg.offshore and brain.seaX ~= nil and #c.factories > 0 and c.extractors >= 6 and Skirmish.freeSeaDeposit(brain) ~= nil
+	local wantNaval = cfg.naval and brain.seaX ~= nil and #c.factories > 0 and (established or offshoreWanted) and #c.shipyards + c.shipFrames == 0
 	local wantTurret = c.turrets < turretsWanted and #c.factories > 0 and c.extractors >= 5 and #c.army >= 4
 	-- normal: once two generators stand, an army before anything else
 	-- (S-57): builders start no new job until the plant has rolled out
@@ -1532,6 +1624,25 @@ local function think(brain: Brain)
 	-- draw more, and no generator would come; S-94)
 	local armyFirst = brain.tanksFirst > 0 and c.generators >= 2 and #c.army < brain.tanksFirst and #c.factories > 0
 		and sim.tick - brain.powerLowAt > Skirmish.POWER_MEMORY
+	-- (S-216) the first finished factory with fewer than `nanos`
+	-- Construction Turrets near it: its position
+	local function nanoFactory(): (number?, number?)
+		for _, list in { c.factories, c.botLabs, c.advFactories, c.advBotLabs, c.airfields, c.advAirfields, c.gantries } do
+			for _, f in list do
+				local fx, fz = w.posX[f], w.posZ[f]
+				local n = 0
+				for _, p in c.nanos do
+					if (p[1] - fx) ^ 2 + (p[2] - fz) ^ 2 <= Skirmish.NANO_REACH ^ 2 then
+						n += 1
+					end
+				end
+				if n < (cfg.nanos or 0) then
+					return fx, fz
+				end
+			end
+		end
+		return nil, nil
+	end
 	for _, id in workers do
 		local isCommander = id == c.commander
 		if not idleBuilder(sim, id) then
@@ -1631,6 +1742,20 @@ local function think(brain: Brain)
 				continue
 			end
 		end
+		if (cfg.nanos or 0) > 0 and not isCommander and not powerShort and c.extractors >= 6 and #c.army >= 4 then
+			-- (S-216) Construction Turrets beside the factories, `nanos` each,
+			-- behind them (away from the enemy)
+			local fx, fz = nanoFactory()
+			if fx and fz then
+				local nano = brain.prefix .. "nano"
+				local x, z = spotNear(brain, nano, fx - brain.dirX * 45, fz - brain.dirZ * 45, id)
+				if x and z and (x - fx) ^ 2 + (z - fz) ^ 2 <= Skirmish.NANO_REACH ^ 2 then
+					build(brain, id, nano, x, z, 0)
+					table.insert(c.nanos, { x, z })
+					continue
+				end
+			end
+		end
 		if cfg.botLab and not isCommander and #c.botLabs > 0 and #c.advFactories > 0 and #c.advBotLabs + c.advBotFrames == 0 and acc.supply.stored > (cfg.advPlantSupply or Skirmish.ADV_PLANT_SUPPLY) then
 			-- (S-187) the advanced lab: Fatboys / Centurions
 			local lab = brain.prefix .. "advbotlab"
@@ -1651,13 +1776,24 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if cfg.techUp and not isCommander and #c.factories > 0 and #c.advFactories + #c.advFrames == 0 and acc.supply.stored > (cfg.advPlantSupply or Skirmish.ADV_PLANT_SUPPLY) then
+		if cfg.techUp and not isCommander and #c.factories > 0 and #c.advFactories + #c.advFrames == 0 and (acc.supply.stored > (cfg.advPlantSupply or Skirmish.ADV_PLANT_SUPPLY) or ((c.extractors >= Skirmish.TECH_EXTRACTORS or (sim.tick >= Skirmish.TECH_TICKS and c.extractors >= 6)) and #c.army >= 8)) then
 			-- tech up: the Advanced Vehicle Plant (fire-control radar, MLRS; S-7)
 			local adv = faction(brain, "advvehplant", "advvehplant")
 			local x, z = spotNear(brain, adv, brain.homeX - brain.toward * 40, brain.homeZ + 120, id)
 			if x and z then
 				build(brain, id, adv, x, z, Skirmish.enemyFacing(brain))
 				table.insert(c.advFrames, 0)
+				continue
+			end
+		end
+		if cfg.advEco and not isCommander and supplyShort and not powerShort and acc.power.stored >= acc.power.storage * 0.9
+			and (c.built[brain.prefix .. "converter"] or 0) < Skirmish.CONVERTERS and #c.factories > 0 then
+			-- (S-216) power sits full while supply runs short: turn it into supply
+			local conv = brain.prefix .. "converter"
+			local x, z = spotNear(brain, conv, brain.homeX - brain.toward * 80, brain.homeZ - 40, id)
+			if x and z then
+				build(brain, id, conv, x, z, 0)
+				c.built[conv] = (c.built[conv] or 0) + 1
 				continue
 			end
 		end
@@ -1691,19 +1827,29 @@ local function think(brain: Brain)
 		-- need, and one more only while power stalls and supply doesn't
 		-- (counts and stall memories, never the moment's income: mirror-safe,
 		-- S-31 / S-94)
-		local genWanted = math.ceil((factoryPower + builderPower + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP)) / Skirmish.GENERATOR_POWER)
+		local genWanted = math.ceil((factoryPower + builderPower + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP) + c.upkeep) / Skirmish.GENERATOR_POWER) -- (S-216: extractors' upkeep too)
 		local extractorFirst = cell ~= nil and (c.extractors < c.generators or (supplyShort and not powerShort))
 		local genCap = genWanted + (if powerShort and not supplyShort then Skirmish.GEN_SLACK else 0)
-		local wantGen = c.generators < Skirmish.MIN_GENERATORS or (not extractorFirst and c.generators < genCap)
+		-- (S-216) an advanced solar makes ADV_SOLAR_EQ solars' power
+		local genEq = c.generators + c.advSolars * Skirmish.ADV_SOLAR_EQ
+		local wantGen = c.generators + c.advSolars < Skirmish.MIN_GENERATORS or (not extractorFirst and genEq < genCap)
 		if genAllowed and wantGen then
-			local gen = faction(brain, "solar", "solar")
-			local x, z = Skirmish.blockSpot(brain, gen, c.generators, id)
+			local advanced = cfg.advEco and c.generators >= Skirmish.ADV_SOLAR_AFTER
+			local gen = if advanced then brain.prefix .. "advsolar" else faction(brain, "solar", "solar")
+			local x, z = nil, nil
+			if not advanced then
+				x, z = Skirmish.blockSpot(brain, gen, c.generators, id)
+			end
 			if x == nil then
 				x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ, id)
 			end
 			if x and z then
 				build(brain, id, gen, x, z, 0)
-				c.generators += 1
+				if advanced then
+					c.advSolars += 1
+				else
+					c.generators += 1
+				end
 				continue
 			end
 		end
@@ -1729,7 +1875,9 @@ local function think(brain: Brain)
 			end
 		end
 		local frame = c.advFrames[1]
-		if frame and frame ~= 0 then
+		if c.gantryFrame ~= 0 then
+			submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = c.gantryFrame }) -- (S-216) help the gantry
+		elseif frame and frame ~= 0 then
 			submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = frame }) -- help the tech-up
 		elseif #c.factories > 0 then
 			submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = c.factories[1] })
@@ -1795,7 +1943,12 @@ local function think(brain: Brain)
 		if not idleBuilder(sim, id) then
 			continue
 		end
-		local ux, uz = nextUpgrade()
+		-- (S-216) while power stalls, a fusion before more upgrades (each adds upkeep)
+		local fusionFirst = cfg.advEco and powerShort and count(brain.prefix .. "fusion") < Skirmish.FUSIONS
+		local ux, uz = nil, nil
+		if not fusionFirst then
+			ux, uz = nextUpgrade()
+		end
 		if ux and uz then
 			-- in-place upgrade (S-108): straight on the deposit, not via spotNear
 			brain.claims[lg:index(lg:cellAt(ux, uz))] = sim.tick
@@ -1807,9 +1960,25 @@ local function think(brain: Brain)
 		local flak, beam = faction(brain, "lumen", "hailstorm"), faction(brain, "radiance", "bulwark") -- Bulwark in Inferno's place (S-157)
 		local umbrella, silo = faction(brain, "providence", "cerberus"), faction(brain, "reckoning", "ragnarok")
 		local longRadar = faction(brain, "beacon", "allseer")
-		if c.shields == 0 then
+		local fusion, advFusion = brain.prefix .. "fusion", brain.prefix .. "advfusion"
+		local advDepot, advCap = brain.prefix .. "advdepot", faction(brain, "advcapacitor", "advaccumulator")
+		local advConverter, gantry = brain.prefix .. "advconverter", brain.prefix .. "gantry"
+		if cfg.advEco and powerShort and count(fusion) < Skirmish.FUSIONS then
+			-- (S-216) fusion behind the base while power stalls
+			job, cx, cz = fusion, brain.homeX - brain.dirX * 90, brain.homeZ - brain.dirZ * 90
+			c.built[fusion] = count(fusion) + 1
+		elseif c.shields == 0 then
 			job, cx, cz = faction(brain, "phalanx", "carapace"), brain.homeX + brain.toward * 40, brain.homeZ
 			c.shields += 1
+		elseif cfg.experimental and count(gantry) == 0 and (acc.supply.stored >= math.min(Skirmish.GANTRY_SUPPLY, acc.supply.storage * 0.8) or (sim.tick >= Skirmish.GANTRY_TICKS and c.extractors >= Skirmish.GANTRY_EXTRACTORS)) then
+			-- (S-216, hard) the Experimental Gantry: Titans / Juggernauts; late in the game it
+			-- comes before the rest of the list (in a match the builder never reached the end)
+			job, cx, cz = gantry, brain.homeX - brain.dirX * 70 + brain.dirZ * 120, brain.homeZ - brain.dirZ * 70 - brain.dirX * 120
+			c.built[gantry] = 1
+		elseif cfg.advEco and count(advDepot) == 0 and acc.supply.stored >= acc.supply.storage * 0.9 then
+			-- (S-216) supply sits full: more room for it
+			job, cx, cz = advDepot, brain.homeX - brain.dirX * 60, brain.homeZ - brain.dirZ * 60 - 50
+			c.built[advDepot] = 1
 		elseif c.pinpointers < Skirmish.PINPOINTERS then
 			job, cx, cz = faction(brain, "witness", "augur"), brain.homeX - brain.toward * 70, brain.homeZ + (if c.pinpointers == 0 then 60 else -60)
 			c.pinpointers += 1
@@ -1828,22 +1997,34 @@ local function think(brain: Brain)
 		elseif count(beam) == 0 then
 			job, cx, cz = beam, brain.homeX + brain.dirX * 90, brain.homeZ + brain.dirZ * 90
 			c.built[beam] = 1
+		elseif cfg.advEco and count(advCap) == 0 then
+			-- (S-216) power storage for the beam tower's charged shots
+			job, cx, cz = advCap, brain.homeX - brain.dirX * 60, brain.homeZ - brain.dirZ * 60 + 50
+			c.built[advCap] = 1
 		elseif count(longRadar) == 0 then
 			-- long-range radar behind the beam tower (S-207, the user's H33:
 			-- the AI's Radiance never shot blips; its one T1 radar tower
 			-- didn't reach the beam's range)
 			job, cx, cz = longRadar, brain.homeX + brain.dirX * 30, brain.homeZ + brain.dirZ * 30 + 50
 			c.built[longRadar] = 1
+		elseif cfg.advEco and count(advConverter) < Skirmish.ADV_CONVERTERS and not powerShort and acc.power.stored >= acc.power.storage * 0.8 then
+			-- (S-216) power to spare: turn it into supply
+			job, cx, cz = advConverter, brain.homeX - brain.dirX * 100, brain.homeZ - brain.dirZ * 100 + (if count(advConverter) == 0 then 50 else -50)
+			c.built[advConverter] = count(advConverter) + 1
 		elseif count(umbrella) < (if c.enemySilo then 2 else 1) then
 			-- the anti-nuke umbrella (S-110, S-111)
 			job, cx, cz = umbrella, brain.homeX - brain.dirX * 40, brain.homeZ - brain.dirZ * 40 + (if count(umbrella) == 0 then 0 else 80)
 			c.built[umbrella] = count(umbrella) + 1
-		elseif cfg.nuke and count(silo) == 0 and acc.supply.stored >= acc.supply.storage * Skirmish.NUKE_RICH and (not cfg.citadel or c.citadels > 0) then
+		elseif cfg.nuke and count(silo) == 0 and acc.supply.stored >= math.min(Skirmish.NUKE_SUPPLY, acc.supply.storage * Skirmish.NUKE_RICH) and (not cfg.citadel or c.citadels > 0) then
 			job, cx, cz = silo, brain.homeX - brain.dirX * 120, brain.homeZ - brain.dirZ * 120
 			c.built[silo] = 1
 		elseif cfg.citadel and c.citadels == 0 and acc.supply.stored >= math.min(Skirmish.CITADEL_SUPPLY, acc.supply.storage * 0.9) then
 			job, cx, cz = "ord_citadel", brain.homeX + brain.dirX * 120, brain.homeZ + brain.dirZ * 120
 			c.citadels += 1
+		elseif cfg.advEco and count(advFusion) == 0 and count(fusion) >= Skirmish.FUSIONS and (powerShort or acc.supply.stored >= math.min(Skirmish.ADV_FUSION_SUPPLY, acc.supply.storage * 0.8)) then
+			-- (S-216) the big reactor, far behind the base: power still stalls with two fusions, or it's rich
+			job, cx, cz = advFusion, brain.homeX - brain.dirX * 150, brain.homeZ - brain.dirZ * 150
+			c.built[advFusion] = 1
 		end
 		if job then
 			local x, z = spotNear(brain, job, cx, cz, id)
@@ -1929,7 +2110,7 @@ local function think(brain: Brain)
 		local q = sim.build.queue[f] or {}
 		for _ = #q + 1, cfg.queue do
 			local item
-			if cfg.t2Builder and t2Planned < 1 and acc.supply.stored >= Skirmish.ADV_BUILDER_SUPPLY then
+			if cfg.t2Builder and t2Planned < 1 and (acc.supply.stored >= Skirmish.ADV_BUILDER_SUPPLY or c.extractors >= Skirmish.TECH_EXTRACTORS or (sim.tick >= Skirmish.TECH_TICKS and c.extractors >= 6)) then
 				item = t2BuilderUnit -- shield and Pinpointers (S-101)
 				t2Planned += 1
 			elseif c.enemySilo and mobilePlanned < 1 then
@@ -1942,7 +2123,7 @@ local function think(brain: Brain)
 				item = "chs_shroud" -- a jammer to cover the waves (S-76)
 				jammerPlanned += 1
 			else
-				item = if brain.rng:chance(0.5) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "juggernaut")
+				item = if brain.rng:chance(0.5) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "tzar") -- (S-216: chs_juggernaut is the T3 bot since S-213, and the Goliath is retired; the Tzar takes its place)
 				if brain.prefix == "chs_" and brain.rng:chance(if c.enemyTurrets >= 3 then 0.35 else 0.15) then
 					item = "chs_tzar" -- (S-187) heavy plasma, more against defences
 				elseif cfg.wardenShare and brain.rng:chance(cfg.wardenShare) then
@@ -1999,6 +2180,7 @@ local function think(brain: Brain)
 		end
 	end
 
+	local g0 = (sim.map :: Passability.PassMap).grid
 	-- hard: aircraft (fighters against known aircraft, else helicopters and
 	-- bombers) and ships
 	local fightersWanted = math.min(math.ceil(c.enemyAir / 2), Skirmish.MAX_AA)
@@ -2016,10 +2198,38 @@ local function think(brain: Brain)
 			queueItem(f, item)
 		end
 	end
+	-- (S-216) one naval worker for the offshore deposits, while any is free
+	local navalWorker = faction(brain, "tidewright", "wrecker")
+	local navalPlanned = #c.navalBuilders + queued(sim, c.shipyards, navalWorker)
+	local seaCell = if cfg.offshore and #c.shipyards > 0 then Skirmish.freeSeaDeposit(brain) else nil
 	for _, f in c.shipyards do
 		local q = sim.build.queue[f] or {}
 		for _ = #q + 1, cfg.queue do
+			if seaCell and navalPlanned < 1 then
+				queueItem(f, navalWorker)
+				navalPlanned += 1
+				continue
+			end
 			queueItem(f, if brain.rng:chance(0.3) then faction(brain, "silence", "lamprey") else faction(brain, "sentry", "barracuda"))
+		end
+	end
+	for _, id in c.navalBuilders do
+		if not idleBuilder(sim, id) then
+			continue
+		end
+		local cell = Skirmish.freeSeaDeposit(brain, id)
+		if cell then
+			local x, z = Skirmish.depositPoint(g0, cell)
+			brain.claims[cell] = sim.tick
+			build(brain, id, brain.prefix .. "seaextractor", x, z, 0)
+		elseif #c.shipyards > 0 then
+			submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = c.shipyards[1] })
+		end
+	end
+	-- (S-216, hard) the gantry builds one walker at a time
+	for _, f in c.gantries do
+		if #(sim.build.queue[f] or {}) == 0 then
+			queueItem(f, faction(brain, "titan", "juggernaut"))
 		end
 	end
 

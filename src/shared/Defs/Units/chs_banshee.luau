@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "chs_banshee",
 	name = "Banshee",
-	description = "EW jammer aircraft. Hides friendly units from radar over a wide area.",
+	description = "Jammer aircraft. Hides friendly units from enemy radar over a wide area.",
 	faction = "chaos",
 	tier = 2,
 	domain = "air",
