@@ -62,18 +62,25 @@ return function(t: RunAll.Context)
 		t.equal(w2.health[other2], before, "a self-destructed nano hurts no nano")
 	end)
 
-	t.test("the Juggernaut self-destructs almost like a nuke: 220 studs (H40)", function()
-		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:96" })
-		local w = sim.world
-		local jug = Spawn.unit(sim, "chs_juggernaut", 1, 0, 0)
-		local far = Spawn.unit(sim, "ord_paladin", 2, 160, 0)
-		World.setFireState(w, jug, World.FireState.HOLD_FIRE)
-		World.setFireState(w, far, World.FireState.HOLD_FIRE)
-		local before = w.health[far]
-		selfDestruct(sim, 1, jug)
-		steps(sim, 15 * 7)
-		t.equal(w.slot[jug], nil, "it went up")
-		t.expect(w.slot[far] == nil or w.health[far] < before, "a tank 160 studs off is hit")
+	t.test("a T3 walker's self-destruct reaches 35% of a nuke's radius and can't kill a Commander (S-217, the user)", function()
+		for _, id in { "ord_titan", "chs_juggernaut" } do
+			local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:96" })
+			local w = sim.world
+			local walker = Spawn.unit(sim, id, 1, 0, 0)
+			local com = Spawn.unit(sim, "ord_sovereign", 2, 20, 0) -- right beside it
+			local far = Spawn.unit(sim, "ord_paladin", 2, 90, 0)
+			for _, u in { walker, com, far } do
+				World.setFireState(w, u, World.FireState.HOLD_FIRE)
+			end
+			local nuke = sim.defs.weapons.ord_nuke.aoe
+			t.expect(sim.defs.units[id].selfDestructBlast.aoe <= 0.35 * nuke + 1e-9, `{id}: at most 35% of a nuke's {nuke} studs`)
+			local full, before = w.health[com], w.health[far]
+			selfDestruct(sim, 1, walker)
+			steps(sim, 15 * 7)
+			t.equal(w.slot[walker], nil, `{id} went up`)
+			t.expect(w.slot[com] ~= nil and w.health[com] >= 0.8 * full, `{id}: the Commander beside it keeps over 80% ({w.health[com]} of {full})`)
+			t.equal(w.health[far], before, `{id}: a tank 90 studs off is untouched`)
+		end
 	end)
 
 	t.test("a construction turret left alone assists, repairs and reclaims what is in its reach, and never moves (H31, S-211)", function()
