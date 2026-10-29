@@ -13,7 +13,8 @@
 -- and stats. The category tabs sit under the grid, each with its colour
 -- and hotkey (Economy Z, Combat X, Utility C, Build V, C-203): while a
 -- builder's menu shows, those keys open the tab and arm the digits (over
--- Patrol, Cancel, camera right and range rings).
+-- Patrol, Cancel, camera right and range rings). A mobile builder selected
+-- by click or box arms them at once (C-248).
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -344,11 +345,14 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 	local world = api.world
 	local menu = BuildMenu.of(world, api.state.selection)
 	ui.menu = menu
-	-- another selection: the digits go back to control groups until B
+	-- another selection: a mobile builder picked by click or box arms the
+	-- digits at once (H17: they did nothing until a tab key); one recalled
+	-- from a control group, or a factory, leaves them to the groups until B
+	-- or a tab key (a double tap still jumps the camera, C-248)
 	local selKey = table.concat(api.state.selection, ",")
 	if selKey ~= ui.armedFor then
 		ui.armedFor = selKey
-		ui.armed = false
+		ui.armed = #menu.tabs > 0 and #menu.factories == 0 and not api.state.recalled
 	end
 	ui.panel.Visible = #menu.tabs > 0
 	if #menu.tabs == 0 then
@@ -399,6 +403,7 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 			local index = i
 			b.MouseButton1Click:Connect(function()
 				ui.tab = index
+				ui.armed = true -- a clicked tab arms the digits too
 				ui.key = ""
 			end)
 			ui.tabButtons[i] = b

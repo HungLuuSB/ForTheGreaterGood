@@ -14,8 +14,9 @@
 -- facing × 90°, Core/Facing).
 -- A row being dragged (G14) shows every building it will place: a ghost on
 -- each spot, green where it can go and red where not, as Api's placeRow
--- checks them. Planned buildings are highlighted on top of everything
--- (Highlight AlwaysOnTop, G15), so hills and units don't hide them.
+-- checks them, over its footprint's build cells (Render/Footprint, H3).
+-- Planned buildings are highlighted on top of everything (Highlight
+-- AlwaysOnTop, G15), so hills and units don't hide them.
 
 local Players = game:GetService("Players")
 
@@ -24,6 +25,7 @@ local Facing = require("../Core/Facing")
 local Placement = require("../Core/Placement")
 local Upgrades = require("../Core/Upgrades")
 local World = require("../Core/World")
+local Footprint = require("./Footprint")
 local Models = require("./Models")
 
 local PlacementGhost = {}
@@ -38,7 +40,7 @@ export type Ghost = {
 	model: Model?,
 	defId: string?,
 	marks: Folder, -- upgrade target discs and the area circle (outside the ghost: shown without placing too)
-	row: { ok: Model, bad: Model, shown: { Model }, free: { Model }, defId: string?, key: string }, -- a dragged row's ghosts (G14)
+	row: { ok: Model, bad: Model, shown: { Model }, free: { Model }, defId: string?, key: string, cells: Footprint.Pool }, -- a dragged row's ghosts (G14) and their cells (H3)
 	discs: { Part },
 	area: Part,
 	grid: Folder, -- the build grid's line segments (outside the ghost: its Highlight would tint them)
@@ -158,7 +160,11 @@ function PlacementGhost.new(): Ghost
 		m.Parent = folder
 		return m
 	end
-	local row = { ok = rowModel("RowOk", VALID), bad = rowModel("RowBad", INVALID), shown = {}, free = {}, defId = nil, key = "" }
+	-- (the cells in their own folder: the ghosts' Highlights would tint them)
+	local rowCells = Instance.new("Folder")
+	rowCells.Name = "RowCells"
+	rowCells.Parent = folder
+	local row = { ok = rowModel("RowOk", VALID), bad = rowModel("RowBad", INVALID), shown = {}, free = {}, defId = nil, key = "", cells = Footprint.new(rowCells) }
 	return { folder = folder, plate = plate, highlight = highlight, model = nil, defId = nil, marks = marks, discs = discs, area = area, grid = grid, lines = {}, gridKey = "", arrow = arrow, labelGui = labelGui, label = label, facing = nil, labelUntil = 0, row = row }
 end
 
@@ -315,7 +321,7 @@ local function layGrid(g: Ghost, world: World.World, bx: number, bz: number)
 	end
 end
 
-PlacementGhost.ROW_MAX = 40 -- ghosts drawn for one row
+PlacementGhost.ROW_MAX = 80 -- ghosts drawn for one row or grid
 
 local function rowGhost(g: Ghost, def: any): Model
 	local m = table.remove(g.row.free)
@@ -332,12 +338,13 @@ local function rowGhost(g: Ghost, def: any): Model
 end
 
 -- The row from `from` to `to` (Controls' drag; nil when not dragging one):
--- a ghost on each spot Placement.row gives, checked as Api's placeRow does.
--- Redrawn only when the row's spots change. True while a row shows.
-local function drawRow(g: Ghost, api: Api.Api, def: any, facing: number, from: Vector3?, to: Vector3?): boolean
+-- a ghost on each spot Placement.drag gives (a grid with Alt, H4), checked
+-- as Api's placeRow does. Redrawn only when the spots change. True while
+-- a row shows.
+local function drawRow(g: Ghost, api: Api.Api, def: any, facing: number, from: Vector3?, to: Vector3?, grid: boolean?): boolean
 	local r = g.row
 	local world = api.world
-	local spots = if from and to then Placement.row(world, def, from.X, from.Z, to.X, to.Z) else {}
+	local spots = if from and to then Placement.drag(world, def, from.X, from.Z, to.X, to.Z, grid) else {}
 	if #spots < 2 then
 		spots = {}
 	end
@@ -364,6 +371,7 @@ local function drawRow(g: Ghost, api: Api.Api, def: any, facing: number, from: V
 		r.defId = def.id
 	end
 	local planned = Placement.planned(world, api.waypoints.byUnit)
+	Footprint.begin(r.cells)
 	for i = 1, n do
 		local check = Placement.check(world, def, spots[i][1], spots[i][2], planned)
 		local m = rowGhost(g, def)
@@ -372,11 +380,13 @@ local function drawRow(g: Ghost, api: Api.Api, def: any, facing: number, from: V
 		m:PivotTo(CFrame.new(check.x, y, check.z) * CFrame.Angles(0, Facing.heading(facing) + math.pi, 0) * offset)
 		m.Parent = if check.ok then r.ok else r.bad
 		table.insert(r.shown, m)
+		Footprint.lay(r.cells, world, check.x, check.z, def.footprint, if check.ok then VALID else INVALID, 0.25, World.floats(def))
 	end
+	Footprint.finish(r.cells)
 	return n > 0
 end
 
-function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vector3?, areaTo: Vector3?, rowFrom: Vector3?, rowTo: Vector3?)
+function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vector3?, areaTo: Vector3?, rowFrom: Vector3?, rowTo: Vector3?, rowGrid: boolean?)
 	marks(g, api, now or os.clock(), areaFrom, areaTo)
 	local p: any = api.state.placement
 	local hint = api.state.depositHint
@@ -416,7 +426,7 @@ function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vec
 	setModel(g, def)
 	local model = g.model :: Model
 	-- a dragged row: its ghosts stand in for the single one (G14)
-	local rowing = drawRow(g, api, def, p.facing, rowFrom, rowTo)
+	local rowing = drawRow(g, api, def, p.facing, rowFrom, rowTo, rowGrid)
 	model.Parent = if rowing then nil else g.folder
 	g.plate.Transparency = if rowing then 1 else 0.6
 	local color = if p.valid then VALID else INVALID

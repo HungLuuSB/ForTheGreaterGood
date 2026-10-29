@@ -6,6 +6,12 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Playtest feedback 3, part one (C-248):**
+  - A builder's number keys work as soon as it's selected.
+  - Shift-drag rows only add buildings as they grow; Alt + drag lays a grid.
+  - Planned buildings show their build cells, and planned orders draw on top of hills and units.
+  - The Commander shows its D-Gun and death-blast rings, and the unit panel shows health as a number.
+  - Beams take their weapon's colour, and hovering a resource-bar marker no longer shifts the bar.
 - Ready to merge: `a8987295` (main 92b9147c merged in; AttackPreview.spec reads the silo's capacity from the def, as S-200 changed it. test_client 326 / 326, build passed)
 - **Trees and rocks textured (C-247):** the approved tree and rock models draw with their textures on Supreme Strait. Two of models-C's textures don't load yet; C is told.
 - Ready to merge: `efda9c36` (C-247; main 4f875faa merged in; test_client 326 / 326, build passed; Studio: 568 features textured)

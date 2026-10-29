@@ -1,7 +1,8 @@
 --!strict
 -- Queued structures (C-23): every BUILD your own builders still have queued
 -- (Core/Waypoints) shows as a translucent copy of the structure on its spot,
--- over a faint footprint, until its frame starts. Pooled per def; rebuilt
+-- over its footprint's build cells (Render/Footprint, H3: it was a flat
+-- plate that sank into slopes), until its frame starts. Pooled per def; rebuilt
 -- only when the set of queued builds changes. The copies share one
 -- Highlight drawn on top of everything (G15), so a plan behind a hill or
 -- under units still shows.
@@ -10,11 +11,13 @@ local Facing = require("../Core/Facing")
 local Api = require("../Api")
 local Schema = require("@shared/Net/Schema")
 local World = require("../Core/World")
+local Footprint = require("./Footprint")
 local Models = require("./Models")
 
 local QueuedBuilds = {}
 
 QueuedBuilds.TRANSPARENCY = 0.6
+local CELLS_COLOR = Color3.fromRGB(235, 220, 80)
 
 local CT = Schema.CmdType
 
@@ -23,7 +26,7 @@ export type Queued = {
 	planned: Model, -- the copies, under one Highlight
 	free: { [string]: { Model } },
 	shown: { Model },
-	plates: { BasePart },
+	cells: Footprint.Pool,
 	key: string,
 }
 
@@ -39,7 +42,7 @@ function QueuedBuilds.new(): Queued
 	h.Parent = planned
 	planned.Parent = folder
 	folder.Parent = workspace
-	return { folder = folder, planned = planned, free = {}, shown = {}, plates = {}, key = "" }
+	return { folder = folder, planned = planned, free = {}, shown = {}, cells = Footprint.new(folder), key = "" }
 end
 
 local function take(q: Queued, def: any): Model
@@ -55,25 +58,6 @@ local function take(q: Queued, def: any): Model
 		end
 	end
 	return model
-end
-
-local function plate(q: Queued, i: number): BasePart
-	local p = q.plates[i]
-	if p == nil then
-		local part = Instance.new("Part")
-		part.Name = "QueuedFootprint"
-		part.Anchored = true
-		part.CanCollide = false
-		part.CanQuery = false
-		part.CanTouch = false
-		part.CastShadow = false
-		part.Material = Enum.Material.Neon
-		part.Color = Color3.fromRGB(235, 220, 80)
-		part.Transparency = 0.8
-		q.plates[i] = part
-		p = part
-	end
-	return p :: BasePart
 end
 
 function QueuedBuilds.step(q: Queued, api: Api.Api)
@@ -99,6 +83,7 @@ function QueuedBuilds.step(q: Queued, api: Api.Api)
 		return
 	end
 	q.key = key
+	Footprint.begin(q.cells)
 
 	for _, model in q.shown do
 		local id = model:GetAttribute("DefId") :: string
@@ -107,7 +92,7 @@ function QueuedBuilds.step(q: Queued, api: Api.Api)
 		model.Parent = nil
 	end
 	table.clear(q.shown)
-	for i, p in items do
+	for _, p in items do
 		local def = world.defs.unitByIndex[p.defIndex :: number]
 		local model = take(q, def)
 		local y = World.groundY(world, p.x, p.z)
@@ -116,15 +101,9 @@ function QueuedBuilds.step(q: Queued, api: Api.Api)
 		;(model.PrimaryPart :: BasePart).CFrame = CFrame.new(p.x, y, p.z) * CFrame.Angles(0, heading + math.pi, 0) * offset
 		model.Parent = q.planned
 		table.insert(q.shown, model)
-		local size = def.footprint * 8
-		local fp = plate(q, i)
-		fp.Size = Vector3.new(size, 0.15, size)
-		fp.CFrame = CFrame.new(p.x, y + 0.08, p.z)
-		fp.Parent = q.folder
+		Footprint.lay(q.cells, world, p.x, p.z, def.footprint, CELLS_COLOR, 0.35, World.floats(def))
 	end
-	for i = #items + 1, #q.plates do
-		q.plates[i].Parent = nil
-	end
+	Footprint.finish(q.cells)
 end
 
 return QueuedBuilds

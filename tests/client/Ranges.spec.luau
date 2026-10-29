@@ -257,4 +257,33 @@ return function(t: any)
 		t.expect(Ranges.isRadarFacility(sim.defs.units.chs_eye), "an enemy tower is a radar facility, just not ours")
 		t.expect(not Ranges.isRadarFacility(sim.defs.units.ord_aegis), "a radar SAM site isn't")
 	end)
+
+	t.test("a Commander shows its D-Gun and its death blast apart; other units don't (H21)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:48", scenario = "empty" })
+		local defs = sim.defs
+		for _, id in { "ord_sovereign", "chs_warlord" } do
+			local def = defs.units[id]
+			local out = {}
+			Ranges.circlesOfDef(def, defs, 10, 20, out, 3)
+			local r: { [string]: number } = {}
+			for _, c in out do
+				r[c.kind] = c.r
+			end
+			t.equal(r.blast, def.deathBlast.aoe, `{id}: the blast ring is the death blast's reach`)
+			local dgun
+			for _, slot in def.weapons do
+				local w = defs.weaponByIndex[slot.weaponIndex]
+				if w.fx and w.fx.trail == "dgun" then
+					dgun = w.range
+				end
+			end
+			t.equal(r.dgun, dgun, `{id}: the D-Gun ring is its range`)
+			t.expect(r.weapon ~= nil and r.weapon ~= dgun, `{id}: the laser keeps the weapon ring`)
+		end
+		local out = {}
+		Ranges.circlesOfDef(defs.units.ord_fusion, defs, 0, 0, out)
+		for _, c in out do
+			t.expect(c.kind ~= "blast" and c.kind ~= "dgun", `a fusion reactor draws no {c.kind} ring`)
+		end
+	end)
 end
