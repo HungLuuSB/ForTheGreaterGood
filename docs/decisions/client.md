@@ -2399,3 +2399,17 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - in range: the band ends on the yellow D-Gun ring (`debug_out/screens/2026-10-30-dgun-preview.jpg`);
   - cursor far outside: the band still stops at the ring (`…-dgun-preview-far.jpg`). The click fired from where the Commander stood, with power 1.0k → 513 and the bolt flying along the band (`…-dgun-fired-far.jpg`).
 - The D-Gun's own effects (bolt, muzzle, hits, end) were asked of models-C, as the user requested. They will come as templates `Vfx.DgunBolt` / `DgunMuzzle` / `DgunHit` / `DgunEnd` in `place/Vfx.model.json`, which B wires when they land.
+
+### C-265 — Unit pictures and faction emblems uploaded (2026-10-30)
+
+- The user approved uploading 2D-E's E-11 unit pictures (2d 3b0aedf1) and the faction emblem atlas (2d d9d67900); the `2d` branch is merged in up to a8a12d1d. The ids are in `tools/icons/assets.json` with their pixel hashes:
+  - pictures, sheets 1–4: 122608829388990, 77489597273393, 138922904621520, 97328947914631;
+  - emblems: 136358453510061.
+- `UI/UnitPictures` is regenerated: all 197 defs have a picture on an uploaded sheet. E packs 126-px pictures 2 px apart, 64 to a sheet. `Portrait` reads `TILE` from the module, and `UnitPictures.spec` now checks rects on that 128-px pitch instead of the tile size.
+- New `tools/icons/emblems.mjs` writes `UI/FactionEmblems` from E's `keys.json`, read-only for lobby-D as `UiIcons` is:
+  - the atlas image and size;
+  - each emblem's name, faction, tint and rect at every drawn size (16 to 256 px);
+  - `keyOf(faction)`, `pick(px)` (the smallest drawn size that covers it), and `of(faction, px)` → image, rect, tint.
+  - An id whose atlas changed since its upload is dropped, as for every other sheet. Nothing in the match draws an emblem yet.
+- Spec: `FactionEmblems.spec` (both factions, every rect on the atlas, `pick`).
+- Studio, Coastline: the build tiles and the unit panel show the pictures (Order blue, in their setting), cropped cleanly with no neighbour bleeding in (`debug_out/screens/2026-10-30-unit-pictures.png`).
