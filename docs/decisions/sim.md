@@ -2968,3 +2968,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:** Playtest3Units.spec:
   - a nano speeds up a Commander's solar, repairs a tank in reach but not one out of it, reclaims a wreck, drops an out-of-reach order and never moves;
   - offshore extractors are refused on land and accepted on wall:64's lake, and seafloor matches water's rule on every 7th cell.
+
+## S-212 — Strategic snapshots say "part k of n" (protocol 41; client-B's H36) (2026-10-29)
+
+- **Found by client-B:** at 200+ known units a snapshot takes two or more 900-byte messages with one tick, sent unreliably. The client replaced every non-tactical unit at a new tick, so a lost part made its blips vanish for a third of a second.
+- **Now:**
+  - The Strategic header is `tick u16 | part u8 | parts u8` (`Schema.encodeStrategicHeader` / `decodeStrategicHeader`, `numberStrategicParts`; `STRATEGIC_HEADER_BYTES` 4).
+  - A client drops the units missing from a snapshot only once it has every part of it.
+  - The test client (`Tests/Support/Client`) does this.
+- **Client side:** the client's NetIn (B's) must read Strategic with `decodeStrategicHeader`. So this lands on `main` together with B's change, not before.
+- **Tests:** StrategicParts.spec:
+  - 300 records take several numbered messages of one tick;
+  - an empty snapshot is part 0 of 1;
+  - a lost part keeps its units, and a complete snapshot drops a missing blip;
+  - a bad part number is refused.
+

@@ -122,6 +122,8 @@ export type View = {
 	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
 	rejected: Schema.SnapshotRecord?, -- a REJECT: the server's versions
 	strategicTick: number, -- wire tick of the current strategic snapshot
+	strategicParts: { [number]: boolean }, -- its parts received so far (S-212)
+	strategicSeen: { [number]: boolean }, -- the unit IDs in them
 	received: { [number]: boolean }, -- every unit ID ever mentioned
 	log: { { channel: string, ids: { number } } }, -- this tick's mentions, for checks
 	wrecks: { [number]: Wreck }, -- wrecks the team knows (S-26)
@@ -157,6 +159,8 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?)
 		countdown = {},
 		shares = {},
 		strategicTick = -1,
+		strategicParts = {},
+		strategicSeen = {},
 		received = {},
 		log = {},
 		economies = {},
@@ -272,6 +276,8 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				table.clear(view.projectiles)
 				table.clear(view.effects)
 				view.strategicTick = -1
+				table.clear(view.strategicParts)
+				table.clear(view.strategicSeen)
 				view.economy = nil
 				table.clear(view.economies)
 				table.clear(view.wrecks)
@@ -604,21 +610,34 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 		mention(view, "State", ids)
 	end
 	for _, msg in outbox.Strategic do
-		local records, tick = Packer.readAll(msg, Schema.decodeStrategic, Schema.decodeTickHeader)
-		if tick ~= view.strategicTick then
-			-- a new snapshot replaces every non-tactical unit
-			view.strategicTick = tick :: number
-			for id, u in view.units do
-				if u.tier ~= "tactical" then
-					view.units[id] = nil
-				end
-			end
+		local records, header = Packer.readAll(msg, Schema.decodeStrategic, Schema.decodeStrategicHeader)
+		local h = header :: Schema.StrategicHeader
+		if h.tick ~= view.strategicTick then
+			-- a new snapshot: its records update units as they come
+			view.strategicTick = h.tick
+			table.clear(view.strategicParts)
+			table.clear(view.strategicSeen)
 		end
 		local ids = {}
 		for _, r in records do
 			table.insert(ids, r.unitId)
+			view.strategicSeen[r.unitId] = true
 			local x, z = g:decode(r.cell, r.offX :: number, r.offZ :: number) -- the 8-stud square's centre (S-189)
 			view.units[r.unitId] = { tier = "strategic", team = r.team, icon = r.icon, flags = r.flags, x = x, z = z }
+		end
+		view.strategicParts[h.part] = true
+		local got = 0
+		for _ in view.strategicParts do
+			got += 1
+		end
+		if got == h.parts then
+			-- every part: the non-tactical units missing from it are gone (S-212;
+			-- with a part lost on the unreliable channel, they stay)
+			for id, u in view.units do
+				if u.tier ~= "tactical" and not view.strategicSeen[id] then
+					view.units[id] = nil
+				end
+			end
 		end
 		mention(view, "Strategic", ids)
 	end
