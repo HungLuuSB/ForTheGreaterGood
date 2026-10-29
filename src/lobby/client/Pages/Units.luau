@@ -14,6 +14,7 @@ local Defs = require("@shared/Defs/Defs")
 local UserInputService = game:GetService("UserInputService")
 
 local IconAtlas = require("@client/UI/IconAtlas")
+local Emblem = require("../Emblem")
 local Showroom = require("../Showroom")
 local StatBars = require("../StatBars")
 local Ui = require("../Ui")
@@ -191,11 +192,13 @@ function Units.new(frame: Frame, _router: any): any
 	title.Size = UDim2.new(1, 0, 0, 36)
 	title.LayoutOrder = 1
 	local render: () -> ()
-	local factionSeg = Kit.segmented(head, { { "order", "Order" }, { "chaos", "Chaos" } }, faction, function(v)
+	local factionOptions = { { "order", "Order" }, { "chaos", "Chaos" } }
+	local factionSeg = Kit.segmented(head, factionOptions, faction, function(v)
 		faction = v
 		render()
 	end, 136)
 	factionSeg.frame.LayoutOrder = 2
+	Emblem.decorate(factionSeg.frame, factionOptions)
 	local search = Ui.input(head, "Search units and roles", LIST_W - Kit.SPACE.m * 2)
 	search.LayoutOrder = 3
 	Kit.segmented(head, { { "all", "All" }, { "units", "Units" }, { "structures", "Structures" } }, filter, function(v)
@@ -450,6 +453,10 @@ function Units.new(frame: Frame, _router: any): any
 		icon(head, def, 34, factionColor(e.faction)).LayoutOrder = 1
 		local name = Ui.label(head, def.name, "title", nil, 2)
 		name.TextSize = 30
+		local emblem = Emblem.label(head, e.faction, 28)
+		if emblem then
+			emblem.LayoutOrder = 3
+		end
 		paragraph(article, `<font color="#{factionColor(e.faction):ToHex()}">{Ui.label2(e.faction)}</font>  ·  {if e.role then e.role.name else "Unit"}  ·  {Codex.tierName(def.tier)}`, nextOrder(), "label", Kit.COLOR.dim)
 		paragraph(article, def.description or "", nextOrder(), "label")
 
