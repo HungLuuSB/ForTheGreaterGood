@@ -12,7 +12,7 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 255, power = 4250, buildTime = 6800 },
 	health = 1280, -- faction pass (S-62)
 	footprint = 3,
-	sensors = { sight = 180, radar = 950, radarError = 45, radarDrain = 9 }, -- upkeep: S-72
+	sensors = { sight = 270, radar = 950, radarError = 45, radarDrain = 9 }, -- upkeep: S-72; sight +50% (S-203, the user's H9; was 180)
 	icon = "radar",
 	model = "chs_allseer",
 })

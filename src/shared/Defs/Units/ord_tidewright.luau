@@ -19,7 +19,7 @@ return Templates.extend(Templates.Unit, {
 	sensors = { sight = 120 },
 	buildPower = 100,
 	buildRange = 45, -- 70% of 64 (client request 7, S-19)
-	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_tidal", "ord_shipyard", "ord_advshipyard", "ord_moat", "ord_undertow", "ord_ear" },
+	buildOptions = { "ord_extractor", "ord_seaextractor", "ord_solar", "ord_advsolar", "ord_capacitor", "ord_windmill", "ord_converter", "ord_depot", "ord_tidal", "ord_shipyard", "ord_advshipyard", "ord_moat", "ord_undertow", "ord_ear", "ord_nano" },
 	pieces = { "base", "nano" },
 	icon = "worker",
 	model = "ord_tidewright",

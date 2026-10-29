@@ -13,6 +13,7 @@ return Templates.extend(Templates.Structure, {
 	health = 250,
 	footprint = 2, -- size shows tech level (S-104)
 	icon = "solar",
-	production = { power = 8 },
+	production = { power = 20 }, -- (S-203, the user's H23; was 8)
+	storage = { power = 50 },
 	model = "chs_solar",
 })

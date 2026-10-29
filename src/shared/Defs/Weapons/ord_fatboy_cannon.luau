@@ -3,12 +3,12 @@
 return {
 	id = "ord_fatboy_cannon",
 	type = "BALLISTIC",
-	range = 300,
+	range = 255, -- -15% (S-203, the user's H43; was 300)
 	reload = 6,
 	projectileSpeed = 150,
 	gravity = 60,
 	accuracy = 2,
-	damage = { LIGHT = 900, ARMORED = 800, STRUCTURE = 1100, SHIP = 850, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 720, ARMORED = 640, STRUCTURE = 880, SHIP = 680, AIR = 0, SUB = 0 }, -- -20% (S-203, the user's H42)
 	aoe = 48,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

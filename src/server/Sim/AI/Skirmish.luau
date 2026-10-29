@@ -148,7 +148,7 @@ Skirmish.ESCORT_RADIUS = 160 -- studs: workers sent to deposits farther from hom
 Skirmish.ARMY_FIRST_RATIO = 0.6 -- normal's tanks-before-the-third-generator rule holds only while power runs at least this well (S-94)
 Skirmish.MIN_GENERATORS = 2 -- generators before the extractor-first rule applies (S-114)
 Skirmish.GEN_SLACK = 1 -- generators beyond the planned need while only power stalls (S-114)
-Skirmish.GENERATOR_POWER = 20 -- power per second a generator makes (the generator rule's unit; S-94)
+Skirmish.GENERATOR_POWER = 20 -- power per second a generator makes (the generator rule's unit; S-94). Since S-203 (the user's H22) the "generator" is the solar array, the same 20
 Skirmish.BUILDER_POWER_PER_WORK = 1 / 6 -- power per build power a busy builder draws on average (extractors 500 / 1,800, generators none; S-114)
 Skirmish.POWER_PER_WORK = 1 / 3 -- power per work unit of a T1 tank (Lancer 1,700 / 5,100): what a building factory draws per build power (S-94)
 Skirmish.REFILL_POWER_CAP = 60 -- power/s of missile refills the generator rule plans for, at most (S-57)
@@ -359,6 +359,8 @@ Skirmish.LEVEL_NAMES = table.freeze({ "easy", "normal", "hard", "hard_aggressive
 -- chokepoints with jammers and turrets"). Two or more AIs on one side
 -- share them out in player order; a lone AI plays balanced.
 Skirmish.ROLES = table.freeze({ "balanced", "air", "defense", "spam", "tech" })
+-- front (1) to back (5): who takes which spot (S-207)
+Skirmish.ROLE_DEPTH = table.freeze({ balanced = 1, spam = 2, defense = 3, tech = 4, air = 5 })
 Skirmish.RAID_EVERY = 900 -- ticks between raids (aggressive)
 Skirmish.RAID_UNITS = 4
 Skirmish.TEAM_JOIN_TICKS = 150 -- an ally's wave left this recently: join it
@@ -380,8 +382,53 @@ function Skirmish.roleOf(sim: Types.Sim, player: number, level: string): string
 	if #mine < 2 then
 		return "balanced"
 	end
-	local k = table.find(mine, player) or 1
-	return Skirmish.ROLES[(k - 1) % #Skirmish.ROLES + 1]
+	-- the side's roles, as many as it has AIs, in ROLES order; then handed
+	-- out by spot (S-207, the user's H10: a Normal AI on Supreme Strait's
+	-- front spot built a plant and an airfield; it had drawn the air role by
+	-- player order): the AIs nearest an enemy Commander get the roles that
+	-- fight up front, those farthest back air and tech. Ties keep player
+	-- order.
+	local roles = {}
+	for k = 1, #mine do
+		table.insert(roles, Skirmish.ROLES[(k - 1) % #Skirmish.ROLES + 1])
+	end
+	-- (the lobby's badges ask with a room's config and no world, and the
+	-- pre-game has no Commanders yet: the roles in player order, as before)
+	local w = sim.world
+	local coms = {}
+	for _, id in if w then w.ids else {} do
+		if bit32.band(sim.defs.unitByIndex[w.defIndex[id]].categoryMask, Categories.Bit.COMMANDER) ~= 0 then
+			table.insert(coms, id)
+		end
+	end
+	if #coms == 0 then
+		return roles[table.find(mine, player) or 1]
+	end
+	table.sort(roles, function(a, b)
+		return Skirmish.ROLE_DEPTH[a] < Skirmish.ROLE_DEPTH[b]
+	end)
+	local front: { [number]: number } = {}
+	for _, pid in mine do
+		local best = math.huge
+		for _, me in coms do
+			if w.owner[me] == pid then
+				for _, them in coms do
+					if sim.players[w.owner[them]].allyTeam ~= ally then
+						best = math.min(best, (w.posX[me] - w.posX[them]) ^ 2 + (w.posZ[me] - w.posZ[them]) ^ 2)
+					end
+				end
+			end
+		end
+		front[pid] = best
+	end
+	local order = table.clone(mine)
+	table.sort(order, function(a, b)
+		if front[a] ~= front[b] then
+			return front[a] < front[b]
+		end
+		return (table.find(mine, a) :: number) < (table.find(mine, b) :: number)
+	end)
+	return roles[table.find(order, player) or 1]
 end
 
 -- The level's settings for a role (S-187).
@@ -511,7 +558,7 @@ export type Brain = {
 	dirZ: number,
 	escorts: { [number]: number }, -- army unit → the worker it guards (hard)
 	escortWanted: { [number]: number }, -- workers on their way to a far deposit → tick sent; waiting for an escort
-	enemyStarts: { { number } }, -- the other starts' { x, z } (S-97: contested deposits)
+	enemyStarts: { { number } }, -- the enemy Commanders' starts { x, z } (S-97: contested deposits; S-207: the enemy side's only)
 	seaX: number?, -- a navigable sea spot near home (hard, naval maps)
 	seaZ: number?,
 	lastFleetOrder: number,
@@ -578,11 +625,24 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 	-- own start and an enemy start. On a mirrored map those would be a race
 	-- that unit IDs and player order decide, not play (S-17); armies fight
 	-- over them.
+	-- the enemy side's starts: where its Commanders stand (S-207, the
+	-- user's H15: every other map start counted, allies' and empty ones
+	-- too, so deposits by an ally or an empty spot were "contested" or
+	-- skipped and stayed empty); with no enemy Commander yet, the map's
+	-- other starts as before
 	local enemyStarts = {}
-	for _, s in layers.starts do
-		local near = (s[1] - homeX) ^ 2 + (s[2] - homeZ) ^ 2 < 1
-		if not near then
-			table.insert(enemyStarts, s)
+	local ally = sim.players[player].allyTeam
+	for _, id in w.ids do
+		if bit32.band(unitDef(sim, id).categoryMask, BIT.COMMANDER) ~= 0 and sim.players[w.owner[id]].allyTeam ~= ally then
+			table.insert(enemyStarts, { w.posX[id], w.posZ[id] })
+		end
+	end
+	if #enemyStarts == 0 then
+		for _, s in layers.starts do
+			local near = (s[1] - homeX) ^ 2 + (s[2] - homeZ) ^ 2 < 1
+			if not near then
+				table.insert(enemyStarts, s)
+			end
 		end
 	end
 	local deposits = {}
@@ -1191,7 +1251,7 @@ local function census(brain: Brain): Census
 		enemyExtractors = {},
 	}
 	local advPlant = faction(brain, "advvehplant", "advvehplant")
-	local generator = faction(brain, "generator", "generator")
+	local generator = faction(brain, "solar", "solar")
 	local airfield = faction(brain, "airfield", "airfield")
 	local shipyard = faction(brain, "shipyard", "shipyard")
 	local nearHome = (Skirmish.HOME_RADIUS * 1.5) ^ 2
@@ -1636,7 +1696,7 @@ local function think(brain: Brain)
 		local genCap = genWanted + (if powerShort and not supplyShort then Skirmish.GEN_SLACK else 0)
 		local wantGen = c.generators < Skirmish.MIN_GENERATORS or (not extractorFirst and c.generators < genCap)
 		if genAllowed and wantGen then
-			local gen = faction(brain, "generator", "generator")
+			local gen = faction(brain, "solar", "solar")
 			local x, z = Skirmish.blockSpot(brain, gen, c.generators, id)
 			if x == nil then
 				x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ, id)
@@ -1746,6 +1806,7 @@ local function think(brain: Brain)
 		local heavy, battery = faction(brain, "bastion", "maw"), faction(brain, "sanction", "scourge")
 		local flak, beam = faction(brain, "lumen", "hailstorm"), faction(brain, "radiance", "bulwark") -- Bulwark in Inferno's place (S-157)
 		local umbrella, silo = faction(brain, "providence", "cerberus"), faction(brain, "reckoning", "ragnarok")
+		local longRadar = faction(brain, "beacon", "allseer")
 		if c.shields == 0 then
 			job, cx, cz = faction(brain, "phalanx", "carapace"), brain.homeX + brain.toward * 40, brain.homeZ
 			c.shields += 1
@@ -1767,6 +1828,12 @@ local function think(brain: Brain)
 		elseif count(beam) == 0 then
 			job, cx, cz = beam, brain.homeX + brain.dirX * 90, brain.homeZ + brain.dirZ * 90
 			c.built[beam] = 1
+		elseif count(longRadar) == 0 then
+			-- long-range radar behind the beam tower (S-207, the user's H33:
+			-- the AI's Radiance never shot blips; its one T1 radar tower
+			-- didn't reach the beam's range)
+			job, cx, cz = longRadar, brain.homeX + brain.dirX * 30, brain.homeZ + brain.dirZ * 30 + 50
+			c.built[longRadar] = 1
 		elseif count(umbrella) < (if c.enemySilo then 2 else 1) then
 			-- the anti-nuke umbrella (S-110, S-111)
 			job, cx, cz = umbrella, brain.homeX - brain.dirX * 40, brain.homeZ - brain.dirZ * 40 + (if count(umbrella) == 0 then 0 else 80)

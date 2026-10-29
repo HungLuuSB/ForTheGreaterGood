@@ -18,7 +18,7 @@ return Templates.extend(Templates.Builder, {
 	buildPower = 70,
 	buildRange = 40,
 	canResurrect = true,
-	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_botlab", "chs_advbotlab", "chs_guard", "chs_twin_guard", "chs_geryon", "chs_talos", "chs_thorn", "chs_eye", "chs_smog" },
+	buildOptions = { "chs_extractor", "chs_solar", "chs_advsolar", "chs_accumulator", "chs_windmill", "chs_converter", "chs_depot", "chs_botlab", "chs_advbotlab", "chs_guard", "chs_twin_guard", "chs_geryon", "chs_talos", "chs_thorn", "chs_eye", "chs_smog", "chs_nano" },
 	icon = "worker",
 	model = "chs_tinker",
 })

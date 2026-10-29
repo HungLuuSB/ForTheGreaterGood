@@ -19,7 +19,7 @@ return Templates.extend(Templates.Builder, {
 	sensors = { sight = 120 },
 	buildPower = 220, -- faction pass (S-62)
 	buildRange = 45, -- 70% of 64 (client request 7, S-19)
-	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_advextractor", "ord_fusion", "ord_advvehplant", "ord_advbotlab", "ord_bastion", "ord_aegis", "ord_edict", "ord_beacon", "ord_veilspire", "ord_tribunal", "ord_reckoning", "ord_witness", "ord_barrier", "ord_citadel", "ord_phalanx", "ord_radiance", "ord_lumen", "ord_sanction", "ord_providence", "ord_sanctum" },
+	buildOptions = { "ord_extractor", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_advextractor", "ord_fusion", "ord_advconverter", "ord_advdepot", "ord_advcapacitor", "ord_advfusion", "ord_advvehplant", "ord_advbotlab", "ord_gantry", "ord_bastion", "ord_aegis", "ord_edict", "ord_beacon", "ord_veilspire", "ord_tribunal", "ord_reckoning", "ord_witness", "ord_barrier", "ord_citadel", "ord_phalanx", "ord_radiance", "ord_lumen", "ord_sanction", "ord_providence", "ord_sanctum" },
 	pieces = { "base", "nano" },
 	icon = "worker",
 	model = "ord_architect",

@@ -49,12 +49,67 @@ return function(t: RunAll.Context)
 		t.expect(aggressive.defenses < hard.defenses, "and fewer turrets")
 	end)
 
+	t.test("roles go by spot: the AI nearest the enemy fights up front, the one farthest back takes air (S-207, H10)", function()
+		local levels = { "normal", "normal", "normal", "normal", "normal", "normal", "normal", "normal" }
+		local players, ai = {}, {}
+		for i, level in levels do
+			table.insert(players, { id = i, team = i, allyTeam = if i <= 4 then 1 else 2 })
+			ai[i] = level
+		end
+		local sim = Sim.new({ seed = 5, players = players, mapId = "map:supreme_strait", scenario = "standard_start", match = { mode = "TEAM", win = "COMMAND_ENDS", ai = ai } })
+		local w = sim.world
+		local front: { [number]: number } = {}
+		for _, me in w.ids do
+			if sim.defs.unitByIndex[w.defIndex[me]].id == "ord_sovereign" or sim.defs.unitByIndex[w.defIndex[me]].id == "chs_warlord" then
+				local best = math.huge
+				for _, them in w.ids do
+					local td = sim.defs.unitByIndex[w.defIndex[them]].id
+					if (td == "ord_sovereign" or td == "chs_warlord") and sim.players[w.owner[them]].allyTeam ~= sim.players[w.owner[me]].allyTeam then
+						best = math.min(best, (w.posX[me] - w.posX[them]) ^ 2 + (w.posZ[me] - w.posZ[them]) ^ 2)
+					end
+				end
+				front[w.owner[me]] = best
+			end
+		end
+		for _, side in { { 1, 2, 3, 4 }, { 5, 6, 7, 8 } } do
+			table.sort(side, function(a, b)
+				return front[a] < front[b]
+			end)
+			t.equal(Skirmish.roleOf(sim, side[1], "normal"), "balanced", `side of {side[1]}: the front AI plays balanced`)
+			t.equal(Skirmish.roleOf(sim, side[4], "normal"), "air", `side of {side[1]}: the back AI takes air`)
+		end
+	end)
+
+	t.test("an AI's enemy starts are the enemy Commanders, not its allies' or empty spots (S-207, H15)", function()
+		local levels = { "hard", "hard", "hard", "hard" }
+		local players, ai = {}, {}
+		for i, level in levels do
+			table.insert(players, { id = i, team = i, allyTeam = if i <= 2 then 1 else 2 })
+			ai[i] = level
+		end
+		local sim = Sim.new({ seed = 5, players = players, mapId = "map:supreme_strait", scenario = "standard_start", match = { mode = "TEAM", win = "COMMAND_ENDS", ai = ai } })
+		local b = Skirmish.new(sim, 1, "hard") :: any
+		t.equal(#b.enemyStarts, 2, "two enemy Commanders, of 16 map starts")
+		local w = sim.world
+		for _, s in b.enemyStarts do
+			local owner = 0
+			for _, id in w.ids do
+				if math.abs(w.posX[id] - s[1]) < 1e-6 and math.abs(w.posZ[id] - s[2]) < 1e-6 then
+					owner = w.owner[id]
+				end
+			end
+			t.expect(owner == 3 or owner == 4, `an enemy Commander's spot ({s[1]}, {s[2]}: player {owner})`)
+		end
+	end)
+
 	t.test("roles: a side's AIs take air, defence, spam and tech in turn; a lone AI plays balanced", function()
 		local sim = teamMatch({ "hard", "hard", "hard", "hard", "normal", "hard", "hard", "easy" })
 		local roles = {}
 		for pid = 1, 8 do
 			table.insert(roles, Skirmish.roleOf(sim, pid, sim.match.ai[pid]))
 		end
+		-- (in the pre-game no Commander stands yet: the roles in player order,
+		-- as the lobby's badges show them; by spot once they land, S-207)
 		t.deepEqual(roles, { "balanced", "air", "defense", "spam", "balanced", "air", "defense", "balanced" })
 		local lone = teamMatch({ "hard", "hard" })
 		t.equal(Skirmish.roleOf(lone, 1, "hard"), "balanced", "1v1")
@@ -66,16 +121,39 @@ return function(t: RunAll.Context)
 		local sim = teamMatch({ "hard", "hard", "hard", "hard_aggressive", "hard_aggressive", "hard_aggressive" })
 		local brains = Skirmish.forMatch(sim)
 		run(sim, brains, 15 * 60 * 14) -- (14 min: S-193 slowed units and the bot lab waits for an established base)
-		t.expect(owned(sim, 2, "airfield") + owned(sim, 5, "airfield") >= 1, "an air role built an airfield")
-		local airUnits = 0
-		for _, id in sim.world.ids do
-			local d = sim.defs.unitByIndex[sim.world.defIndex[id]]
-			if (sim.world.owner[id] == 2 or sim.world.owner[id] == 5) and d.domain == "air" then
-				airUnits += 1
+		-- the roles go by spot (S-207): look them up
+		local byRole: { [string]: { number } } = {}
+		for _, b in brains do
+			local role = (b :: any).cfg.role
+			byRole[role] = byRole[role] or {}
+			table.insert(byRole[role], (b :: any).player)
+		end
+		local air, defense, balanced = byRole.air or {}, byRole.defense or {}, byRole.balanced or {}
+		t.equal(#air, 2, "one air AI a side")
+		local fields, airUnits = 0, 0
+		for _, pid in air do
+			fields += owned(sim, pid, "airfield")
+			for _, id in sim.world.ids do
+				if sim.world.owner[id] == pid and sim.defs.unitByIndex[sim.world.defIndex[id]].domain == "air" then
+					airUnits += 1
+				end
 			end
 		end
+		t.expect(fields >= 1, "an air role built an airfield")
 		t.expect(airUnits >= 2, `and flies aircraft ({airUnits})`)
-		t.expect(owned(sim, 3, "sentry_tower") + owned(sim, 3, "guard") > owned(sim, 1, "sentry_tower") + owned(sim, 1, "guard"), "the defence AI has more turrets than the balanced one")
+		-- side 1 (Hard: players 1–3): its defence AI and its balanced one
+		local d, bal = 0, 0
+		for _, pid in defense do
+			if pid <= 3 then
+				d = pid
+			end
+		end
+		for _, pid in balanced do
+			if pid <= 3 then
+				bal = pid
+			end
+		end
+		t.expect(owned(sim, d, "sentry_tower") + owned(sim, d, "guard") > owned(sim, bal, "sentry_tower") + owned(sim, bal, "guard"), "the defence AI has more turrets than the balanced one")
 		t.expect(owned(sim, 4, "botlab") + owned(sim, 5, "botlab") + owned(sim, 6, "botlab") >= 1, "a bot lab")
 	end)
 
@@ -88,7 +166,7 @@ return function(t: RunAll.Context)
 		local xs: { [number]: boolean } = {}
 		local n, onLattice = 0, 0
 		for _, id in w.ids do
-			if w.owner[id] == 1 and sim.defs.unitByIndex[w.defIndex[id]].id == b.prefix .. "generator" then
+			if w.owner[id] == 1 and sim.defs.unitByIndex[w.defIndex[id]].id == b.prefix .. "solar" then -- the AI's generator since S-203
 				n += 1
 				-- distance behind the base along its axis, on the GEN_GAP lattice
 				local along = (w.posX[id] - b.homeX) * b.dirX + (w.posZ[id] - b.homeZ) * b.dirZ

@@ -143,7 +143,7 @@ end
 
 -- The spot the AI (or a player who never picked) takes (S-171): as the
 -- k-th player of its side (by player ID) its side's k-th hint, when valid;
--- else the best valid spot in its box on a SCAN_STEP grid, by free
+-- else the side's first valid hint (S-207); else the best valid spot in its box on a SCAN_STEP grid, by free
 -- deposits within DEPOSIT_RADIUS (none within CLAIM_RADIUS of another pick)
 -- × 10, open ground (the Commander's clearance, up to 6) × 2, less the
 -- distance to the side's nearest hint / 16; the first best in scan order.
@@ -166,6 +166,14 @@ function Pregame.bestSpot(sim: Types.Sim, player: number, picks: { [number]: { n
 	local hint = hints[k]
 	if hint and Pregame.validPick(sim, player, starts[hint][1], starts[hint][2], taken) then
 		return starts[hint][1], starts[hint][2]
+	end
+	-- its hint taken (a player picked it): the side's first hint still free
+	-- (S-207, the user's H14: an AI landed beside another player while a
+	-- start stood empty), before the scan
+	for _, h in hints do
+		if Pregame.validPick(sim, player, starts[h][1], starts[h][2], taken) then
+			return starts[h][1], starts[h][2]
+		end
 	end
 	local box = pg.boxes[ally]
 	local map = sim.map :: any

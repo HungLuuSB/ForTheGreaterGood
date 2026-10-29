@@ -169,7 +169,7 @@ return function(t: RunAll.Context)
 		local mason = Spawn.unit(sim2, "ord_mason", 1, 0, 0, math.pi / 2)
 		local g = (sim2.map :: any).grid
 		local cell, ox, oz = g:encode(150, 0)
-		submit(sim2, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { mason }, defIndex = sim2.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		submit(sim2, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { mason }, defIndex = sim2.defs.units.ord_solar.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
 		local best, back, built = math.huge, 0, false
 		for _ = 1, 600 do
 			sim2.eco.accounts[1].supply.stored = 1000
@@ -359,7 +359,7 @@ return function(t: RunAll.Context)
 		t.expect(goneA > 0 and goneB > goneA, `reclaimed A (tick {goneA}) then B (tick {goneB})`)
 
 		-- two generators built one after the other
-		local gen = sim.defs.units.ord_generator.index
+		local gen = sim.defs.units.ord_solar.index
 		local g = (sim.map :: any).grid
 		local function build(x: number, z: number, queued: boolean)
 			local cell, ox, oz = g:encode(x, z)
@@ -564,7 +564,7 @@ return function(t: RunAll.Context)
 			end
 			local g = (sim.map :: any).grid
 			local cell, ox, oz = g:encode(80, 0)
-			submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { leader }, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+			submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { leader }, defIndex = sim.defs.units.ord_solar.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
 			local done: number? = nil
 			for _ = 1, 15 * 60 do
 				local acc = sim.eco.accounts[1]
@@ -621,7 +621,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 6, players = PLAYERS, mapId = "flat:64" })
 		local w = sim.world
 		local mason = Spawn.unit(sim, "ord_mason", 1, 0, 0)
-		local gen = sim.defs.units.ord_generator.index
+		local gen = sim.defs.units.ord_solar.index
 		local g = (sim.map :: any).grid
 		local function build(x: number, z: number, flags: number)
 			local cell, ox, oz = g:encode(x, z)

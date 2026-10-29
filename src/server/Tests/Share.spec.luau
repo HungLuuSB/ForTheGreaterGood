@@ -34,7 +34,7 @@ return function(t: RunAll.Context)
 		local w = sim.world
 		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0, 1)
 		w.health[tank] = 123
-		local gen = Spawn.unit(sim, "ord_generator", 1, 100, 0)
+		local gen = Spawn.unit(sim, "ord_solar", 1, 100, 0)
 		local plane = Spawn.unit(sim, "ord_archon", 1, -100, 0)
 		local com = Spawn.unit(sim, "ord_sovereign", 1, 0, -100)
 		submit(sim, 1, { cmdType = CT.SHARE_UNITS, flags = 0, unitIds = { tank, gen, plane, com }, value = 2 })
@@ -47,7 +47,7 @@ return function(t: RunAll.Context)
 			end
 		end
 		local nt = got.ord_lancer
-		t.expect(nt ~= nil and got.ord_generator ~= nil and got.ord_archon ~= nil, "player 2 has the tank, the generator and the aircraft")
+		t.expect(nt ~= nil and got.ord_solar ~= nil and got.ord_archon ~= nil, "player 2 has the tank, the generator and the aircraft")
 		-- (player 2's own Lancer from newMatch is also a Lancer: find the given one by position)
 		for _, id in w.ids do
 			if w.owner[id] == 2 and math.abs(w.posX[id]) < 1 and math.abs(w.posZ[id]) < 1 then
@@ -67,7 +67,7 @@ return function(t: RunAll.Context)
 		Sim.step(sim)
 		t.equal(w.owner[nt], 2, "not to an enemy")
 		Sim.step(sim)
-		t.equal(w.owner[got.ord_generator], 2)
+		t.equal(w.owner[got.ord_solar], 2)
 	end)
 
 	t.test("resources: up to what the giver can spend; the receiver gets it at the window's settle", function()

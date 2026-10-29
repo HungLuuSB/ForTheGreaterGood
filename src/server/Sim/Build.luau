@@ -66,6 +66,26 @@ local function inRange(sim: Types.Sim, builder: number, x: number, z: number, ta
 	return sqrt(dx * dx + dz * dz) <= (d.buildRange or 0) + targetHalf
 end
 
+-- Is builder `id` close enough to work on its current job: its unit
+-- (frame, factory, damaged unit) or the wreck it reclaims / resurrects?
+-- NetOut sends the nano-spray target only then (S-208, the user's H1: the
+-- line showed while the builder was still walking there).
+function Build.inReach(sim: Types.Sim, id: number): boolean
+	local b = sim.build
+	local w = sim.world
+	local unit = b.target[id] or 0
+	if unit ~= 0 then
+		return w.slot[unit] ~= nil and inRange(sim, id, w.posX[unit], w.posZ[unit], halfSize(def(sim, unit)))
+	end
+	local wreck = if (b.resurrect[id] or 0) ~= 0 then b.resurrect[id] else (b.reclaim[id] or 0)
+	if wreck ~= 0 then
+		local c = sim.combat
+		local wx = c.wreckX[wreck]
+		return wx ~= nil and inRange(sim, id, wx, c.wreckZ[wreck], Grid.CELL_SIZE / 2)
+	end
+	return false
+end
+
 -- Where a unit braking from its speed now comes to rest, straight ahead.
 local function stopPoint(sim: Types.Sim, id: number): (number, number)
 	local w = sim.world
@@ -670,6 +690,7 @@ function Build.step(sim: Types.Sim)
 
 	-- 2. missile stockpiles (S-47) first: refills have priority in a stall (S-66)
 	Stockpile.step(sim, demandS, demandP, priorityS, priorityP, lowS, lowP)
+	Stockpile.chargeStep(sim, demandS, demandP, priorityS, priorityP, lowS, lowP) -- heavy shots charge while reloading (S-205)
 
 	-- a factory waits while a unit it made still stands on its build pad
 	-- (within twice its radius: the next one would appear on top of it; S-133,

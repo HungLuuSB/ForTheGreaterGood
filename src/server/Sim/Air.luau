@@ -403,7 +403,13 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 	else
 		local isBomber = Air.isBomber(sim, def(sim, id))
 		local target, kx, kz, defIndex = 0, nil, nil, nil
-		if a.ammo[id] == nil or a.ammo[id] > 0 then
+		-- a player's move order comes first (S-204, the user's H12: a
+		-- fighter sent home kept chasing a plane): no chase and no bomb
+		-- run on the way; the weapons still fire at what comes in front
+		local q = sim.orders.queue[id]
+		local head = if q then q[1] else nil
+		local sent = head ~= nil and head.kind == "move" and not head.auto
+		if not sent and (a.ammo[id] == nil or a.ammo[id] > 0) then
 			if isBomber then
 				local t: number?, x: number?, z: number?, d: number? = Air.bombAim(sim, id)
 				target, kx, kz, defIndex = t or 0, x, z, d

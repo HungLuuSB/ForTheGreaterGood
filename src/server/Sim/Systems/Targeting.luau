@@ -494,6 +494,14 @@ return function(sim: Types.Sim)
 				World.setTarget(w, key, forced, forcedGen) -- ordered: overrides fire states and search
 				continue
 			end
+			if forced and weapon.type == "BOMB" then
+				-- a bomber's ordered target, out of range too: its runs go at
+				-- it from wherever it is (Air.steerJet), and the bomb bay takes
+				-- nothing nearer on the way (S-204, the user's H13)
+				local known = Sensors.knownTarget(sim, w.ally[id], forced, forcedGen) ~= nil
+				World.setTarget(w, key, if known then forced else 0, if known then forcedGen else nil)
+				continue
+			end
 			if blind and (sim.orders.manualX[id] - w.posX[id]) ^ 2 + (sim.orders.manualZ[id] - w.posZ[id]) ^ 2 <= weapon.range * weapon.range then
 				-- the manual target, unseen, its last known position in range:
 				-- Weapons fires there if it can shoot a point, else holds; no

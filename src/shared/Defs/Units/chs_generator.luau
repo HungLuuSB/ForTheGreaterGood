@@ -6,6 +6,7 @@ return Templates.extend(Templates.Structure, {
 	id = "chs_generator",
 	name = "Furnace",
 	description = "Power Generator. Steady power.",
+	retired = true, -- (S-203, the user's H22) removed from both factions: the solar array makes its 20 power now; kept for old replays and scenes
 	faction = "chaos",
 	cost = { supply = 40, power = 0, buildTime = 1200 },
 	health = 340,

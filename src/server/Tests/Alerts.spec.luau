@@ -68,7 +68,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local g = (sim.map :: any).grid
 		local views = { Client.new(g), Client.new(g) }
-		local gen = Spawn.unit(sim, "ord_generator", 1, -300, 0)
+		local gen = Spawn.unit(sim, "ord_solar", 1, -300, 0)
 		submit(sim, 1, { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 100, minZ = 100, maxX = 120, maxZ = 120 }) -- elsewhere
 		run(sim, views, 30)
 		t.equal(bit32.band(views[1].units[gen].flags or 0, Schema.StrategicFlag.UNDER_ATTACK), 0, "not before")

@@ -135,7 +135,7 @@ return function(t: RunAll.Context)
 		local sim = s.sim
 		local gens = {}
 		for i = 0, 9 do
-			table.insert(gens, Spawn.unit(sim, "chs_generator", 2, 150 + (i % 5) * 24, 150 + (i // 5) * 24))
+			table.insert(gens, Spawn.unit(sim, "chs_solar", 2, 150 + (i % 5) * 24, 150 + (i // 5) * 24))
 		end
 		step(sim, 2)
 		Combat.queueDamage(sim.combat, s.commander[2], sim.world.health[s.commander[2]], 0)
@@ -277,24 +277,24 @@ return function(t: RunAll.Context)
 				Spawn.unit(sim, "ord_lancer", pid, CORNERS[pid][1], CORNERS[pid][2]) -- keep everyone in
 			end
 			for i = 1, 3 do
-				Spawn.unit(sim, "ord_generator", 1, -300 + i * 30, -300) -- player 1: +60 power/s
+				Spawn.unit(sim, "ord_solar", 1, -300 + i * 30, -300) -- player 1: +60 power/s
 			end
 			local p1, p2 = sim.eco.accounts[1].power, sim.eco.accounts[2].power
 			p1.stored = p1.storage -- full
 			p2.stored = 0
-			for _ = 1, 300 do -- 20 s
+			for _ = 1, 255 do -- 17 s
 				Sim.step(sim)
 			end
 			return p2.stored, p1.wasted
 		end
-		-- 60 power/s for 20 s = 1,200; the generators' own storage (+300)
-		-- fills first, so 900 overflows
+		-- 60 power/s for 17 s = 1,020; the solar arrays' own storage (+150,
+		-- S-203) fills first, so 870 overflows
 		local teamP2, teamWasted = run("TEAM")
 		local ffaP2, ffaWasted = run("FFA")
-		t.expect(math.abs(teamP2 - 900) < 1e-6, `TEAM: the ally received player 1's overflow ({teamP2} power)`)
+		t.expect(math.abs(teamP2 - 870) < 1e-6, `TEAM: the ally received player 1's overflow ({teamP2} power)`)
 		t.expect(teamWasted < 1e-6, "TEAM: nothing wasted while the ally has room")
 		t.equal(ffaP2, 0, "FFA: no sharing")
-		t.expect(math.abs(ffaWasted - 900) < 1e-6, `FFA: overflow wasted ({ffaWasted})`)
+		t.expect(math.abs(ffaWasted - 870) < 1e-6, `FFA: overflow wasted ({ffaWasted})`)
 	end)
 
 	t.test("unit cap: construction fails and factory output waits at the cap", function()
@@ -303,13 +303,13 @@ return function(t: RunAll.Context)
 		local w = sim.world
 		local generators = {}
 		for i = 1, 2 do
-			table.insert(generators, Spawn.unit(sim, "ord_generator", 1, -300 + i * 30, -460))
+			table.insert(generators, Spawn.unit(sim, "ord_solar", 1, -300 + i * 30, -460))
 		end
 		-- player 1: commander, tank, two generators = 4 = the cap
 		t.equal(sim.match.units[1], 4)
 		local g = (sim.map :: any).grid
 		local cell, ox, oz = g:encode(-300, -300)
-		submit(sim, 1, { cmdType = Schema.CmdType.BUILD, flags = 0, unitIds = { s.commander[1] }, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		submit(sim, 1, { cmdType = Schema.CmdType.BUILD, flags = 0, unitIds = { s.commander[1] }, defIndex = sim.defs.units.ord_solar.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
 		local failed = nil
 		for _ = 1, 600 do
 			Sim.step(sim)

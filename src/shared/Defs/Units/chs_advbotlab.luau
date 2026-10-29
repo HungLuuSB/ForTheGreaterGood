@@ -12,7 +12,7 @@ return Templates.extend(Templates.Structure, {
 	health = 5500,
 	footprint = 5,
 	buildPower = 200,
-	buildOptions = { "chs_tinker", "chs_centurion" },
+	buildOptions = { "chs_tinker", "chs_centurion", "chs_mammoth" },
 	icon = "factory",
 	model = "chs_advbotlab",
 })
