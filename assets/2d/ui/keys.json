@@ -1,0 +1,164 @@
+{
+	"sheet": "ftgg-ui-icons.png",
+	"sizes": [
+		16,
+		24,
+		32
+	],
+	"tiles": {
+		"supply": {
+			"name": "Supply",
+			"group": "resource",
+			"tint": "#E6E8EE",
+			"files": {
+				"16": "supply_16.png",
+				"24": "supply_24.png",
+				"32": "supply_32.png"
+			},
+			"rect": {
+				"16": [
+					0,
+					0,
+					16,
+					16
+				],
+				"24": [
+					0,
+					18,
+					24,
+					24
+				],
+				"32": [
+					0,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"power": {
+			"name": "Power",
+			"group": "resource",
+			"tint": "#F6BE50",
+			"files": {
+				"16": "power_16.png",
+				"24": "power_24.png",
+				"32": "power_32.png"
+			},
+			"rect": {
+				"16": [
+					18,
+					0,
+					16,
+					16
+				],
+				"24": [
+					26,
+					18,
+					24,
+					24
+				],
+				"32": [
+					34,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"time": {
+			"name": "Build time",
+			"group": "resource",
+			"tint": "#C4C8D0",
+			"files": {
+				"16": "time_16.png",
+				"24": "time_24.png",
+				"32": "time_32.png"
+			},
+			"rect": {
+				"16": [
+					36,
+					0,
+					16,
+					16
+				],
+				"24": [
+					52,
+					18,
+					24,
+					24
+				],
+				"32": [
+					68,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"wind": {
+			"name": "Wind",
+			"group": "resource",
+			"tint": "#D6DAE2",
+			"files": {
+				"16": "wind_16.png",
+				"24": "wind_24.png",
+				"32": "wind_32.png"
+			},
+			"rect": {
+				"16": [
+					54,
+					0,
+					16,
+					16
+				],
+				"24": [
+					78,
+					18,
+					24,
+					24
+				],
+				"32": [
+					102,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"tidal": {
+			"name": "Tidal",
+			"group": "resource",
+			"tint": "#78CED6",
+			"files": {
+				"16": "tidal_16.png",
+				"24": "tidal_24.png",
+				"32": "tidal_32.png"
+			},
+			"rect": {
+				"16": [
+					72,
+					0,
+					16,
+					16
+				],
+				"24": [
+					104,
+					18,
+					24,
+					24
+				],
+				"32": [
+					136,
+					44,
+					32,
+					32
+				]
+			}
+		}
+	},
+	"atlasSize": [
+		1024,
+		76
+	]
+}
