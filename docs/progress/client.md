@@ -56,6 +56,22 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, D-Gun preview, command cursor, unit pictures ready: C-262..C-264)
+
+- **D-Gun aim preview (C-264):**
+  - With the D-Gun armed, the bolt's path and its 14-stud hitbox are drawn from the Commander over the whole 80-stud range, with a red ring on every unit it would burn (own units too).
+  - The path always stays inside the Commander's range. A ground click out of range fires from where the Commander stands.
+  - An enemy clicked out of range is walked to, with no path shown, and fired at once in range.
+- **Icon fixes (C-263):**
+  - build tile costs are level with their icons;
+  - the unit panel has E's health, supply and power icons;
+  - command buttons are plain labels, and the chosen command's icon becomes the mouse cursor;
+  - the weapon line reads "DPS: x";
+  - the resource bar's threshold tip is placed below its marker.
+- **Unit pictures (C-262):** portraits show E's pre-rendered unit picture once its sheet is uploaded, and the live model until then.
+- Asked of models-C: the D-Gun's effects (bolt, muzzle, hits, end) as `Vfx` templates.
+- Ready to merge: `c3c529e5` (C-262..C-264; test_client 343 / 343, build passed (881 scripts, 2468 requires). Studio, Coastline: the D-Gun band in range and capped at the ring for a far point, which fired on the spot; the command cursor; the cost rows; the unit panel icons. The threshold tip isn't hovered yet)
+
 ## Summary (2026-10-29, new icons: C-258..C-261)
 
 - **2D-E's icon set is in the game (C-258, C-261):** every unit has its icon from E's approved set, on two uploaded sheets. The Commanders show their own heads, but enemy radar still shows them as a plain walker. A unit added later without an icon gets its type's placeholder (a "?") instead of a blank frame, and the icon build warns about it.
