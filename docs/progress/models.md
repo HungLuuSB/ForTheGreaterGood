@@ -33,6 +33,16 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 - **Output:** the PNGs are regenerable and not committed. E reads them from `debug_out/pictures/` and commits only the packed sheets, in `assets/2d/pictures/`.
 - **When to re-render:** whenever a mesh changes or a unit is added.
 - **Fix in passing:** `portraits.py` now strips the `_bar` suffix from glow-part names. Before, every glow rendered in the fallback grey instead of its channel colour.
+- **Later notes from the user (2026-10-30), all built in:** "too blurry because of the fog. Remove it" (the haze is off, the sub's murk halved, the depth of field eased); "Make them glow more" (glow 3.5, a stronger bloom); "push the color up too" (unit saturation 2.1, plus a whole-picture grade).
+
+**D-Gun effects (2026-10-30, the user via clients-B: "make the VFX for D-gun too"):** four templates in `place/Vfx.model.json`, from `assets/fx/vfx/build_vfx.py`, next to F27's `Death`. The colour is fixed (255, 200, 90) for both factions. They're authored at real size: the bolt is about 7 studs across, for the 14-stud-wide path.
+- **`DgunBolt`:** a Folder of two Attachments.
+  - `Bolt` holds the core, plasma, halo, a world-space heat trail, sparks and a light that stays on.
+  - `Ground`, 5 studs below, leaves fire, a burnt strip and smoke along the path.
+  - Its emitters are saved Enabled with a `Rate`, and the Folder's `Continuous` attribute says they run while the client moves the bolt.
+- **`DgunMuzzle`, `DgunHit`, `DgunEnd`:** emit-once bursts, facing `-Z`.
+- **Review:** `Workspace.DgunReview` in FTGG Art, the Order Commander firing past three targets. Studio's edit mode doesn't run `Rate` emitters, so the review loop emits Rate × dt by hand.
+- **B's part:** wiring the four names into `Render/Vfx` and Effects.
 
 **Where it stands:** `m-models` is at `main` `d8611b86`. Every piece of models work is integrated; the last merges were `34cbaf59` and `82bedb2a`. Checks there: `lune run test` 615/615, `lune run test_client` 335/335, `lune run build` (879 scripts, 2457 requires resolve). Nothing is in review: all 203 defs have an approved mesh and an approved wreck (status table below), and all nine named maps have an approved baked ground (`GROUND_APPROVED` in `assets/models/tools/manifest.py`).
 
