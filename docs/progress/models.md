@@ -58,10 +58,11 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
   - a wide glow that reads from the RTS camera, sparks, and a thick rocket-smoke trail lit orange at the nozzle;
   - a light.
 - **`Launch`:** the booster lighting: a flash, a backblast of fire, sparks, and a launch-smoke cloud with billows.
-- **Blast marks** (`assets/fx/scorch/`, not uploaded yet):
+- **Blast marks** (`assets/fx/scorch/`):
   - `blast_mark_a` / `blast_mark_b`: soot decals with a charred centre, fine blast streaks, a ragged edge, an ash ring and thrown flecks.
   - `blast_mark_glow`: molten centre, a network of glowing cracks and embers. White, so the client tints it hot orange and overbright (as BeamShots does), fading over the first seconds.
   - Previews: `debug_out/scorchfx/`.
+  - Uploaded 2026-10-30 with the user's approval: `Meshes.textures.blastMarkA` / `blastMarkB` / `blastMarkGlow`. The Decal ids are in `assets/fx/scorch/opencloud.json`.
   - These replace Render/Vfx's flat dark disc. The particle scorch is now only a one-second ground glow.
 - **Two template bugs, found in review, fixed here:**
   - The `ParticleOrientation` values were off by one (1 is `FacingCameraWorldUp`). "Flat" scorches stood upright like domes, and streaks weren't velocity-aligned. The D-Gun's too.
@@ -986,7 +987,10 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
    - **Blast marks:** replace the dark `Scorch` disc with two Decals on its top face, the way BeamShots does: a soot decal (`blast_mark_a` or `blast_mark_b` at random, at a random yaw) and the glow decal on top (`Color3` about (1, 0.55, 0.18) × 2.2, fading over ~2 s).
      - The soot stays `SCORCH_SECONDS` as now. The size can stay 5.6 × scale, or a little more.
      - A nuke can lay one big mark over its crater too.
-     - The asset ids follow in the manifest once the user approves the upload.
+     - **Uploaded with the user's approval (2026-10-30):** `Meshes.textures.blastMarkA` / `blastMarkB` (soot) and `blastMarkGlow`.
+     - Checked in FTGG Art (`debug_out/screens/vfx_blast_marks_studio.jpg`):
+       - set the part's `CastShadow = false`, or the decals throw blob shadows;
+       - lift the part about 0.6 stud over the ground height. At +0.08, Terrain's sand ripples hid it.
 13. **Models → 2D session E (E-11 pictures, 2026-10-30):** the full set is re-rendered with the user's notes: no fog, more glow, more colour, and team paint in the faction colour. That's all 197 in `debug_out/pictures/` (contact sheet `debug_out/screens/pictures_all_v3.png`). Please repack the sheets from them. Uploading the repacked sheets needs the user's approval.
 - Ready to merge: `39aa66e8` (explosions, missiles, blast marks: new `Death` / `StructureDeath` / `Impact` / `Nuke` / `MissileExhaust` / `Launch` templates in `place/Vfx.model.json`. It also fixes two template bugs: the orientation values, and attributes now typed so Rojo keeps them, which also fixes the D-Gun templates. Also the `assets/fx/scorch` blast-mark decals (not uploaded) and `tests/client/VfxTemplates.spec.luau`. `place/`, `assets/`, `tests/client/` and docs only; B wires the new names, request 12).
 - Ready to merge: `51db9785` (D-Gun VFX templates `DgunBolt` / `DgunMuzzle` / `DgunHit` / `DgunEnd` in `place/Vfx.model.json`, built by `assets/fx/vfx/build_vfx.py`; contains `e958c1c8`, the E-11 pictures with no fog and more glow and colour. `place/`, `assets/` and docs only; B wires the names into Render/Vfx).
