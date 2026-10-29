@@ -2369,3 +2369,33 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - The build menu, the unit panel and the pre-game tiles all go through `Portrait`, so they all take the pictures.
 - Today there are no pictures yet: C is rendering, and E packs them. Every def keeps its live model.
 - Studio: build tiles and the unit panel show their models as before, with no errors. The pictures themselves are checked after their upload.
+
+### C-263 — Icon fixes from the user's feedback (2026-10-30)
+
+- **Build tile costs** (the user: "they does not look aligned", twice): 2D-E's supply and power icons at their drawn 16 px. Scaled down to 11 px they blurred and sat off the number's line. Each resource gets one row centred 22 and 8 px from the tile's bottom, with the icon at the right and the number beside it. GothamBold's digits sit about 2 px below the centre of their line box (room for descenders), so the icon is 1 px lower and the number 1 px higher. Checked in an enlarged crop (`debug_out/screens/2026-10-30-cost-rows.png`).
+- **Unit panel** (the user: its icon wasn't the new one): E's health icon replaces the drawn cross, and the supply and power flow lines get E's 16-px icons at their left in place of the ■ / ϟ text marks. `UnitFlow.rich` takes "" as its mark when the icon stands beside the line, with no leading space.
+- **Command card** (the user: "the command button does not need the icon. The icon may be replaced the cursor if applicable when choosing a command"): C-260's button icons are removed; the buttons are plain labels again.
+- **Command cursor**, new `UI/CommandCursor`: while a command with an E-10 icon is chosen, that icon (24 px, its tint) is the mouse cursor, centred on the point a click orders at. Roblox's MouseIcon takes a whole image, not a rect of the atlas, so the system cursor is hidden (`MouseIconEnabled`) and the icon is drawn at the mouse every frame. With no command, or no icon for it, the system cursor stays.
+- **Weapon line** (the user: "Just DPS: number"): `UnitStats` writes `DPS: 66.7`, with no "vs <armour class>".
+- **Resource bar threshold tooltip** (the user: under the box, not above): the tip ScreenGui ignores the GUI inset but marker positions are below it, so the tip now adds `GuiService:GetGuiInset()`. Not hovered in Studio yet; the user is checking the threshold markers.
+- **Studio, Coastline:** the Move cursor with the system cursor hidden; "DPS: 66.7"; plain command buttons; the unit panel's health, supply and power icons; build tile cost rows level.
+
+### C-264 — D-Gun aim preview; the path stays inside the Commander's range (2026-10-30)
+
+- The user: "D-gun still show no hitbox or the path of the projectile?"
+  - With the D-Gun armed, `Core/AttackPreview.bolts` gives each selected Commander's bolt by the server's rules (Commands DGUN, Projectiles' bolt). The bolt is fired from where the Commander stands and flies level for its whole range (80). It destroys every unit whose centre is within `bolt` (7) plus its collision radius of the path, own units included. Aircraft in flight pass over it.
+  - `Render/AttackPreview` draws it on the ground as a band its full width (the hitbox) with a dashed centre line. Every unit in its way gets a red ring.
+- The user: "always make the path stay inside the commander range", then "unless the commander target a unit from outside the range, the commander will walk to that target until D-gun in range and fire it", then "when outside, show no path":
+  - **Ground point out of range:** the order's point is pulled in along the same line to 0.85 of the range (`AttackPreview.boltPoint`). The server walks only past 0.9, so the Commander fires from where it stands. The preview starts at the Commander and ends on its range ring.
+  - **Enemy unit clicked:** the DGUN goes to the unit's position as it is. Out of range, the Commander walks there, as the server does, and fires once in range. The preview shows no path for that case.
+  - Api sends one DGUN per Commander, each with its own pulled-in point.
+- The DGUN order carries a point, not a unit, so a target that moves away after the click isn't followed. If the user wants that, it's a sim request (DGUN with a target ID).
+- Specs (`Dgun.spec`):
+  - the units the preview marks are the ones the bolt burns, own included; one off to the side and one past the end are spared;
+  - a far point fires from where the Commander stood;
+  - a far enemy is walked to and burned;
+  - an enemy out of range gets no path.
+- **Studio, Coastline:**
+  - in range: the band ends on the yellow D-Gun ring (`debug_out/screens/2026-10-30-dgun-preview.jpg`);
+  - cursor far outside: the band still stops at the ring (`…-dgun-preview-far.jpg`). The click fired from where the Commander stood, with power 1.0k → 513 and the bolt flying along the band (`…-dgun-fired-far.jpg`).
+- The D-Gun's own effects (bolt, muzzle, hits, end) were asked of models-C, as the user requested. They will come as templates `Vfx.DgunBolt` / `DgunMuzzle` / `DgunHit` / `DgunEnd` in `place/Vfx.model.json`, which B wires when they land.

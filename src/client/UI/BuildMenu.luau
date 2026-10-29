@@ -434,21 +434,27 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 			g.root.ZIndex = 4
 			ui.itemGlyphs[i] = g
 			local function costLabel(name: string, y: number, color: Color3): TextLabel
-				-- 2D-E's supply / power icon right of the number, once the UI
-				-- icon atlas is uploaded (C-259)
-				local icon = UiIcon.make(string.lower(name), 11, color)
+				-- 2D-E's supply / power icon right of the number once the UI icon
+				-- atlas is uploaded (C-259), at its drawn 16 px (scaled down it
+				-- blurred and sat off the number's line, the user): one 14-px row
+				-- per resource, number and icon centred on it
+				local icon = UiIcon.make(string.lower(name), 16, color)
+				local row = if name == "Supply" then -22 else -8 -- the row's centre from the bottom
+				-- GothamBold's digits sit ~2 px below the centre of their line
+				-- box (room for descenders): icon down 1, number up 1 (the user)
+				local ICON_DROP = 1
 				if icon then
-					icon.AnchorPoint = Vector2.new(1, 1)
-					icon.Position = UDim2.new(1, -2, 1, y - 1)
+					icon.AnchorPoint = Vector2.new(1, 0.5)
+					icon.Position = UDim2.new(1, 0, 1, row + ICON_DROP)
 					icon.ZIndex = 4
 					icon.Parent = b
 				end
 				local l = Instance.new("TextLabel")
 				l.Name = name
 				l.BackgroundTransparency = 1
-				l.AnchorPoint = Vector2.new(1, 1)
-				l.Position = UDim2.new(1, if icon then -15 else -3, 1, y)
-				l.Size = UDim2.new(1, -24, 0, 12)
+				l.AnchorPoint = if icon then Vector2.new(1, 0.5) else Vector2.new(1, 1)
+				l.Position = if icon then UDim2.new(1, -16, 1, row - ICON_DROP) else UDim2.new(1, -3, 1, y)
+				l.Size = UDim2.new(1, -24, 0, if icon then 16 else 12)
 				l.Font = Enum.Font.GothamBold
 				l.TextSize = 11
 				l.TextColor3 = color

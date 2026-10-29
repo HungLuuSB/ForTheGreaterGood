@@ -132,7 +132,11 @@ function ResourceBar.new(): Bar
 		local scale = gui:FindFirstChild("SettingsScale")
 		local k = if scale and scale:IsA("UIScale") then scale.Scale else 1 -- (screen pixels → the scaled gui's)
 		tip.Text = line
-		tip.Position = UDim2.fromOffset((h.AbsolutePosition.X + h.AbsoluteSize.X / 2) / k, (root.AbsolutePosition.Y + root.AbsoluteSize.Y) / k + 4)
+		-- AbsolutePosition counts from below Roblox's top bar, this gui from the
+		-- screen's top (IgnoreGuiInset): add the inset back, or the tip sat a
+		-- top bar's height too high, over the box (the user, C-263)
+		local inset = game:GetService("GuiService"):GetGuiInset()
+		tip.Position = UDim2.fromOffset((h.AbsolutePosition.X + inset.X + h.AbsoluteSize.X / 2) / k, (root.AbsolutePosition.Y + inset.Y + root.AbsoluteSize.Y) / k + 4)
 		tip.Visible = true
 	end
 	local markers: { Marker } = {}

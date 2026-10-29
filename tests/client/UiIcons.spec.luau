@@ -27,7 +27,7 @@ return function(t: any)
 			t.expect(UiIcons.icons[key] ~= nil, `{key} is used by the UI`)
 		end
 		for _, name in CommandSet.ORDER do
-			t.expect(UiIcons.icons[name] ~= nil, `command {name} has an icon (CommandCard, C-260)`)
+			t.expect(UiIcons.icons[name] ~= nil, `command {name} has an icon (the command cursor, C-263)`)
 		end
 		t.expect(ATLAS_W <= 1024 and ATLAS_H <= 1024, "the atlas fits a Roblox image")
 		t.expect(UiIcons.image == "" or string.match(UiIcons.image, "^rbxassetid://%d+$") ~= nil, `image {UiIcons.image}`)
