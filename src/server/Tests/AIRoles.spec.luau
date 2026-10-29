@@ -121,16 +121,39 @@ return function(t: RunAll.Context)
 		local sim = teamMatch({ "hard", "hard", "hard", "hard_aggressive", "hard_aggressive", "hard_aggressive" })
 		local brains = Skirmish.forMatch(sim)
 		run(sim, brains, 15 * 60 * 14) -- (14 min: S-193 slowed units and the bot lab waits for an established base)
-		t.expect(owned(sim, 2, "airfield") + owned(sim, 5, "airfield") >= 1, "an air role built an airfield")
-		local airUnits = 0
-		for _, id in sim.world.ids do
-			local d = sim.defs.unitByIndex[sim.world.defIndex[id]]
-			if (sim.world.owner[id] == 2 or sim.world.owner[id] == 5) and d.domain == "air" then
-				airUnits += 1
+		-- the roles go by spot (S-207): look them up
+		local byRole: { [string]: { number } } = {}
+		for _, b in brains do
+			local role = (b :: any).cfg.role
+			byRole[role] = byRole[role] or {}
+			table.insert(byRole[role], (b :: any).player)
+		end
+		local air, defense, balanced = byRole.air or {}, byRole.defense or {}, byRole.balanced or {}
+		t.equal(#air, 2, "one air AI a side")
+		local fields, airUnits = 0, 0
+		for _, pid in air do
+			fields += owned(sim, pid, "airfield")
+			for _, id in sim.world.ids do
+				if sim.world.owner[id] == pid and sim.defs.unitByIndex[sim.world.defIndex[id]].domain == "air" then
+					airUnits += 1
+				end
 			end
 		end
+		t.expect(fields >= 1, "an air role built an airfield")
 		t.expect(airUnits >= 2, `and flies aircraft ({airUnits})`)
-		t.expect(owned(sim, 3, "sentry_tower") + owned(sim, 3, "guard") > owned(sim, 1, "sentry_tower") + owned(sim, 1, "guard"), "the defence AI has more turrets than the balanced one")
+		-- side 1 (Hard: players 1–3): its defence AI and its balanced one
+		local d, bal = 0, 0
+		for _, pid in defense do
+			if pid <= 3 then
+				d = pid
+			end
+		end
+		for _, pid in balanced do
+			if pid <= 3 then
+				bal = pid
+			end
+		end
+		t.expect(owned(sim, d, "sentry_tower") + owned(sim, d, "guard") > owned(sim, bal, "sentry_tower") + owned(sim, bal, "guard"), "the defence AI has more turrets than the balanced one")
 		t.expect(owned(sim, 4, "botlab") + owned(sim, 5, "botlab") + owned(sim, 6, "botlab") >= 1, "a bot lab")
 	end)
 

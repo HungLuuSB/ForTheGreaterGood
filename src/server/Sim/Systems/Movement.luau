@@ -35,6 +35,7 @@ local Air = require("../Air")
 local Deploy = require("../Deploy")
 local FlowField = require("../Path/FlowField")
 local Layers = require("@shared/Grid/Layers")
+local MoveClasses = require("@shared/Defs/MoveClasses")
 local Nav = require("../Nav")
 local Quadtree = require("../Path/Quadtree")
 local Terrain = require("@shared/Grid/Terrain")
@@ -128,7 +129,7 @@ local function updateMoving(sim: Types.Sim, profiles: { [number]: any })
 			end
 		end
 		local next = if now then bor(state, MOVING) else band(state, bnot(MOVING))
-		if p ~= nil and p.moveClass == "AMPHIB" then
+		if p ~= nil and MoveClasses[p.moveClass] ~= nil and MoveClasses[p.moveClass].surface == "amphib" then -- AMPHIB, AMPHIB_WALKER (S-210)
 			local cx, cz = g:cellAt(w.posX[id], w.posZ[id])
 			local under = Layers.getWater(layers, cz * g.cellsX + cx) >= hulls[w.defIndex[id]].height
 			next = if under then bor(next, SUBMERGED) else band(next, bnot(SUBMERGED))

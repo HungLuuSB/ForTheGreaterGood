@@ -14,5 +14,5 @@ return {
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "LIGHT", "GROUND", "STRUCTURE" },
 	turret = { yawRate = 120, pitchRate = 90, tolerance = 4, minPitch = -30, maxPitch = 40, arc = 360 },
-	fx = { trail = "plasma", color = { r = 120, g = 190, b = 255 }, impact = "explosion_medium", sound = "plasma_heavy" },
+	fx = { trail = "plasma", color = { r = 255, g = 225, b = 120 }, impact = "explosion_medium", sound = "plasma_heavy" },
 }

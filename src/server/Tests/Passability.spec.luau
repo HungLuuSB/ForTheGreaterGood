@@ -5,7 +5,7 @@ local Passability = require("@shared/Grid/Passability")
 local TestMap = require("@shared/Grid/TestMap")
 local RunAll = require("./RunAll")
 
-local CLASSES = { "WHEELED", "TRACKED", "HEAVY_TRACKED", "HOVER", "AMPHIB", "SHIP", "SUB", "HELI", "JET", "WALKER" }
+local CLASSES = { "WHEELED", "TRACKED", "HEAVY_TRACKED", "HOVER", "AMPHIB", "SHIP", "SUB", "HELI", "JET", "WALKER", "AMPHIB_WALKER" }
 
 -- Land at height 10 everywhere; `water(cx, cz)` gives depths (0 = dry).
 local function flatWith(cellsX: number, cellsZ: number, water: (number, number) -> number): Passability.PassMap
@@ -59,15 +59,15 @@ return function(t: RunAll.Context)
 			return depths[cx + 1]
 		end)
 		local expected = {
-			-- depth: WHEELED TRACKED HEAVY HOVER AMPHIB SHIP SUB HELI JET WALKER
-			{ true, true, true, true, true, false, false, true, true, true }, -- 0
-			{ true, true, true, true, true, false, false, true, true, true }, -- 1 (ford ≤ 1)
-			{ false, true, true, true, true, false, false, true, true, true }, -- 2 (ford ≤ 2)
-			{ false, false, false, true, true, false, false, true, true, false }, -- 3
-			{ false, false, false, true, true, true, false, true, true, false }, -- 6 (ship ≥ 6)
-			{ false, false, false, true, true, true, false, true, true, false }, -- 11.75
-			{ false, false, false, true, true, true, true, true, true, false }, -- 12 (sub ≥ 12)
-			{ false, false, false, true, true, true, true, true, true, false }, -- 20
+			-- depth: WHEELED TRACKED HEAVY HOVER AMPHIB SHIP SUB HELI JET WALKER AMPHIB_WALKER
+			{ true, true, true, true, true, false, false, true, true, true, true }, -- 0
+			{ true, true, true, true, true, false, false, true, true, true, true }, -- 1 (ford ≤ 1)
+			{ false, true, true, true, true, false, false, true, true, true, true }, -- 2 (ford ≤ 2)
+			{ false, false, false, true, true, false, false, true, true, false, true }, -- 3
+			{ false, false, false, true, true, true, false, true, true, false, true }, -- 6 (ship ≥ 6)
+			{ false, false, false, true, true, true, false, true, true, false, true }, -- 11.75
+			{ false, false, false, true, true, true, true, true, true, false, true }, -- 12 (sub ≥ 12)
+			{ false, false, false, true, true, true, true, true, true, false, true }, -- 20
 		}
 		for i, row in expected do
 			local want = {}
