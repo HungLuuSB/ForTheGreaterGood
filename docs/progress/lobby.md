@@ -2,6 +2,16 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-29: playtest 3's units in the Codex)
+
+- Merged main `de7be455` (playtest 3, S-203..S-210: the 21 new unit defs, the Goliath rename, the Generators retired). It includes `3ddbc46c`, which added these units' roles ahead of the defs.
+- The Codex spec now checks every one of the 21 against the real defs: the `AWAITED` exemption is gone. The Generators' role is removed, and the spec checks that both Generators stay hidden.
+- All 21 show, each with its role, its tier (matching the def) and its counterpart. Mammoth has no counterpart (Chaos only). `chs_juggernaut` lists as Goliath. `Codex.stats` runs cleanly on all 198 entries.
+- `Skirmish.roleOf` no longer needs a world (`cc5f84fa`): `AiLevels.spec` passes unchanged.
+- **Studio:** Titan's article shows Order · Experimental assault walker · T3, its Chaos counterpart Juggernaut, the comparison, and its cost and stats (`debug_out/screens/lobby_units_titan.jpg`). No script errors. Its model is still a blockout box and its list row has no icon yet; those are C's and B's.
+- Lobby specs 67 / 67; the build check passes (626 scripts, 1051 requires).
+- Ready to merge: `5badabe4` (playtest 3's units in the Codex; includes the merge of main `de7be455`; touches only `src/lobby`)
+
 ## Summary (2026-10-29: Codex roles for playtest 3's units)
 
 - sim-A's playtest 3 plan (`docs/progress/playtest-2026-10-28.md`, H20, H25–H31, H39–H41) announced 21 new unit IDs. They now have Codex roles, ahead of their defs, so the lobby suite passes when the defs reach main:
