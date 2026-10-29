@@ -1,0 +1,356 @@
+<title>FTGG Icon Directions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a field-manual review sheet. One comparison strip first (the decision), then one plate per direction: in-game field, 1x row, 4x zoom. */
+:root {
+  --bg: #eceee4;
+  --surface: #f7f8f1;
+  --ink: #1c231d;
+  --muted: #5b655c;
+  --line: #cdd3c3;
+  --accent: #a86a12;
+  --chip: #e2e6d8;
+  --field: #2a2f2b;
+  --field-ink: #e6eadf;
+  --font-display: "Saira Condensed", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121713; --surface: #1a201b; --ink: #e2e7da; --muted: #96a092;
+    --line: #2d362d; --accent: #e3a646; --chip: #232b24; --field: #0e110f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121713; --surface: #1a201b; --ink: #e2e7da; --muted: #96a092;
+  --line: #2d362d; --accent: #e3a646; --chip: #232b24; --field: #0e110f; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+  display: grid; gap: 34px;
+}
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(34px, 6vw, 54px); line-height: 1; margin: 0; text-wrap: balance; }
+.lede { max-width: 70ch; color: var(--muted); margin: 0; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 28px; margin: 0; letter-spacing: .02em; text-transform: uppercase; text-wrap: balance; }
+h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.section { display: grid; gap: 14px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.section-head p { margin: 0; color: var(--muted); font-size: 13px; }
+.tag { font-family: var(--font-display); font-weight: 700; font-size: 28px; color: var(--accent); margin-right: 8px; }
+.pitch { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.pitch > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; min-width: 0; }
+.pitch p, .pitch ul { margin: 6px 0 0; font-size: 14px; }
+.pitch ul { padding-left: 18px; }
+.field { border-radius: 6px; overflow-x: auto; background: var(--field); }
+.field > svg { display: block; min-width: 900px; width: 100%; height: auto; }
+.row1x { display: grid; gap: 6px; }
+.strip { overflow-x: auto; border-radius: 6px; background: var(--field); }
+.strip > svg { display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+.note { font-size: 13px; color: var(--muted); margin: 0; max-width: 78ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.controls > span { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; padding: 5px 10px; background: transparent; color: var(--ink); border: 0; border-right: 1px solid var(--line); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--chip); font-weight: 600; }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">For The Greater Good · E-2 · strategic icons</div>
+    <h1>Three icon directions</h1>
+    <p class="lede">The same 12 units drawn three ways. All three keep the grammar players learn: the frame is the unit type, the dots are the tech level, the symbol is the weapon or role. All three share one new set of symbols, built from solid shapes rather than thin lines so they survive at strategic zoom. The directions differ in how the frame and symbol are painted. Every icon is still one white image with a dark edge, tinted per team in Roblox.</p>
+  </header>
+
+  <div class="controls" role="group" aria-label="Team colours for the in-game fields">
+    <span>Teams</span>
+    <div class="seg" id="pal"></div>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>Side by side at in-game size</h2><p>24 px base, ×1.15 for T2, ×1.3 for T3, larger for the Commander and the mech</p></div>
+    <div class="strip" id="compare"></div>
+    <p class="note">Each row is one direction: Order, then Chaos, then the same icons on the map. The game's base icon width is 22 px (<code>Icons.BASE</code>); 24 px is the low end of what you'll see at strategic zoom.</p>
+  </section>
+
+  <div id="dirs"></div>
+
+  <section class="section">
+    <div class="section-head"><h2>What changed from draft 6, in all three</h2><p>Fixes from the E-1 audit</p></div>
+    <div class="pitch">
+      <div><h3>Ships</h3><p>The ship frame is a pointed bow seen from above, so it can't be read as a structure. The submarine frame is now full size, a hull with a sail.</p></div>
+      <div><h3>Fighter vs bomber</h3><p>Fighters keep the anti-air chevron. Bombers drop two solid bombs, so they no longer mirror the chevron.</p></div>
+      <div><h3>Destroyer</h3><p>A gun over a torpedo: its real weapons (gun, ASW torpedoes). Draft 6 gave it the radar-SAM symbol.</p></div>
+      <div><h3>Line weight</h3><p>No stroke thinner than 4 units of 48 (2 px at 24 px). Symbols are mostly filled shapes with a dark edge.</p></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+// ---- engine ----
+const DARK = "#101411";
+const TEAMS = [
+  { id: "white", name: "White (source)", color: "#ffffff" },
+  { id: "order", name: "Order", color: "#4084e6" },
+  { id: "chaos", name: "Chaos", color: "#de463e" },
+  { id: "navy", name: "Navy", color: "#263c96" },
+  { id: "crimson", name: "Crimson", color: "#a01828" },
+];
+const f2 = (n) => (+n).toFixed(2);
+
+// frames: unit type, in the 48 x 56 box (dots at y = 50). `pts` = polygon (corners get each direction's treatment), `d` = fixed path.
+// c = where the symbol sits, k = symbol scale inside this frame.
+const FRAMES = {
+  vehicle: { pts: [[24, 2], [46, 23], [24, 44], [2, 23]], c: [24, 23], k: 1.06, label: "Vehicle" },
+  walker:  { circle: [24, 23, 19.5], c: [24, 23], k: 1.1, label: "Walker" },
+  amphib:  { pts: [[13, 7], [35, 7], [46.5, 23], [35, 39], [13, 39], [1.5, 23]], c: [24, 23], k: 1.04, label: "Amphibious" },
+  hover:   { pts: [[12, 8], [36, 8], [46, 38], [2, 38]], c: [24, 23.5], k: 1, label: "Hover" },
+  air:     { pts: [[24, 1.5], [46.5, 42], [1.5, 42]], c: [24, 29.5], k: .96, label: "Aircraft" },
+  vtol:    { pts: [[1.5, 4], [46.5, 4], [24, 44.5]], c: [24, 16], k: .94, label: "Helicopter" },
+  ship:    { d: "M24 1.5 C33 8 40.5 16 40.5 27 V43 H7.5 V27 C7.5 16 15 8 24 1.5 Z", c: [24, 28.5], k: 1, label: "Ship" },
+  sub:     { d: "M1.5 31 C1.5 24 7 20.5 13 20.5 H17 V11.5 Q17 9.5 19 9.5 H29 Q31 9.5 31 11.5 V20.5 H35 C41 20.5 46.5 24 46.5 31 C46.5 38 41 41.5 35 41.5 H13 C7 41.5 1.5 38 1.5 31 Z", c: [24, 31], k: .92, label: "Submarine" },
+  struct:  { pts: [[5, 4], [43, 4], [43, 42], [5, 42]], c: [24, 23], k: 1.2, label: "Structure" },
+  defense: { pts: [[24, 2], [43, 8.5], [43, 22], [24, 45], [5, 22], [5, 8.5]], c: [24, 21.5], k: 1.02, label: "Defense", soft: [3] },
+};
+
+// polygon with each corner rounded (mode "round"), cut (mode "cut") or left sharp; r = corner size
+function polyPath(pts, mode, r, soft = []) {
+  const n = pts.length;
+  if (mode === "sharp" || r <= 0) return "M" + pts.map((p) => p.map(f2).join(" ")).join(" L") + " Z";
+  let d = "";
+  for (let i = 0; i < n; i++) {
+    const p = pts[i], a = pts[(i + n - 1) % n], b = pts[(i + 1) % n];
+    const rr = soft.includes(i) ? r * 2.2 : r;
+    const ua = Math.hypot(a[0] - p[0], a[1] - p[1]), ub = Math.hypot(b[0] - p[0], b[1] - p[1]);
+    const ta = Math.min(rr, ua / 2.5), tb = Math.min(rr, ub / 2.5);
+    const p1 = [p[0] + (a[0] - p[0]) * ta / ua, p[1] + (a[1] - p[1]) * ta / ua];
+    const p2 = [p[0] + (b[0] - p[0]) * tb / ub, p[1] + (b[1] - p[1]) * tb / ub];
+    d += (i ? " L" : "M") + f2(p1[0]) + " " + f2(p1[1]);
+    d += mode === "cut" ? ` L${f2(p2[0])} ${f2(p2[1])}` : ` Q${f2(p[0])} ${f2(p[1])} ${f2(p2[0])} ${f2(p2[1])}`;
+  }
+  return d + " Z";
+}
+function framePath(fr, mode, r) {
+  if (fr.circle) { const [x, y, rad] = fr.circle; return `M${x - rad} ${y} A${rad} ${rad} 0 1 0 ${x + rad} ${y} A${rad} ${rad} 0 1 0 ${x - rad} ${y} Z`; }
+  if (fr.d) return fr.d;
+  return polyPath(fr.pts, mode, r, fr.soft);
+}
+
+// ---- symbols: drawn around (0, 0), about 24 units across ----
+// A pen paints them: P.fill(d) a solid shape, P.line(d, w) a stroke, P.dot(x, y, r), P.hole(d) a cut in the colour behind.
+const SYMBOLS = {
+  command: (P) => P.fill(star(0, 1, 11, 4.6, 5)),
+  cannon: (P) => P.fill("M0 -11 C3.6 -8 5 -4.5 5 0 V10 H-5 V0 C-5 -4.5 -3.6 -8 0 -11 Z") + P.hole("M-5 3.2 H5 V5.6 H-5 Z"),
+  plasma: (P) => P.fill("M-11 11 L-4.13 -5.31 A7.2 7.2 0 1 1 5.31 4.13 Z") + P.holeDot(4.6, -4.6, 2.3),
+  experimental: (P) => P.fill("M-12 9 V-8.5 L-6 -1 L0 -11.5 L6 -1 L12 -8.5 V9 Z") + P.hole("M-12 4 H12 V6.4 H-12 Z"),
+  aa: (P) => P.line("M-10 7 L0 -4 L10 7", 5),
+  bombs: (P) => bomb(P, -5.6) + bomb(P, 5.6),
+  rockets: (P) => rocket(P, -8.4, 1.5, .86) + rocket(P, 0, -1, 1) + rocket(P, 8.4, 1.5, .86),
+  destroyer: (P) => P.fill("M0 -12 C2.8 -9.6 3.8 -7 3.8 -3.5 V1.5 H-3.8 V-3.5 C-3.8 -7 -2.8 -9.6 0 -12 Z") + P.fill("M-11 4.5 H6 C10.5 4.5 10.5 11.5 6 11.5 H-11 Z") + P.line("M-11 3 V13", 2.6),
+  torpedo: (P) => P.fill("M-12 -4 H5 C11 -4 11 4 5 4 H-12 Z") + P.line("M-12 -7.5 V7.5", 3),
+  fabVehicle: (P) => P.fill("M0 -12 L9 -3 L0 6 L-9 -3 Z") + P.line("M-11 11 H11", 4),
+  extractor: (P) => P.fill("M-9.5 -4.5 H9.5 L0 11.5 Z") + P.line("M0 -12 V-4.5", 4.6),
+  unknown: (P) => P.line("M-5 -4.5 C-5 -11.5 5.5 -11.5 5.5 -4.5 C5.5 -0.5 0 -1 0 3.5", 4.2) + P.dot(0, 9.4, 2.8),
+};
+function star(x, y, r1, r2, n) { let d = ""; for (let i = 0; i < n * 2; i++) { const r = i % 2 ? r2 : r1, a = -Math.PI / 2 + i * Math.PI / n; d += (i ? "L" : "M") + f2(x + r * Math.cos(a)) + " " + f2(y + r * Math.sin(a)) + " "; } return d + "Z"; }
+function bomb(P, x) { return P.fill(`M${x} 10.5 C${x + 4.4} 10.5 ${x + 4.6} 4 ${x + 4.6} 0 C${x + 4.6} -3.5 ${x + 3} -5.5 ${x + 2} -6 L${x + 4} -10.5 H${x - 4} L${x - 2} -6 C${x - 3} -5.5 ${x - 4.6} -3.5 ${x - 4.6} 0 C${x - 4.6} 4 ${x - 4.4} 10.5 ${x} 10.5 Z`); }
+function rocket(P, x, y, s) { return P.fill(`M${x} ${y - 11 * s} L${x + 2.9 * s} ${y - 5 * s} V${y + 5.5 * s} L${x + 4.4 * s} ${y + 10 * s} H${x - 4.4 * s} L${x - 2.9 * s} ${y + 5.5 * s} V${y - 5 * s} Z`); }
+
+// ---- the three directions: how frame and symbol are painted ----
+// Each returns the body of one icon for colour W (white in the source; the team colour here to preview the tint).
+function pen(ink, edge, holeColor, ew) {
+  const E = edge ? ` stroke="${edge}" stroke-width="${ew}" stroke-linejoin="round" paint-order="stroke"` : "";
+  return {
+    fill: (d) => `<path d="${d}" fill="${ink}"${E}/>`,
+    line: (d, w) => (edge ? `<path d="${d}" fill="none" stroke="${edge}" stroke-width="${w + ew}" stroke-linecap="round" stroke-linejoin="round"/>` : "") + `<path d="${d}" fill="none" stroke="${ink}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`,
+    dot: (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${ink}"${E}/>`,
+    hole: (d) => `<path d="${d}" fill="${holeColor}"/>`,
+    holeDot: (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${holeColor}"/>`,
+  };
+}
+const GREY = "#8c8c8c"; // the two-tone plate: × team colour = a darker shade of it
+const DIRS = [
+  {
+    id: "plate", tag: "A", name: "Solid plate",
+    corners: ["sharp", 0],
+    blurb: "The frame is a solid plate in the team colour and the symbol is cut out of it in dark. The most colour per pixel, so teams and frame shapes read first, from furthest away.",
+    pros: ["Strongest team colour and silhouette at 22 px", "Symbols read as dark holes, like stencils", "Contacts (dashed outline) and ghosts stay clearly different from units"],
+    cons: ["Dark symbols lose a little detail when the plate is a dark team colour (Navy, Crimson)", "Big white plates are loud; a dense blob of units is a wall of colour"],
+    paint(fr, W, sym, mode) {
+      const d = framePath(fr, "sharp", 0);
+      if (mode === "contact") return `<path d="${d}" fill="none" stroke="${DARK}" stroke-width="5.4" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${W}" stroke-width="2.6" stroke-linejoin="round" stroke-dasharray="5 3.5"/>`;
+      return `<path d="${d}" fill="${W}" stroke="${DARK}" stroke-width="4.4" stroke-linejoin="round" paint-order="stroke"/>` + (sym ? sym(pen(DARK, null, W, 0)) : "");
+    },
+  },
+  {
+    id: "ring", tag: "B", name: "Bold ring",
+    corners: ["round", 4.5],
+    blurb: "Draft 6 grown up: a thick white ring on a dark smoked fill, a white symbol with a dark edge, rounded corners. The calmest of the three; the field stays visible through it.",
+    pros: ["Closest to what players have seen in playtests", "Lets the terrain and effects show through a crowd", "White symbols keep their full detail on any team colour"],
+    cons: ["Least team colour: on red rock or blue water, Chaos and Order rings need a second look", "Frame shapes rely on a 2.3-px ring at 22 px"],
+    paint(fr, W, sym, mode) {
+      const d = framePath(fr, "round", 4.5);
+      if (mode === "contact") return `<path d="${d}" fill="none" stroke="${DARK}" stroke-width="6" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${W}" stroke-width="3" stroke-linejoin="round" stroke-dasharray="5 3.5"/>`;
+      return `<path d="${d}" fill="${DARK}" fill-opacity=".62" stroke="${DARK}" stroke-width="8.6" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${W}" stroke-width="4.6" stroke-linejoin="round"/>` + (sym ? sym(pen(W, DARK, DARK, 2.6)) : "");
+    },
+  },
+  {
+    id: "twotone", tag: "C", name: "Two-tone",
+    corners: ["cut", 4.2],
+    blurb: "A plate in a deep shade of the team colour, a bright rim and a bright symbol, with cut corners like stencilled kit markings. Colour and detail together.",
+    pros: ["Team colour on the whole shape, like A, but the symbol stays bright, like B", "Cut corners give the set its own military look", "Works on light ground (sand) and dark ground (rock, water)"],
+    cons: ["On the darkest team colours (Navy, Crimson) the plate goes nearly black and the icon reads like B", "Needs one grey level in the source image: fine for ImageColor3, a detail for B to know"],
+    paint(fr, W, sym, mode) {
+      const d = framePath(fr, "cut", 4.2);
+      if (mode === "contact") return `<path d="${d}" fill="none" stroke="${DARK}" stroke-width="5.6" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${W}" stroke-width="2.6" stroke-linejoin="round" stroke-dasharray="5 3.5"/>`;
+      return `<path d="${d}" fill="${DARK}" stroke="${DARK}" stroke-width="5.8" stroke-linejoin="round"/><path d="${d}" fill="${mul(GREY, W)}" stroke="${W}" stroke-width="2.8" stroke-linejoin="round"/>` + (sym ? sym(pen(W, DARK, DARK, 2.4)) : "");
+    },
+  },
+];
+// the tint Roblox applies (ImageColor3 multiplies): grey × team colour
+function mul(a, b) { const h = (s, i) => parseInt(s.slice(i, i + 2), 16); return "#" + [1, 3, 5].map((i) => Math.round(h(a, i) * h(b, i) / 255).toString(16).padStart(2, "0")).join(""); }
+
+function dots(n, W) {
+  if (!(n >= 2)) return "";
+  const gap = 10, x0 = 24 - (n - 1) * gap / 2;
+  let s = ""; for (let i = 0; i < n; i++) s += `<circle cx="${f2(x0 + i * gap)}" cy="50.5" r="3.9" fill="${W}" stroke="${DARK}" stroke-width="2.6" paint-order="stroke"/>`;
+  return s;
+}
+// one icon: it = { f: frame, s: symbol, t: tier }, W = colour, size = width in px, mode = unit | contact | ghost
+function iconSVG(dir, it, W, size, mode = "unit") {
+  const fr = FRAMES[it.f], [cx, cy] = fr.c;
+  const sym = it.s && mode !== "contact" ? (P) => `<g transform="translate(${cx} ${cy}) scale(${fr.k})">${SYMBOLS[it.s](P)}</g>` : null;
+  const body = dir.paint(fr, W, sym, mode) + (mode === "contact" ? "" : dots(it.t, W));
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round(size * 56 / 48)}" viewBox="0 0 48 56" role="img" aria-label="${it.n || fr.label}"><g${mode === "ghost" ? ' opacity=".45"' : ""}>${body}</g></svg>`;
+}
+
+const SAMPLES = [
+  { n: "Commander", u: "Sovereign · Warlord", f: "walker", s: "command", t: 0, big: 1.35 },
+  { n: "Light Tank", u: "Lancer (T1 tank)", f: "vehicle", s: "cannon", t: 1 },
+  { n: "Plasma Bot", u: "Mace (bot)", f: "walker", s: "plasma", t: 1 },
+  { n: "Experimental Mech", u: "Titan (T3 mech)", f: "walker", s: "experimental", t: 3, big: 1.4 },
+  { n: "Fighter", u: "Falcon", f: "air", s: "aa", t: 1 },
+  { n: "Bomber", u: "Absolution", f: "air", s: "bombs", t: 1 },
+  { n: "Attack Helicopter", u: "Guardian", f: "vtol", s: "rockets", t: 1 },
+  { n: "Destroyer", u: "Crusader (T2)", f: "ship", s: "destroyer", t: 2 },
+  { n: "Submarine", u: "Silence", f: "sub", s: "torpedo", t: 1 },
+  { n: "Vehicle Plant", u: "Factory", f: "struct", s: "fabVehicle", t: 1 },
+  { n: "Supply Extractor", u: "Extractor", f: "struct", s: "extractor", t: 1 },
+  { n: "IR SAM Site", u: "Vigil (AA defense)", f: "defense", s: "aa", t: 1 },
+];
+const SCALE = { 0: 1, 1: 1, 2: 1.15, 3: 1.3 };
+const scaleOf = (it) => it.big || SCALE[it.t] || 1;
+// place an icon's svg at (x, y) with width w inside a larger svg
+const place = (svg, x, y, w) => svg.replace(/^<svg /, `<svg x="${f2(x)}" y="${f2(y)}" `).replace(/width="\d+" height="\d+"/, `width="${w}" height="${Math.round(w * 56 / 48)}"`);
+
+// ---- the battlefield: map crop, water, smoke, wrecks, and both armies ----
+// bg = an <image> or <rect> for the ground; returns svg markup W x H
+function battlefield(dir, colors, bg, Wd = 960, H = 340, base = 24) {
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const out = [];
+  const at = (it, x, y, c, mode) => { const s = Math.round(base * scaleOf(it)); out.push(place(iconSVG(dir, it, c, s, mode), x - s / 2, y - s * .55, s)); };
+  // water channel along the bottom right; ships and subs live there
+  const water = `<path d="M560 ${H} C600 300 660 262 760 258 C840 255 900 236 ${Wd} 224 V${H} Z" fill="#1d4f72" fill-opacity=".78"/><path d="M560 ${H} C600 300 660 262 760 258 C840 255 900 236 ${Wd} 224" fill="none" stroke="#cfe6f0" stroke-opacity=".35" stroke-width="3"/>`;
+  // smoke, scorch and wrecks: the busy part
+  let fx = "";
+  for (let i = 0; i < 14; i++) { const x = 160 + rnd() * 640, y = 30 + rnd() * 230, r = 10 + rnd() * 26; fx += `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(r)}" fill="#14110e" fill-opacity="${f2(.18 + rnd() * .2)}"/>`; }
+  for (let i = 0; i < 10; i++) { const x = 300 + rnd() * 360, y = 40 + rnd() * 220; fx += `<rect x="${f2(x)}" y="${f2(y)}" width="${f2(7 + rnd() * 6)}" height="${f2(4 + rnd() * 4)}" rx="1" fill="#2b2622" transform="rotate(${f2(rnd() * 180)} ${f2(x)} ${f2(y)})"/>`; }
+  for (let i = 0; i < 9; i++) { const x = 360 + rnd() * 260, y = 60 + rnd() * 200, r = 5 + rnd() * 9; fx += `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(r)}" fill="#ffb347" fill-opacity=".55"/><circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(r * .45)}" fill="#fff3c4" fill-opacity=".7"/>`; }
+  for (let i = 0; i < 8; i++) { const x = 300 + rnd() * 400, y = 30 + rnd() * 240, r = 16 + rnd() * 30; fx += `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(r)}" fill="#c9c6bd" fill-opacity="${f2(.12 + rnd() * .12)}"/>`; }
+  const S = SAMPLES, by = (n) => S.find((s) => s.n === n);
+  const ground = ["Light Tank", "Plasma Bot", "Light Tank", "Plasma Bot", "Light Tank"].map(by);
+  // Order on the left, Chaos on the right
+  [[0, 1], [1, -1]].forEach(([k, dirx]) => {
+    const c = colors[k], left = k === 0;
+    const bx = left ? 70 : Wd - 70;
+    at(by("Vehicle Plant"), bx, 70, c); at(by("Supply Extractor"), bx + dirx * 44, 40, c); at(by("Supply Extractor"), bx + dirx * 30, 130, c);
+    at(by("IR SAM Site"), bx + dirx * 82, 110, c); at(by("IR SAM Site"), bx + dirx * 20, 190, c);
+    at(by("Commander"), bx + dirx * 110, 175, c);
+    at(by("Experimental Mech"), bx + dirx * 205, 150, c);
+    for (let i = 0; i < 18; i++) at(ground[i % ground.length], (left ? 300 : 520) + rnd() * 140, 50 + rnd() * 180, c);
+    for (let i = 0; i < 3; i++) at(by("Attack Helicopter"), (left ? 330 : 480) + rnd() * 150, 30 + rnd() * 70, c);
+    at(by("Fighter"), left ? 470 : 500, left ? 230 : 40, c); at(by("Fighter"), left ? 420 : 560, left ? 200 : 70, c);
+    at(by("Bomber"), left ? 560 : 400, left ? 120 : 160, c);
+    at(by("Destroyer"), left ? 640 : 860, left ? 300 : 270, c); at(by("Submarine"), left ? 700 : 800, left ? 318 : 312, c);
+  });
+  at({ f: "vehicle" }, 600, 210, colors[1], "contact"); at({ f: "air" }, 380, 250, colors[1], "contact");
+  at(by("IR SAM Site"), Wd - 230, 60, colors[1], "ghost");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${Wd} ${H}" width="${Wd}" height="${H}" role="img" aria-label="${dir.name}: both teams at in-game size on a battlefield">${bg(Wd, H)}${water}${fx}${out.join("")}</svg>`;
+}
+// one row of the 12 samples at size `base` (tier-scaled), for each colour
+function sampleRow(dir, colors, base, gap, bgFill) {
+  const cell = Math.round(base * 1.4 * 1.35) + gap, Hc = Math.round(cell * 56 / 48);
+  const Wd = cell * SAMPLES.length, H = Hc * colors.length;
+  let b = bgFill(Wd, H);
+  colors.forEach((c, r) => SAMPLES.forEach((it, i) => { const s = Math.round(base * scaleOf(it)); b += place(iconSVG(dir, it, c, s), i * cell + (cell - s) / 2, r * Hc + (Hc - s * 56 / 48) / 2, s); }));
+  return { svg: b, w: Wd, h: H };
+}
+// ---- page ----
+// the ground: the Supreme Strait minimap (a data URI in the published copy, the repo path in the repo copy), one blob URL for every field
+let MAP = document.getElementById("mapdata").textContent.trim();
+try { if (MAP.startsWith("data:")) { const bin = atob(MAP.split(",")[1]), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); MAP = URL.createObjectURL(new Blob([a], { type: "image/png" })); } } catch (e) {}
+const mapBg = (Wd, H) => `<image href="${MAP}" x="0" y="0" width="${Wd}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`;
+const PAIRS = { std: ["#4084e6", "#de463e"], dark: ["#263c96", "#a01828"] };
+let pair = "std";
+try { pair = localStorage.getItem("ftgg-dir-pal") || "std"; } catch (e) {}
+if (!PAIRS[pair]) pair = "std";
+
+function renderPal() {
+  const el = document.getElementById("pal");
+  const opts = [["std", "Order blue · Chaos red", PAIRS.std], ["dark", "Navy · Crimson (darkest)", PAIRS.dark]];
+  el.innerHTML = opts.map(([id, l, c]) => `<button type="button" data-id="${id}" aria-pressed="${id === pair}"><span class="sw" style="background:${c[0]}"></span><span class="sw" style="background:${c[1]}"></span>${l}</button>`).join("");
+  el.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; pair = b.dataset.id; try { localStorage.setItem("ftgg-dir-pal", pair); } catch (err) {} render(); };
+}
+function render() {
+  renderPal();
+  const C = PAIRS[pair];
+  // comparison strip: per direction, Order row and Chaos row on dark, then a map row
+  const lab = 34;
+  let rows = "", y = 0, wMax = 0;
+  for (const dir of DIRS) {
+    const r = sampleRow(dir, C, 24, 6, (w, h) => `<rect width="${w}" height="${h}" fill="#1b201c"/>`);
+    const m = sampleRow(dir, C.slice(0, 1).concat(C.slice(1)), 24, 6, mapBg);
+    rows += `<text x="10" y="${y + r.h / 2 + 9}" font-family="Saira Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="26" fill="#e3a646">${dir.tag}</text>`;
+    rows += `<svg x="${lab}" y="${y}" width="${r.w}" height="${r.h}">${r.svg}</svg><svg x="${lab + r.w + 10}" y="${y}" width="${m.w}" height="${m.h}">${m.svg}</svg>`;
+    y += r.h + 12; wMax = Math.max(wMax, lab + r.w * 2 + 10);
+  }
+  document.getElementById("compare").innerHTML = `<svg width="${wMax}" height="${y}" viewBox="0 0 ${wMax} ${y}">${rows}</svg>`;
+
+  document.getElementById("dirs").innerHTML = DIRS.map((dir) => {
+    const zoom = sampleRow(dir, C, 96, 14, mapBg);
+    const one = sampleRow(dir, C, 24, 6, mapBg);
+    const frames = Object.keys(FRAMES).map((k) => ({ f: k, s: "unknown", t: 0, n: FRAMES[k].label }));
+    const fr = frames.map((it, i) => place(iconSVG(dir, it, C[i % 2], 40), 12 + i * 58, 10, 40)).join("") + frames.map((it, i) => `<text x="${32 + i * 58}" y="70" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="#c9cfc2">${it.n}</text>`).join("");
+    return `<section class="section">
+      <div class="section-head"><h2><span class="tag">${dir.tag}</span>${dir.name}</h2><p>${dir.blurb}</p></div>
+      <div class="pitch"><div><h3>Strengths</h3><ul>${dir.pros.map((p) => `<li>${p}</li>`).join("")}</ul></div><div><h3>Costs</h3><ul>${dir.cons.map((p) => `<li>${p}</li>`).join("")}</ul></div></div>
+      <h3>Strategic zoom: both teams, in-game size</h3>
+      <div class="field">${battlefield(dir, C, mapBg)}</div>
+      <p class="note">Includes a radar contact (dashed frame, no symbol) and an enemy ghost (last seen, faded) on the right.</p>
+      <h3>4× zoom (96 px, the tile size B's sheet uses)</h3>
+      <div class="strip"><svg width="${zoom.w}" height="${zoom.h}" viewBox="0 0 ${zoom.w} ${zoom.h}">${zoom.svg}</svg></div>
+      <div class="legend">${SAMPLES.map((s, i) => `<span>${i + 1}. ${s.n}: ${s.u}</span>`).join("")}</div>
+      <h3>The ten frames (placeholder "?")</h3>
+      <div class="strip"><svg width="${12 + 58 * 10}" height="80" viewBox="0 0 ${12 + 58 * 10} 80">${fr}</svg></div>
+    </section>`;
+  }).join("");
+}
+render();
+})();
+</script>
+<script type="text/plain" id="mapdata">../../../assets/maps/supreme_strait/source/minimap.png</script>
