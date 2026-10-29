@@ -4,7 +4,65 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: the beta playtest feedback, 2026-10-26, branch `m-sim-2`)
+## Summary (latest: playtest feedback 3, 2026-10-29, branch `m-sim-2`)
+
+**The playtest 3 round:** the user's FTGG-FEEDBACK-3, items H1–H43. Owners and status are in `docs/progress/playtest-2026-10-28.md`.
+- Decisions: S-197..S-212.
+- Protocol 40 → 41.
+- Tests: 566 in 87 specs → 615 in 97 (fast); slow 11.
+- All of it is on `main` at **d8611b86** (2026-10-29), along with B's, C's and D's work for the round. `m-sim-2` equals `main`.
+
+- **Before the feedback (2026-10-27):**
+  - Map features: trees give power and rocks give supply (S-197).
+  - Economy balance: extractors cost power; share and convert levels on the resource bar (S-198, protocol 40).
+  - FRONT puts an order at the head of the queue (S-199).
+  - Bigger stockpiles: nukes 10, anti-nukes 20 (S-200). Anti-nukes take turns (S-201).
+  - Every unit takes radar blips (S-202).
+- **Balance and economy (S-203):**
+  - Commanders: D-Gun range 80, laser range 90.
+  - Radiance range 488 (electric blue), Bulwark 384.
+  - Radars: Watchtower radar 438, Eye 350; Beacon and All-Seer sight 270.
+  - Solar +20 power / +50 storage; windmill 40 supply / 175 power.
+  - Fatboy and Tzar: shorter range, 0.8× damage.
+  - The Generator is retired (`retired = true`, in no build list).
+  - Scouts fire a yellow hit-scan laser.
+  - `chs_juggernaut` is now named "Goliath".
+- **Air (S-204, S-206):**
+  - A player's move order beats chasing and bombing.
+  - A bomber keeps a forced target.
+  - Air builders build what ground builders of their tier build (`buildsLike`).
+- **Charged shots (S-205):** weapons whose shot costs 100+ power charge during the reload instead of needing the full cost stored. This fixes the Bulwark firing once.
+- **AI (S-207):**
+  - Roles by spot: the front spots get the shallow roles.
+  - Roles in player order when no Commander stands (the lobby asks with no world).
+  - Free starts are filled first. Only enemies' starts count as enemy starts.
+  - Long-range radar after the beam tower.
+  - The pre-game spot pick falls back to the side's first valid hint.
+- **Wire:**
+  - The nano-spray target is sent only once the builder is in reach (S-208, H1).
+  - Strategic snapshots say "part k of n" (S-212, protocol 41, H36). The client drops far units only once it has every part. B's NetIn does it (C-253).
+- **New units (S-209):** 21 IDs.
+  - T1 economy: advanced solar, capacitor / accumulator.
+  - Construction turret ("nano").
+  - Offshore extractor.
+  - T2 economy: advanced converter, advanced depot, advanced capacitor, advanced fusion.
+  - T3 gantry.
+  - Titan, Juggernaut (`chs_korgoth`), Mammoth.
+  - New def fields: `buildsLike`, `assistOnly`, `selfDestructBlast`, `deathBlast.onlyDefs` / `notSelfDestruct`, and `placement = "seafloor"`.
+  - B (icons), C (models; approved, on main) and D (Codex) have all 21.
+- **Amphibious walkers (S-210):** a new move class, AMPHIB_WALKER, for the Commanders, Titan and Juggernaut. They walk the seafloor, and in water deeper than they are tall they are submerged: sonar only (H18, H19).
+- **Construction turret and offshore extractor (S-211):**
+  - An idle nano works in its reach, nearest first: frames, then factories, then repair, then reclaim. It never moves.
+  - Offshore extractors go only on water 6+ studs deep.
+- **Open (sim):**
+  - The AI doesn't build any of the 21 new units yet.
+  - The nano doesn't reclaim live enemy units (BAR's does).
+  - Transports.
+  - Large (1,024-cell) maps after a Studio check.
+  - The balance checkpoint after this round (only when the user says "balance checkpoint").
+  - Scavengers / Legion (roadmap).
+
+## Summary (previous round: the beta playtest feedback, 2026-10-26, branch `m-sim-2`)
 
 **The playtest round** (`FTGG-FEEDBACK.txt`; owners and status in `docs/progress/playtest-2026-10-26.md`). Decisions S-174..S-187. Protocol 36 → 37 (pre-game v2, sharing, AREA). Replay format 5. MatchConfig v2 (host, startBoxes, ERRORS). Tests: 534 in 79 specs → 566 in 87 (fast); slow 9.
 
@@ -597,6 +655,21 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
 
+- **2026-10-29, playtest 3 (all pushed, one integrate.sh each, in this order):**
+
+  | Merge | Pushed as |
+  |---|---|
+  | sim cc5f84fa | de7be455 |
+  | models e0b61a1e | 1e578a65 |
+  | models 90e3ae5b | 34cbaf59 |
+  | models 7e462cdf | 82bedb2a |
+  | client ebb30463 (C-252, C-253, carrying sim S-211 / S-212) | 740d63ef |
+  | lobby 5badabe4 | d8611b86 |
+
+  - The first try of sim 8a111001 failed only the lobby suite: `AiLevels.spec` called `Skirmish.roleOf` with no world. cc5f84fa fixed it.
+  - Protocol 41 (S-212) was held on `m-sim-2` until B's NetIn change sat on top of it, then went in through B's merge.
+  - Last checks: test 615/615, slow 11/11, client 335/335, lobby 67/67, build 877 scripts / 2,457 requires.
+
 - **2026-10-24, the beta merge (pushed fb13cd4):** at the user's request, all tips merged at once in ../FTGG-integration and checked once instead of one integrate.sh each: models 0305a40, sim 548d154, client 285e02c, lobby c64caa7, sim c06d3ca, models 2d872ef, models b123bdc, client af53be5, then lobby 800fe69 (D's fix for 3 Rooms specs that still expected the old limits). Fast 534/534 on the merge; lobby 47/47 and build 725 scripts after D's fix; the slow suite was dropped at the user's call (it had passed 8/8, mirror 15 / 21, on the tree before D's lobby-only fix); test_client not rerun on the final merge (B's dry run: 303). One mistake of mine: stopping the old one-at-a-time chain left its integrate.sh for 0305a40 running; it checked my merged tree, failed the lobby suite and reset main to origin/main, dropping the merges, so my first "all green" run was on old main. The merges were restored from the reflog (58d60e7) before D's fix. The RESUME note above is done.
 
 - **2026-10-24, RESUME HERE after the restart (the merge chain for the beta):** on main (pushed): 3e06cf2 (S-167, S-168). Was running when Claude restarted: client 5ffed26 (merge bf35ebd in ../FTGG-integration, NOT pushed, slow suite unfinished). To resume: in ../FTGG-integration `git reset --hard origin/main` (drops the unpushed merge, as integrate.sh does on a failure), then run integrate.sh in order, one at a time: (1) client 5ffed26, (2) models 0305a40, (3) sim 548d154 (S-169, S-170), (4) client 285e02c (EditableImage guards; contains 29482f6), (5) lobby c64caa7 (d1c6758), (6) sim 458b2d0 (S-171..S-173), (7) models 2d872ef (contains 1746bbc: ship hulls, Shepherd/Griffin, wrecks; and adfb7ec: ten more wrecks; all `review`). NOT m-models' tip: 59b4e0d and 089559e are C's WIP. Then send the user, B, C and D the final main commit for the beta publish. B's S-168 client side (e831e9d) is held by B until a Studio check.
@@ -696,6 +769,38 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
   - it plugs in at `PlayerReplay.serialize` / `parse` (a new format byte, version 2), so recorders and players stay the same; Roblox has no built-in compressor, so a pure-Luau one (or a server-side store that compresses) is the likely path.
 
 ## How to continue
+
+### Handing the project to a new session (2026-10-29)
+
+Four Claude sessions work in parallel, one per stream. Each has its own git worktree in `C:\Workspace\Projects`, and they message each other by name.
+
+| Stream | Session name | Worktree | Branch | Owns | Progress / decisions | Studio |
+|---|---|---|---|---|---|---|
+| A, sim (integrator) | `sim-A` | `ForTheGreaterGood` | `m-sim-2` | `src/server`, `src/shared` except `Defs/Blockouts`, `.lune/`, `docs/progress/playtest-*.md` | `docs/progress/sim.md`, `docs/decisions/sim.md` (S-) | none (Lune only) |
+| B, client | `client-B` | `FTGG-client` | `m-client-foundation` | `src/client`, `src/roblox`, icons, `docs/contracts/` | `docs/progress/client.md`, `docs/decisions/client.md` (C-) | the match place "For The Greater Good" (placeId 89435699207932) |
+| C, models | `models-C` | `FTGG-models` | `m-models` | `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/`, `assets/models/`, `place/` | `docs/progress/models.md`, `docs/decisions/models.md` (M-) | "FTGG Art", Rojo port 34873 |
+| D, lobby | `lobby-D` | `FTGG-lobby` | `m-lobby` | `src/lobby/**`, `lobby.project.json`, `docs/contracts/match.md` | `docs/progress/lobby.md`, `docs/decisions/lobby.md` (L-) | "FTGG Lobby", Rojo port 34874 |
+
+- **Integration (A only):**
+  - In `../FTGG-integration`, per `CLAUDE.md`.
+  - Run `integrate.sh` once per "Ready to merge" commit, strictly one after another (chained with `&&` in one background command, never in parallel).
+  - After each push, tell the streams, and each merges `main` itself.
+- **Live sync:**
+  - Match place: `lune run serve` and `rojo serve serve.project.json` in this folder.
+  - Each Studio stream runs its own pair in its own worktree; D's is `lune run src/lobby/tools/sync serve` and `rojo serve lobby.project.json`.
+  - Never wipe `build/serve/` while a sync runs.
+- **Messages between sessions:** SendMessage to the session name works only when both sessions run in the same permission mode (bypass so far). Otherwise use the progress files: "Ready to merge" lines, and each stream's Requests section.
+- **The user's standing rules for A:**
+  - Commit each finished piece without asking. Push only `main`, through integration.
+  - Run the fast suite and build on every commit, and the slow suite on merges.
+  - No balance or fairness reports unless the user says "balance checkpoint".
+  - Tell B (icon), C (model) and D (Codex) every new unit ID.
+  - Never edit another stream's files, including its progress file.
+  - Show the test output and the commit message in the closing reply.
+- **State at handover:**
+  - All four branches contain `main` d8611b86 and nothing A must merge.
+  - B has a local, uncommitted `src/roblox/MatchConfig.luau` (its test-match settings).
+  - C has an untracked `src/shared/_VfxProto.luau`.
 
 - Branch: `m-sim-2` (pushed to `origin`); merged into `main` after every task. Run `lune run test` from the repo root (~65 s); everything must pass before starting the next task.
 - **Integration:** merges into `main` run in the worktree `../FTGG-integration` with `bash tools/integration/check.sh` and `bash tools/integration/integrate.sh <commit> "<description>"` (`CLAUDE.md`, "Integration"); never in this checkout, and never edit `docs/progress/client.md`.
