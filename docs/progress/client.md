@@ -10,17 +10,16 @@ Written for a new session (the project is moving to another Claude account). Eve
 
 ### Where it stands
 
-- Branch `m-client-foundation` (worktree `C:\Workspace\Projects\FTGG-client`) has main d06f303b merged in: all of playtest 3 and the handover, with C-248..C-253 integrated.
-  - C-254..C-256 (seafloor walkers, still water, the S-213 id swap) aren't on main yet: see the Ready line in the newest summary below.
-- Suites on the branch: `lune run test_client` 335 / 335, `lune run build` passed (877 scripts, 2457 requires).
-- The last decision is **C-256**; the next one is **C-257**, in [`../decisions/client.md`](../decisions/client.md).
+- Branch `m-client-foundation` (worktree `C:\Workspace\Projects\FTGG-client`) has main 7ac4df3f merged in: everything up to C-256 is integrated.
+  - C-257 (pulse pieces swell) isn't on main yet: see the Ready line in the newest summary below.
+- Suites on the branch: `lune run test_client` 336 / 336, `lune run build` passed (877 scripts, 2457 requires).
+- The last decision is **C-257**; the next one is **C-258**, in [`../decisions/client.md`](../decisions/client.md).
 - The live sync for the three places runs from `tools/studio/sync_all.cmd` (double-click; `sync_all.ps1`, ports in `places.json`, FTGG Match on 34872). Connect the Rojo plugin in FTGG Match to 34872.
 - **`src/roblox/MatchConfig.luau` has a local, uncommitted change that is the user's own test setting.** `ACTIVE = "skirmish"`, the `air` profile at speed 0.1, and two Radiances removed from one test scene. Never commit it and never revert it: leave it in the working tree. A lobby match ignores MatchConfig; it only sets what Play in Studio starts.
 
 ### Open items (client-B's)
 
 - **Own icons for the 21 playtest-3 units:** drawn by 2D-E (request E1 below). They borrow existing tiles (C-253) until E's icons arrive; then B renders them (`tools/icons/render.mjs`) and maps them in `UI/IconAtlas` (each unit ID in exactly one catalogue item's `defs`, or `IconAtlas.spec` / `Icons.spec` fail).
-- **Pulse pieces (C-252):** the glow breathes; the scale half of rig.md's `pulse` isn't done.
 - **Not tested with a real mouse:** hovering and dragging the resource bars' share and converter markers (C-245). The Studio harness can't click GUI; the user is testing them (2026-10-29).
 - sim-A once suggested an orange-white core for `chs_juggernaut_heatray` (named `chs_korgoth_heatray` before S-213). Today the core is white lerped 30% toward the beam colour (C-248, `Render/BeamShots`).
 
@@ -63,6 +62,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - On the Server, `ServerStorage.FtggDebug:Invoke("spawn", defId, player, x, z, heading, count?, spacing?)` and `("damage", id, amount)`.
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
+
+## Summary (2026-10-29, pulse pieces swell: C-257)
+
+- **Pulsing cores grow and shrink (C-257, your request):** the advanced fusions' cores, the advanced converters' coils and the advanced capacitor and accumulator cells now swell and shrink by 4% with their glow's breath, once every two seconds; less on an energy stall, not at all out of power.
+- Ready to merge: `678dfe56` (C-257; test_client 336 / 336, build passed. Studio, Coastline: four pulse pieces swinging ±4% with their glow shells on them)
 
 ## Summary (2026-10-29, S-213 id swap: C-256)
 
