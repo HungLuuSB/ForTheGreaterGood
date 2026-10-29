@@ -2343,3 +2343,12 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - a build tile's supply and power cost: icon right of the number.
 - Rich-text lines (tooltips, the unit panel's flow line) keep their glyphs: rich text can't hold images.
 - Studio, without an upload: the UI builds as before (■ ϟ, the two-bar cross), no errors. The icons themselves are checked after the upload.
+
+### C-260 — Command icons on the command card (2026-10-29)
+
+- 2D-E's E-9 (weapon and sensor stats) and E-10 (one icon per `CommandSet.ORDER` id) are approved and in `UI/UiIcons`: 47 keys, and the atlas grew to 1024 × 136.
+  - `UiIcons.atlasSize` now carries the atlas size, so the spec reads it instead of a fixed height.
+  - The generator writes a key that is a Luau keyword as `["repeat"]`. A bare `repeat =` broke the module, and darklua with it.
+- `CommandCard` puts the command's icon (14 px, E's white #E8EAEE) at the left of each button once the atlas is uploaded. The label sits beside it, scaled to fit between 8 and 11 px; state buttons keep their segments under it. On a greyed-out Repeat or On / Off button the icon dims with the label. Until the upload, the buttons are the text labels as before.
+- `UiIcons.spec` checks that every command has an icon.
+- Studio, without an upload: the command card shows its text labels as before, with no errors.

@@ -6,7 +6,9 @@
 local UiIcons = require("../../src/client/UI/UiIcons")
 local UiIcon = require("../../src/client/UI/UiIcon")
 
-local ATLAS_W, ATLAS_H = 1024, 76 -- assets/2d/ui/ftgg-ui-icons.png
+local CommandSet = require("../../src/client/Core/CommandSet")
+
+local ATLAS_W, ATLAS_H = UiIcons.atlasSize[1], UiIcons.atlasSize[2] -- assets/2d/ui/ftgg-ui-icons.png
 
 return function(t: any)
 	t.test("every icon has a rect per size on the atlas, and the UI's keys exist", function()
@@ -24,6 +26,10 @@ return function(t: any)
 		for _, key in { "supply", "power", "health" } do
 			t.expect(UiIcons.icons[key] ~= nil, `{key} is used by the UI`)
 		end
+		for _, name in CommandSet.ORDER do
+			t.expect(UiIcons.icons[name] ~= nil, `command {name} has an icon (CommandCard, C-260)`)
+		end
+		t.expect(ATLAS_W <= 1024 and ATLAS_H <= 1024, "the atlas fits a Roblox image")
 		t.expect(UiIcons.image == "" or string.match(UiIcons.image, "^rbxassetid://%d+$") ~= nil, `image {UiIcons.image}`)
 	end)
 

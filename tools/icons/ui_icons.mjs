@@ -40,6 +40,9 @@ if (problems.length > 0) {
 }
 
 const q = (s) => JSON.stringify(s);
+// a key that is a Luau keyword (the "repeat" command) is written ["repeat"]
+const KEYWORDS = new Set("and break continue do else elseif end false for function if in local nil not or repeat return then true until while".split(" "));
+const field = (k) => (KEYWORDS.has(k) ? `[${q(k)}]` : k);
 const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ");
 const L = [];
 L.push("--!strict");
@@ -55,12 +58,13 @@ L.push("export type Icon = { name: string, group: string, tint: { number }, rect
 L.push("");
 L.push(`UiIcons.image = ${q(image)}`);
 L.push(`UiIcons.sizes = { ${sizes.join(", ")} } :: { number } -- pixels; a rect per size`);
+L.push(`UiIcons.atlasSize = { ${keys.atlasSize.join(", ")} } :: { number } -- the atlas image, pixels`);
 L.push("");
 L.push("-- key → name, group, suggested tint (r, g, b) and its rect per size: { x, y, w, h }");
 L.push("UiIcons.icons = {");
 for (const [key, t] of Object.entries(keys.tiles)) {
 	const rects = sizes.map((s) => `[${s}] = { ${t.rect[s].join(", ")} }`).join(", ");
-	L.push(`\t${key} = { name = ${q(t.name)}, group = ${q(t.group)}, tint = { ${rgb(t.tint)} }, rect = { ${rects} } },`);
+	L.push(`\t${field(key)} = { name = ${q(t.name)}, group = ${q(t.group)}, tint = { ${rgb(t.tint)} }, rect = { ${rects} } },`);
 }
 L.push("} :: { [string]: Icon }");
 L.push("");
