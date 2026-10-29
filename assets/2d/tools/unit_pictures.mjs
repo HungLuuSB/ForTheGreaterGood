@@ -1,10 +1,8 @@
 // Unit pictures (E-11): packs models-C's renders into sprite sheets for the build menu, or checks them.
-// C renders two 256 x 256 PNGs per def into its debug_out/pictures/ (regenerable, not committed):
-//   <id>.png       the unit in its setting (opaque)
-//   <id>_mask.png  its team paint in lit white, everything else transparent; B draws it over the
-//                  picture, tinted with ImageColor3 to the team colour
-// This scales each to TILE px and packs pictures and masks into twin sheets with the same layout, so
-// one rect serves both images.
+// C renders one 256 x 256 PNG per def into its debug_out/pictures/ (regenerable, not committed):
+//   <id>.png   the unit in its setting (opaque), its paint baked in its faction's colour (Order blue,
+//              Chaos red; the user, 2026-10-30: pictures don't follow the player's team colour)
+// This scales each to TILE px and packs them into 1024-wide sheets.
 //
 //   node assets/2d/tools/unit_pictures.mjs [renders]           writes assets/2d/pictures/: the sheets
 //                                                              and pictures.json
@@ -38,7 +36,6 @@ const defs = JSON.parse(execSync("lune run icon_defs", { encoding: "utf8" }))
 const problems = [];
 const haveRenders = existsSync(RENDERS);
 const renderOf = (id) => [`${RENDERS}/${id}.png`, `${RENDERS}/${id}.jpg`].find((p) => existsSync(p));
-const maskOf = (id) => (existsSync(`${RENDERS}/${id}_mask.png`) ? `${RENDERS}/${id}_mask.png` : null);
 
 const uri = (path) => `data:image/${path.endsWith(".jpg") ? "jpeg" : "png"};base64,${readFileSync(path).toString("base64")}`;
 // a render scaled into one tile; a wider render (C's old 512 x 320 portraits) is cropped to its middle square
@@ -52,31 +49,23 @@ function build() {
 	const placed = [];
 	for (const d of defs) {
 		const pic = haveRenders ? renderOf(d.id) : null;
-		if (!pic) {
-			missing.push(d.id);
-			continue;
-		}
-		const mask = maskOf(d.id);
-		if (!mask) problems.push(`${d.id}: ${pic} has no ${d.id}_mask.png`);
-		placed.push({ id: d.id, pic, mask });
+		if (pic) placed.push({ id: d.id, pic });
+		else missing.push(d.id);
 	}
 	const files = new Map();
 	const sheets = [];
 	for (let s = 0; s * PER_SHEET < placed.length; s++) {
 		const here = placed.slice(s * PER_SHEET, (s + 1) * PER_SHEET);
-		const rows = Math.ceil(here.length / PER_ROW);
-		const h = rows * (TILE + GAP) - GAP;
-		let pics = "", masks = "";
+		const h = Math.ceil(here.length / PER_ROW) * (TILE + GAP) - GAP;
+		let body = "";
 		here.forEach((u, i) => {
 			const x = (i % PER_ROW) * (TILE + GAP), y = Math.floor(i / PER_ROW) * (TILE + GAP);
-			pics += tileImage(u.pic, x, y);
-			if (u.mask) masks += tileImage(u.mask, x, y);
-			units[u.id] = { sheet: s + 1, rect: [x, y, TILE, TILE] }; // ImageRectOffset / ImageRectSize, the same in both sheets
+			body += tileImage(u.pic, x, y);
+			units[u.id] = { sheet: s + 1, rect: [x, y, TILE, TILE] }; // ImageRectOffset / ImageRectSize
 		});
-		const names = { picture: `ftgg-unit-pictures-${s + 1}.png`, mask: `ftgg-unit-masks-${s + 1}.png`, size: [1024, h] };
-		files.set(names.picture, png(1024, h, pics));
-		files.set(names.mask, png(1024, h, masks));
-		sheets.push(names);
+		const sheet = { file: `ftgg-unit-pictures-${s + 1}.png`, size: [1024, h] };
+		files.set(sheet.file, png(1024, h, body));
+		sheets.push(sheet);
 	}
 	const json = { tile: TILE, sheets, units, missing };
 	files.set("pictures.json", Buffer.from(JSON.stringify(json, null, "\t") + "\n"));
@@ -99,7 +88,7 @@ if (check) {
 		if (!sh) problems.push(`${id}: sheet ${u.sheet} doesn't exist`);
 		else if (w !== json.tile || h !== json.tile || x < 0 || y < 0 || x + w > sh.size[0] || y + h > sh.size[1]) problems.push(`${id}: rect ${u.rect} is outside its sheet`);
 	}
-	for (const sh of json.sheets) for (const f of [sh.picture, sh.mask]) if (!existsSync(`${OUT}/${f}`)) problems.push(`${OUT}/${f} is missing`);
+	for (const sh of json.sheets) if (!existsSync(`${OUT}/${sh.file}`)) problems.push(`${OUT}/${sh.file} is missing`);
 	if (haveRenders) {
 		// the renders are here: everything must match a fresh pack
 		const { files } = build();
@@ -112,13 +101,11 @@ if (check) {
 		for (const f of readdirSync(OUT)) if (!files.has(f)) problems.push(`${OUT}/${f} is no file of the pack`);
 	}
 	for (const p of problems) console.error(`PROBLEM: ${p}`);
-	console.log(`${defs.length} defs need pictures: ${Object.keys(json.units).length} packed on ${json.sheets.length} sheet pair(s), ${json.missing.length} missing${haveRenders ? "" : " (renders not at hand, files not compared)"}; ${problems.length} problem(s)`);
+	console.log(`${defs.length} defs need pictures: ${Object.keys(json.units).length} packed on ${json.sheets.length} sheet(s), ${json.missing.length} missing${haveRenders ? "" : " (renders not at hand, files not compared)"}; ${problems.length} problem(s)`);
 	process.exit(problems.length ? 1 : 0);
 }
 
 const { files, json } = build();
-for (const p of problems) console.error(`PROBLEM: ${p}`);
 mkdirSync(OUT, { recursive: true });
 for (const [name, bytes] of files) writeFileSync(`${OUT}/${name}`, bytes);
-console.log(`${defs.length} defs need pictures: ${Object.keys(json.units).length} packed on ${json.sheets.length} sheet pair(s) (${TILE} px tiles, ${PER_SHEET} a sheet), ${json.missing.length} missing → ${OUT}/`);
-process.exit(problems.length ? 1 : 0);
+console.log(`${defs.length} defs need pictures: ${Object.keys(json.units).length} packed on ${json.sheets.length} sheet(s) (${TILE} px tiles, ${PER_SHEET} a sheet), ${json.missing.length} missing → ${OUT}/`);
