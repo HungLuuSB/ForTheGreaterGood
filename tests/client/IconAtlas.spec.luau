@@ -1,7 +1,7 @@
 --!strict
 -- The icon sprite sheet (C-74): every unit def has an icon on it, every
--- tile it names exists and fits the sheet, and no two tiles overlap. Fails
--- when a def is added without rerunning tools/icons/render.mjs.
+-- tile it names exists and fits the sheet, and no two tiles overlap. A def
+-- the sheet doesn't list yet draws its type's placeholder (C-258).
 
 local IconAtlas = require("../../src/client/UI/IconAtlas")
 local Defs = require("@shared/Defs/Defs")
@@ -15,17 +15,37 @@ return function(t: any)
 			t.expect(e ~= nil, `{def.id} has no icon: rerun node tools/icons/render.mjs`)
 			if e then
 				t.expect(IconAtlas.tiles[e.tile] ~= nil, `{def.id}: no tile {e.tile}`)
-				t.expect(e.scale >= 1 and e.scale <= 1.35, `{def.id}: scale {e.scale}`)
+				t.expect(e.scale >= 1 and e.scale <= 1.4, `{def.id}: scale {e.scale}`) -- 1.4: the experimental mechs (draft 7)
 				t.expect(IconAtlas.contacts[e.frame] ~= nil, `{def.id}: no contact tile for its frame {e.frame}`)
 			end
 		end
 	end)
 
-	t.test("a def the sheet has no tile for yet shows its domain's plain frame", function()
+	t.test("a def the sheet has no tile for yet draws its type's placeholder (the sheet's rule, C-258)", function()
 		local Icons = require("../../src/client/Core/Icons")
-		t.equal(Icons.ofDef({ id = "chs_new_unit", domain = "naval" }, 2, 24).tile, IconAtlas.contacts.ship)
-		t.equal(Icons.ofDef({ id = "ord_new_wall", domain = "structure" }, 1).tile, IconAtlas.contacts.struct)
-		t.equal(Icons.ofDef({ id = "ord_new_tank" }, 1).tile, IconAtlas.contacts.vehicle)
+		local ph = IconAtlas.placeholders
+		for f, key in ph do
+			t.expect(IconAtlas.tiles[key] ~= nil, `no tile for {f}'s placeholder {key}`)
+		end
+		t.equal(Icons.ofDef({ id = "chs_new_ship", domain = "naval", moveClass = "SHIP" }, 2, 24).tile, ph.ship)
+		t.equal(Icons.ofDef({ id = "chs_new_sub", domain = "naval", moveClass = "SUB" }, 2).tile, ph.sub)
+		t.equal(Icons.ofDef({ id = "ord_new_wall", domain = "structure" }, 1).tile, ph.struct)
+		t.equal(Icons.ofDef({ id = "ord_new_tower", domain = "structure", weapons = { {} } }, 1).tile, ph.defense)
+		t.equal(Icons.ofDef({ id = "ord_new_heli", domain = "air", moveClass = "HELI" }, 1).tile, ph.vtol)
+		t.equal(Icons.ofDef({ id = "ord_new_jet", domain = "air", moveClass = "JET" }, 1).tile, ph.air)
+		t.equal(Icons.ofDef({ id = "ord_new_bot", domain = "ground", moveClass = "WALKER" }, 1).tile, ph.walker)
+		t.equal(Icons.ofDef({ id = "ord_new_mech", domain = "ground", moveClass = "AMPHIB_WALKER" }, 1).tile, ph.walker)
+		t.equal(Icons.ofDef({ id = "ord_new_amphib", domain = "ground", moveClass = "AMPHIB" }, 1).tile, ph.amphib)
+		t.equal(Icons.ofDef({ id = "ord_new_hover", domain = "ground", moveClass = "HOVER" }, 1).tile, ph.hover)
+		t.equal(Icons.ofDef({ id = "ord_new_tank", domain = "ground", moveClass = "TRACKED" }, 1).tile, ph.vehicle)
+		t.equal(Icons.entry({ id = "ord_new_bot", domain = "ground", moveClass = "WALKER" }).frame, "walker", "its radar contact is its type's frame")
+	end)
+
+	t.test("the Commanders draw their heads but keep the walker frame, so radar shows a plain walker (2D-E)", function()
+		for _, id in { "ord_sovereign", "chs_warlord" } do
+			local e = IconAtlas.byDef[id]
+			t.expect(e ~= nil and e.frame == "walker", `{id}: frame {e and e.frame}`)
+		end
 	end)
 
 	t.test("contacts have a tile per frame", function()

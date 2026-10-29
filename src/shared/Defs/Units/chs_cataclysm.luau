@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_cataclysm",
 	name = "Cataclysm",
-	description = "Artillery emplacement. Very long range; can shell radar contacts.",
+	description = "Artillery emplacement. Very long-range guns that can shell radar contacts.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE", "ARTILLERY" },

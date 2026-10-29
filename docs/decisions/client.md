@@ -2318,3 +2318,45 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - Client: the arms script `PieceScripts/chs_juggernaut` is renamed `chs_goliath`; the Bot gait's hip and scale tables, `PieceScripts/Registry` and `UI/IconAtlas` take the new ids (the T3 bot still borrows the Main Battle Tank tile until 2D-E's icons, request E1). The Deaths, PieceAnim, Ambient and PortraitStage specs follow.
 - The test scenes in `src/roblox/MatchConfig.luau` that spawned the T2 tank now spawn `chs_goliath` (committed from the file's committed version only; the user's local edits stay out).
 - Studio, Coastline: `chs_juggernaut` draws as the meshed T3 bot and walks on the Bot gait, `chs_goliath` as the meshed tank; no piece-script errors (`debug_out/screens/c256-juggernaut-t3.jpg`).
+
+### C-257 — Pulse pieces swell with their breath (2026-10-29)
+
+- rig.md's `pulse` is "scale and emissive pulse about the pivot"; C-252 did the glow. Now the piece also changes size: `Core/Glow.scale` gives 1 ± `CORE_SCALE` (0.04) in step with the glow's breath (0.5 Hz), the swing times the stall ratio (still with no power), 1 while being built, retracted, or below the "high" glow level. `Glow.spec` covers it.
+- `Render/Glow.collectPulses` finds each pulse piece and every part welded to it, with their resting sizes and joint offsets. `Glow.step` resizes them about the piece's pivot: sizes, the piece's Motor6D `C1`, the welds' `C0` and attachment positions times the scale. That's only within `PULSE_NEAR` (450 studs) of the camera, and only on a change of `PULSE_STEP` (0.3%) or more. A model going back to the pool is put back at rest.
+- For that, glow parts in `MeshModels` and welded parts in `BlockoutBuilder` are joined with a `Weld` (C0 offset) instead of a `WeldConstraint`, whose offset can't be scaled. Nothing in the client treats the two differently.
+- Studio, Coastline: both advanced fusions' cores, the advanced converter's coil and the advanced capacitor's cells swing 4% each way over 2 s, their glow shells scaling with them and staying on (`debug_out/screens/c257-pulse-pieces.jpg`).
+
+### C-258 — 2D-E's icon set on two sheets, with placeholders (2026-10-29)
+
+- 2D-E's approved set (draft 7, `docs/art/icons/ftgg-unit-icons.html`, f6da8aca) maps all 203 defs once over 109 icons, plus 10 placeholders (`ph: 1`, no defs, one per frame). `tools/icons/render.mjs` accepts them and gives each a tile; the atlas lists them as `IconAtlas.placeholders[frame]`. 129 tiles of 96 × 112 (109 unit, 10 placeholder, 10 contact) on two 1024-px sheets; the tinted-white check's worst pixel is 14.2 / 255, as E's dry run.
+- A def in no catalogue item is a build warning now, not a failure. `Core/Icons.entry` gives it its type's placeholder by the sheet's "Placeholder rule" (`Icons.placeholderFrame`): a structure takes defense if armed, else struct; HELI takes vtol, else air; SUB takes sub, else ship; WALKER and AMPHIB_WALKER take walker; AMPHIB and HOVER take their own; the rest take vehicle. `.lune/icon_defs` now passes the move class and whether the def is armed. The Commanders draw their heads but keep the walker frame, so radar shows a plain walker (E's request); a spec guards it.
+- The experimental mechs are drawn at 1.4× (E's `big`); the specs' cap follows.
+- `tools/icons/assets.json` records each sheet's pixel hash (`sha256`) at upload. A sheet whose pixels changed loses its id, so a stale image is never shipped; that dropped the old sheet 1 id. `IconAtlas.spec` fails until both sheets are uploaded (the user approves uploads).
+
+### C-259 — 2D-E's resource and stat icons wired, with text marks until uploaded (2026-10-29)
+
+- `tools/icons/ui_icons.mjs` writes `UI/UiIcons.luau` from E's `assets/2d/ui/keys.json` (E-7, E-8: supply, power, time, wind, tidal, health, dps, range, speed, sight, radar, build, armor, value, airSight). It holds the atlas id (`assets.json` `ui`: { image, sha256 }, dropped when the atlas changes), the sizes (16, 24, 32), and per key the name, group, tint and rect per size. It's pure data, so lobby-D can require it for the Codex.
+- `UI/UiIcon.make(key, size, color?)` makes the ImageLabel from the smallest atlas size at least `size`, or returns nil while there's no id. Each place keeps its text mark until then:
+  - the resource bar's ■ / ϟ;
+  - the team panel's ■ / ϟ buttons;
+  - the unit panel's health cross;
+  - a build tile's supply and power cost: icon right of the number.
+- Rich-text lines (tooltips, the unit panel's flow line) keep their glyphs: rich text can't hold images.
+- Studio, without an upload: the UI builds as before (■ ϟ, the two-bar cross), no errors. The icons themselves are checked after the upload.
+
+### C-260 — Command icons on the command card (2026-10-29)
+
+- 2D-E's E-9 (weapon and sensor stats) and E-10 (one icon per `CommandSet.ORDER` id) are approved and in `UI/UiIcons`: 47 keys, and the atlas grew to 1024 × 136.
+  - `UiIcons.atlasSize` now carries the atlas size, so the spec reads it instead of a fixed height.
+  - The generator writes a key that is a Luau keyword as `["repeat"]`. A bare `repeat =` broke the module, and darklua with it.
+- `CommandCard` puts the command's icon (14 px, E's white #E8EAEE) at the left of each button once the atlas is uploaded. The label sits beside it, scaled to fit between 8 and 11 px; state buttons keep their segments under it. On a greyed-out Repeat or On / Off button the icon dims with the label. Until the upload, the buttons are the text labels as before.
+- `UiIcons.spec` checks that every command has an icon.
+- Studio, without an upload: the command card shows its text labels as before, with no errors.
+
+### C-261 — The icon sheets and the UI icon atlas uploaded (2026-10-29)
+
+- The user approved the upload. Both unit icon sheets and 2D-E's UI icon atlas (47 keys, 1024 × 136) are on Roblox, with their pixel hashes in `tools/icons/assets.json`: sheet 1 73786884026732, sheet 2 126240026480583, UI atlas 98955338730678. `IconAtlas` and `UiIcons` are regenerated with the ids.
+- Studio check on the command card, Coastline:
+  - Bug found: the button's UIPadding also moved the icon, onto the label. The icon now sits at -(ICON + 2) inside the padding, 3 px from the edge.
+  - All three images fetch; the resource bar, build tile costs, health cross and every command button show their icons (`debug_out/screens/c260-ui-icons.jpg`).
+- Studio check at strategic zoom: the new unit icons show in team colours, with the Commanders' heads, on the map and the minimap (`debug_out/screens/c258-strategic-icons.jpg`).

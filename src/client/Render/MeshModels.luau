@@ -185,10 +185,12 @@ local function build(def: any, e: any): Model
 		part:SetAttribute("GlowTint", tint)
 		part:SetAttribute("GlowStrength", g.strength)
 		CollectionService:AddTag(part, MeshModels.GLOW_TAG)
-		local weld = Instance.new("WeldConstraint")
+		-- a Weld, not a WeldConstraint: a pulse piece scales its offset (C-257)
+		local weld = Instance.new("Weld")
 		weld.Name = "Weld"
 		weld.Part0 = parts[g.piece]
 		weld.Part1 = part
+		weld.C0 = parts[g.piece].CFrame:Inverse() * part.CFrame
 		weld.Parent = part
 		part.Parent = model
 	end

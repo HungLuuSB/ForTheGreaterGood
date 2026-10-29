@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "chs_locust",
 	name = "Locust",
-	description = "Swarm tank. Very cheap and fast, a short autocannon; strong in numbers, weak to splash.",
+	description = "Swarm tank. A small fast tank with a short autocannon.",
 	faction = "chaos",
 	tier = 1,
 	categories = { "GROUND", "ARMORED" },

@@ -7,7 +7,9 @@
 -- weapon or role) on one sprite sheet, UI/IconAtlas: a unit shows its type's
 -- tile in team color, a ghost the same tile at 45% opacity, a radar or sonar
 -- contact the dashed frame with no symbol (its type's frame when the type is
--- known, else by what it is: aircraft, submarine, else a vehicle).
+-- known, else by what it is: aircraft, submarine, else a vehicle). A def the
+-- sheet doesn't list yet draws its type's placeholder (the sheet's
+-- "Placeholder rule", draft 7; C-258).
 
 local NetIcons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
@@ -36,7 +38,7 @@ export type Table = {
 }
 
 -- Icon width in pixels for a T1 unit at strategic zoom; tiers scale it
--- (IconAtlas: ×1.15 T2, ×1.3 T3, ×1.35 the Command Vehicle).
+-- (IconAtlas: ×1.15 T2, ×1.3 T3, up to ×1.4 for the experimental mechs).
 Icons.BASE = 22
 Icons.GHOST_ALPHA = 1 - IconAtlas.GHOST_TRANSPARENCY
 -- a radar contact this high (studs) is drawn in the aircraft frame
@@ -88,18 +90,42 @@ function Icons.table(defs: any): Table
 	return { names = NetIcons.names(defs), byDef = byDef, sample = sample, codes = Icons.codes(defs) }
 end
 
--- the plain frame for a def the sheet has no tile for yet (a unit added after
--- the last import): by its domain
-local DOMAIN_FRAME: { [string]: string } = { ground = "vehicle", air = "air", naval = "ship", structure = "struct" }
+-- The sheet's "Placeholder rule": the frame whose placeholder a def the
+-- sheet doesn't list draws (tools/icons/render.mjs warns about each).
+function Icons.placeholderFrame(def: any): string
+	local mc = def.moveClass
+	if def.domain == "structure" then
+		return if def.weapons ~= nil and #def.weapons > 0 then "defense" else "struct"
+	elseif def.domain == "air" then
+		return if mc == "HELI" then "vtol" else "air"
+	elseif def.domain == "naval" then
+		return if mc == "SUB" then "sub" else "ship"
+	elseif mc == "WALKER" or mc == "AMPHIB_WALKER" then
+		return "walker"
+	elseif mc == "AMPHIB" then
+		return "amphib"
+	elseif mc == "HOVER" then
+		return "hover"
+	end
+	return "vehicle"
+end
+
+-- A def's sheet entry: its own, else its type's placeholder at scale 1.
+function Icons.entry(def: any): IconAtlas.Entry
+	local e = IconAtlas.byDef[def.id]
+	if e then
+		return e
+	end
+	local frame = Icons.placeholderFrame(def)
+	local placeholders = (IconAtlas :: any).placeholders :: { [string]: string }?
+	local tile = (placeholders and placeholders[frame]) or IconAtlas.contacts[frame] or IconAtlas.contacts.vehicle
+	return { tile = tile, scale = 1, frame = frame, name = def.name or def.id }
+end
 
 -- A unit type's icon in `team` color, `base` pixels wide before its tier
 -- scale (the build grid and unit panel use this too).
 function Icons.ofDef(def: any, team: number, base: number?): Style
-	local e = IconAtlas.byDef[def.id]
-	if e == nil then
-		local tile = IconAtlas.contacts[DOMAIN_FRAME[def.domain] or "vehicle"]
-		return { kind = "unit", tile = tile, size = base or Icons.BASE, team = team, alpha = 1, selected = false }
-	end
+	local e = Icons.entry(def)
 	return { kind = "unit", tile = e.tile, size = math.floor((base or Icons.BASE) * e.scale + 0.5), team = team, alpha = 1, selected = false }
 end
 
@@ -110,7 +136,7 @@ function Icons.style(t: Table, world: World.World, u: World.Unit, selected: bool
 	if def == nil and u.icon and u.icon > 0 then
 		def = t.sample[u.icon]
 	end
-	local entry = if def then IconAtlas.byDef[def.id] else nil
+	local entry = if def then Icons.entry(def) else nil
 	if bit32.band(flags, Schema.StrategicFlag.GHOST) ~= 0 and entry then
 		local s = Icons.ofDef(def, u.team)
 		s.kind, s.alpha = "ghost", Icons.GHOST_ALPHA

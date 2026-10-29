@@ -47,6 +47,19 @@ local function withCapturedLog(fn: () -> ()): { string }
 end
 
 return function(t: RunAll.Context)
+	t.test("every unit's description is 'Role. What it does.', with no comparison to its counterpart (the user, S-214)", function()
+		for id, u in Registry.units :: { [string]: any } do
+			local d = u.description
+			-- the unit panel shows the text before the first full stop as the role
+			local role, rest = string.match(d, "^([^%.]+)%. (.+)$")
+			t.expect(role ~= nil and #role <= 40, `{id}: starts with a short role and a full stop: "{d}"`)
+			t.expect(rest ~= nil and string.sub(rest, -1) == ".", `{id}: one line after the role, ending in a full stop: "{d}"`)
+			for _, word in { "than", "Order's", "Chaos's", "cheaper", "fragile" } do
+				t.expect(string.find(d, word, 1, true) == nil, `{id}: no comparison ("{word}"): "{d}"`)
+			end
+		end
+	end)
+
 	t.test("registered defs load", function()
 		local set = Defs.load()
 		t.expect(set.units.ord_lancer ~= nil, "ord_lancer missing")

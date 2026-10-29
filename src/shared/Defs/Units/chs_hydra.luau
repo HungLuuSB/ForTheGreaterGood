@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "chs_hydra",
 	name = "Hydra",
-	description = "MLRS. Large inaccurate salvos.",
+	description = "MLRS. Fires large rocket salvos.",
 	faction = "chaos",
 	tier = 2,
 	domain = "ground",

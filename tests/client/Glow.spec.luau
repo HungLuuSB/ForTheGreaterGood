@@ -85,6 +85,23 @@ return function(t: any)
 		t.equal(Glow.strength("power", 2, ctx({ now = 0.5, level = "low" }), true), 2, "low: no breath")
 	end)
 
+	t.test("a pulse piece swells and shrinks with its glow's breath (C-257)", function()
+		local lo, hi = math.huge, -math.huge
+		for i = 0, 199 do
+			local c = ctx({ now = i / 100 })
+			local k = Glow.scale(c)
+			lo, hi = math.min(lo, k), math.max(hi, k)
+			-- in step: bigger exactly when brighter
+			t.expect((k > 1) == (Glow.strength("power", 2, c, true) > 2) or math.abs(k - 1) < 1e-6, `in step at {i}`)
+		end
+		t.expect(math.abs(lo - (1 - Glow.CORE_SCALE)) < 0.001 and math.abs(hi - (1 + Glow.CORE_SCALE)) < 0.001, `swells {lo}..{hi}`)
+		t.expect(math.abs(Glow.scale(ctx({ now = 1, ratio = 0.5 })) - 1) < math.abs(Glow.scale(ctx({ now = 1 })) - 1), "less on a stall")
+		t.equal(Glow.scale(ctx({ now = 1, ratio = 0 })), 1, "still with no power")
+		t.equal(Glow.scale(ctx({ now = 1, built = false })), 1, "still while built")
+		t.equal(Glow.scale(ctx({ now = 1, level = "low" })), 1, "low: no swell")
+		t.equal(Glow.scale(ctx({ now = 1, retracted = true })), 1)
+	end)
+
 	t.test("only real changes are written", function()
 		t.expect(not Glow.changed(2, 2.01), "a hundredth is skipped")
 		t.expect(Glow.changed(2, 2.5), "a real change")

@@ -10,7 +10,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_nano",
 	name = "Construction Turret",
-	description = "Nano turret. Assists, repairs and reclaims everything in reach; more build power than any T1 builder. Stack several on a factory.",
+	description = "Construction turret. Assists, repairs and reclaims everything in its reach; never moves.",
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE" },

@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_solar",
 	name = "Sun Trap",
-	description = "Solar Array. Low steady power, cheap.",
+	description = "Solar array. Makes low, steady power.",
 	faction = "chaos",
 	tier = 1,
 	categories = { "STRUCTURE" },

@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "chs_ravager",
 	name = "Ravager",
-	description = "Light tank. Cheap and tough, hits hard up close.",
+	description = "Light tank. A short cannon for close fights.",
 	faction = "chaos",
 
 	cost = { supply = 130, power = 1300, buildTime = 3700 },

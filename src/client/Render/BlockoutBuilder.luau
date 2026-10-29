@@ -98,10 +98,12 @@ function BlockoutBuilder.build(bp: Blockout.Blockout, def: any): Model
 				joint.C1 = cf:Inverse() * pivot
 				joint.Parent = part
 			else
-				local weld = Instance.new("WeldConstraint")
+				-- a Weld, not a WeldConstraint: a pulse piece scales its offset (C-257)
+				local weld = Instance.new("Weld")
 				weld.Name = "Weld"
 				weld.Part0 = parentPart
 				weld.Part1 = part
+				weld.C0 = frames[p.parent]:Inverse() * cf
 				weld.Parent = part
 			end
 		end

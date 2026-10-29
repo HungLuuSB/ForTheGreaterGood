@@ -11,7 +11,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "chs_juggernaut",
 	name = "Juggernaut",
-	description = "T3 experimental assault bot. A heat ray, two shotgun cannons and long-range missiles; walks under water. Self-destructed, nearly a nuke.",
+	description = "Experimental assault bot. A heat ray, two shotgun cannons and missiles; walks under water, and self-destructs almost like a nuke.",
 	faction = "chaos",
 	tier = 3,
 	domain = "ground",

@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "chs_minotaur",
 	name = "Minotaur",
-	description = "Siege ram. Heavy armor, a gun that wrecks structures and a demolition charge that levels them up close.",
+	description = "Siege ram. A gun that wrecks structures and a demolition charge that levels them up close.",
 	faction = "chaos",
 	tier = 2,
 	domain = "ground",
