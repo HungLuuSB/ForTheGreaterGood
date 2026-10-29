@@ -687,8 +687,8 @@ return function(t: RunAll.Context)
 		for i = 0, 3 do
 			table.insert(attackers, Spawn.unit(sim, "chs_ravager", 2, -60 + i * 40, 90, math.pi))
 		end
-		table.insert(attackers, Spawn.unit(sim, "chs_juggernaut", 2, -120, 110, math.pi))
-		table.insert(attackers, Spawn.unit(sim, "chs_juggernaut", 2, 120, 110, math.pi))
+		table.insert(attackers, Spawn.unit(sim, "chs_goliath", 2, -120, 110, math.pi))
+		table.insert(attackers, Spawn.unit(sim, "chs_goliath", 2, 120, 110, math.pi))
 		table.insert(attackers, Spawn.unit(sim, "chs_cyclops", 2, -50, 330, math.pi))
 		table.insert(attackers, Spawn.unit(sim, "chs_watcher", 2, 200, 60, math.pi))
 		local health = {}
@@ -743,7 +743,7 @@ return function(t: RunAll.Context)
 		local carapace = Spawn.unit(sim, "chs_carapace", 2, 0, 200)
 		local capacity = sim.defs.units.chs_carapace.shield.capacity
 		sim.combat.shieldCharge[carapace] = capacity
-		local inside = Spawn.unit(sim, "chs_juggernaut", 2, 0, 215, math.pi)
+		local inside = Spawn.unit(sim, "chs_goliath", 2, 0, 215, math.pi)
 		local outside = Spawn.unit(sim, "chs_scrapper", 2, 0, 110, math.pi) -- (far enough that the Juggernaut is the pick)
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
 		local scout = Spawn.unit(sim, "ord_herald", 1, 60, 100, 0) -- sees the Juggernaut: an exact aim, a straight line
@@ -781,7 +781,7 @@ return function(t: RunAll.Context)
 		local carapace = Spawn.unit(sim, "chs_carapace", 2, 0, 200)
 		local capacity = sim.defs.units.chs_carapace.shield.capacity
 		sim.combat.shieldCharge[carapace] = capacity
-		local inside = Spawn.unit(sim, "chs_juggernaut", 2, 0, 215, math.pi)
+		local inside = Spawn.unit(sim, "chs_goliath", 2, 0, 215, math.pi)
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
 		local scout = Spawn.unit(sim, "ord_herald", 1, 60, 100, 0)
 		for _, id in { inside, scout } do
@@ -872,7 +872,7 @@ return function(t: RunAll.Context)
 			-- only the attack order's beam (S-185: idle weapons search on every
 			-- sensor tick, so it would otherwise fire before the order)
 			World.setFireState(w, tower, World.FireState.HOLD_FIRE)
-			local target = Spawn.unit(sim, "chs_juggernaut", 2, 0, 280, math.pi)
+			local target = Spawn.unit(sim, "chs_goliath", 2, 0, 280, math.pi)
 			local scout = Spawn.unit(sim, "ord_herald", 1, 60, 200, 0)
 			for _, id in { target, scout } do
 				World.setFireState(w, id, World.FireState.HOLD_FIRE)

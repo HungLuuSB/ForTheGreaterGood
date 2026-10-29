@@ -35,7 +35,7 @@ local MOVE_CLASS = {
 	ord_halo = "WHEELED", chs_hornet = "WHEELED",
 	ord_seraph = "WHEELED", chs_gorgon = "WHEELED",
 	ord_oracle = "WHEELED", chs_watcher = "WHEELED",
-	ord_paladin = "HEAVY_TRACKED", chs_juggernaut = "HEAVY_TRACKED",
+	ord_paladin = "HEAVY_TRACKED", chs_goliath = "HEAVY_TRACKED",
 	ord_tideguard = "AMPHIB", chs_mire = "AMPHIB",
 	ord_lancer = "TRACKED", chs_ravager = "TRACKED",
 	ord_skywright = "HELI", chs_vulture = "HELI", ord_zenith = "HELI", chs_condor = "HELI",

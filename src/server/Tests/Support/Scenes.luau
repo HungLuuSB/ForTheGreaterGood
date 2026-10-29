@@ -408,7 +408,7 @@ end
 -- on more army. `defs` carries the dome radius under test.
 Scenes.SHIELD_ROLES = table.freeze({
 	order = table.freeze({ "ord_lancer", "ord_paladin", "ord_verdict" }),
-	chaos = table.freeze({ "chs_ravager", "chs_juggernaut", "chs_hellmouth" }),
+	chaos = table.freeze({ "chs_ravager", "chs_goliath", "chs_hellmouth" }),
 })
 function Scenes.shieldSiege(defender: string, shielded: boolean, seed: number, defs: Defs.DefSet?): Scene
 	local set = defs or Defs.load()

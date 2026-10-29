@@ -182,7 +182,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "sea:128" })
 		local w = sim.world
 		Spawn.unit(sim, "ord_beacon", 1, -400, 0) -- on the land strip, radar 1100
-		local tank = Spawn.unit(sim, "chs_juggernaut", 2, -350, 400) -- on land, far from Order's sight
+		local tank = Spawn.unit(sim, "chs_goliath", 2, -350, 400) -- on land, far from Order's sight
 		local heli = Spawn.unit(sim, "chs_wasp", 2, 200, -300)
 		local sub = Spawn.unit(sim, "chs_lamprey", 2, 300, 300)
 		Spawn.unit(sim, "ord_crusader", 1, 300, 100) -- sonar 320 reaches the sub
@@ -207,7 +207,7 @@ return function(t: RunAll.Context)
 			Sim.step(sim)
 		end
 		t.expect(Sensors.isTracked(sim, 1, tank), "tracked")
-		t.equal(cats(tank), sim.defs.units.chs_juggernaut.categoryMask, "tracked: its real categories")
+		t.equal(cats(tank), sim.defs.units.chs_goliath.categoryMask, "tracked: its real categories")
 	end)
 
 	-- A Seraph (radar SAM, priority jet > air > helicopter) with a Wasp radar

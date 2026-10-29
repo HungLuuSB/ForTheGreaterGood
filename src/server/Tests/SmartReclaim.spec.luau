@@ -116,7 +116,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:128" })
 		local mason = Spawn.unit(sim, "ord_mason", 1, 0, -20)
 		for i = 1, 4 do
-			wreck(sim, "chs_juggernaut", -30 + i * 15, 10)
+			wreck(sim, "chs_goliath", -30 + i * 15, 10)
 		end
 		area(sim, { mason }, OP.RECLAIM, 0, 10, 60)
 		local peak = 0

@@ -6,6 +6,15 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 ## Summary (latest: playtest feedback 3, 2026-10-29, branch `m-sim-2`)
 
+**After the round (2026-10-29, the user):**
+- **S-213: the T3 bot is `chs_juggernaut`.** `chs_korgoth` became `chs_juggernaut` (its weapons `chs_juggernaut_heatray` / `_shotgun` / `_missiles`). The T2 tank that had the id is now `chs_goliath` ("Goliath", weapon `chs_goliath_cannon`), retired and on no build list.
+- **Shorter T3 range:**
+  - Titan: beam 420 → 320, missiles 520 → 390.
+  - Juggernaut: heat ray 300 → 230, missiles 700 → 520.
+  - The close guns are unchanged.
+- The client, the models and the Codex key on unit ids, so B, C and D swap their keys too. It lands as one merge, through the last of their branches.
+- `tools/studio/sync_all.cmd`: a double-click start for the three places' live syncs.
+
 **The playtest 3 round:** the user's FTGG-FEEDBACK-3, items H1–H43. Owners and status are in `docs/progress/playtest-2026-10-28.md`.
 - Decisions: S-197..S-212.
 - Protocol 40 → 41.
