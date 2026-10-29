@@ -5,9 +5,9 @@
 -- steel tusks and a trunk, exhaust stacks on the rump, on four thick pillar
 -- legs (`legFL` / `legFR` / `legBL` / `legBR`, each jointed at the hip and
 -- swinging for the walk). On its back the `turret` (turns) carries the
--- `barrels` (pitch) with two long laser barrels; `muzzleL` / `muzzleR` sit
--- at their lenses (small parts here: the blockout rules make only
--- `muzzle<n>` names Attachments). Chaos reads heavy and brutal (M-14).
+-- `barrels` (pitch) with two long laser barrels, glowing lenses at their
+-- mouths and `muzzle1` (left) / `muzzle2` (right) just in front of them.
+-- Chaos reads heavy and brutal (M-14).
 -- Model space, forward = -Z.
 
 local SWING = { motion = "swing", axis = { 1, 0, 0 } }
@@ -46,8 +46,8 @@ for _, p in {
 	{ name = "barrels", parent = "turret", shape = "box", size = { 3.8, 1.7, 2.2 }, at = { 0, GUN_Y, GUN_Z - 0.1 }, pivot = { 0, GUN_Y, GUN_Z }, color = "dark" },
 	{ name = "barrelL", parent = "barrels", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 4.8 }, at = { -BX, GUN_Y, -4.1 }, color = "metal" },
 	{ name = "barrelR", parent = "barrels", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 4.8 }, at = { BX, GUN_Y, -4.1 }, color = "metal" },
-	{ name = "muzzleL", parent = "barrels", shape = "cylinder", axis = "z", size = { 0.92, 0.92, 0.5 }, at = { -BX, GUN_Y, MZ + 0.3 }, color = "glass" },
-	{ name = "muzzleR", parent = "barrels", shape = "cylinder", axis = "z", size = { 0.92, 0.92, 0.5 }, at = { BX, GUN_Y, MZ + 0.3 }, color = "glass" },
+	{ name = "lensL", parent = "barrels", shape = "cylinder", axis = "z", size = { 0.92, 0.92, 0.5 }, at = { -BX, GUN_Y, MZ + 0.3 }, color = "glass" },
+	{ name = "lensR", parent = "barrels", shape = "cylinder", axis = "z", size = { 0.92, 0.92, 0.5 }, at = { BX, GUN_Y, MZ + 0.3 }, color = "glass" },
 } do
 	table.insert(parts, p)
 end
@@ -55,4 +55,8 @@ end
 return {
 	id = "chs_mammoth",
 	parts = parts,
+	attachments = {
+		{ name = "muzzle1", parent = "barrels", at = { -BX, GUN_Y, MZ } },
+		{ name = "muzzle2", parent = "barrels", at = { BX, GUN_Y, MZ } },
+	},
 }

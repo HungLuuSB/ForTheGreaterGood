@@ -20074,11 +20074,11 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				},
 			},
 			attachments = {
-				muzzleL = {
+				muzzle1 = {
 					at = { -1, 10.15, -6.75 },
 					parent = "barrels",
 				},
-				muzzleR = {
+				muzzle2 = {
 					at = { 1, 10.15, -6.75 },
 					parent = "barrels",
 				},
