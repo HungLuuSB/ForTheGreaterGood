@@ -20,8 +20,8 @@ return Templates.extend(Templates.Unit, {
 	health = 6200, -- more than the Fatboy's 4,800 (H41)
 	movement = { maxSpeed = 6, accel = 8, brake = 18, turnRate = 120 },
 	sensors = { sight = 210 },
-	weapons = { { def = "chs_mammoth_laser", turretPiece = "turret", pitchPiece = "barrels", muzzle = "muzzleL", muzzles = { "muzzleL", "muzzleR" } } },
-	pieces = { "base", "legFL", "legFR", "legBL", "legBR", "turret", "barrels", "muzzleL", "muzzleR" },
+	weapons = { { def = "chs_mammoth_laser", turretPiece = "turret", pitchPiece = "barrels", muzzle = "muzzle1", muzzles = { "muzzle1", "muzzle2" } } },
+	pieces = { "base", "legFL", "legFR", "legBL", "legBR", "turret", "barrels", "muzzle1", "muzzle2" },
 	icon = "tank_heavy",
 	model = "chs_mammoth",
 })

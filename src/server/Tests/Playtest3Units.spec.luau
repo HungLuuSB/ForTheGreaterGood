@@ -1,8 +1,11 @@
 --!strict
 -- Playtest 3's new units (S-209): the construction turret's nano-only death
 -- blast, the Juggernaut's near-nuke self-destruct, the economy's numbers.
+local Build = require("../Sim/Build")
 local Combat = require("../Sim/Combat/Combat")
+local Placement = require("../Sim/Placement")
 local Packer = require("@shared/Net/Packer")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
@@ -71,6 +74,69 @@ return function(t: RunAll.Context)
 		steps(sim, 15 * 7)
 		t.equal(w.slot[jug], nil, "it went up")
 		t.expect(w.slot[far] == nil or w.health[far] < before, "a tank 160 studs off is hit")
+	end)
+
+	t.test("a construction turret left alone assists, repairs and reclaims what is in its reach, and never moves (H31, S-211)", function()
+		-- a Commander's solar 40 studs off it, its progress after 1.3 s
+		local function solarProgress(withNano: boolean): (number, Sim.Sim, number?)
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+			local w = sim.world
+			local acc = sim.eco.accounts[1]
+			acc.supply.stored, acc.power.stored = acc.supply.storage, acc.power.storage
+			local com = Spawn.unit(sim, "ord_sovereign", 1, 0, -40)
+			World.setFireState(w, com, World.FireState.HOLD_FIRE)
+			local nano = if withNano then Spawn.unit(sim, "ord_nano", 1, 80, 0) else nil
+			Build.commandBuild(sim, { com }, sim.defs.units.ord_solar.index, 0, 0, 0)
+			steps(sim, 20)
+			local frame = sim.build.target[com] or 0
+			return if frame ~= 0 then w.buildProgress[frame] else 1, sim, nano
+		end
+		local alone = solarProgress(false)
+		local helped, sim, nano = solarProgress(true)
+		t.expect(helped > alone * 1.5, `the nano helped build the Commander's solar ({helped} against {alone})`)
+
+		local w = sim.world
+		local id = nano :: number
+		local x, z = w.posX[id], w.posZ[id]
+		local near = Spawn.unit(sim, "ord_lancer", 1, 180, 0) -- 100 studs off: in reach
+		local far = Spawn.unit(sim, "ord_lancer", 1, 80, 300) -- out of it
+		for _, u in { near, far } do
+			World.setFireState(w, u, World.FireState.HOLD_FIRE)
+			World.setHealth(w, u, w.health[u] / 2)
+		end
+		local nearHp, farHp = w.health[near], w.health[far]
+		steps(sim, 15 * 20)
+		t.expect(w.health[near] > nearHp, "it repaired the tank in reach")
+		t.equal(w.health[far], farHp, "not the one out of it")
+
+		local wreck = Combat.addWreck(sim.combat, 80, 100, sim.defs.units.chs_ravager, 0)
+		local supply = sim.combat.wreckSupply[wreck]
+		steps(sim, 15 * 3)
+		t.expect(sim.combat.wreckX[wreck] == nil or sim.combat.wreckSupply[wreck] < supply, "it reclaims the wreck in reach")
+
+		Build.commandAssist(sim, { id }, far)
+		steps(sim, 2)
+		t.equal(w.health[far], farHp, "an order out of reach does nothing")
+		t.expect((sim.build.target[id] or 0) ~= far, "and is dropped")
+		t.equal(w.posX[id], x, "it never moved")
+		t.equal(w.posZ[id], z)
+	end)
+
+	t.test("an offshore extractor goes only under the sea, like a ship's yard (H20)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "wall:64" })
+		local g = (sim.map :: any).grid
+		local wx, wz = g:cellCenter(32, 40) -- wall:64's lake
+		for _, id in { "ord_seaextractor", "chs_seaextractor" } do
+			local def = sim.defs.units[id]
+			local _, onWater = Placement.check(sim, def, wx, wz)
+			t.expect(onWater ~= "terrain", `{id}: the lake's terrain is fine ({onWater})`)
+			local _, onLand = Placement.check(sim, def, g:cellCenter(4, 4))
+			t.equal(onLand, "terrain", `{id}: not on land`)
+		end
+		local pm = sim.map :: any
+		for i = 0, g.cellsX * g.cellsZ - 1, 7 do
+			t.equal(PlacementRules.terrainOk(pm, i, "seafloor"), PlacementRules.terrainOk(pm, i, "water"), `cell {i}: seafloor is water's rule`)
+		end
 	end)
 
 	t.test("the new economy's numbers (H23, H25, H27-H30)", function()

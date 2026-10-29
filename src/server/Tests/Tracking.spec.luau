@@ -206,7 +206,7 @@ return function(t: RunAll.Context)
 			powered(sim)
 			Sim.step(sim)
 			for _, msg in sim.net.players[1].outbox.Strategic do
-				for _, r in (Packer.readAll(msg, Schema.decodeStrategic, Schema.decodeTickHeader)) do
+				for _, r in (Packer.readAll(msg, Schema.decodeStrategic, Schema.decodeStrategicHeader)) do
 					seen[r.unitId] = r
 				end
 			end

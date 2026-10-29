@@ -26,13 +26,14 @@ end
 local maxSlope = Passability.degreesToSlope(PlacementRules.LAND_MAX_SLOPE)
 
 -- Does cell `i`'s terrain allow a structure with this `placement` ("land",
--- "water", or anything else = either)? Occupants and units are checked
--- separately (the server's Placement.check).
+-- "water", "seafloor": on the bottom of water as deep, S-209; anything
+-- else = either)? Occupants and units are checked separately (the
+-- server's Placement.check).
 function PlacementRules.terrainOk(pm: Passability.PassMap, i: number, placement: string): boolean
 	local water = Layers.getWater(pm.layers, i)
 	local land = water <= 0 and buffer.readu8(pm.slope, i) <= maxSlope
 	local sea = water >= PlacementRules.WATER_MIN_DEPTH
-	return if placement == "land" then land elseif placement == "water" then sea else (land or sea)
+	return if placement == "land" then land elseif placement == "water" or placement == "seafloor" then sea else (land or sea)
 end
 
 PlacementRules.DEPOSIT_CELLS = 4 -- a deposit is a 2 × 2 patch (S-184)
