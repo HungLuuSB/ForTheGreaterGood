@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "ord_paladin",
 	name = "Paladin",
-	description = "Main battle tank. Heavy armor, heavy gun.",
+	description = "Main battle tank. A heavy gun on an armored hull.",
 	faction = "order",
 	tier = 2,
 	domain = "ground",

@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "ord_verdict",
 	name = "Verdict",
-	description = "Self-propelled artillery. Long, precise indirect fire; can shell radar contacts.",
+	description = "Self-propelled artillery. Precise long-range indirect fire that can shell radar contacts.",
 	faction = "order",
 	categories = { "GROUND", "ARMORED", "ARTILLERY" },
 	cost = { supply = 180, power = 1800, buildTime = 5200 },

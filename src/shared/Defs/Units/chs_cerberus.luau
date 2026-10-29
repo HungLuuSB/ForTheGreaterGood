@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_cerberus",
 	name = "Cerberus",
-	description = "Anti-nuke. Stockpiles interceptors; shoots down enemy nukes over its coverage. Never fires at units.",
+	description = "Anti-nuke. Stockpiles interceptors and shoots down enemy nukes over its coverage; never fires at units.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE" },

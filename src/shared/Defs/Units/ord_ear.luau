@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_ear",
 	name = "Ear",
-	description = "Sonar buoy.",
+	description = "Sonar buoy. Detects ships and submarines nearby.",
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE" },

@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "ord_warden",
 	name = "Warden",
-	description = "Deployable gun. Unpacks in 4 s into a fortified emplacement: long range, 1.5× armor, immobile. Can't fire while packed.",
+	description = "Deployable gun. Unpacks in 4 s into a fortified long-range emplacement; can't fire while packed.",
 	faction = "order",
 	tier = 2,
 	domain = "ground",

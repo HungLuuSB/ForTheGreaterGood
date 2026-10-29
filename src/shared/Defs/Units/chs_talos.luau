@@ -6,7 +6,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_talos",
 	name = "Talos",
-	description = "Lobbing gun. High-arc shells, shorter range than Gauntlet; slow to land.",
+	description = "Lobbing gun. Fires shells on a high arc, over walls.",
 	faction = "chaos",
 	tier = 1,
 	categories = { "STRUCTURE" },

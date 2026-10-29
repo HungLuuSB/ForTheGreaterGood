@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_bulwark",
 	name = "Bulwark",
-	description = "Gun turret.",
+	description = "Gun turret. A light cannon emplacement.",
 	faction = "order",
 	retired = true, -- (S-157) Sentry (ord_sentry_tower) took its place as the T1 basic tower; kept for old replays and scenes
 	tier = 1,

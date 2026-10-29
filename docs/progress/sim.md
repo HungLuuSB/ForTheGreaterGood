@@ -14,6 +14,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
   - The close guns are unchanged.
 - The client, the models and the Codex key on unit ids, so B, C and D swap their keys too. It lands as one merge, through the last of their branches.
 - `tools/studio/sync_all.cmd`: a double-click start for the three places' live syncs.
+- **S-214: unit descriptions** are "Role. What it does." for all 203 units, with no comparison to the counterpart; `Defs.spec` keeps them that way.
 
 **The playtest 3 round:** the user's FTGG-FEEDBACK-3, items H1–H43. Owners and status are in `docs/progress/playtest-2026-10-28.md`.
 - Decisions: S-197..S-212.

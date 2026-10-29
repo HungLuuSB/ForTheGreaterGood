@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_shipyard",
 	name = "Shipyard",
-	description = "T1 factory: naval worker, T1 ships and submarines.",
+	description = "T1 naval factory. Builds the naval worker, T1 ships and submarines.",
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE" },

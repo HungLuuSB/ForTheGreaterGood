@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_sanction",
 	name = "Sanction",
-	description = "Missile battery. Radar-guided missiles against ground targets, artillery first; outranges mobile artillery.",
+	description = "Missile battery. Fires radar-guided missiles at ground targets, artillery first.",
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE" },

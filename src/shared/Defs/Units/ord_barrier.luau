@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_barrier",
 	name = "Barrier",
-	description = "Wall segment. Cheap and tough; blocks movement and low direct fire.",
+	description = "Wall segment. Blocks movement and low direct fire.",
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE" },

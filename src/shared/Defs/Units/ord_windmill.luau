@@ -9,7 +9,7 @@ return Templates.extend(Templates.Structure, {
 	tier = 1,
 	categories = { "STRUCTURE" },
 	footprint = 2, -- size shows tech level (S-104)
-	description = "Wind Turbine. Power that follows the map's wind (up to 30 per second; the wind rises and falls slowly between the map's minimum and maximum).",
+	description = "Wind turbine. Makes power that rises and falls with the map's wind, up to 30 a second.",
 	cost = { supply = 40, power = 175, buildTime = 1000 }, -- (S-203, the user's H24; was 35 / 0)
 	health = 220,
 	wind = { max = 30 },
