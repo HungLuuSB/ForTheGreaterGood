@@ -3010,3 +3010,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Now:** all 203 unit defs read "Role. One line on what it does." Counterparts share the role (Sentry and Guard are both "Laser tower"), and most share the whole text. The line names the weapon or job, plus numbers a player needs (storage, output, power a shot). There are no comparisons ("than Order's", "shorter range than Gauntlet", "cheaper", "weak to splash", "fragile up close").
 - The unit panel shows the text before the first full stop as the role (`UnitPanel`), so a role has no full stop of its own.
 - **Kept that way by a test:** `Defs.spec` checks each description: a role of at most 40 characters, a full stop, one line ending in a full stop, and none of "than", "Order's", "Chaos's", "cheaper", "fragile".
+
+## S-215 — The power bar's demand counts extractor upkeep and converters (client-B, from the user's playtest) (2026-10-30)
+
+- **Asked (client-B):** the power bar showed "-0" with three extractors running. Upkeep (S-198) and converters' burn were paid into `spent`, but the Eco record's `demand` was construction's alone.
+- **Now:** `Economy` keeps `power.fixedRate`, what the team paid per second this window outside construction: extractor upkeep (times the share it could pay) plus each burning converter's rate. NetOut sends `demand + fixedRate`, so the bar's red number is everything spent per second. No protocol change; the client shows it as sent.
+- Converters' supply already showed as income (it is credited through `reclaimed`, S-183).
+- **Test:** `EcoLevels.spec`: one extractor reads 3 a second, and a burning converter adds its 70.

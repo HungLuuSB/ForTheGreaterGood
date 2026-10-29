@@ -46,6 +46,7 @@ export type Resource = {
 	priorityRatio: number?, -- 0..1: their progress ratio this window (S-66)
 	lowDemand: number?, -- per second, of `demand`: low-priority consumers, served last (S-156)
 	lowRatio: number?, -- 0..1: their progress ratio this window (S-156)
+	fixedRate: number?, -- per second paid this window outside construction: extractor upkeep and converters' burn (power; S-215, client-B: the bar showed -0 with extractors running)
 	gathered: number, -- total credited: income and reclaim per window, before the storage cap (Stats, S-63)
 	drawn: number, -- total spent, less any shortfall a window forgave (Stats, S-63)
 	bonusIncome: number?, -- per second, from the INCOME cheat (S-102)
@@ -343,10 +344,12 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 		local acc = eco.accounts[team]
 		local need = (upkeepScratch[team] or 0) * Economy.WINDOW
 		local ratio = 1
+		acc.power.fixedRate = 0
 		if need > 0 then
 			local p = acc.power
 			ratio = math.clamp((p.stored + p.income * Economy.WINDOW - p.spent) / need, 0, 1)
 			p.spent += need * ratio
+			p.fixedRate = (upkeepScratch[team] or 0) * ratio
 		end
 		acc.extractRatio = ratio
 		acc.supply.income += (extractScratch[team] or 0) * ratio
@@ -375,6 +378,7 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 		if spare >= conv.power then
 			local burn = conv.power * Economy.WINDOW
 			p.spent += burn
+			p.fixedRate = (p.fixedRate or 0) + conv.power
 			acc.supply.reclaimed += burn * conv.supply / conv.power
 			spare -= conv.power
 		end
