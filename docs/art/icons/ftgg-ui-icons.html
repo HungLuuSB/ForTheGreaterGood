@@ -57,15 +57,15 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">For The Greater Good · UI icons · E-7 resources, E-8 unit stats</div>
+    <div class="eyebrow">For The Greater Good · UI icons · E-7 resources, E-8 unit stats, E-9 weapon stats</div>
     <h1>Resource and stat icons</h1>
-    <p class="lede">The small icons of the HUD and the Codex, in the unit icons' style B: a white glyph with a hairline dark edge and a soft shadow, drawn for 16 px first. Each is one white image tinted in Roblox with <code>ImageColor3</code>, so the match and the Codex keep their own colours (supply white, power amber). One supply mark and one power mark serve both. E-7 draws the resources, E-8 the unit stats; the weapon stats (E-9) follow on this sheet.</p>
+    <p class="lede">The small icons of the HUD and the Codex, in the unit icons' style B: a white glyph with a hairline dark edge and a soft shadow, drawn for 16 px first. Each is one white image tinted in Roblox with <code>ImageColor3</code>, so the match and the Codex keep their own colours (supply white, power amber). One supply mark and one power mark serve both. E-7 draws the resources, E-8 the unit stats, E-9 the weapon and detail stats.</p>
   </header>
 
   <section class="section">
     <div class="section-head"><h2>In place</h2><p>Mock-ups at real size: the match HUD (B's colours) and Codex cards (D's colours)</p></div>
     <div class="scene" id="inplace"></div>
-    <p class="note">Left: the resource bar, a team-panel row with the ask/give buttons, and a build-menu tile's cost corner, all at 16 px. Right: the Codex's cost rows at 24 px. Below: a unit panel with its stat strip and a tooltip at 16 px, and a Codex stat card at 24 px. The stopgap glyphs these replace: ■ / ϟ in the match, ◆ ⚡ ⏱ ♥ » ◉ ◎ ✚ ↗ ⚒ in the Codex.</p>
+    <p class="note">Left: the resource bar, a team-panel row with the ask/give buttons, and a build-menu tile's cost corner, all at 16 px. Right: the Codex's cost rows at 24 px. Below: a unit panel with its stat strip and a tooltip at 16 px, and a Codex stat card at 24 px. Last: a Codex weapon card and a unit panel's sensor and defence row. The stopgap glyphs these replace: ■ / ϟ in the match, ◆ ⚡ ⏱ ♥ » ◉ ◎ ✚ ↗ ⚒ ▤ ≡ ♦ ☉ → ⁞ ⊕ in the Codex.</p>
   </section>
 
   <section class="section">
@@ -133,6 +133,32 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
     value: () => F("M3 4.5 H15.5 L29 18 L18 29 L3 16 Z") + HC(9.2, 10.6, 2.6),
     // air sight: the eye, a jet over it
     airSight: () => F("M16 1 L25.5 12.5 L16 9.6 L6.5 12.5 Z") + F("M2 22 Q16 11.5 30 22 Q16 32.5 2 22 Z") + HC(16, 22, 5) + C(16, 22, 2),
+
+    // ---- E-9: weapon and detail stats ----
+    // stock (stockpile): one missile standing in its silo (a row of missiles read as the ammo clip)
+    stock: () => L("M4.5 8 V28 H27.5 V8", 2.8) + F("M12.5 25.5 V10 L16 3 L19.5 10 V25.5 Z") + F("M12.5 19 L9 24.5 H12.5 Z M19.5 19 L23 24.5 H19.5 Z"),
+    // reload: a cycle arrow
+    reload: () => L("M24.5 9.5 A11 11 0 1 0 27 18", 3.6) + F("M29.5 3 V14.5 H18 Z"),
+    // alpha: one heavy shell, the biggest single hit
+    alpha: () => F("M10.5 29 V14 C10.5 8.5 16 2.5 16 2.5 C16 2.5 21.5 8.5 21.5 14 V29 Z") + HL("M10.5 18.5 H21.5", 1.8) + HL("M10.5 24.5 H21.5", 1.8),
+    // aoe: a blast in its ring
+    aoe: () => L("M16 3.5 A12.5 12.5 0 1 1 15.99 3.5", 2.6) + F(poly([...Array(12)].map((_, i) => { const r = i % 2 ? 3.4 : 7.6, a = -Math.PI / 2 + i * Math.PI / 6; return [16 + r * Math.cos(a), 16 + r * Math.sin(a)]; }))),
+    // projectile (projectile speed): a round in flight, speed streaks behind
+    projectile: () => F("M14 11 H22 C26 11 30 16 30 16 C30 16 26 21 22 21 H14 Z") + L("M2.5 11.5 H9.5 M5 16 H9.5 M2.5 20.5 H9.5", 2.4),
+    // salvo: three rounds fired in a ripple
+    salvo: () => [[6, 4], [11, 13], [4, 22]].map(([x, y]) => F(`M${x} ${y} H${x + 12} C${x + 15} ${y} ${x + 18} ${y + 3} ${x + 18} ${y + 3} C${x + 18} ${y + 3} ${x + 15} ${y + 6} ${x + 12} ${y + 6} H${x} Z`)).join(""),
+    // lock: a reticle's corner brackets round a dot
+    lock: () => L("M3.5 10.5 V3.5 H10.5 M21.5 3.5 H28.5 V10.5 M28.5 21.5 V28.5 H21.5 M10.5 28.5 H3.5 V21.5", 3) + C(16, 16, 4.6),
+    // guidance: a missile on a curved track (thick body, square fins, so it doesn't read as a bird)
+    guidance: () => L("M3.5 29 Q4 17 12.5 13.5", 2.6) + G("rotate(-32 20 11)", F("M11 8 H24 L30.5 11 L24 14 H11 Z") + F("M11 8 L8 3.5 H12.5 L15 8 Z M11 14 L8 18.5 H12.5 L15 14 Z")),
+    // ammo: rounds carried, three cartridges on a clip
+    ammo: () => [9, 16, 23].map((x) => F(`M${x - 2.8} 25 V11 C${x - 2.8} 7 ${x} 4 ${x} 4 C${x} 4 ${x + 2.8} 7 ${x + 2.8} 11 V25 Z`) + HL(`M${x - 2.8} 12.5 H${x + 2.8}`, 1.5)).join("") + F("M4 25 H28 V29 H4 Z"),
+    // sonar: pings spreading under the waterline
+    sonar: () => L("M3 6 L7 3.5 L11 6 L15 3.5 L19 6 L23 3.5 L27 6 L29 4.8", 2.2) + C(7, 20, 3.2) + L("M12.5 13.5 A8 8 0 0 1 12.5 26.5 M18 10 A13 13 0 0 1 18 30", 2.6),
+    // jam: a signal struck through
+    jam: () => C(9, 23, 3.2) + L("M8.5 15 A8.5 8.5 0 0 1 17 23.5 M8.5 8 A15.5 15.5 0 0 1 24 23.5", 2.6) + L("M5 27.5 L27.5 5", 3.4),
+    // countermeasures: a jet, flares falling away from it
+    countermeasures: () => F("M16 2 L24.5 13 L16 10.5 L7.5 13 Z") + [[5.5, 24], [16, 26.5], [26.5, 24]].map(([x, y]) => L(`M${16 + (x - 16) * .3} 16 L${16 + (x - 16) * .75} ${y - 5.5}`, 1.6) + C(x, y, 3.4)).join(""),
   };
 
   // ---- catalogue: key (the tile name), n (shown name), group, tint (the colour the game draws it in), use ----
@@ -152,6 +178,18 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
     { key: "armor", n: "Armor class", group: "stat", tint: "#A9B6C4", use: "Unit panel, Codex (no row yet)." },
     { key: "value", n: "Value", group: "stat", tint: "#E2C878", use: "Unit panel, score screens, Codex (no row yet)." },
     { key: "airSight", n: "Air sight", group: "stat", tint: "#9CC8F0", use: "Sight against aircraft; Codex (no row yet). Camel case, like the Codex's keys." },
+    { key: "stock", n: "Stockpile", group: "weapon", tint: "#D6DAE2", use: "Codex weapon cards, unit panel stockpile count. Replaces ▤ (Codex)." },
+    { key: "reload", n: "Reload", group: "weapon", tint: "#C4C8D0", use: "Codex weapon cards. Replaces ≡ (Codex)." },
+    { key: "alpha", n: "Alpha (biggest hit)", group: "weapon", tint: "#EC685C", use: "Codex weapon cards. Replaces ♦ (Codex)." },
+    { key: "aoe", n: "Area of effect", group: "weapon", tint: "#F0903C", use: "Codex weapon cards. Replaces ☉ (Codex)." },
+    { key: "projectile", n: "Projectile speed", group: "weapon", tint: "#D6DAE2", use: "Codex weapon cards. Replaces → (Codex)." },
+    { key: "salvo", n: "Salvo", group: "weapon", tint: "#EC685C", use: "Codex weapon cards. Replaces ⁞ (Codex)." },
+    { key: "lock", n: "Lock range", group: "weapon", tint: "#F2D45C", use: "Codex weapon cards (guided weapons). Replaces ⊕ (Codex)." },
+    { key: "guidance", n: "Guidance", group: "weapon", tint: "#F2D45C", use: "Codex weapon cards: IR, radar, command, acoustic. Had ⊕ like lock; now its own mark." },
+    { key: "ammo", n: "Ammo", group: "weapon", tint: "#C4C8D0", use: "Aircraft rounds carried; unit panel, Codex. Replaces ▤ (Codex), shared with stock." },
+    { key: "sonar", n: "Sonar", group: "sensor", tint: "#5AA8E0", use: "Unit panel, Codex (no row yet)." },
+    { key: "jam", n: "Jammer", group: "sensor", tint: "#B08CF0", use: "Jammer radius; unit panel, Codex (no row yet)." },
+    { key: "countermeasures", n: "Countermeasures", group: "sensor", tint: "#F0B060", use: "Flares, chaff, DIRCM; unit panel, Codex (no row yet)." },
   ];
   const SIZES = [16, 24, 32];
 
@@ -220,8 +258,22 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
       c += txt(632, y + 11, label, 10, Dc.dim) + txt(924, y + 11, v, 11, Dc.text, "end", 600);
       c += `<rect x="632" y="${y + 17}" width="292" height="5" rx="1" fill="${Dc.cell}"/><rect x="632" y="${y + 17}" width="${292 * f}" height="5" rx="1" fill="${col}"/>`;
     });
+    // weapon card (D) and a unit panel's sensor and defence row (B)
+    m += `<rect x="0" y="410" width="560" height="190" fill="#2d3a2c"/><rect x="0" y="410" width="560" height="190" fill="url(#grid)"/>`;
+    m += `<rect x="10" y="422" width="540" height="70" rx="3" fill="${B.panel}" fill-opacity=".92"/>` + txt(20, 440, "Corsair · sensors and defence", 11, B.text, "start", 600);
+    [["sonar", "#5AA8E0", "320"], ["jam", "#B08CF0", "180"], ["countermeasures", "#F0B060", "2 / 4"], ["ammo", "#C4C8D0", "12"], ["stock", "#D6DAE2", "3"]].forEach(([k, col, v], i) => { const x = 20 + i * 104; m += place(uiSVG(byKey(k), col, 16), x, 456, 16) + txt(x + 22, 468, v, 11, B.text, "start", 600); });
+    m += `<rect x="10" y="502" width="540" height="88" rx="3" fill="${B.panel}" fill-opacity=".92"/>` + txt(20, 520, "Build tile tooltip", 10, B.dim);
+    m += place(uiSVG(byKey("guidance"), "#F2D45C", 16), 20, 532, 16) + txt(42, 544, "Radar guided", 11, B.text) + place(uiSVG(byKey("lock"), "#F2D45C", 16), 170, 532, 16) + txt(192, 544, "Lock 900", 11, B.text);
+    m += place(uiSVG(byKey("reload"), "#C4C8D0", 16), 20, 558, 16) + txt(42, 570, "Reload 6 s", 11, B.text) + place(uiSVG(byKey("salvo"), "#EC685C", 16), 170, 558, 16) + txt(192, 570, "Salvo 4", 11, B.text);
+    c += `<rect x="580" y="410" width="360" height="190" fill="${Dc.card}"/>` + txt(596, 430, "WEAPON · SEA SKIMMER", 11, Dc.dim, "start", 600);
+    const wrow = [["alpha", "Alpha", "#EC685C", "640"], ["reload", "Reload", "#C4C8D0", "6 s"], ["salvo", "Salvo", "#EC685C", "4"], ["aoe", "AOE", "#F0903C", "48"], ["projectile", "Speed", "#D6DAE2", "620"], ["lock", "Lock", "#F2D45C", "900"], ["guidance", "Guidance", "#F2D45C", "Radar"], ["stock", "Stock", "#D6DAE2", "3"]];
+    wrow.forEach(([k, label, col, v], i) => {
+      const x = 596 + (i % 2) * 172, y = 442 + Math.floor(i / 2) * 38;
+      c += `<rect x="${x}" y="${y}" width="30" height="30" rx="3" fill="${Dc.cell}"/>` + place(uiSVG(byKey(k), col, 24), x + 3, y + 3, 24);
+      c += txt(x + 38, y + 12, label, 10, Dc.dim) + txt(x + 38, y + 26, v, 12, "#EC685C", "start", 600);
+    });
     const defs = `<defs><pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0 H0 V24" fill="none" stroke="#3a4a38" stroke-width="1"/></pattern><linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4250" stop-opacity=".6"/><stop offset="1" stop-color="#11141a" stop-opacity=".2"/></linearGradient></defs>`;
-    document.getElementById("inplace").innerHTML = `<svg width="940" height="400" viewBox="0 0 940 400" role="img" aria-label="Resource and stat icons in the match HUD and the Codex">${defs}${m}${c}</svg>`;
+    document.getElementById("inplace").innerHTML = `<svg width="940" height="600" viewBox="0 0 940 600" role="img" aria-label="Resource and stat icons in the match HUD and the Codex">${defs}${m}${c}</svg>`;
   }
 
   function renderSizes() {

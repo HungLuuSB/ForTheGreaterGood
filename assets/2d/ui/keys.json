@@ -455,6 +455,366 @@
 					32
 				]
 			}
+		},
+		"stock": {
+			"name": "Stockpile",
+			"group": "weapon",
+			"tint": "#D6DAE2",
+			"files": {
+				"16": "stock_16.png",
+				"24": "stock_24.png",
+				"32": "stock_32.png"
+			},
+			"rect": {
+				"16": [
+					270,
+					0,
+					16,
+					16
+				],
+				"24": [
+					390,
+					18,
+					24,
+					24
+				],
+				"32": [
+					510,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"reload": {
+			"name": "Reload",
+			"group": "weapon",
+			"tint": "#C4C8D0",
+			"files": {
+				"16": "reload_16.png",
+				"24": "reload_24.png",
+				"32": "reload_32.png"
+			},
+			"rect": {
+				"16": [
+					288,
+					0,
+					16,
+					16
+				],
+				"24": [
+					416,
+					18,
+					24,
+					24
+				],
+				"32": [
+					544,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"alpha": {
+			"name": "Alpha (biggest hit)",
+			"group": "weapon",
+			"tint": "#EC685C",
+			"files": {
+				"16": "alpha_16.png",
+				"24": "alpha_24.png",
+				"32": "alpha_32.png"
+			},
+			"rect": {
+				"16": [
+					306,
+					0,
+					16,
+					16
+				],
+				"24": [
+					442,
+					18,
+					24,
+					24
+				],
+				"32": [
+					578,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"aoe": {
+			"name": "Area of effect",
+			"group": "weapon",
+			"tint": "#F0903C",
+			"files": {
+				"16": "aoe_16.png",
+				"24": "aoe_24.png",
+				"32": "aoe_32.png"
+			},
+			"rect": {
+				"16": [
+					324,
+					0,
+					16,
+					16
+				],
+				"24": [
+					468,
+					18,
+					24,
+					24
+				],
+				"32": [
+					612,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"projectile": {
+			"name": "Projectile speed",
+			"group": "weapon",
+			"tint": "#D6DAE2",
+			"files": {
+				"16": "projectile_16.png",
+				"24": "projectile_24.png",
+				"32": "projectile_32.png"
+			},
+			"rect": {
+				"16": [
+					342,
+					0,
+					16,
+					16
+				],
+				"24": [
+					494,
+					18,
+					24,
+					24
+				],
+				"32": [
+					646,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"salvo": {
+			"name": "Salvo",
+			"group": "weapon",
+			"tint": "#EC685C",
+			"files": {
+				"16": "salvo_16.png",
+				"24": "salvo_24.png",
+				"32": "salvo_32.png"
+			},
+			"rect": {
+				"16": [
+					360,
+					0,
+					16,
+					16
+				],
+				"24": [
+					520,
+					18,
+					24,
+					24
+				],
+				"32": [
+					680,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"lock": {
+			"name": "Lock range",
+			"group": "weapon",
+			"tint": "#F2D45C",
+			"files": {
+				"16": "lock_16.png",
+				"24": "lock_24.png",
+				"32": "lock_32.png"
+			},
+			"rect": {
+				"16": [
+					378,
+					0,
+					16,
+					16
+				],
+				"24": [
+					546,
+					18,
+					24,
+					24
+				],
+				"32": [
+					714,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"guidance": {
+			"name": "Guidance",
+			"group": "weapon",
+			"tint": "#F2D45C",
+			"files": {
+				"16": "guidance_16.png",
+				"24": "guidance_24.png",
+				"32": "guidance_32.png"
+			},
+			"rect": {
+				"16": [
+					396,
+					0,
+					16,
+					16
+				],
+				"24": [
+					572,
+					18,
+					24,
+					24
+				],
+				"32": [
+					748,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"ammo": {
+			"name": "Ammo",
+			"group": "weapon",
+			"tint": "#C4C8D0",
+			"files": {
+				"16": "ammo_16.png",
+				"24": "ammo_24.png",
+				"32": "ammo_32.png"
+			},
+			"rect": {
+				"16": [
+					414,
+					0,
+					16,
+					16
+				],
+				"24": [
+					598,
+					18,
+					24,
+					24
+				],
+				"32": [
+					782,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"sonar": {
+			"name": "Sonar",
+			"group": "sensor",
+			"tint": "#5AA8E0",
+			"files": {
+				"16": "sonar_16.png",
+				"24": "sonar_24.png",
+				"32": "sonar_32.png"
+			},
+			"rect": {
+				"16": [
+					432,
+					0,
+					16,
+					16
+				],
+				"24": [
+					624,
+					18,
+					24,
+					24
+				],
+				"32": [
+					816,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"jam": {
+			"name": "Jammer",
+			"group": "sensor",
+			"tint": "#B08CF0",
+			"files": {
+				"16": "jam_16.png",
+				"24": "jam_24.png",
+				"32": "jam_32.png"
+			},
+			"rect": {
+				"16": [
+					450,
+					0,
+					16,
+					16
+				],
+				"24": [
+					650,
+					18,
+					24,
+					24
+				],
+				"32": [
+					850,
+					44,
+					32,
+					32
+				]
+			}
+		},
+		"countermeasures": {
+			"name": "Countermeasures",
+			"group": "sensor",
+			"tint": "#F0B060",
+			"files": {
+				"16": "countermeasures_16.png",
+				"24": "countermeasures_24.png",
+				"32": "countermeasures_32.png"
+			},
+			"rect": {
+				"16": [
+					468,
+					0,
+					16,
+					16
+				],
+				"24": [
+					676,
+					18,
+					24,
+					24
+				],
+				"32": [
+					884,
+					44,
+					32,
+					32
+				]
+			}
 		}
 	},
 	"atlasSize": [
