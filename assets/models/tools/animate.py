@@ -65,7 +65,7 @@ ANIM = {
     **{u: BOT for u in ("ord_artisan", "chs_tinker", "ord_lazarus", "chs_graverobber", "ord_glint", "ord_mace", "chs_thug",
                         "ord_kestrel", "chs_needle", "ord_fatboy", "chs_centurion")},
     "chs_skitter": BOT4,
-    "ord_titan": BOT, "chs_korgoth": BOT,  # the T3 mechs (S-209): the leg kit's pieces are def pieces
+    "ord_titan": BOT, "chs_juggernaut": BOT,  # the T3 mechs (S-209): the leg kit's pieces are def pieces
     "chs_mammoth": {f"leg{s}": a("swing", X) for s in ("FL", "FR", "BL", "BR")},  # whole legs swing at the hip
     "chs_dragon": {"fanL": a("spin", Y), "fanR": a("spin", Y)},
     "ord_radiance": {"shellL": a("open", (0, 0, -1), 90), "shellR": a("open", Z, 90)},

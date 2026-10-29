@@ -8,6 +8,13 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 
 **Start here.** This section is enough to carry on the models stream. The sections below are history.
 
+**S-213 id swap (2026-10-29, sim-A's `748ddf25`, merged here):** the T3 bot `chs_korgoth` is now `chs_juggernaut`, and the old T2 tank `chs_juggernaut` is now `chs_goliath` (retired; it keeps its blockout and mesh).
+- Renamed to match: the blockout files and `Blockouts/Registry.luau` keys, the `assets/models/<id>` folders and their export file names, and the ids inside `build.py`, `rig.json` and `opencloud.json`.
+- Also updated: the `manifest.py` approval lists, `animate.py`, and the key-art tank lists.
+- Regenerated: the Meshes registry and `MeshMaterials`.
+- Unchanged: the asset IDs. The review rigs in FTGG Art keep their old names, as `modelPath` records.
+- B's part (the icon and the piece-script swap) is still open, so `test_client` fails 3 tests here (IconAtlas, Icons, PieceAnim Juggernaut) until B's tip.
+
 **Where it stands:** `m-models` is at `main` `d8611b86`. Every piece of models work is integrated; the last merges were `34cbaf59` and `82bedb2a`. Checks there: `lune run test` 615/615, `lune run test_client` 335/335, `lune run build` (879 scripts, 2457 requires resolve). Nothing is in review: all 203 defs have an approved mesh and an approved wreck (status table below), and all nine named maps have an approved baked ground (`GROUND_APPROVED` in `assets/models/tools/manifest.py`).
 
 **Done since the 10-24 queue:**
@@ -215,10 +222,10 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `chs_chimera` | Chimera | 2 | ground | hand-made | approved | approved |
 | `chs_cyclops` | Cyclops | 2 | ground | hand-made | approved | approved |
 | `chs_forgemaster` | Forgemaster | 2 | ground | hand-made | approved | approved |
+| `chs_goliath` | Goliath | 2 | ground | hand-made | approved | approved |
 | `chs_gorgon` | Gorgon | 2 | ground | hand-made | approved | approved |
 | `chs_griffin` | Griffin | 2 | ground | hand-made | approved | approved |
 | `chs_hydra` | Hydra | 2 | ground | hand-made | approved | approved |
-| `chs_juggernaut` | Goliath | 2 | ground | hand-made | approved | approved |
 | `chs_mammoth` | Mammoth | 2 | ground | hand-made | approved | approved |
 | `chs_minotaur` | Minotaur | 2 | ground | hand-made | approved | approved |
 | `chs_mire` | Mire | 2 | ground | hand-made | approved | approved |
@@ -313,7 +320,7 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `ord_tribunal` | Tribunal | 2 | structure | hand-made | approved | approved |
 | `ord_veilspire` | Veilspire | 2 | structure | hand-made | approved | approved |
 | `ord_witness` | Witness | 2 | structure | hand-made | approved | approved |
-| `chs_korgoth` | Juggernaut | 3 | ground | hand-made | approved | approved |
+| `chs_juggernaut` | Juggernaut | 3 | ground | hand-made | approved | approved |
 | `ord_titan` | Titan | 3 | ground | hand-made | approved | approved |
 | `chs_gantry` | Experimental Gantry | 3 | structure | hand-made | approved | approved |
 | `chs_ragnarok` | Ragnarok | 3 | structure | hand-made | approved | approved |

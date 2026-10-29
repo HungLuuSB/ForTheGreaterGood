@@ -296,7 +296,7 @@ def run(name, build):
 # ---------------------------------------------------------------------------
 
 ORDER_TANKS = ["ord_paladin", "ord_lancer"]
-CHAOS_TANKS = ["chs_ravager", "chs_ravager", "chs_minotaur", "chs_juggernaut"]
+CHAOS_TANKS = ["chs_ravager", "chs_ravager", "chs_minotaur", "chs_goliath"]
 
 
 def scatter(land, uids, region, count, heading, seed, spread=20, keep=(), layer="mid", screen=False):
