@@ -11,6 +11,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - Requests D-E1 and B-9 are done.
 - Lobby specs 67 / 67; the build check passes (649 scripts, 1078 requires).
 - Ready to merge: `957cd3be` (the Units article's icons; includes the merge of main `6e4f6303`; touches only `src/lobby`, `lobby.project.json` and the lobby progress)
+- Ready to merge: `19ae9299` (progress only: faction emblem requests D-E2 and B-10; touches only the lobby progress)
 
 ## Summary (2026-10-29: S-213's Chaos id swap in the Codex)
 
