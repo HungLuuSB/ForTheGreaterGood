@@ -1330,7 +1330,8 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 				table.insert(fx.crashes, { at = renderTick + crash.duration * 15, x = crash.ex, y = crash.ey, z = crash.ez, radius = r * 1.3 })
 			else
 				local ground = World.groundY(world, d.x, d.z)
-				local b = burst(fx, now, d.x, ground + 1.5, d.z, r, "death", Effects.DEATH_SECONDS)
+				-- a structure's is heavier (models-C's StructureDeath, C-267)
+				local b = burst(fx, now, d.x, ground + 1.5, d.z, r, if def and def.domain == "structure" then "structureDeath" else "death", Effects.DEATH_SECONDS)
 				b.ground = ground
 				local bolt = Effects.boltThrough(fx, d.x, d.z, def)
 				if bolt then

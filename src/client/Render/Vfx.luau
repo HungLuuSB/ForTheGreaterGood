@@ -29,6 +29,11 @@
 -- end): its emitters saved Enabled with no EmitCount run while it's held,
 -- and its lights with no LightSeconds stay lit; released, it stops and is
 -- reused once its longest particles have faded.
+--
+-- Templates are authored at scale 1 (C-267, models-C): their Attachments'
+-- positions (debris arms, chain blasts, shock diamonds) scale with the burst
+-- like sizes and speeds, accelerations by its square root, and emitters
+-- with the attribute `GroundOnly` play in a ground burst only.
 
 local Vfx = {}
 
@@ -62,9 +67,12 @@ Vfx.TEMPLATE_NAMES = table.freeze({
 	dgunHit = "DgunHit",
 	dgunEnd = "DgunEnd",
 	dgunBolt = "DgunBolt", -- Continuous: held with Vfx.follow
+	nuke = "Nuke", -- models-C's (C-267): scale 1 = a 150-stud blast, as the built-in one
+	structureDeath = "StructureDeath",
+	missileExhaust = "MissileExhaust", -- Continuous: held on a missile's nozzle at its style's scale
 } :: { [string]: string })
 -- the built-in effect a kind falls back to while the place has no template for it
-Vfx.FALLBACK = table.freeze({ dgunMuzzle = "muzzle", dgunHit = "hit", dgunEnd = "impact" } :: { [string]: string })
+Vfx.FALLBACK = table.freeze({ dgunMuzzle = "muzzle", dgunHit = "hit", dgunEnd = "impact", structureDeath = "death" } :: { [string]: string })
 Vfx.TEMPLATE_CAP = 24 -- copies of one template at once
 local RING_DIRECTIONS = 8
 
@@ -258,7 +266,7 @@ type Rig = {
 type Scorch = { part: BasePart, born: number }
 
 -- A copy of a saved template (see the header).
-type TEmitter = { emitter: ParticleEmitter, size: NumberSequence, speed: NumberRange, count: number?, delay: number, duration: number, emitted: boolean, continuous: boolean }
+type TEmitter = { emitter: ParticleEmitter, size: NumberSequence, speed: NumberRange, accel: Vector3, count: number?, delay: number, duration: number, emitted: boolean, continuous: boolean, groundOnly: boolean, skip: boolean }
 type TLight = { light: PointLight, brightness: number, range: number, seconds: number?, continuous: boolean }
 type TRig = {
 	template: Instance,
@@ -266,6 +274,7 @@ type TRig = {
 	carrier: BasePart?, -- Attachments and Folders hang from it; Parts and Models move themselves
 	emitters: { TEmitter },
 	lights: { TLight },
+	attachments: { { attachment: Attachment, position: Vector3 } }, -- authored at scale 1
 	born: number,
 	freeAt: number,
 	life: number,
@@ -527,7 +536,7 @@ local function newCopy(v: State, template: Instance): TRig
 			end
 			d.Enabled = false
 			d.TimeScale = v.timeScale
-			table.insert(emitters, { emitter = d, size = d.Size, speed = d.Speed, count = count, delay = delay, duration = duration, emitted = true, continuous = held })
+			table.insert(emitters, { emitter = d, size = d.Size, speed = d.Speed, accel = d.Acceleration, count = count, delay = delay, duration = duration, emitted = true, continuous = held, groundOnly = attr(d, template, "GroundOnly") == true, skip = false })
 			life = math.max(life, delay + duration + d.Lifetime.Max)
 		elseif d:IsA("PointLight") then
 			local seconds = attr(d, template, "LightSeconds") :: number?
@@ -536,7 +545,13 @@ local function newCopy(v: State, template: Instance): TRig
 			d.Enabled = false
 		end
 	end
-	return { template = template, root = root, carrier = carrier, emitters = emitters, lights = lights, born = -math.huge, freeAt = -math.huge, life = life, scale = 1, live = false, held = false }
+	local attachments = {}
+	for _, d in scope:GetDescendants() do
+		if d:IsA("Attachment") then
+			table.insert(attachments, { attachment = d, position = d.Position })
+		end
+	end
+	return { template = template, root = root, carrier = carrier, emitters = emitters, lights = lights, attachments = attachments, born = -math.huge, freeAt = -math.huge, life = life, scale = 1, live = false, held = false }
 end
 
 local function scaled(n: NumberSequence, k: number): NumberSequence
@@ -547,7 +562,7 @@ local function scaled(n: NumberSequence, k: number): NumberSequence
 	return NumberSequence.new(out)
 end
 
-local function spawnTemplate(v: State, kind: string, template: Instance, frame: CFrame, s: number, now: number): TRig
+local function spawnTemplate(v: State, kind: string, template: Instance, frame: CFrame, s: number, now: number, ground: boolean?): TRig
 	local pool = v.copies[template]
 	if pool == nil then
 		pool = {}
@@ -589,8 +604,15 @@ local function spawnTemplate(v: State, kind: string, template: Instance, frame: 
 		if c.scale ~= s then
 			e.emitter.Size = scaled(e.size, s)
 			e.emitter.Speed = NumberRange.new(e.speed.Min * s, e.speed.Max * s)
+			e.emitter.Acceleration = e.accel * math.sqrt(s)
 		end
-		e.emitted = false
+		e.skip = e.groundOnly and ground == false -- (a burst in the air)
+		e.emitted = e.skip
+	end
+	if c.scale ~= s then
+		for _, a in c.attachments do
+			a.attachment.Position = a.position * s
+		end
 	end
 	c.scale = s
 	v.stats.templated[kind] = (v.stats.templated[kind] or 0) + 1
@@ -609,16 +631,17 @@ local function place(c: TRig, frame: CFrame)
 end
 
 -- Holds a Continuous template's copy for `key` (a projectile, say) at
--- `frame` this frame: started on the first call, moved on the next ones.
+-- `frame` this frame: started on the first call (at `scale`, 1 by
+-- default), moved on the next ones.
 -- False when the place has no template for `kind` (the caller draws its own).
-function Vfx.follow(v: State, key: any, kind: string, frame: CFrame, now: number): boolean
+function Vfx.follow(v: State, key: any, kind: string, frame: CFrame, now: number, scale: number?): boolean
 	local c = v.held[key]
 	if c == nil then
 		local template = Vfx.template(kind)
 		if template == nil then
 			return false
 		end
-		local copy = spawnTemplate(v, kind, template, frame, 1, now)
+		local copy = spawnTemplate(v, kind, template, frame, scale or 1, now)
 		copy.held, copy.freeAt = true, math.huge
 		v.held[key] = copy
 		c = copy
@@ -655,7 +678,7 @@ local function stepTemplates(v: State, now: number, lightsUsed: number): number
 						e.emitter:Emit(math.max(1, math.floor(e.count * math.clamp(c.scale, 1, 2.5) + 0.5)))
 					end
 				end
-				local running = if e.continuous then c.held else e.duration > 0 and age >= e.delay and age < e.delay + e.duration
+				local running = not e.skip and (if e.continuous then c.held else e.duration > 0 and age >= e.delay and age < e.delay + e.duration)
 				if e.emitter.Enabled ~= running then
 					e.emitter.Enabled = running
 				end
@@ -701,7 +724,8 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 	if template then
 		local at = Vector3.new(x, y, z)
 		local dir = if dx then Vector3.new(dx, dy :: number, dz :: number) else Vector3.zero
-		spawnTemplate(v, kind, template, if dir.Magnitude > 1e-3 then CFrame.lookAt(at, at + dir) else CFrame.new(at), s, now)
+		local groundBurst = ground ~= nil and y - ground <= Vfx.GROUND_BURST * math.max(1, s * 0.5)
+		spawnTemplate(v, kind, template, if dir.Magnitude > 1e-3 then CFrame.lookAt(at, at + dir) else CFrame.new(at), s, now, groundBurst)
 		return
 	end
 	k = k :: any

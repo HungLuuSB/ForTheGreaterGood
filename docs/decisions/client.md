@@ -2429,3 +2429,26 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - the server sends no IMPACT for the units the bolt passes through (S-194). So a DEATH within the bolt's reach of its last 1.5 s of path plays `dgunHit` there too (`Effects.boltThrough`).
 - Spec (`Dgun.spec`): the bolt through three tanks plays one `dgunMuzzle`, one `dgunEnd` and three `dgunHit`.
 - **Studio, Coastline:** the Sovereign fired through a row of its own Lancers. The muzzle, the held bolt, the end and both hits played as templates, with no errors (`debug_out/screens/2026-10-30-dgun-vfx-launch.jpg`, `…-dgun-vfx-path.jpg`). The flight itself is about a second, too short to frame well by tool; the burning path and the end scorch show after it.
+
+### C-267 — The D-Gun fixed; models-C's new explosions and missile booster (2026-10-30)
+
+- **C-266 didn't work as logged. Two faults:**
+  - C's templates shipped with no attributes: Rojo drops a top-level "Attributes" in a .model.json. So DgunBolt had no `Continuous`, and every emitter fell back to the default count of 10. C fixed this in m-models 39aa66e8, merged in.
+  - My release loop for held copies landed in `shellFor` instead of the frame step. It never ran there, and it named an undefined local (`bolts`), so a shell asked for while a bolt was held would have errored. It's moved into the step.
+  - So C-266's Studio note ("the held bolt played") was wrong: the bolt ran as a plain 0.2-s burst.
+- **Re-checked in Studio, Coastline:**
+  - The D-Gun bolt's 8 emitters run for its 1.25-s flight, then stop.
+  - The muzzle, the end and three hits (three Lancers) play as templates.
+- **C's request 12, in `Render/Vfx`:**
+  - New template names: `nuke` → Nuke (scale 1 = a 150-stud blast, as before), `structureDeath` → StructureDeath (falls back to the death look), `missileExhaust` → MissileExhaust.
+  - A template's Attachment positions scale with the burst like sizes and speeds: debris arms, chain blasts and shock diamonds are authored at scale 1. Accelerations scale by its square root.
+  - Emitters with `GroundOnly` play only in a ground burst (within `GROUND_BURST` of the ground, as the built-in dust).
+  - `Vfx.follow` takes a scale.
+- `Core/Effects`: a structure's death is a `structureDeath` burst, sized as a unit's.
+- **Missiles** (`Render/Effects`): MissileExhaust is held on each missile's nozzle (2.2 × its style scale behind the centre) at its style's scale, and released when the missile ends. While it's there, the built-in flame trail and smoke puffs are off; the smoke trail stays.
+- C's Impact and Death templates (already named) now replace every impact and unit death in the game.
+- **Not done yet:** C's blast-mark decals (`assets/fx/scorch`, soot and glow in place of the dark scorch disc). They wait for the user's upload approval and the ids.
+- **Studio, Coastline:**
+  - a nuke from a Reckoning: Launch, then the held MissileExhaust (10 emitters running, its booster flame on the tail; `debug_out/screens/2026-10-30-missile-exhaust.jpg`), then the Nuke template at the impact, with the exhaust released;
+  - the silo killed: StructureDeath, with its smoke column and rubble fires (`…-structure-death.jpg`);
+  - no script errors.
