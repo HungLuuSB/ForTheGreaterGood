@@ -2,12 +2,24 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-30: the Units article's real icons)
+
+- Merged main `6e4f6303` (B's C-258..C-261: E's UI icons uploaded, atlas `rbxassetid://98955338730678`, `UI/UiIcons` with 47 keys).
+- **`lobby.project.json`** mounts client-B's `UI/UiIcons` read-only (`ClientKit.UI.UiIcons`). The live sync's converter only picks up the new mount when it restarts; `sync build` wrote it once, and the next `sync_all` covers it.
+- **StatBars:** each mark is now 2D-E's icon from the atlas, the same as the match's supply and power marks: the cost and stat bars (tinted with the bar's colour), the weapon cards' rows (each icon's own tint) and the card header's power cost. Without an uploaded atlas, or for a key the atlas lacks, the old text glyph stays.
+- **Studio** (`debug_out/screens/`): `lobby_units_icons_stats` (Paladin: supply crate, power bolt, hourglass, health, speed, sight, DPS, range), `lobby_units_icons_weapon` (the heavy cannon's rows), `lobby_units_icons_seraph` (the radar SAM: the header's bolt and 900, stockpile, lock range). No script errors.
+- Requests D-E1 and B-9 are done.
+- Lobby specs 67 / 67; the build check passes (649 scripts, 1078 requires).
+
 ## Summary (2026-10-29: S-213's Chaos id swap in the Codex)
 
 - Merged sim-A's `748ddf25` (S-213): the T3 bot `chs_korgoth` is now `chs_juggernaut` (Juggernaut); the T2 tank that was `chs_juggernaut` is `chs_goliath` (Goliath), retired and on no build list.
 - **Codex:** the Experimental assault walker row is Titan / `chs_juggernaut`. The Main battle tank row has no Chaos unit until you pick one, so the Paladin shows without a counterpart and Goliath is hidden.
 - `Codex.spec` follows: the counterpart pair is Titan ↔ Juggernaut, the Paladin has none, and Goliath is hidden. Lobby specs 67 / 67; the build check passes. In Studio the synced Codex gives the same result.
 - Ready to merge: `e4aef962` (Codex for S-213; includes the merge of sim-A's `748ddf25`, so it lands with or after it; touches only `src/lobby`)
+- Ready to merge: `428ad8c1` (progress only: a Requests section for the 2D stream, session E; touches only the lobby progress)
+- Ready to merge: `70b80bf9` (progress only: requests D-E1 and B-9 for the Codex's stat icons; touches only the lobby progress)
+- Ready to merge: `6dc3e0ab` (progress only: E-8's status in D-E1; touches only the lobby progress)
 
 ## Summary (2026-10-29: your answers on the review list, L-27)
 
@@ -492,6 +504,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 - **B-4. Kit additions** (I use the kit read-only): a text input (`Kit.input`, the lobby has its own in `src/lobby/client/Ui.luau`), and a `fill` option on `Kit.button` for green / red action buttons.
 - **B-5. (later) Replays from the lobby:** a `kind = "replay"` match config for a reserved server that plays a saved replay (contract "reserved for a later version").
 
+- **B-9. Done (C-259, `UI/UiIcons`, on main 6e4f6303).** The UI icons' asset IDs (with E's D-E1). Once E's resource and stat icons are uploaded, put their asset IDs and atlas rects in a client module next to `IconAtlas` (key → image and rect per size, E's `keys.json` keys). The lobby requires it read-only, like `IconAtlas`.
 - **B-6. Done (C-184, ddc588f).** **Key-art viewer stutter (2026-10-24, the user approved):** UDim2 offsets are whole pixels, so `UI/KeyArt` moved its layers in 1 px jumps. Move them by scale instead (fractional), give tiles a 1 px overlap and a 0.001° rotation (sub-pixel drawing). Tested live: smooth, 60 fps.
 
 ### For models-C (models session)
@@ -502,6 +515,12 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
   3. a beach assault.
 
   Each art is 4 depth layers in 2 × 2 tiles of 1024 × 576. Once you approve the uploads, they go in the manifest's `keyArt`. The lobby's loading screen shows them as soon as they're listed. **Status 2026-10-24:** 2 "Volley" and 3 "Converging" are listed and show in the lobby; 1 "Commander's stand" waits for its upload and manifest entry.
+
+### For 2d-E (2D assets session, `FTGG-2d`)
+
+Since 2026-10-29 (the user), session E owns the 2D assets: the icon sheet's source, unit pictures, command and resource icons, thumbnails. client-B keeps `render.mjs`, `IconAtlas` and the UI wiring. The lobby reads the icons only through B's `IconAtlas` (the Units list, read-only), so an icon request goes to E here, and its wiring to B.
+
+- **D-E1. Done (2026-10-30): the Units article uses them.** The Codex's stat icons (E-7 done on branch `2d`, ccd4bde1; E-8 done, 41fa001e: health, dps, range, speed, sight, radar, build, plus armor, value, airSight; E-9 next, the weapon-card keys).** E-7: supply (crate), power (bolt), time (hourglass), wind, tidal, at 16 / 24 / 32 px, white for tinting, with an atlas and `keys.json`. They're not uploaded yet: the upload waits for your approval. E-8 keeps StatBars' `GLYPH` keys (health, dps, range, speed, sight, radar, build) and adds armor, value and airSight. Once they're uploaded, the lobby swaps `StatBars`' text glyphs for these images (the glyph stays as a fallback). It needs B-9 below first.
 
 ## Plan and status
 
