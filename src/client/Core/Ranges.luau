@@ -1,6 +1,7 @@
 --!strict
 -- Range rings for selected units, BAR style (C-19): weapon, anti-air,
--- sight, radar, tracking and jammer ranges. Circles of the same kind merge
+-- sight, radar, tracking and jammer ranges. A Commander (a D-Gun) shows its
+-- D-Gun's range and its death blast's reach apart (H21). Circles of the same kind merge
 -- into one outline: only the arc segments not inside another circle of
 -- that kind are kept. Pure Luau (C-7); Render/RangeOverlay draws the
 -- polylines on the terrain.
@@ -18,7 +19,7 @@ local World = require("./World")
 
 local Ranges = {}
 
-Ranges.KINDS = table.freeze({ "weapon", "aa", "sight", "radar", "track", "jammer", "enemyWeapon", "enemyAa", "radarFacility" })
+Ranges.KINDS = table.freeze({ "weapon", "aa", "dgun", "blast", "sight", "radar", "track", "jammer", "enemyWeapon", "enemyAa", "radarFacility" })
 Ranges.MEMORY_MATCH = 24 -- studs: a radar contact this close to a structure seen there is that structure (radar error and cell rounding)
 Ranges.STEP = 6 -- studs between polyline points, at most
 Ranges.MIN_POINTS_PER_CIRCLE = 24
@@ -174,13 +175,24 @@ local function targetsOnlyAir(weapon: any): boolean
 	return #targets > 0 and table.find(targets, "AIR") ~= nil and #targets == 1
 end
 
+local function isDgun(weapon: any): boolean
+	return weapon.fx ~= nil and weapon.fx.trail == "dgun" -- (as CommandSet.hasDgun)
+end
+
 -- Circles of one def at (x, z), owned by unit `owner` if given.
 function Ranges.circlesOfDef(def: any, defs: any, x: number, z: number, out: { Circle }, owner: number?)
+	local commander = false
 	for _, slot in def.weapons or {} do
 		local weapon = defs.weaponByIndex[slot.weaponIndex]
 		if weapon and weapon.range > 0 then
-			table.insert(out, { x = x, z = z, r = weapon.range, kind = if targetsOnlyAir(weapon) then "aa" else "weapon", owner = owner })
+			local kind = if isDgun(weapon) then "dgun" elseif targetsOnlyAir(weapon) then "aa" else "weapon"
+			commander = commander or kind == "dgun"
+			table.insert(out, { x = x, z = z, r = weapon.range, kind = kind, owner = owner })
 		end
+	end
+	if commander and def.deathBlast and def.deathBlast.aoe > 0 then
+		-- what its death takes with it (own units too, S-70)
+		table.insert(out, { x = x, z = z, r = def.deathBlast.aoe, kind = "blast", owner = owner })
 	end
 	local s = def.sensors or {}
 	for kind, r in { sight = s.sight, radar = s.radar, track = s.track, jammer = s.jam } :: { [string]: number? } do

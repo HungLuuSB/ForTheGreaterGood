@@ -3,7 +3,8 @@
 -- on the factory's `buildpad` facing the exit. Parts below the build line
 -- show as built; the rest are a team-colored nanoframe (ForceField). A
 -- glowing line rises with the progress, and every `nano1..N` emitter of the
--- factory sprays at it while the progress moves. The progress eases between
+-- factory sprays nano particles at it while the progress moves
+-- (Render/NanoStream, C-251). The progress eases between
 -- the server's steps (Nanoframe.track).
 --
 -- The frame model comes from ModelPool like a unit's. Everything changed on
@@ -12,6 +13,7 @@
 local Nanoframe = require("../Core/Nanoframe")
 local World = require("../Core/World")
 local ModelPool = require("./ModelPool")
+local NanoStream = require("./NanoStream")
 local TeamColors = require("./TeamColors")
 local UnitRenderer = require("./UnitRenderer")
 
@@ -46,8 +48,8 @@ type Frame = {
 	hx: number,
 	hz: number,
 	edges: { Part }, -- the build line: an outline around the frame's footprint
-	targets: { Attachment },
-	beams: { Beam },
+	nozzles: { Attachment }, -- the factory's nano1..N
+	streams: { NanoStream.Stream },
 	tracker: Nanoframe.Tracker,
 	expected: number, -- seconds between progress steps at full economy
 }
@@ -119,11 +121,8 @@ local function release(f: Frame)
 		setBuilt(look, true, look.color)
 		look.part.CanQuery = look.canQuery
 	end
-	for _, b in f.beams do
-		b:Destroy()
-	end
-	for _, a in f.targets do
-		a:Destroy()
+	for _, s in f.streams do
+		NanoStream.destroy(s)
 	end
 	for _, e in f.edges do
 		e:Destroy()
@@ -174,8 +173,8 @@ local function create(world: World.World, factory: World.Unit, factoryModel: Mod
 		hx = 1,
 		hz = 1,
 		edges = {},
-		targets = {},
-		beams = {},
+		nozzles = {},
+		streams = {},
 		tracker = Nanoframe.tracker(),
 		expected = Nanoframe.expectedGap(def.cost.buildTime, (world.defs.unitByIndex[factory.defIndex or 0] or {} :: any).buildPower or 1),
 	}
@@ -200,27 +199,8 @@ local function create(world: World.World, factory: World.Unit, factoryModel: Mod
 		if a == nil or not a:IsA("Attachment") then
 			break
 		end
-		local target = Instance.new("Attachment")
-		target.Name = "NanoTarget"
-		target.Parent = workspace.Terrain
-		table.insert(f.targets, target)
-		local beam = Instance.new("Beam")
-		beam.Name = "NanoSpray"
-		beam.Attachment0 = a
-		beam.Attachment1 = target
-		beam.Color = ColorSequence.new(color)
-		beam.LightEmission = 1
-		beam.LightInfluence = 0
-		beam.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.15),
-			NumberSequenceKeypoint.new(1, 0.65),
-		})
-		beam.Width0 = 0.2
-		beam.Width1 = 0.9
-		beam.FaceCamera = true
-		beam.Segments = 1
-		beam.Parent = workspace.Terrain
-		table.insert(f.beams, beam)
+		table.insert(f.nozzles, a)
+		table.insert(f.streams, NanoStream.new(workspace.Terrain))
 	end
 	return f
 end
@@ -283,13 +263,14 @@ function FactoryFrames.step(ff: FactoryFrames, world: World.World, renderer: Uni
 		edges[2].CFrame = place * CFrame.new(frame.cx, lineY, frame.cz + ez)
 		edges[3].CFrame = place * CFrame.new(frame.cx - ex, lineY, frame.cz)
 		edges[4].CFrame = place * CFrame.new(frame.cx + ex, lineY, frame.cz)
-		local n = #frame.beams
-		for i, beam in frame.beams do
-			beam.Enabled = spraying
+		local n = #frame.streams
+		for i, stream in frame.streams do
 			if spraying then
 				local ox, oz = Nanoframe.sprayPoint(i, n, now, frame.hx, frame.hz)
-				frame.targets[i].WorldPosition = (place * CFrame.new(frame.cx + ox, lineY, frame.cz + oz)).Position
-				beam.Width1 = 0.7 + 0.35 * math.sin(now * 17 + i * 2.1)
+				local to = (place * CFrame.new(frame.cx + ox, lineY, frame.cz + oz)).Position
+				NanoStream.aim(stream, frame.nozzles[i].WorldPosition, to, color)
+			else
+				NanoStream.off(stream)
 			end
 		end
 	end

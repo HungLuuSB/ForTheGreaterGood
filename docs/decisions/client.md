@@ -2190,3 +2190,84 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Two of C's colour maps fail to load in Studio (`ContentProvider` Failure): `fx_feature_tree_2` (rbxassetid://71786331211211, the conifer, which draws grey) and `fx_feature_rock_1` (rbxassetid://111245066781069). Sent to models-C.
 - S-200 (silos hold 10, anti-nukes 20): the health bar's stock count gets 18 pixels for two digits.
 - S-202 (every weapon targets radar blips): no client line reads `canTargetRadar`, so nothing changes.
+
+### C-248 — Playtest feedback 3, client part one: digits, rows, grids, footprints, planned orders, rings, HP (2026-10-29, H2, H3, H4, H17, H21, H26, H34, H38)
+
+- **H17, build-menu digits:**
+  - A builder's number keys did nothing until a tab key (or B) armed them.
+  - Now a mobile builder picked by click or box arms them at once, and so does a clicked tab.
+  - A selection recalled from a control group (`Api.state.recalled`) or a factory leaves the digits to the groups until B or a tab key. Otherwise 2 then 2 couldn't jump the camera, and nothing could switch groups.
+  - Studio: the Commander selected by the API showed hotkeys 1–6 straight away, and a real 3 started a solar's placement.
+- **H2, rows:**
+  - `Placement.row` spread its spots over the whole drag (`t = i / (n − 1)`), so they all slid and snapped elsewhere as the drag grew. The user saw the 3rd and 4th generators jump and leave a gap.
+  - Each spot is now one footprint further along the drag's longer axis from the snapped first spot. The slope comes from the drag itself, so a longer drag only adds spots, and a diagonal never overlaps.
+- **H4, grids:**
+  - Alt + drag (Shift as usual queues) lays `Placement.grid`: rows and columns one footprint apart over the dragged box, as a growing box only adds spots.
+  - The rows run along the box's longer side in a serpentine, so a builder walks them end to end.
+  - The preview draws the grid (up to 80 ghosts).
+  - Specs in `Placement.spec`. Studio: a 4 × 3 grid of solars and a 2 × 2 grid of wind turbines, laid edge to edge.
+- **H3, footprints:** planned structures draw their footprint as build cells (`Render/Footprint`): the 8-stud cells under it as lines on the ground, the outline thicker, a segment per cell edge so they follow hills. Queued builds have yellow cells in place of the flat plate that sank into slopes. A dragged row's or grid's ghosts have green or red cells, as each spot checks.
+- **H26, planned commands:**
+  - The order lines and points of selected units (move, fight, attack, build…) sit in one Model per order kind, each with an AlwaysOnTop Highlight in that kind's colour, as the planned buildings have had since G15. Hills, trees and units no longer hide them.
+  - Each pooled part keeps its layer, so nothing is re-parented per frame. At most one Highlight per order kind: about 10, under Roblox's 31.
+- **H21, Commander rings:**
+  - A D-Gun weapon (`fx.trail == "dgun"`) gets its own ring kind, `dgun`, in the nuke arc's orange.
+  - A def with a D-Gun, so a Commander, gets a `blast` ring at `deathBlast.aoe`, deep red and wider. Fusion reactors' blasts don't ring.
+  - Today the blast (120) sits on the laser ring (120). sim-A's H5 / H6 cuts separate them.
+  - Spec in `Ranges.spec`; Studio: the four rings round the Sovereign.
+- **H34, health as a number:** first "current / max" right of the name. Then the user: "replace the healthbar with the current health only (change color from green to deep red)". So the unit panel's health bar under the portrait is now the current health alone, a deep red number (205, 35, 35). A wreck's or feature's resource bar stays, and the health bars over units in the world are unchanged. Studio: a Sovereign hit for 777 reads 2224. Then the user: "why the health is red? it is suppose to be green at full -> change to orange at medium and red at low", and "add a green health icon to it too". So the number now shades by the share left (`UnitPanel.healthColor`): green (80, 200, 90) at full, orange (240, 150, 40) at half, deep red (205, 35, 35) at none, blended between. A green cross before it is drawn from two bars, since no font glyph is needed that way. Studio: 3000 green, 1506 orange, 306 red, each with the green cross.
+- **H38, beam colour:** a BEAM weapon's `fx.color` rides on its tracer (`beamColor`) and tints models-C's beam rig. The glow and filaments take the colour, the core is white lerped 30% toward it, and rigs pool by faction and colour. It takes effect once sim-A gives Radiance its electric blue.
+- **H11:** the scouts' hit-scan laser needs nothing new: `fx.tracer = "laser"` with `fx.color` already draws as Lasers (C-198).
+- **The user's report, "when I hover over these threshold bars, the UI moves to the right":**
+  - The eco markers' tooltip was a child of the bar's row, which has a UIListLayout. Showing it added an item to the row and pushed the blocks along.
+  - It now hangs off the ScreenGui, under the hovered marker, in the Settings UIScale's units.
+  - Studio: the supply block stays at x 435 with the tip shown. The test harness's mouse can't reach Roblox's top strip, so the hover itself is unchecked.
+- **H16, nuke panel hidden at far zoom: not reproduced.** Coastline, a stocked Reckoning, attack mode. The arc, blast ring, flight-time label, unit panel and command card all stay at full zoom (900): set by the API, by a real mouse wheel, and with the silo strategic-tier off camera. Needs the user's details.
+
+### C-249 — A far selected unit stays selected; a lost snapshot part no longer drops units (2026-10-29, H16, H36)
+
+- **H16, the user:** "it was on the big map, i selected the nuke, move the camera far away to the enemy base and the panel is gone, like my selection of its is gone".
+- **Cause:**
+  - Off camera, an own unit is a strategic record. NetIn replaced every non-tactical unit with each new snapshot.
+  - A big snapshot (about 7 bytes a record, 900-byte parts, so 120+ records a part) comes in several parts on the unreliable channel. With 200+ known units (an 8v8), a lost part made its units vanish for one snapshot (a third of a second).
+  - `Selection.prune` dropped a selected unit the moment it was missing from the world, so the silo, its panel and its card went for good.
+  - The same loss makes blips blink and jump: likely H36 (blips teleporting at 200+ contacts), which sim-A is checking on the wire side.
+- **Fix, NetIn:**
+  - Each strategic unit keeps the wire tick of the last snapshot that listed it (`snapTick`). A new snapshot drops only the units the previous one didn't list either, so a unit survives one lost part, and a unit really gone goes one snapshot (1/3 s) later.
+  - A unit that has just left the camera area (LEAVE, no `snapTick` yet) gets the same one snapshot's grace.
+- **Fix, Selection:** a selected or grouped own unit that is only missing stays, for up to `Selection.MISSING_SECONDS` (10). Its DEATH (`world.dying`) or a team change drops it at once. Every loop over the selection already handles a missing unit, and the unit panel says "(out of view)".
+- **Checks:**
+  - Spec `SnapshotLoss.spec`: a two-part snapshot with one part lost; then a selected silo missing for two snapshots stays selected and grouped, another one's death drops it, and one missing for 10 s goes.
+  - Studio, Supreme Strait: the Reckoning selected at (−1100, 200) and the camera panned to x 1150. The silo went strategic and stayed selected, with its panel, the Attack card and the nuke preview. Losing the part itself can't be staged in Studio (1v1, one-part snapshots).
+
+### C-250 — A shot from a stale shooter draws only its hit (2026-10-29, H37)
+
+- H37: "a beam or laser fired near the edge of vision stretches from its start to somewhere random."
+- **Cause:** sim-A says a FIRE carries the shooter's ID and the shot's end only; the start is where the client draws the shooter. A shooter that just left the camera area is held at its last spot or a strategic record's 8-stud square. One drawn far from its record (a lagging interpolation) also gives a stale start.
+- **Fix:** `Effects.staleStart` marks the start stale in four cases:
+  - no live muzzle, and the shooter not in the tactical tier;
+  - no live muzzle, and the shooter drawn more than 24 studs (`STALE_STUDS`) from its record;
+  - the shot reaching beyond its weapon's range × 1.5 + 40 (except `fullLength` beams);
+  - no shooter at all.
+  A stale FIRE draws no streak or muzzle flash. A beam that hit still bursts at its end, and other hits come with their IMPACT.
+- A tactical shooter not drawn yet still starts from its record, which is current.
+- Ends aren't clamped to the map: aircraft fire from up to 512 studs past the edge (S-189).
+- `fx.skipped.stale` counts the dropped streaks (`Invoke("fx")`).
+- Spec `StaleShot.spec`. Studio, Coastline: three Ravagers against the Commander, 8 FIREs, none stale. The edge-of-vision case itself can't be staged on demand.
+
+### C-251 — Nano particles; the Commander faces its work; specs for S-203 (2026-10-29)
+
+- **Nano spray, the user:** "VFX for nanospray instead of random floating lightbeam? Can we spray nano particles?"
+  - `Render/NanoStream`: one ParticleEmitter on an attachment of our own, aimed from the nozzle at the target each frame. It shoots small glowing sparkles (the engine's sparkles texture), white-hot leaving the nozzle and the stream's colour on the way.
+  - Speed and lifetime follow the distance: a trip of about 0.55 s at 16–90 studs/s, so they arrive and fade there. A 6° spread fans the stream.
+  - Rate 90/s, size 0.35 → 0.8 → 0.45 studs, brightness 3. The first try (48/s, half the size) read as a few specks.
+  - Builders (`BuildSpray`) and factories' `nano1..N` (`FactoryFrames`) both use it, in place of their Beams. Builder sprays are team-coloured; reclaim is violet and flows back to the builder.
+  - Studio, Coastline: the Commander's stream onto a vehicle plant's frame, and the plant's two nozzles showering a Lancer on its pad.
+- **The Commander faces its work, the user:** "the commander does not look at it while building".
+  - The `Work` hook (G4) turned the torso to the work. But the Commander's guns are mounted on that torso, and each change of their idle aim (the server's turret settling) called `AimWeapon`, which squared it to the front within a second. Studio sample: −24° then 0 while the spray went on. `StopMoving` did the same after a walk to the site.
+  - Now, while a unit works, idle weapons leave their turret alone; a weapon in action still takes over. A change of moving re-issues the work turn. Studio: the torso turned to −168° (the plant behind its left shoulder) and held for the whole build, with the stream flowing from it.
+- **Server start:** the lobby's map list built every map in one go. Under load, Studio's script timeout cut it, and the server never came up. A `task.wait()` between maps. It still timed out inside one map's generation while sim-A's suites ran, so that's CPU starvation.
+- **Specs after S-203 (sim-A's m-sim-2 8a111001):**
+  - The generator is retired (H22), so `Placement.spec` and `Bars.spec` place solars.
+  - The D-Gun's range is 80 (H5), so `Dgun.spec` puts the tanks 18, 36 and 54 studs out, aims at 75, and expects a flight from the weapon's range and speed.
+  - All pass on main and on m-sim-2.

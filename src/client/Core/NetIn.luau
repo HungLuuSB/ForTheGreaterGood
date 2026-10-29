@@ -377,12 +377,22 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 	end
 	local before: { [number]: World.Unit } = {}
 	if wireTick ~= world.strategicTick then
-		-- a new snapshot replaces every non-tactical unit
+		-- a new snapshot replaces the non-tactical units, but one the last
+		-- snapshot listed stays through this one, missing or not (C-249): a
+		-- big snapshot comes in several unreliable parts, and a lost part
+		-- made its units vanish for a third of a second. That made blips
+		-- jump (H36) and dropped a far selected unit from the selection
+		-- (the user's nuke silo). A unit really gone goes one snapshot later.
+		local prev = world.strategicTick
 		world.strategicTick = wireTick
 		for id, u in world.units do
 			if u.tier ~= "tactical" then
 				before[id] = u
-				world.units[id] = nil
+				if u.snapTick == nil then
+					u.snapTick = prev -- (just left the camera area: one snapshot's grace too)
+				elseif u.snapTick ~= prev then
+					world.units[id] = nil
+				end
 			end
 		end
 	end
@@ -428,6 +438,7 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			snaps = {},
 			lastTick = tick,
 			movedTick = movedTick,
+			snapTick = wireTick,
 			health = if keep then keep.health else nil,
 			shownHealth = if keep then keep.shownHealth else nil,
 			build = if keep then keep.build else nil,

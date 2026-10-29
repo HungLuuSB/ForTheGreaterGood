@@ -23,6 +23,7 @@
 --   T                        camera follow on / off (Core/Follow, C-43; handled in Main)
 -- While placing a structure (build ghost, guide 15.6):
 --   left click / drag        place / a row (Shift: queue it and keep placing)
+--   Alt + drag               a grid of rows and columns over the box (H4)
 --   R                        rotate
 --   right click              cancel (Esc is Roblox's menu key: it never reaches the game)
 --   B                        build menu (UI/BuildMenu, C-68): open / next tab; 1..0 pick
@@ -124,6 +125,11 @@ end
 
 local function ctrl(): boolean
 	return UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+end
+
+-- Alt held: a placement drag lays a grid (H4; Main asks it for the preview).
+function Controls.alt(): boolean
+	return UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)
 end
 
 -- Ground point under a viewport pixel: a raycast against the drawn ground
@@ -480,7 +486,7 @@ function Controls.bind(api: Api.Api): Controls
 				-- an extractor drag: every spot in the circle (upgrades too), nearest first
 				api.actions.placeArea(from.X, from.Z, math.sqrt((to.X - from.X) ^ 2 + (to.Z - from.Z) ^ 2), shift(), shift())
 			elseif to and dragged then
-				api.actions.placeRow(from.X, from.Z, to.X, to.Z, shift(), shift())
+				api.actions.placeRow(from.X, from.Z, to.X, to.Z, shift(), shift(), Controls.alt())
 			elseif to then
 				api.actions.place(to.X, to.Z, shift(), shift())
 			end
