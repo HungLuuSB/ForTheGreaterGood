@@ -20,10 +20,10 @@ import { execSync } from "node:child_process";
 import { Resvg } from "@resvg/resvg-js";
 
 const OUT = "assets/2d/pictures";
-const TILE = 128; // px per picture in the sheet; the build tile is 66 px, so this holds up to UI scale 2
+const TILE = 126; // px per picture in the sheet: 8 x 8 fit a 1024 sheet with gutters (128 left one picture alone on a fifth sheet); the build tile is 66 px
 const GAP = 2; // transparent gutter between tiles, so scaled tiles don't bleed
-const PER_ROW = Math.floor((1024 + GAP) / (TILE + GAP)); // 7
-const PER_SHEET = PER_ROW * PER_ROW; // 49
+const PER_ROW = Math.floor((1024 + GAP) / (TILE + GAP)); // 8
+const PER_SHEET = PER_ROW * PER_ROW; // 64
 const args = process.argv.slice(2);
 const check = args.includes("--check");
 const RENDERS = args.find((a) => !a.startsWith("--")) || "../FTGG-models/debug_out/pictures";
