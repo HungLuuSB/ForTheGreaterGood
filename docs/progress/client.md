@@ -56,6 +56,15 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, D-Gun effects: C-266)
+
+- **D-Gun effects (C-266):** the Commander's D-Gun plays models-C's effects:
+  - a muzzle blast on firing;
+  - the plasma bolt with its burning trail along the ground;
+  - a hit on every unit it burns through;
+  - a blast at the end of its range.
+- Ready to merge: `c0e38cc3` (C-266; carries m-models 51db9785 (the D-Gun templates). test_client 345 / 345, build passed (882 scripts, 2468 requires). Studio, Coastline: all four templates played on a shot through two Lancers, no errors)
+
 ## Summary (2026-10-30, unit pictures and emblems uploaded: C-265)
 
 - **Unit pictures live (C-265):** E's 197 pre-rendered pictures are uploaded on four sheets, so the build tiles and the unit panel show them in place of the live model.
