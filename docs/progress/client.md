@@ -6,6 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Shots at the edge of vision (C-250, H37):** a beam or laser from a shooter the client holds at a stale spot no longer stretches across the map; only its hit shows.
 - **Far selection kept (C-249):** a unit selected far from the camera (the user's nuke silo on Supreme Strait) no longer drops out of the selection when the camera moves away. A lost part of a big strategic snapshot no longer makes units blink out for a moment, which is likely part of H36's jumping blips.
 - Ready to merge: `d8c7303d` (the health number's colours and green cross, on top of ebf84768; test_client 331 / 331, build passed. Studio: 3000 green, 1506 orange, 306 red)
 - Ready to merge: `ebf84768` (C-249; test_client 331 / 331, build passed (822 scripts, 2345 requires). Studio, Supreme Strait: the silo stays selected with the camera at the enemy side)

@@ -2239,3 +2239,18 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **Checks:**
   - Spec `SnapshotLoss.spec`: a two-part snapshot with one part lost; then a selected silo missing for two snapshots stays selected and grouped, another one's death drops it, and one missing for 10 s goes.
   - Studio, Supreme Strait: the Reckoning selected at (−1100, 200) and the camera panned to x 1150. The silo went strategic and stayed selected, with its panel, the Attack card and the nuke preview. Losing the part itself can't be staged in Studio (1v1, one-part snapshots).
+
+### C-250 — A shot from a stale shooter draws only its hit (2026-10-29, H37)
+
+- H37: "a beam or laser fired near the edge of vision stretches from its start to somewhere random."
+- **Cause:** sim-A says a FIRE carries the shooter's ID and the shot's end only; the start is where the client draws the shooter. A shooter that just left the camera area is held at its last spot or a strategic record's 8-stud square. One drawn far from its record (a lagging interpolation) also gives a stale start.
+- **Fix:** `Effects.staleStart` marks the start stale in four cases:
+  - no live muzzle, and the shooter not in the tactical tier;
+  - no live muzzle, and the shooter drawn more than 24 studs (`STALE_STUDS`) from its record;
+  - the shot reaching beyond its weapon's range × 1.5 + 40 (except `fullLength` beams);
+  - no shooter at all.
+  A stale FIRE draws no streak or muzzle flash. A beam that hit still bursts at its end, and other hits come with their IMPACT.
+- A tactical shooter not drawn yet still starts from its record, which is current.
+- Ends aren't clamped to the map: aircraft fire from up to 512 studs past the edge (S-189).
+- `fx.skipped.stale` counts the dropped streaks (`Invoke("fx")`).
+- Spec `StaleShot.spec`. Studio, Coastline: three Ravagers against the Commander, 8 FIREs, none stale. The edge-of-vision case itself can't be staged on demand.
