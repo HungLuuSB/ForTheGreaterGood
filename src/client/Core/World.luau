@@ -364,12 +364,14 @@ end
 -- Whether a unit is drawn on the water surface rather than the bed (C-192,
 -- the user: each on its terrain): ships, structures built on water (their
 -- models float), and amphibious or hover units, which ride the surface.
+-- Amphibious walkers (the Commanders, Titan, Juggernaut: AMPHIB_WALKER,
+-- S-210) share the amphibious surface but walk the seafloor (C-254, H18).
 function World.floats(def: any): boolean
 	if def.domain == "naval" or def.placement == "water" then
 		return true
 	end
 	local mc = def.moveClass and (MoveClasses :: any)[def.moveClass]
-	return mc ~= nil and (mc.surface == "amphib" or mc.surface == "hover")
+	return mc ~= nil and mc.id ~= "AMPHIB_WALKER" and (mc.surface == "amphib" or mc.surface == "hover")
 end
 
 -- The sim's own ground height at (x, z): the height of the cell it's in,

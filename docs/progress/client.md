@@ -10,10 +10,11 @@ Written for a new session (the project is moving to another Claude account). Eve
 
 ### Where it stands
 
-- Branch `m-client-foundation` (worktree `C:\Workspace\Projects\FTGG-client`) has main d8611b86 merged in: all of playtest 3, with C-248..C-253 integrated.
-  - Only this tidy-up and f2a949e5 (C-252's Studio note) aren't on main yet: see the Ready line in the 2026-10-29 summary.
+- Branch `m-client-foundation` (worktree `C:\Workspace\Projects\FTGG-client`) has main d06f303b merged in: all of playtest 3 and the handover, with C-248..C-253 integrated.
+  - C-254 and C-255 (seafloor walkers, still water) aren't on main yet: see the Ready line in the newest summary below.
 - Suites on the branch: `lune run test_client` 335 / 335, `lune run build` passed (877 scripts, 2457 requires).
-- The last decision is **C-253**; the next one is **C-254**, in [`../decisions/client.md`](../decisions/client.md).
+- The last decision is **C-255**; the next one is **C-256**, in [`../decisions/client.md`](../decisions/client.md).
+- The live sync for the three places runs from `tools/studio/sync_all.cmd` (double-click; `sync_all.ps1`, ports in `places.json`, FTGG Match on 34872). Connect the Rojo plugin in FTGG Match to 34872.
 - **`src/roblox/MatchConfig.luau` has a local, uncommitted change that is the user's own test setting.** `ACTIVE = "skirmish"`, the `air` profile at speed 0.1, and two Radiances removed from one test scene. Never commit it and never revert it: leave it in the working tree. A lobby match ignores MatchConfig; it only sets what Play in Studio starts.
 
 ### Open items (client-B's)
@@ -23,14 +24,7 @@ Written for a new session (the project is moving to another Claude account). Eve
   - The sheet is full at 90 tiles, so own tiles need a new catalogue draft in `docs/art/icons/ftgg-unit-icons.html` and `node tools/icons/render.mjs`. That makes a second sheet `assets/icons/ftgg-icons-2.png`.
   - The user must approve its upload to Roblox; its asset id then goes into `tools/icons/assets.json`.
   - Every new unit ID must be in exactly one catalogue item's `defs`, or render.mjs fails and `IconAtlas.spec` / `Icons.spec` fail.
-- **H18 / H20, drawing under water:**
-  - Check in Studio that Commanders, Titan and Juggernaut walking the seafloor (AMPHIB_WALKER, S-210) are drawn on the seafloor, not on the water surface.
-  - Check that the offshore extractors (`ord_seaextractor` / `chs_seaextractor`) draw submerged.
-  - H19 needed nothing (submerged units come as sonar-only or hidden).
-- **H1:** a builder shows its nano stream while still far from the structure. sim-A was to check whether the wire sends the target before the builder is in range; if it does, the client should hide the stream until in range (`Render/BuildSpray`).
-- **H11:** the scouts' hit-scan laser should be hot yellow. Check that the client takes the weapon's colour (C-248 tints BEAM weapons from `fx.color`; a hit-scan laser goes through `Render/Lasers`).
 - **Pulse pieces (C-252):** the glow breathes; the scale half of rig.md's `pulse` isn't done.
-- **The 21 new units draw as models-C's blockouts.** When their meshes arrive, re-check the rigs in Studio: the Mammoth's legs, the bots' thighs, and the nano turret's `turret` / `nano` axes and signs.
 - **Not tested with a real mouse:** hovering and dragging the resource bars' share and converter markers (C-245). The Studio harness can't click GUI.
 - sim-A once suggested an orange-white core for `chs_korgoth_heatray`. Today the core is white lerped 30% toward the beam colour (C-248, `Render/BeamShots`).
 
@@ -61,8 +55,16 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-29, after the handover: C-254, C-255)
+
+- **Amphibious walkers on the seafloor (C-254, H18):** the Commanders, the Titan and the Juggernaut were drawn standing on the sea; they now walk the bed, and the Titan's and Juggernaut's heads clear the surface in 20 studs of water. Checked in the same playtest, no change needed: the offshore extractors sit on the bed (H20), the scouts' laser is hot yellow (H11), a builder's nano stream waits until it's in reach (H1), and the new units' rigs work on models-C's meshes (the Mammoth's diagonal legs, the T3s' thighs, the nano turrets aiming at their work).
+- **Still water (C-255):** the moving ripple texture on the water is gone (the user: it looked odd).
+- Ready to merge: `c2f1f372` (C-254, C-255; test_client 335 / 335, build passed. Studio, Coastline: walkers at the bed, -12; Tideguard floating; no texture on the water)
+
 ## Summary (2026-10-29, playtest 3: C-248..C-253)
 
+- **Handover notes:** a section at the top of this file says where the stream stands, what's open and how to continue; summaries split by date.
+- Ready to merge: `c67ee9fd` (the handover notes, on top of f2a949e5, C-252's Studio note and main d8611b86; docs only. test_client 335 / 335, build passed)
 
 - **Snapshot parts and new icons (C-253, H36):** with sim-A's protocol 41, a far unit goes only when a whole strategic snapshot leaves it out, so a lost part no longer makes blips vanish or drops a far selection. The 21 new units show icons, borrowed from existing tiles until the sheet gets a second page.
 - Ready to merge: `ebb30463` (C-253, carries m-sim-2 f65a3b23 (protocol 41) and C-252; test_client 334 / 335, the 1 left is C's chs_gantry blockout; build passed. Studio, Coastline: 2-part snapshots, 212 far units held, none dropped)
