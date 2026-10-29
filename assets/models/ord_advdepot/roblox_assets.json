@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 3096 triangles, glow share 0.2%",
+  "bar": {
+    "model": "rbxassetid://96834230821549",
+    "meshes": {
+      "base": "rbxassetid://92305699107855",
+      "base_glow_power": "rbxassetid://125338511717470",
+      "base_glow_running": "rbxassetid://96712976841789"
+    },
+    "decals": {
+      "ALB": "rbxassetid://140621056159751",
+      "RGH": "rbxassetid://91421518074800",
+      "NOR": "rbxassetid://116554330175338",
+      "MTL": "rbxassetid://93199142264088",
+      "EMI": "rbxassetid://71299539723139"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://73351133994128",
+      "NOR": "rbxassetid://129087430714968",
+      "RGH": "rbxassetid://113679030518585",
+      "MTL": "rbxassetid://75861568880735",
+      "EMI": "rbxassetid://86252201935142"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advdepot_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://117843237631451",
+    "meshes": {
+      "base": "rbxassetid://126060774837209"
+    },
+    "decals": {
+      "ALB": "rbxassetid://129205075862597",
+      "RGH": "rbxassetid://107766449689723",
+      "NOR": "rbxassetid://98900741985159",
+      "MTL": "rbxassetid://103918288711491",
+      "EMI": "rbxassetid://82713553248228"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://125455361136900",
+      "NOR": "rbxassetid://91606800919395",
+      "RGH": "rbxassetid://132224799746202",
+      "MTL": "rbxassetid://89924101590443",
+      "EMI": "rbxassetid://140530129307919"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advdepot_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 2824 triangles"
+  }
+}

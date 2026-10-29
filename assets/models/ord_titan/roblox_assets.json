@@ -1,0 +1,85 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 5984 triangles, glow share 4.5%",
+  "bar": {
+    "model": "rbxassetid://136289812555241",
+    "meshes": {
+      "base": "rbxassetid://71191735812876",
+      "base_glow_running": "rbxassetid://81658734099072",
+      "beam_arm": "rbxassetid://70965274165270",
+      "beam_arm_glow_power": "rbxassetid://137998703675188",
+      "beam_arm_glow_running": "rbxassetid://112104316368758",
+      "beam_arm_glow_weapon": "rbxassetid://108008808346774",
+      "blaster_arm": "rbxassetid://73217685631963",
+      "blaster_arm_glow_power": "rbxassetid://132720976039799",
+      "blaster_arm_glow_running": "rbxassetid://87015094922781",
+      "blaster_arm_glow_weapon": "rbxassetid://91965533698531",
+      "footL": "rbxassetid://94108421923924",
+      "footL_glow_running": "rbxassetid://70413206462473",
+      "footR": "rbxassetid://73831878904120",
+      "footR_glow_running": "rbxassetid://116467966546269",
+      "missile_pod": "rbxassetid://119919401570072",
+      "missile_pod_glow_running": "rbxassetid://115823143345016",
+      "missile_pod_glow_weapon": "rbxassetid://130621370082734",
+      "shinL": "rbxassetid://106826424338896",
+      "shinL_glow_power": "rbxassetid://110846628833354",
+      "shinL_glow_running": "rbxassetid://100505009847171",
+      "shinR": "rbxassetid://100380827003552",
+      "shinR_glow_power": "rbxassetid://103393250569284",
+      "shinR_glow_running": "rbxassetid://138262063902208",
+      "thighL": "rbxassetid://85663008508151",
+      "thighR": "rbxassetid://99348698016805",
+      "torso": "rbxassetid://77241479442340",
+      "torso_glow_head": "rbxassetid://87880666260733",
+      "torso_glow_power": "rbxassetid://133784743647928",
+      "torso_glow_running": "rbxassetid://124986040753677"
+    },
+    "decals": {
+      "ALB": "rbxassetid://84750510445687",
+      "RGH": "rbxassetid://124833176433404",
+      "NOR": "rbxassetid://78179197300052",
+      "MTL": "rbxassetid://139938795636174",
+      "EMI": "rbxassetid://130259569460613"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://87865176981227",
+      "NOR": "rbxassetid://75814180052559",
+      "RGH": "rbxassetid://105427105055844",
+      "MTL": "rbxassetid://105907646583951",
+      "EMI": "rbxassetid://116676869648895"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_titan_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://114327209091795",
+    "meshes": {
+      "base": "rbxassetid://82972937895299",
+      "beam_arm": "rbxassetid://72188889461134",
+      "blaster_arm": "rbxassetid://116495237581166",
+      "footL": "rbxassetid://136286847332871",
+      "footR": "rbxassetid://91339225015938",
+      "missile_pod": "rbxassetid://115190933565056",
+      "shinL": "rbxassetid://71706492670161",
+      "shinR": "rbxassetid://130132464423239",
+      "thighL": "rbxassetid://82728602526151",
+      "thighR": "rbxassetid://113108179536916",
+      "torso": "rbxassetid://71091449534573"
+    },
+    "decals": {
+      "ALB": "rbxassetid://74939168400259",
+      "RGH": "rbxassetid://113907087675301",
+      "NOR": "rbxassetid://136184164934933",
+      "MTL": "rbxassetid://108921084851175",
+      "EMI": "rbxassetid://96735457139380"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://94171041815464",
+      "NOR": "rbxassetid://103997904449310",
+      "RGH": "rbxassetid://131861842272162",
+      "MTL": "rbxassetid://81830481866977",
+      "EMI": "rbxassetid://75353060572096"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_titan_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 4300 triangles"
+  }
+}

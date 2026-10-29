@@ -1,0 +1,218 @@
+{
+  "id": "chs_mammoth_wreck",
+  "wreckOf": "chs_mammoth",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0245,
+        6.5546,
+        -1.4127
+      ],
+      "size": [
+        9.1444,
+        9.2272,
+        16.4087
+      ]
+    },
+    "legFL": {
+      "parent": "base",
+      "center": [
+        -2.9997,
+        3.2836,
+        -3.6521
+      ],
+      "size": [
+        3.3084,
+        6.6109,
+        3.1745
+      ],
+      "pivot": [
+        -3.15,
+        5.6,
+        -3.6
+      ]
+    },
+    "legFR": {
+      "parent": "base",
+      "center": [
+        3.2433,
+        3.1856,
+        -3.7263
+      ],
+      "size": [
+        3.1193,
+        6.8744,
+        3.2106
+      ],
+      "pivot": [
+        3.15,
+        5.6,
+        -3.6
+      ]
+    },
+    "legBL": {
+      "parent": "base",
+      "center": [
+        -3.0945,
+        3.2696,
+        3.5238
+      ],
+      "size": [
+        3.2881,
+        6.8482,
+        3.4225
+      ],
+      "pivot": [
+        -3.15,
+        5.6,
+        3.5
+      ]
+    },
+    "legBR": {
+      "parent": "base",
+      "center": [
+        3.1222,
+        3.2157,
+        3.5236
+      ],
+      "size": [
+        3.2376,
+        6.9015,
+        3.3097
+      ],
+      "pivot": [
+        3.15,
+        5.6,
+        3.5
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.0448,
+        10.717,
+        1.0057
+      ],
+      "size": [
+        5.5553,
+        3.2645,
+        5.3516
+      ],
+      "pivot": [
+        0.0,
+        9.1,
+        0.6
+      ]
+    },
+    "barrels": {
+      "parent": "turret",
+      "center": [
+        -0.0955,
+        10.1253,
+        -3.2041
+      ],
+      "size": [
+        4.0094,
+        1.9744,
+        7.3766
+      ],
+      "pivot": [
+        0.0,
+        10.15,
+        -0.9
+      ]
+    }
+  },
+  "attachments": {
+    "muzzleL": {
+      "parent": "barrels",
+      "at": [
+        -1.0,
+        10.15,
+        -6.75
+      ]
+    },
+    "muzzleR": {
+      "parent": "barrels",
+      "at": [
+        1.0,
+        10.15,
+        -6.75
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "legFL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "legFR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "legBL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "legBR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1428,
+    "legFL": 540,
+    "legFR": 528,
+    "legBL": 528,
+    "legBR": 572,
+    "turret": 272,
+    "barrels": 308,
+    "total": 4176
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

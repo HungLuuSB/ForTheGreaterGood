@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 4436 triangles, glow share 4.2%",
+  "bar": {
+    "model": "rbxassetid://128543069576008",
+    "meshes": {
+      "base": "rbxassetid://118125572368436",
+      "base_glow_power": "rbxassetid://127120056569059",
+      "base_glow_running": "rbxassetid://119681987297725",
+      "coil": "rbxassetid://85061344443605",
+      "coil_glow_power": "rbxassetid://113336063163982"
+    },
+    "decals": {
+      "ALB": "rbxassetid://139507830766369",
+      "RGH": "rbxassetid://91827977116672",
+      "NOR": "rbxassetid://127984506037726",
+      "MTL": "rbxassetid://71557193762112",
+      "EMI": "rbxassetid://137471588438138"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://117313660818854",
+      "NOR": "rbxassetid://135412545217000",
+      "RGH": "rbxassetid://73754940881346",
+      "MTL": "rbxassetid://107349998992906",
+      "EMI": "rbxassetid://119823713937940"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advconverter_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://120470010420523",
+    "meshes": {
+      "base": "rbxassetid://95953943241730",
+      "coil": "rbxassetid://105041484292093"
+    },
+    "decals": {
+      "ALB": "rbxassetid://98818730037639",
+      "RGH": "rbxassetid://103407676628009",
+      "NOR": "rbxassetid://83405072048597",
+      "MTL": "rbxassetid://109832960821122",
+      "EMI": "rbxassetid://83800515934981"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://76116858319530",
+      "NOR": "rbxassetid://132151666192062",
+      "RGH": "rbxassetid://102658966815135",
+      "MTL": "rbxassetid://82337499699248",
+      "EMI": "rbxassetid://123112835555873"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advconverter_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 4076 triangles"
+  }
+}

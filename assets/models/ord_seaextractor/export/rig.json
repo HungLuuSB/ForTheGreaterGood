@@ -1,0 +1,171 @@
+{
+  "id": "ord_seaextractor",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.025,
+        0.0
+      ],
+      "size": [
+        15.8,
+        4.05,
+        15.8
+      ]
+    },
+    "drill": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.6125,
+        0.0
+      ],
+      "size": [
+        8.73,
+        1.225,
+        8.73
+      ],
+      "pivot": [
+        0.0,
+        4.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "drill"
+  ],
+  "visualPieces": [
+    "drill"
+  ],
+  "anim": {
+    "drill": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.5035,
+        0.0
+      ],
+      "size": [
+        12.6,
+        2.407,
+        12.6
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        0.85,
+        0.0
+      ],
+      "size": [
+        15.98,
+        0.5,
+        15.98
+      ]
+    },
+    {
+      "name": "drill_glow_running",
+      "piece": "drill",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.75,
+        0.0
+      ],
+      "size": [
+        7.9368,
+        0.3,
+        7.9368
+      ]
+    },
+    {
+      "name": "drill_glow_power",
+      "piece": "drill",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        5.015,
+        0.0
+      ],
+      "size": [
+        2.0,
+        0.65,
+        2.0
+      ]
+    }
+  ],
+  "glowShare": 0.009,
+  "triangles": {
+    "base": 1888,
+    "drill": 692,
+    "total": 2580
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

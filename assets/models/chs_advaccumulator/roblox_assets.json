@@ -1,0 +1,51 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 3466 triangles, glow share 4.1%",
+  "bar": {
+    "model": "rbxassetid://89156623964704",
+    "meshes": {
+      "base": "rbxassetid://105953246966617",
+      "base_glow_running": "rbxassetid://111120189780476",
+      "cells": "rbxassetid://126907832899059",
+      "cells_glow_power": "rbxassetid://87018319316236"
+    },
+    "decals": {
+      "ALB": "rbxassetid://92396151031713",
+      "RGH": "rbxassetid://78530495515400",
+      "NOR": "rbxassetid://112331982179820",
+      "MTL": "rbxassetid://112775909334106",
+      "EMI": "rbxassetid://93204520318656"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://138627229995866",
+      "NOR": "rbxassetid://114293589435070",
+      "RGH": "rbxassetid://102704387948130",
+      "MTL": "rbxassetid://124923405798499",
+      "EMI": "rbxassetid://92653864822535"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advaccumulator_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://107813790892776",
+    "meshes": {
+      "base": "rbxassetid://122552395772383",
+      "cells": "rbxassetid://110940867823207"
+    },
+    "decals": {
+      "ALB": "rbxassetid://98175899457747",
+      "RGH": "rbxassetid://127856662400715",
+      "NOR": "rbxassetid://135144817281137",
+      "MTL": "rbxassetid://118818162638562",
+      "EMI": "rbxassetid://113423187489369"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://91512044189507",
+      "NOR": "rbxassetid://104511824145035",
+      "RGH": "rbxassetid://81530549071016",
+      "MTL": "rbxassetid://91062252436431",
+      "EMI": "rbxassetid://94690818511284"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advaccumulator_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 3042 triangles"
+  }
+}

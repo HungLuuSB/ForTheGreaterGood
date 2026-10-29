@@ -1,0 +1,84 @@
+{
+  "id": "chs_advaccumulator_wreck",
+  "wreckOf": "chs_advaccumulator",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0716,
+        4.157,
+        -0.0221
+      ],
+      "size": [
+        23.4739,
+        8.3271,
+        23.4219
+      ]
+    },
+    "cells": {
+      "parent": "base",
+      "center": [
+        0.096,
+        5.0047,
+        0.1728
+      ],
+      "size": [
+        19.1865,
+        7.265,
+        18.768
+      ],
+      "pivot": [
+        0.0,
+        0.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "cells"
+  ],
+  "anim": {
+    "cells": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2686,
+    "cells": 356,
+    "total": 3042
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "id": "ord_advconverter",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        4.525,
+        0.0
+      ],
+      "size": [
+        23.5216,
+        9.05,
+        23.5216
+      ]
+    },
+    "coil": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.05,
+        0.0
+      ],
+      "size": [
+        13.0,
+        6.7,
+        10.6
+      ],
+      "pivot": [
+        0.0,
+        0.7,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "coil"
+  ],
+  "visualPieces": [
+    "coil"
+  ],
+  "anim": {
+    "coil": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.9025,
+        0.0
+      ],
+      "size": [
+        22.4,
+        8.385,
+        22.4
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.2,
+        0.0
+      ],
+      "size": [
+        20.2,
+        0.22,
+        9.31
+      ]
+    },
+    {
+      "name": "coil_glow_power",
+      "piece": "coil",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.055,
+        0.0
+      ],
+      "size": [
+        12.04,
+        6.81,
+        10.72
+      ]
+    }
+  ],
+  "glowShare": 0.0416,
+  "triangles": {
+    "base": 3412,
+    "coil": 1024,
+    "total": 4436
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

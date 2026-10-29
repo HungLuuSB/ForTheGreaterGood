@@ -87,6 +87,16 @@ ANCHORS = {
     "chs_advbotlab": {"buildpad": (B, (0.0, 0.8, -3.0)),
                       "nano1": (B, (0.0, 19.2, -3.0)),  # the tower crane's hook
                       "nano2": (B, (-10.2, 12.1, -3.0)), "nano3": (B, (10.2, 12.1, -3.0))},  # the lamp masts
+    # S-209 experimental gantries: the pad, the emitter heads over it
+    "ord_gantry": {"buildpad": (B, (0.0, 0.8, -9.0)),
+                   "nano1": (B, (-13.6, 24.7, -15.0)), "nano2": (B, (13.6, 24.7, -15.0)),
+                   "nano3": (B, (-13.6, 24.7, -9.0)), "nano4": (B, (13.6, 24.7, -9.0)),
+                   "nano5": (B, (-13.6, 24.7, -3.0)), "nano6": (B, (13.6, 24.7, -3.0))},
+    "chs_gantry": {"buildpad": (B, (0.0, 4.2, -3.0)),  # on the raised floor over the split doors
+                   "nano1": (B, (-18.9, 10.0, -14.0)), "nano2": (B, (18.9, 10.0, -14.0)),  # the wall heads' lenses
+                   "nano3": (B, (-18.9, 10.0, -3.0)), "nano4": (B, (18.9, 10.0, -3.0)),
+                   "nano5": (B, (-18.9, 10.0, 8.0)), "nano6": (B, (18.9, 10.0, 8.0)),
+                   "nano7": (B, (-7.5, 12.0, 13.6)), "nano8": (B, (7.5, 12.0, 13.6))},  # the bunker heads
     # S-181 walking constructors and helpers: the emitter at the tip of the `nano` arm
     "ord_artisan": {"nano1": (N, (1.45, 4.6, -2.2))},
     "chs_tinker": {"nano1": (N, (0.95, 5.4, -2.65))},

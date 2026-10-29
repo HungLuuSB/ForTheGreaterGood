@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 5408 triangles, glow share 0.7%",
+  "bar": {
+    "model": "rbxassetid://80075096107581",
+    "meshes": {
+      "base": "rbxassetid://105523514230271",
+      "base_glow_power": "rbxassetid://129303978095379",
+      "base_glow_running": "rbxassetid://108442059971544"
+    },
+    "decals": {
+      "ALB": "rbxassetid://131663376623567",
+      "RGH": "rbxassetid://72991773139046",
+      "NOR": "rbxassetid://102091414603949",
+      "MTL": "rbxassetid://81413614799400",
+      "EMI": "rbxassetid://138173962759214"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://87348658873559",
+      "NOR": "rbxassetid://106166326917408",
+      "RGH": "rbxassetid://129705608109180",
+      "MTL": "rbxassetid://94254520259916",
+      "EMI": "rbxassetid://86110232626489"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_gantry_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://106639106898438",
+    "meshes": {
+      "base": "rbxassetid://123632727646204"
+    },
+    "decals": {
+      "ALB": "rbxassetid://94280610141680",
+      "RGH": "rbxassetid://128898645277490",
+      "NOR": "rbxassetid://72228181834551",
+      "MTL": "rbxassetid://84033330413909",
+      "EMI": "rbxassetid://108335953250164"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://114615682477621",
+      "NOR": "rbxassetid://105977233050190",
+      "RGH": "rbxassetid://74686647633291",
+      "MTL": "rbxassetid://74177942604963",
+      "EMI": "rbxassetid://114115658115271"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_gantry_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 3960 triangles"
+  }
+}
