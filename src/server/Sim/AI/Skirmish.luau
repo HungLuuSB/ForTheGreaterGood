@@ -386,22 +386,27 @@ function Skirmish.roleOf(sim: Types.Sim, player: number, level: string): string
 	-- out by spot (S-207, the user's H10: a Normal AI on Supreme Strait's
 	-- front spot built a plant and an airfield; it had drawn the air role by
 	-- player order): the AIs nearest an enemy Commander get the roles that
-	-- fight up front, those farthest back air and tech. Ties (or no
-	-- Commanders yet) keep player order.
+	-- fight up front, those farthest back air and tech. Ties keep player
+	-- order.
 	local roles = {}
 	for k = 1, #mine do
 		table.insert(roles, Skirmish.ROLES[(k - 1) % #Skirmish.ROLES + 1])
 	end
-	table.sort(roles, function(a, b)
-		return Skirmish.ROLE_DEPTH[a] < Skirmish.ROLE_DEPTH[b]
-	end)
+	-- (the lobby's badges ask with a room's config and no world, and the
+	-- pre-game has no Commanders yet: the roles in player order, as before)
 	local w = sim.world
 	local coms = {}
-	for _, id in w.ids do
+	for _, id in if w then w.ids else {} do
 		if bit32.band(sim.defs.unitByIndex[w.defIndex[id]].categoryMask, Categories.Bit.COMMANDER) ~= 0 then
 			table.insert(coms, id)
 		end
 	end
+	if #coms == 0 then
+		return roles[table.find(mine, player) or 1]
+	end
+	table.sort(roles, function(a, b)
+		return Skirmish.ROLE_DEPTH[a] < Skirmish.ROLE_DEPTH[b]
+	end)
 	local front: { [number]: number } = {}
 	for _, pid in mine do
 		local best = math.huge

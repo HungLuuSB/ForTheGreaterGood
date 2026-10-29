@@ -108,9 +108,9 @@ return function(t: RunAll.Context)
 		for pid = 1, 8 do
 			table.insert(roles, Skirmish.roleOf(sim, pid, sim.match.ai[pid]))
 		end
-		-- (in the pre-game no Commander stands yet: player order, the roles
-		-- front to back, S-207)
-		t.deepEqual(roles, { "balanced", "spam", "defense", "air", "balanced", "defense", "air", "balanced" })
+		-- (in the pre-game no Commander stands yet: the roles in player order,
+		-- as the lobby's badges show them; by spot once they land, S-207)
+		t.deepEqual(roles, { "balanced", "air", "defense", "spam", "balanced", "air", "defense", "balanced" })
 		local lone = teamMatch({ "hard", "hard" })
 		t.equal(Skirmish.roleOf(lone, 1, "hard"), "balanced", "1v1")
 		local cfg = Skirmish.withRole(Skirmish.LEVELS.hard, "defense", "hard")
