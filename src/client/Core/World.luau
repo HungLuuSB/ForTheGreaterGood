@@ -50,7 +50,6 @@ export type Unit = {
 	snaps: { Snap }, -- tactical: ascending sim ticks
 	lastTick: number, -- sim tick of the last position applied (drops reordered unreliable records)
 	movedTick: number?, -- sim tick its position or heading last changed (C-45)
-	snapTick: number?, -- a strategic unit's: the wire tick of the last snapshot that listed it (NetIn keeps it through one snapshot without it, C-249)
 	health: number?, -- 0..1, the latest the server sent
 	shownHealth: number?, -- what the bars show: health as of the render tick (C-49, World.settle)
 	healthLog: { { number } }?, -- health changes not shown yet: { tick, health }, oldest first
@@ -176,6 +175,9 @@ export type World = {
 	latestTick: number, -- newest sim tick seen on any channel, -1 before the first
 	latestAt: number, -- local time (seconds) when latestTick arrived
 	strategicTick: number, -- wire tick of the current strategic snapshot, -1 none
+	strategicParts: { [number]: boolean }, -- the parts of it received (S-212)
+	strategicGot: number, -- how many
+	strategicSeen: { [number]: boolean }, -- the units its parts so far list
 	-- queues the renderer drains each frame
 	entered: { number }, -- became tactical (ENTER)
 	left: { number }, -- stopped being tactical without dying (LEAVE)
@@ -219,6 +221,9 @@ function World.new(defs: Defs.DefSet): World
 		latestTick = -1,
 		latestAt = 0,
 		strategicTick = -1,
+		strategicParts = {},
+		strategicGot = 0,
+		strategicSeen = {},
 		entered = {},
 		left = {},
 		died = {},
@@ -279,6 +284,9 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.teamEco)
 	table.clear(world.shares)
 	world.strategicTick = -1
+	table.clear(world.strategicParts)
+	world.strategicGot = 0
+	table.clear(world.strategicSeen)
 	world.economy = nil
 	world.latestTick = rec.tick :: number -- unwraps wire ticks from here on
 	world.latestAt = now

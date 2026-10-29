@@ -1,6 +1,7 @@
 --!strict
--- A lost part of a strategic snapshot (C-249): a big snapshot comes in
--- several unreliable parts; units of a lost part stay one snapshot, a far
+-- A lost part of a strategic snapshot (C-249, S-212): a big snapshot comes
+-- in several unreliable parts, each saying "part k of n"; units go only
+-- when a whole snapshot leaves them out, so a lost part drops none. A far
 -- selected unit stays selected, and a dead or long-gone one is dropped.
 -- The user: a nuke silo selected, the camera at the enemy base on Supreme
 -- Strait, and the selection was gone.
@@ -28,9 +29,9 @@ local function header(wireTick: number): (any) -> ()
 	end
 end
 
--- One part of the snapshot at `wireTick`: own silos with the given IDs and
--- enemy blips with the given IDs.
-local function part(sim: any, wireTick: number, own: { number }, blips: { number }): buffer
+-- Part `k` of `n` (1-based) of the snapshot at `wireTick`: own silos with
+-- the given IDs and enemy blips with the given IDs.
+local function partOf(sim: any, wireTick: number, k: number, n: number, own: { number }, blips: { number }): buffer
 	local silo = sim.defs.units.ord_reckoning.index
 	local records = {}
 	for i, id in own do
@@ -39,32 +40,56 @@ local function part(sim: any, wireTick: number, own: { number }, blips: { number
 	for i, id in blips do
 		table.insert(records, { unitId = id, cell = 300 + i, icon = 0, team = 2, flags = Schema.StrategicFlag.RADAR_ONLY })
 	end
-	return Packer.chunk(records, Schema.encodeStrategic, nil, header(wireTick))[1]
+	local msg = Packer.chunk(records, Schema.encodeStrategic, nil, function(w: any)
+		Schema.encodeStrategicHeader(w, wireTick)
+	end)[1]
+	if msg == nil then -- an empty snapshot: the header only (as NetOut sends it)
+		local w = Packer.Writer.new(Schema.STRATEGIC_HEADER_BYTES)
+		Schema.encodeStrategicHeader(w, wireTick)
+		msg = w:finish()
+	end
+	buffer.writeu8(msg, Schema.TICK_HEADER_BYTES, k - 1)
+	buffer.writeu8(msg, Schema.TICK_HEADER_BYTES + 1, n)
+	return msg
+end
+
+-- A whole snapshot in one part.
+local function part(sim: any, wireTick: number, own: { number }, blips: { number }): buffer
+	return partOf(sim, wireTick, 1, 1, own, blips)
 end
 
 return function(t: any)
-	t.test("units of a lost snapshot part stay one snapshot, then go", function()
+	t.test("units of a lost snapshot part stay till a whole snapshot leaves them out (S-212)", function()
 		local sim, world = setup()
 		-- snapshot 10 in two parts
-		NetIn.apply(world, "Strategic", part(sim, 10, { 50 }, { 60, 61 }), 0)
-		NetIn.apply(world, "Strategic", part(sim, 10, {}, { 70, 71 }), 0)
+		NetIn.apply(world, "Strategic", partOf(sim, 10, 1, 2, { 50 }, { 60, 61 }), 0)
+		NetIn.apply(world, "Strategic", partOf(sim, 10, 2, 2, {}, { 70, 71 }), 0)
 		for _, id in { 50, 60, 61, 70, 71 } do
 			t.expect(world.units[id] ~= nil, `{id} after snapshot 10`)
 		end
-		-- snapshot 15: its second part is lost
-		NetIn.apply(world, "Strategic", part(sim, 15, {}, { 70, 71 }), 0)
+		-- snapshot 15: its first part is lost
+		NetIn.apply(world, "Strategic", partOf(sim, 15, 2, 2, {}, { 70, 71 }), 0)
 		for _, id in { 50, 60, 61, 70, 71 } do
 			t.expect(world.units[id] ~= nil, `{id} still there with a part of snapshot 15 lost`)
 		end
-		-- snapshot 20 lists only 70: the others missed two snapshots
-		NetIn.apply(world, "Strategic", part(sim, 20, {}, { 70 }), 0)
-		t.expect(world.units[70] ~= nil, "70 listed")
-		t.expect(world.units[71] ~= nil, "71 was in 15: one more snapshot")
-		for _, id in { 50, 60, 61 } do
-			t.equal(world.units[id], nil, `{id} missing from 15 and 20: gone`)
+		-- snapshot 20, whole, in two parts: 60 and 71 aren't in it
+		NetIn.apply(world, "Strategic", partOf(sim, 20, 1, 2, { 50 }, { 61 }), 0)
+		t.expect(world.units[60] ~= nil and world.units[71] ~= nil, "nothing goes before the last part")
+		NetIn.apply(world, "Strategic", partOf(sim, 20, 2, 2, {}, { 70 }), 0)
+		for _, id in { 50, 61, 70 } do
+			t.expect(world.units[id] ~= nil, `{id} listed`)
 		end
-		NetIn.apply(world, "Strategic", part(sim, 25, {}, { 70 }), 0)
-		t.equal(world.units[71], nil, "71 missing from 20 and 25: gone")
+		t.equal(world.units[60], nil, "60 left out of a whole snapshot: gone")
+		t.equal(world.units[71], nil, "71 too")
+		-- the same part twice counts once; a late part of an older snapshot is ignored
+		NetIn.apply(world, "Strategic", partOf(sim, 25, 1, 2, {}, { 70 }), 0)
+		NetIn.apply(world, "Strategic", partOf(sim, 25, 1, 2, {}, { 70 }), 0)
+		t.expect(world.units[50] ~= nil, "a repeated part isn't the whole snapshot")
+		NetIn.apply(world, "Strategic", partOf(sim, 20, 1, 2, {}, { 60 }), 0)
+		t.equal(world.units[60], nil, "an older snapshot's part changes nothing")
+		-- an empty snapshot: part 0 of 1, the header only
+		NetIn.apply(world, "Strategic", part(sim, 30, {}, {}), 0)
+		t.equal(next(world.units), nil, "an empty snapshot clears the far units")
 	end)
 
 	t.test("a far selected unit missing for a moment stays selected; a dead one doesn't", function()
@@ -75,9 +100,8 @@ return function(t: any)
 		api.actions.setGroup(3)
 		Api.frame(api, 1)
 		t.equal(#api.state.selection, 2)
-		-- two snapshots in a row lose 50's part: it leaves the world for a while
+		-- a whole snapshot leaves 50 out (the server didn't list it for a moment)
 		NetIn.apply(world, "Strategic", part(sim, 15, { 51 }, {}), 0)
-		NetIn.apply(world, "Strategic", part(sim, 20, { 51 }, {}), 0)
 		t.equal(world.units[50], nil, "50 is out of the world")
 		Api.frame(api, 2)
 		Api.frame(api, 6)
@@ -94,7 +118,6 @@ return function(t: any)
 		t.equal(table.concat(api.state.selection, ","), "50", "a death drops it")
 		-- 50 missing for good: dropped after Selection.MISSING_SECONDS
 		NetIn.apply(world, "Strategic", part(sim, 30, {}, { 99 }), 8)
-		NetIn.apply(world, "Strategic", part(sim, 35, {}, { 99 }), 8)
 		Api.frame(api, 8)
 		t.equal(#api.state.selection, 1, "missing, still selected")
 		Api.frame(api, 19)
