@@ -5,7 +5,10 @@
 -- particle emitters (Studio's built-in textures, Emit only, never a Rate),
 -- a light and a few animated parts. A rig is reused only once its longest
 -- particles have faded (or, at its pool's cap, the oldest one is taken).
--- Scorch marks are their own pool of fading discs on the ground.
+-- Blast marks are their own pool of fading decals on the ground: models-C's
+-- soot (two variants) under a glow that cools in GLOW_SECONDS (C-268, in
+-- place of a dark disc), left by every ground burst of a kind with a scorch,
+-- its template's or the built-in one.
 --
 -- Sizes scale with the weapon's blast: `scale` 1 is a 7-stud explosion (the
 -- smallest impact, C-18); a burst of diameter d gets scale d / 7, capped.
@@ -35,6 +38,8 @@
 -- like sizes and speeds, accelerations by its square root, and emitters
 -- with the attribute `GroundOnly` play in a ground burst only.
 
+local Meshes = require("@shared/Defs/Meshes/Registry")
+
 local Vfx = {}
 
 local TEX = {
@@ -53,6 +58,9 @@ Vfx.MAX_SCALE = 6
 Vfx.onSpawn = nil :: ((kind: string, x: number, y: number, z: number, scale: number) -> ())?
 Vfx.GROUND_BURST = 4 -- studs: a burst this close to the ground is a ground burst (dust, ring, scorch)
 Vfx.SCORCH_SECONDS = 14
+Vfx.GLOW_SECONDS = 2 -- a blast mark's glow cools in this
+Vfx.MARK_LIFT = 0.6 -- studs over the ground (Terrain's sand ripples hid a mark at 0.08, models-C)
+local MARK_GLOW = Color3.new(1 * 2.2, 0.55 * 2.2, 0.18 * 2.2) -- overbright: a Decal can't emit (as BeamShots)
 Vfx.MAX_LIGHTS = 12 -- explosion and muzzle lights at once
 Vfx.TEMPLATE_NAMES = table.freeze({
 	impact = "Impact",
@@ -263,7 +271,7 @@ type Rig = {
 	live: boolean, -- still animating (light, flash, ring, laser, flares)
 }
 
-type Scorch = { part: BasePart, born: number }
+type Scorch = { part: BasePart, soot: Decal, glow: Decal, born: number }
 
 -- A copy of a saved template (see the header).
 type TEmitter = { emitter: ParticleEmitter, size: NumberSequence, speed: NumberRange, accel: Vector3, count: number?, delay: number, duration: number, emitted: boolean, continuous: boolean, groundOnly: boolean, skip: boolean }
@@ -465,20 +473,30 @@ local function scorch(v: State, x: number, y: number, z: number, d: number, now:
 			end
 			s = oldest
 		else
-			local part = newPart("Scorch")
-			part.Shape = Enum.PartType.Cylinder
-			part.Material = Enum.Material.SmoothPlastic
-			part.Color = Color3.fromRGB(28, 24, 22)
+			local part = newPart("Scorch") -- (casts no shadow: its decals would throw a blob)
+			part.Transparency = 1
+			local soot = Instance.new("Decal")
+			soot.Face = Enum.NormalId.Top
+			soot.Parent = part
+			local glow = Instance.new("Decal")
+			glow.Face = Enum.NormalId.Top
+			glow.Texture = Meshes.textures.blastMarkGlow
+			glow.Color3 = MARK_GLOW
+			glow.ZIndex = 2
+			glow.Parent = part
 			part.Parent = v.folder
-			s = { part = part, born = now }
+			s = { part = part, soot = soot, glow = glow, born = now }
 			table.insert(v.scorches, s :: Scorch)
 		end
 	end
 	local sc = s :: Scorch
 	sc.born = now
-	sc.part.Size = Vector3.new(0.12, d, d)
-	sc.part.CFrame = CFrame.new(x, y + 0.08, z) * CFrame.Angles(0, 0, math.pi / 2)
-	sc.part.Transparency = 0.3
+	-- soot A or B (greyscale, untinted) at a yaw of its own
+	sc.soot.Texture = if jitter(x + z, 3) < 0.5 then Meshes.textures.blastMarkA else Meshes.textures.blastMarkB
+	sc.soot.Transparency = 0.1
+	sc.glow.Transparency = 0
+	sc.part.Size = Vector3.new(d, 0.05, d)
+	sc.part.CFrame = CFrame.new(x, y + Vfx.MARK_LIFT, z) * CFrame.Angles(0, jitter(x - z, 5) * 2 * math.pi, 0)
 end
 
 -- The saved template for `kind`, if the place has one (see the header).
@@ -726,6 +744,11 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 		local dir = if dx then Vector3.new(dx, dy :: number, dz :: number) else Vector3.zero
 		local groundBurst = ground ~= nil and y - ground <= Vfx.GROUND_BURST * math.max(1, s * 0.5)
 		spawnTemplate(v, kind, template, if dir.Magnitude > 1e-3 then CFrame.lookAt(at, at + dir) else CFrame.new(at), s, now, groundBurst)
+		-- the lasting mark is ours, not the template's (models-C)
+		local marks = KINDS[kind] or KINDS[Vfx.FALLBACK[kind] or ""]
+		if marks and marks.scorch and groundBurst then
+			scorch(v, x, ground :: number, z, (marks.scorchSize or 5.6) * s, now)
+		end
 		return
 	end
 	k = k :: any
@@ -880,9 +903,15 @@ function Vfx.step(v: State, now: number, dt: number)
 	for _, s in v.scorches do
 		local t = (now - s.born) / Vfx.SCORCH_SECONDS
 		if t < 1 then
-			s.part.Transparency = 0.3 + 0.7 * t * t
-		elseif s.part.Transparency < 1 then
-			s.part.Transparency = 1
+			s.soot.Transparency = 0.1 + 0.9 * t * t
+		elseif s.soot.Transparency < 1 then
+			s.soot.Transparency = 1
+		end
+		local g = (now - s.born) / Vfx.GLOW_SECONDS
+		if g < 1 then
+			s.glow.Transparency = g
+		elseif s.glow.Transparency < 1 then
+			s.glow.Transparency = 1
 		end
 	end
 end

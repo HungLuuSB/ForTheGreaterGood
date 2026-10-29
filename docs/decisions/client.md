@@ -2452,3 +2452,14 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - a nuke from a Reckoning: Launch, then the held MissileExhaust (10 emitters running, its booster flame on the tail; `debug_out/screens/2026-10-30-missile-exhaust.jpg`), then the Nuke template at the impact, with the exhaust released;
   - the silo killed: StructureDeath, with its smoke column and rubble fires (`…-structure-death.jpg`);
   - no script errors.
+
+### C-268 — Blast-mark decals (2026-10-30, models-C)
+
+- The user approved C's upload. `Meshes.textures` has `blastMarkA`, `blastMarkB` (soot, greyscale, untinted) and `blastMarkGlow` (m-models 2d0afbe4, merged in).
+- `Render/Vfx`'s scorch mark is now a transparent part holding two decals, in place of the dark disc:
+  - soot, A or B picked by a hash of the spot, at a yaw of its own;
+  - the glow on top, tinted (1, 0.55, 0.18) × 2.2 (overbright, as BeamShots).
+  - The glow cools in `GLOW_SECONDS` (2 s); the soot fades over `SCORCH_SECONDS` (14 s), as the disc did.
+- The part casts no shadow (decals would throw a blob) and sits `MARK_LIFT` (0.6) studs over the ground. At +0.08, Terrain's sand ripples hid it.
+- **Templated bursts get the mark too.** C's Impact and Death templates replace the built-in rig, which used to leave the disc, so they had no lasting mark at all. Any ground burst of a kind with a scorch (its own kind's or its fallback's) now leaves one at that kind's size.
+- **Studio, Coastline:** a D-Gun shot through three Lancers left six marks, both variants, with no shadows. The glow faded and the soot stayed (`debug_out/screens/2026-10-30-blast-marks-glow.jpg`, `…-soot.jpg`).
