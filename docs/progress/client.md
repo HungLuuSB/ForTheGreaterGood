@@ -19,17 +19,30 @@ Written for a new session (the project is moving to another Claude account). Eve
 
 ### Open items (client-B's)
 
-- **Own icons for the 21 playtest-3 units:** not client-B's to draw (the user, 2026-10-29). They borrow existing tiles (C-253) until the new icons arrive; then map them in `UI/IconAtlas` (each new unit ID in exactly one catalogue item's `defs`, or `IconAtlas.spec` / `Icons.spec` fail).
+- **Own icons for the 21 playtest-3 units:** drawn by 2D-E (request E1 below). They borrow existing tiles (C-253) until E's icons arrive; then B renders them (`tools/icons/render.mjs`) and maps them in `UI/IconAtlas` (each unit ID in exactly one catalogue item's `defs`, or `IconAtlas.spec` / `Icons.spec` fail).
 - **Pulse pieces (C-252):** the glow breathes; the scale half of rig.md's `pulse` isn't done.
 - **Not tested with a real mouse:** hovering and dragging the resource bars' share and converter markers (C-245). The Studio harness can't click GUI; the user is testing them (2026-10-29).
-- sim-A once suggested an orange-white core for `chs_korgoth_heatray`. Today the core is white lerped 30% toward the beam colour (C-248, `Render/BeamShots`).
+- sim-A once suggested an orange-white core for `chs_juggernaut_heatray` (named `chs_korgoth_heatray` before S-213). Today the core is white lerped 30% toward the beam colour (C-248, `Render/BeamShots`).
+
+### Requests for 2D-E
+
+2D-E (`C:\Workspace\Projects\FTGG-2d`, branch `2d`) owns the 2D assets: the icon sheet source, unit pictures, command and resource icons, thumbnails. Requests to E go here, numbered E1, E2, ...; B renders and wires what E delivers.
+
+- **E1 (2026-10-29): icons for the 21 playtest-3 units.** Today they borrow tiles (C-253, `UI/IconAtlas`). The sheet is full at 90 tiles, so they need a second sheet; its Roblox upload needs the user's approval.
+  - Energy and storage: `ord_advsolar`, `chs_advsolar`; `ord_capacitor`, `chs_accumulator`; `ord_advcapacitor`, `chs_advaccumulator`; `ord_advdepot`, `chs_advdepot`.
+  - Converters and fusion: `ord_advconverter`, `chs_advconverter`; `ord_advfusion`, `chs_advfusion`.
+  - Builders and factories: `ord_nano`, `chs_nano` (construction turrets); `ord_gantry`, `chs_gantry` (experimental gantries).
+  - Offshore extractors: `ord_seaextractor`, `chs_seaextractor`.
+  - Units: `chs_mammoth` (T2 bot), `ord_titan` (T3 mech), `chs_juggernaut` (T3 bot; S-213 gave it this id, it was `chs_korgoth`).
+  - Retired, no new icon needed: `chs_goliath` (the T2 tank once named `chs_juggernaut`) keeps the Main Battle Tank tile.
+  - Each ID must sit in exactly one catalogue item's `defs`, or `render.mjs` fails.
 
 ### How to work
 
 - **Ownership:**
-  - client-B owns `src/client`, `src/roblox`, Studio place content, `docs/contracts/` and the icons.
+  - client-B owns `src/client`, `src/roblox`, Studio place content, `docs/contracts/`, and of the icons `tools/icons/render.mjs`, `UI/IconAtlas` and their wiring in the UI.
   - Don't edit `src/server`, `src/shared/Net/Schema` or `src/shared/Defs/Blockouts` (now models-C's).
-  - The other streams: **sim-A** (branch `m-sim-2`, `../ForTheGreaterGood`; the headless sim and the integrator of main), **models-C** (`m-models`; meshes, blockouts, `assets/`), **lobby-D** (`m-lobby`, `../FTGG-lobby`; the lobby place and the Codex).
+  - The other streams: **sim-A** (branch `m-sim-2`, `../ForTheGreaterGood`; the headless sim and the integrator of main), **models-C** (`m-models`; meshes, blockouts, `assets/`), **lobby-D** (`m-lobby`, `../FTGG-lobby`; the lobby place and the Codex), **2D-E** (`2d`, `../FTGG-2d`; the icon sheet source, unit pictures, command and resource icons, thumbnails; requests go in "Requests for 2D-E" above).
 - **Routine for each finished piece:**
   - Run `lune run test_client` and `lune run build`.
   - Commit with a decision entry `C-n` in `docs/decisions/client.md`.
