@@ -2223,3 +2223,19 @@ The watchdog's WARN / INFO lines (S-140) stay on.
   - It now hangs off the ScreenGui, under the hovered marker, in the Settings UIScale's units.
   - Studio: the supply block stays at x 435 with the tip shown. The test harness's mouse can't reach Roblox's top strip, so the hover itself is unchecked.
 - **H16, nuke panel hidden at far zoom: not reproduced.** Coastline, a stocked Reckoning, attack mode. The arc, blast ring, flight-time label, unit panel and command card all stay at full zoom (900): set by the API, by a real mouse wheel, and with the silo strategic-tier off camera. Needs the user's details.
+
+### C-249 — A far selected unit stays selected; a lost snapshot part no longer drops units (2026-10-29, H16, H36)
+
+- **H16, the user:** "it was on the big map, i selected the nuke, move the camera far away to the enemy base and the panel is gone, like my selection of its is gone".
+- **Cause:**
+  - Off camera, an own unit is a strategic record. NetIn replaced every non-tactical unit with each new snapshot.
+  - A big snapshot (about 7 bytes a record, 900-byte parts, so 120+ records a part) comes in several parts on the unreliable channel. With 200+ known units (an 8v8), a lost part made its units vanish for one snapshot (a third of a second).
+  - `Selection.prune` dropped a selected unit the moment it was missing from the world, so the silo, its panel and its card went for good.
+  - The same loss makes blips blink and jump: likely H36 (blips teleporting at 200+ contacts), which sim-A is checking on the wire side.
+- **Fix, NetIn:**
+  - Each strategic unit keeps the wire tick of the last snapshot that listed it (`snapTick`). A new snapshot drops only the units the previous one didn't list either, so a unit survives one lost part, and a unit really gone goes one snapshot (1/3 s) later.
+  - A unit that has just left the camera area (LEAVE, no `snapTick` yet) gets the same one snapshot's grace.
+- **Fix, Selection:** a selected or grouped own unit that is only missing stays, for up to `Selection.MISSING_SECONDS` (10). Its DEATH (`world.dying`) or a team change drops it at once. Every loop over the selection already handles a missing unit, and the unit panel says "(out of view)".
+- **Checks:**
+  - Spec `SnapshotLoss.spec`: a two-part snapshot with one part lost; then a selected silo missing for two snapshots stays selected and grouped, another one's death drops it, and one missing for 10 s goes.
+  - Studio, Supreme Strait: the Reckoning selected at (−1100, 200) and the camera panned to x 1150. The silo went strategic and stayed selected, with its panel, the Attack card and the nuke preview. Losing the part itself can't be staged in Studio (1v1, one-part snapshots).

@@ -10,6 +10,9 @@ local Selection = {}
 Selection.CENTER_HEIGHT = 1.5 -- studs above the ground: where a unit is "pointed at"
 Selection.PICK_PIXELS = 18 -- click radius around a unit's projected center
 Selection.GROUPS = 9
+-- seconds an own unit may be missing from the client's world (a lost part
+-- of a strategic snapshot, far from the camera) and stay selected and grouped
+Selection.MISSING_SECONDS = 10
 
 -- (x, y, z) world → (screen x, screen y, in front of the camera)
 export type Projector = (x: number, y: number, z: number) -> (number, number, boolean)
@@ -19,6 +22,7 @@ export type Selection = {
 	set: { [number]: boolean },
 	groups: { [number]: { number } },
 	version: number, -- bumps on every change (the API fires `selection` on it)
+	missing: { [number]: number }, -- selected or grouped ID → when it went missing from the world
 }
 
 function Selection.new(): Selection
@@ -26,7 +30,7 @@ function Selection.new(): Selection
 	for n = 1, Selection.GROUPS do
 		groups[n] = {}
 	end
-	return { ids = {}, set = {}, groups = groups, version = 0 }
+	return { ids = {}, set = {}, groups = groups, version = 0, missing = {} }
 end
 
 local function isOwn(world: World.World, id: number): boolean
@@ -70,11 +74,37 @@ end
 
 -- Drops units that died or are no longer known from the selection and the
 -- groups. Returns true if the selection changed.
-function Selection.prune(sel: Selection, world: World.World): boolean
+-- Whether selected or grouped `id` is gone for good: dead (its DEATH came),
+-- someone else's now, or missing from the world over MISSING_SECONDS. A unit
+-- that is only missing stays: far from the camera an own unit is a
+-- strategic record, and losing one part of a big snapshot dropped it for a
+-- moment, and with it the selection (the user, a nuke silo selected and the
+-- camera at the enemy base on Supreme Strait).
+local function gone(sel: Selection, world: World.World, id: number, now: number): boolean
+	local u = world.units[id]
+	if u then
+		sel.missing[id] = nil
+		return u.team ~= world.me.team
+	end
+	if world.dying[id] then
+		return true
+	end
+	local since = sel.missing[id]
+	if since == nil then
+		sel.missing[id] = now
+		return false
+	end
+	return now - since > Selection.MISSING_SECONDS
+end
+
+-- Drops what is gone (see `gone`) from the selection and the groups. `now`:
+-- a clock in seconds (Api.frame's).
+function Selection.prune(sel: Selection, world: World.World, now: number?): boolean
+	local t = now or 0
 	local changed = false
 	for i = #sel.ids, 1, -1 do
 		local id = sel.ids[i]
-		if not isOwn(world, id) then
+		if gone(sel, world, id, t) then
 			table.remove(sel.ids, i)
 			sel.set[id] = nil
 			changed = true
@@ -82,9 +112,14 @@ function Selection.prune(sel: Selection, world: World.World): boolean
 	end
 	for _, group in sel.groups do
 		for i = #group, 1, -1 do
-			if not isOwn(world, group[i]) then
+			if gone(sel, world, group[i], t) then
 				table.remove(group, i)
 			end
+		end
+	end
+	for id, since in sel.missing do
+		if t - since > Selection.MISSING_SECONDS or world.dying[id] then
+			sel.missing[id] = nil -- (pruned above)
 		end
 	end
 	if changed then

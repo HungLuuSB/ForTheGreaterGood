@@ -6,6 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Far selection kept (C-249):** a unit selected far from the camera (the user's nuke silo on Supreme Strait) no longer drops out of the selection when the camera moves away. A lost part of a big strategic snapshot no longer makes units blink out for a moment, which is likely part of H36's jumping blips.
 - **Playtest feedback 3, part one (C-248):**
   - A builder's number keys work as soon as it's selected.
   - Shift-drag rows only add buildings as they grow; Alt + drag lays a grid.
