@@ -2951,3 +2951,20 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Now:** a new move class AMPHIB_WALKER (bit 10): WALKER's 40° slopes on land, and the seafloor like AMPHIB. Both Commanders, Titan and Juggernaut use it. Movement sets SUBMERGED for every amphibious surface class (it checked the AMPHIB id), so in water at least as deep as the unit is tall (a Commander: 12 studs) it is submerged. Submerged units are SONAR or HIDDEN only (S-39), so H19 needed nothing new.
 - **Note:** Supreme Strait's sea is 9 studs at most: a Commander wades there, visible, as a sub can't dive there either. Coastline, Crossroads and The Lakelands have water deep enough.
 - **Tests:** Walker.spec: the Commanders are AMPHIB_WALKER; a Commander in Coastline's deepest water is submerged and hidden from an All-Seer. Passability.spec: the new class's row (it enters every depth).
+
+## S-211 — The construction turret works on its own; offshore extractors go only under the sea (the user's playtest 3) (2026-10-29)
+
+- **Asked:** H31, the construction turret (BAR's nano): assists, repairs and reclaims anything in reach. H20, an extractor under the sea.
+- **Now:**
+  - Build.step works an `assistOnly` structure's jobs (structures used to run only their factory queue, so a nano did nothing).
+  - Assist, repair and reclaim orders take a nano. A job out of its reach is dropped, because a structure can't approach.
+  - An idle nano looks for work every `Build.NANO_SCAN` (8) ticks. It takes the nearest job in reach from the first kind it finds, in this order:
+    1. its team's unfinished frames;
+    2. factories with a queue;
+    3. damaged units;
+    4. wrecks and features to reclaim.
+  - `PlacementRules.terrainOk` treats `placement = "seafloor"` like `"water"` (6+ studs deep). It used to fall through to "either", which let it go on land. The client's ghost uses the same rule.
+- **Not done:** BAR's nano also reclaims enemy units in reach. Our reclaim takes only wrecks and features.
+- **Tests:** Playtest3Units.spec:
+  - a nano speeds up a Commander's solar, repairs a tank in reach but not one out of it, reclaims a wreck, drops an out-of-reach order and never moves;
+  - offshore extractors are refused on land and accepted on wall:64's lake, and seafloor matches water's rule on every 7th cell.
