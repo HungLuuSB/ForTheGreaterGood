@@ -20,7 +20,6 @@ local Players = game:GetService("Players")
 
 local Api = require("../Api")
 local Kit = require("./Kit")
-local UiIcon = require("./UiIcon")
 local World = require("../Core/World")
 local CommandSet = require("../Core/CommandSet")
 local SettingsMenu = require("./SettingsMenu")
@@ -38,8 +37,6 @@ local RETREAT = { [0] = "No retreat", [1] = "Retreat 30%", [2] = "Retreat 40%", 
 local RETREAT_NEXT = { [1] = 2, [2] = 3, [3] = 0, [0] = 1 }
 local COLS = 5
 local W, H = 64, 24
-local ICON = 14 -- 2D-E's command icon left of the label, once the atlas is uploaded (C-260)
-local ICON_COLOR = Color3.fromRGB(232, 234, 238) -- white on the grey buttons (E's note)
 local SEG_W, SEG_H, SEG_GAP = 9, 2, 2 -- a state segment's size and spacing (C-210)
 local DARK = Color3.fromRGB(72, 74, 80) -- an unlit segment
 
@@ -166,21 +163,6 @@ function CommandCard.new(api: Api.Api): UI
 		local c = Instance.new("UICorner")
 		c.CornerRadius = UDim.new(0, 2)
 		c.Parent = b
-		local icon = UiIcon.make(name, ICON, ICON_COLOR)
-		if icon then
-			-- the icon at the left, the label beside it, scaled down to fit
-			-- (the padding below moves children too: 3 px from the edge is -(ICON + 2) inside it)
-			icon.AnchorPoint = Vector2.new(0, 0.5)
-			icon.Position = UDim2.new(0, -(ICON + 2), 0.5, if STATES[name] then -1 else 0)
-			icon.Parent = b
-			local pad = Instance.new("UIPadding")
-			pad.PaddingLeft, pad.PaddingRight = UDim.new(0, ICON + 5), UDim.new(0, 2)
-			pad.Parent = b
-			b.TextScaled = true
-			local limit = Instance.new("UITextSizeConstraint")
-			limit.MaxTextSize, limit.MinTextSize = 11, 8
-			limit.Parent = b
-		end
 		if STATES[name] then
 			-- the state segments (reference 3, C-203; one per state, C-210)
 			local row = Instance.new("Frame")
@@ -307,14 +289,8 @@ function CommandCard.step(ui: UI, api: Api.Api)
 			end
 		end
 	end
-	for name, live in { ["repeat"] = #factories > 0, toggle = switchable } do
-		local b = ui.buttons[name]
-		b.TextTransparency = if live then 0 else 0.5
-		local icon = b:FindFirstChild("Icon_" .. name) :: ImageLabel?
-		if icon then
-			icon.ImageTransparency = b.TextTransparency
-		end
-	end
+	ui.buttons["repeat"].TextTransparency = if #factories > 0 then 0 else 0.5
+	ui.buttons.toggle.TextTransparency = if switchable then 0 else 0.5
 end
 
 return CommandCard

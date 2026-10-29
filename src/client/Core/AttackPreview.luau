@@ -11,6 +11,7 @@
 -- along the approach, `salvo.delay` × the bomber's speed apart.
 
 local Layers = require("@shared/Grid/Layers")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Effects = require("./Effects")
 local World = require("./World")
 
@@ -158,6 +159,118 @@ function AttackPreview.carpets(world: World.World, selection: { number }, tx: nu
 			table.insert(points, { tx + ux * step * k, tz + uz * step * k })
 		end
 		table.insert(out, { unitId = id, weapon = w, points = points })
+		if #out >= AttackPreview.MAX_ARCS then
+			break
+		end
+	end
+	return out
+end
+
+export type Bolt = {
+	unitId: number,
+	weapon: any,
+	x0: number, -- where the bolt starts: the Commander
+	z0: number,
+	x1: number, -- the end of its range
+	z1: number,
+	reach: number, -- studs either side of the path (weapon.bolt)
+	hits: { number }, -- the units in its way now, any team (it spares only its owner)
+}
+
+-- The unit's D-Gun (a weapon with a `bolt`, S-194).
+function AttackPreview.boltWeapon(world: World.World, u: World.Unit): any?
+	local def = World.def(world, u)
+	if def == nil then
+		return nil
+	end
+	for _, ws in def.weapons do
+		local w = world.defs.weaponByIndex[(ws :: any).weaponIndex]
+		if w and w.bolt then
+			return w
+		end
+	end
+	return nil
+end
+
+AttackPreview.BOLT_REACH = 0.85 -- of the range: a D-Gun point is pulled in to this (the server walks past 0.9)
+
+-- The enemy unit `targetId` a D-Gun click on it aims at, else nil (own
+-- units and empty ground: a point).
+function AttackPreview.boltTarget(world: World.World, targetId: number?): World.Unit?
+	local t = if targetId then world.units[targetId] else nil
+	return if t and t.team ~= world.me.team then t else nil
+end
+
+-- Whether unit `u` walks before firing its D-Gun `weapon` at (tx, tz): the
+-- server walks it when the point is farther than 0.9 of the range (Commands).
+function AttackPreview.boltWalks(u: World.Unit, weapon: any, tx: number, tz: number): boolean
+	return (tx - u.x) ^ 2 + (tz - u.z) ^ 2 > (weapon.range * 0.9) ^ 2
+end
+
+-- Where unit `u` is sent to fire its D-Gun `weapon` at the ground point
+-- (tx, tz) (C-264, the user: the path always stays inside the Commander's
+-- range): a point out of range is pulled in along the same line, so the
+-- Commander fires from where it stands instead of walking toward it. (An
+-- enemy unit clicked out of range is aimed at as it is: the Commander walks
+-- to it until in range, then fires.)
+function AttackPreview.boltPoint(u: World.Unit, weapon: any, tx: number, tz: number): (number, number)
+	local dx, dz = tx - u.x, tz - u.z
+	local d = math.sqrt(dx * dx + dz * dz)
+	local reach = weapon.range * AttackPreview.BOLT_REACH
+	if d <= reach then
+		return tx, tz
+	end
+	return u.x + dx / d * reach, u.z + dz / d * reach
+end
+
+-- D-Gun mode's preview (C-264, the user: no hitbox or path shown): each
+-- selected Commander's bolt aimed at (tx, tz), or at the enemy unit
+-- `targetId` under the cursor, the server's rules (Commands DGUN,
+-- Projectiles' bolt): fired from where it stands (the point pulled into
+-- range, `boltPoint`), it flies level for its whole range and destroys
+-- every unit whose centre is within `bolt` + its radius of the path, own
+-- ones too; aircraft in flight pass over it. An enemy unit out of range
+-- shows no path (the user): the Commander walks to it first.
+function AttackPreview.bolts(world: World.World, selection: { number }, tx: number, tz: number, targetId: number?): { Bolt }
+	local out = {}
+	local target = AttackPreview.boltTarget(world, targetId)
+	if target then
+		tx, tz = target.x, target.z
+	end
+	for _, id in selection do
+		local u = world.units[id]
+		local w = u and AttackPreview.boltWeapon(world, u)
+		if u == nil or w == nil or (target and AttackPreview.boltWalks(u, w, tx, tz)) then
+			continue
+		end
+		local dx, dz = tx - u.x, tz - u.z
+		local d = math.sqrt(dx * dx + dz * dz)
+		if d < 1e-3 then
+			dx, dz, d = math.sin(u.heading), math.cos(u.heading), 1
+		end
+		local ux, uz = dx / d, dz / d
+		local x0, z0 = u.x, u.z
+		local x1, z1 = x0 + ux * w.range, z0 + uz * w.range
+		local hits = {}
+		local lx, lz = x1 - x0, z1 - z0
+		local len2 = lx * lx + lz * lz
+		for oid, o in world.units do
+			if oid == id then
+				continue
+			end
+			local odef = World.def(world, o)
+			if odef == nil or (odef.domain == "air" and (o.alt or 0) > 0.5) then
+				continue
+			end
+			local t = math.clamp(((o.x - x0) * lx + (o.z - z0) * lz) / len2, 0, 1)
+			local ex, ez = x0 + lx * t - o.x, z0 + lz * t - o.z
+			local r = w.bolt + odef.footprint * PlacementRules.RADIUS_PER_FOOTPRINT
+			if ex * ex + ez * ez <= r * r then
+				table.insert(hits, oid)
+			end
+		end
+		table.sort(hits)
+		table.insert(out, { unitId = id, weapon = w, x0 = x0, z0 = z0, x1 = x1, z1 = z1, reach = w.bolt, hits = hits })
 		if #out >= AttackPreview.MAX_ARCS then
 			break
 		end

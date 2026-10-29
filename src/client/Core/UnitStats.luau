@@ -248,7 +248,6 @@ end
 
 local FIRE = { [0] = "Hold fire", [1] = "Return fire", [2] = "Fire at will" }
 local MOVE = { [0] = "Hold position", [1] = "Maneuver", [2] = "Roam" }
-local CLASS_NAME = { LIGHT = "light", ARMORED = "armored", STRUCTURE = "structures", AIR = "air", SHIP = "ships", SUB = "subs" }
 
 local function n(x: number): string
 	if x >= 100 or x == math.floor(x) then
@@ -271,7 +270,8 @@ function UnitStats.lines(sheet: Sheet): { string }
 	end
 	for _, w in sheet.weapons do
 		local shot = if w.shots > 1 then `{n(w.damage)}×{w.shots}` else n(w.damage)
-		local parts = { `DPS {n(w.dps)} vs {CLASS_NAME[w.class] or w.class}`, `Range {n(w.range)}`, `Reload {n(w.reload)}s`, `±{n(w.spread)}°`, `{shot}/shot` }
+		-- just the number (the user: "DPS: number", not "vs structures"; C-263)
+		local parts = { `DPS: {n(w.dps)}`, `Range {n(w.range)}`, `Reload {n(w.reload)}s`, `±{n(w.spread)}°`, `{shot}/shot` }
 		if w.shotPower and w.shotPower > 0 then
 			table.insert(parts, `{n(w.shotPower)} power/shot`) -- S-187: no power, no shot
 		end
