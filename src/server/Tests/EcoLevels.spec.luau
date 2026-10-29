@@ -63,6 +63,26 @@ return function(t: RunAll.Context)
 		t.expect(math.abs(burned - 70 * Economy.WINDOW) < 1e-6, `one converter's window: {burned} power`)
 	end)
 
+	t.test("the bar's power demand counts extractor upkeep and converters' burn (S-215, client-B: it showed -0 with extractors running)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		local layers = (sim.map :: any).layers
+		local g = layers.grid
+		local start = layers.starts[1]
+		local sx, sz = g:cellAt(start[1], start[2])
+		local dx, dz = g:cellCenter(sx + 4, sz + 4)
+		local px, pz = PlacementRules.depositNear(layers, dx, dz, 16)
+		Spawn.unit(sim, "ord_extractor", 1, px :: number, pz :: number)
+		local acc = sim.eco.accounts[1]
+		acc.power.stored = 500
+		step(sim, Economy.STEP_TICKS)
+		t.expect(math.abs((acc.power.fixedRate or 0) - 3) < 1e-9, `the extractor's 3 power a second ({acc.power.fixedRate})`)
+		t.equal(acc.power.demand, 0, "(construction demands nothing)")
+		Spawn.unit(sim, "ord_converter", 1, start[1] - 40, start[2] - 40)
+		acc.power.stored = 900
+		step(sim, Economy.STEP_TICKS)
+		t.expect(math.abs((acc.power.fixedRate or 0) - (3 + 70)) < 1e-9, `and a burning converter's 70 ({acc.power.fixedRate})`)
+	end)
+
 	t.test("share levels: what is stored above them goes to the allies, fairly, up to their own levels", function()
 		local players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 1 }, { id = 3, team = 3, allyTeam = 1 }, { id = 4, team = 4, allyTeam = 2 } }
 		local sim = Sim.new({ seed = 1, players = players, mapId = "flat:64" })

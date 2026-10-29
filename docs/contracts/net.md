@@ -315,7 +315,7 @@ per resource, supply then power:
   stored u32        whole units (floor)
   storage u32       whole units
   income u32        tenths of a unit per second
-  demand u32        tenths of a unit per second
+  demand u32        tenths of a unit per second (power: construction plus extractor upkeep and converters' burn, S-215)
   ratio u8          stall ratio, floor(ratio × 255)
 wind u8             current wind, 0..255 of a turbine's maximum
 radarError u16      the team's radar accuracy, tenths of a stud (0 = no radar):
