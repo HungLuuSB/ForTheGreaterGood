@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Snapshot parts and new icons (C-253, H36):** with sim-A's protocol 41, a far unit goes only when a whole strategic snapshot leaves it out, so a lost part no longer makes blips vanish or drops a far selection. The 21 new units show icons, borrowed from existing tiles until the sheet gets a second page.
+- Ready to merge: `ebb30463` (C-253, carries m-sim-2 f65a3b23 (protocol 41) and C-252; test_client 334 / 335, the 1 left is C's chs_gantry blockout; build passed. Studio, Coastline: 2-part snapshots, 212 far units held, none dropped)
 - **Rigs for the playtest-3 units (C-252, models-C's notes):** the Mammoth walks on four legs in diagonal pairs; the Titan and Juggernaut take long, heavy strides; missiles leave from the missile pods; construction turrets turn and pitch their emitter to their work; fusion cores, converter coils and capacitor cells breathe their glow. Keyed by def ID, ready for when sim-A's defs and models-C's models reach main.
 - Ready to merge: `5d938f5e` (C-252; test_client 335 / 335, build passed. Not yet in Studio: the units' defs and models aren't on main)
 - **Nano particles; the Commander faces its work (C-251):** builders and factories spray streams of glowing nano particles instead of light beams. The Commander turns its upper body to what it builds and keeps it there. Specs follow S-203 (generator retired, D-Gun range 80), and the server no longer times out building the lobby's map list.
