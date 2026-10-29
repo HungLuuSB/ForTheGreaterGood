@@ -13,7 +13,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
   - Shift-drag rows only add buildings as they grow; Alt + drag lays a grid.
   - Planned buildings show their build cells, and planned orders draw on top of hills and units.
   - The Commander shows its D-Gun and death-blast rings.
-  - The unit panel shows current health as a deep red number in place of the bar.
+  - The unit panel shows current health as a number with a green cross, in place of the bar: green at full, orange at half, red when low.
   - Beams take their weapon's colour, and hovering a resource-bar marker no longer shifts the bar.
 - Ready to merge: `df9c53ff` (C-248 with the health number in deep red in place of the bar; supersedes ba5d6b76. test_client 329 / 329, build passed (822 scripts, 2345 requires). Studio: 2224 in deep red on a hit Sovereign)
 - Ready to merge: `ba5d6b76` (C-248; test_client 329 / 329, build passed (822 scripts, 2345 requires). Studio, Coastline: digits, grid, footprint cells, highlighted orders, Commander rings, HP, tooltip. H16 not reproduced)

@@ -2,8 +2,9 @@
 -- Unit panel (C-68; BAR style since C-71), bottom left under the build
 -- grid, a functional PLACEHOLDER. One unit selected: a portrait tile (its
 -- model at an angle with its type icon bottom right, as in the build menu;
--- a contact's icon alone), name and role, its current health (a deep red
--- number where a bar was, H34) and, for own units, what it adds to or takes
+-- a contact's icon alone), name and role, its current health (a green
+-- cross and a number where a bar was, the number green at full, orange at
+-- half, red when low; H34) and, for own units, what it adds to or takes
 -- from the economy now ("+5" supply, "−10" power; Core/UnitFlow, C-125),
 -- then its stats as the player may know them
 -- (Core/UnitStats, C-76: combat, mobility and sensors, economy, state with
@@ -38,10 +39,22 @@ local UnitPanel = {}
 
 local BG = Kit.COLOR.panel
 local HEALTH = Color3.fromRGB(80, 200, 90)
+local HEALTH_MID = Color3.fromRGB(240, 150, 40) -- the health number at half (orange)
+local HEALTH_LOW = Color3.fromRGB(205, 35, 35) -- and near none (deep red)
 local SUPPLY = Color3.fromRGB(235, 235, 235) -- the supply bar's white (Kit's ■)
 local POWER = Color3.fromRGB(255, 214, 60) -- the power bar's yellow (Kit's ϟ)
 local TILE = Color3.fromRGB(58, 62, 70)
 local WIDTH = 460 -- wide enough for a stat line at a glance (C-76)
+
+-- The health number's colour for share `k` (0..1) left: green at full,
+-- orange at half, deep red near none, blended between (the user).
+function UnitPanel.healthColor(k: number): Color3
+	k = math.clamp(k, 0, 1)
+	if k >= 0.5 then
+		return HEALTH_MID:Lerp(HEALTH, (k - 0.5) / 0.5)
+	end
+	return HEALTH_LOW:Lerp(HEALTH_MID, k / 0.5)
+end
 
 export type UI = {
 	gui: ScreenGui,
@@ -134,11 +147,30 @@ function UnitPanel.new(api: Api.Api): UI
 	name.Position = UDim2.fromOffset(72, 4)
 	name.Size = UDim2.new(1, -78, 0, 18)
 	-- a unit's current health, in the bar's place (the user: the number
-	-- only, deep red; the bar stays for a wreck's or a feature's resource)
-	local hp = textLabel(panel, Enum.Font.GothamBold, 13, Color3.fromRGB(205, 35, 35))
+	-- only; the bar stays for a wreck's or a feature's resource)
+	local hp = textLabel(panel, Enum.Font.GothamBold, 13, HEALTH)
 	hp.Name = "HP"
-	hp.Position = UDim2.fromOffset(4, 65)
-	hp.Size = UDim2.fromOffset(68, 14)
+	hp.Position = UDim2.fromOffset(19, 65)
+	hp.Size = UDim2.fromOffset(53, 14)
+	-- its icon: a green cross before the number (two bars, no font glyph needed)
+	local cross = Instance.new("Frame")
+	cross.Name = "HealthIcon"
+	cross.BackgroundTransparency = 1
+	cross.Position = UDim2.fromOffset(5, 66)
+	cross.Size = UDim2.fromOffset(11, 11)
+	cross.Parent = hp.Parent
+	for _, size in { UDim2.fromOffset(11, 3), UDim2.fromOffset(3, 11) } do
+		local bar = Instance.new("Frame")
+		bar.AnchorPoint = Vector2.new(0.5, 0.5)
+		bar.Position = UDim2.fromScale(0.5, 0.5)
+		bar.Size = size
+		bar.BackgroundColor3 = HEALTH
+		bar.BorderSizePixel = 0
+		bar.Parent = cross
+	end
+	hp:GetPropertyChangedSignal("Visible"):Connect(function()
+		cross.Visible = hp.Visible -- shown and hidden with the number
+	end)
 	local role = textLabel(panel, Enum.Font.Gotham, 11, Color3.fromRGB(190, 190, 190))
 	role.Position = UDim2.fromOffset(72, 21)
 	role.Size = UDim2.new(1, -78, 0, 14)
@@ -197,11 +229,12 @@ local function one(ui: UI, api: Api.Api, id: number)
 	ui.cornerGlyph.root.Visible = def ~= nil
 	ui.portraitGlyph.root.Visible = def == nil
 	-- health as a number in place of the bar (H34, then the user: "replace the
-	-- healthbar with the current health only", deep red)
+	-- healthbar with the current health only"), its colour by the share left
 	ui.health.Visible = false
 	ui.hp.Visible = sheet.health ~= nil
 	if sheet.health then
 		ui.hp.Text = tostring(math.ceil(sheet.health))
+		ui.hp.TextColor3 = UnitPanel.healthColor(if sheet.maxHealth and sheet.maxHealth > 0 then sheet.health / sheet.maxHealth else 1)
 	end
 	-- what it adds to / takes from the economy now (own units: the client knows their state)
 	local own = def ~= nil and sheet.access == "own"
