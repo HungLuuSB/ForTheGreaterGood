@@ -233,7 +233,7 @@ local function one(ui: UI, api: Api.Api, id: number)
 		style.size = math.floor(style.size * 38 / Icons.BASE + 0.5)
 		Glyph.apply(ui.portraitGlyph, style, TeamColors.of(u.team))
 	end
-	ui.portraitView.frame.Visible = def ~= nil
+	Portrait.setVisible(ui.portraitView, def ~= nil) -- the picture or the model (C-262)
 	ui.cornerGlyph.root.Visible = def ~= nil
 	ui.portraitGlyph.root.Visible = def == nil
 	-- health as a number in place of the bar (H34, then the user: "replace the
@@ -319,7 +319,7 @@ local function wreck(ui: UI, api: Api.Api, w: World.Wreck)
 	if def then
 		Portrait.set(ui.portraitView, def, 0)
 	end
-	ui.portraitView.frame.Visible = def ~= nil
+	Portrait.setVisible(ui.portraitView, def ~= nil) -- the picture or the model (C-262)
 	ui.cornerGlyph.root.Visible = false
 	ui.portraitGlyph.root.Visible = false
 	ui.flowSupply.Visible, ui.flowPower.Visible = false, false

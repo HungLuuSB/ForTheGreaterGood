@@ -6,12 +6,16 @@
 -- portrait uses it: the build menu, the unit panel and its type tiles. A portrait follows its model: `set` rebuilds only when the def,
 -- the team or the template changed (a mesh model finishing replaces the
 -- blockout stand-in). The model is static: no physics, no animation.
+-- A unit with a pre-rendered picture (2D-E's E-11, UI/UnitPictures; C-262)
+-- shows that instead, in its faction's own colour, once its sheet is
+-- uploaded; the rest keep the live model.
 
 local CollectionService = game:GetService("CollectionService")
 
 local PortraitStage = require("../Core/PortraitStage")
 local Models = require("../Render/Models")
 local TeamColors = require("../Render/TeamColors")
+local UnitPictures = require("./UnitPictures")
 
 local Portrait = {}
 
@@ -22,7 +26,7 @@ Portrait.SEABED = Color3.fromRGB(58, 70, 66)
 -- from the unit's front right, above (its forward is -Z)
 local VIEW = Vector3.new(0.8, 0.65, -1).Unit
 
-export type Portrait = { frame: ViewportFrame, camera: Camera, key: string?, template: Model?, model: Model? }
+export type Portrait = { frame: ViewportFrame, camera: Camera, key: string?, template: Model?, model: Model?, picture: ImageLabel? }
 
 function Portrait.new(parent: Instance): Portrait
 	local vf = Instance.new("ViewportFrame")
@@ -40,8 +44,53 @@ function Portrait.new(parent: Instance): Portrait
 	return { frame = vf, camera = cam, key = nil, template = nil, model = nil }
 end
 
--- Shows def `def` in team `team`'s color (rebuilds only on a change).
+-- Shows def `def`'s picture (C-262); false when it has none yet.
+local function showPicture(p: Portrait, def: any): boolean
+	local image, x, y = UnitPictures.of(def.id)
+	if image == nil then
+		if p.picture then
+			p.picture.Visible = false
+		end
+		p.frame.Visible = true
+		return false
+	end
+	local pic = p.picture
+	if pic == nil then
+		local made = Instance.new("ImageLabel")
+		made.Name = "Picture"
+		made.BackgroundTransparency = 1
+		made.Size = UDim2.fromScale(1, 1)
+		made.ScaleType = Enum.ScaleType.Crop
+		made.ImageRectSize = Vector2.new(UnitPictures.TILE, UnitPictures.TILE)
+		made.ZIndex = p.frame.ZIndex
+		made.Parent = p.frame.Parent
+		p.picture = made
+		pic = made
+	end
+	local shown = pic :: ImageLabel
+	shown.Image = image
+	shown.ImageRectOffset = Vector2.new(x, y)
+	shown.Visible = true
+	p.frame.Visible = false
+	return true
+end
+
+-- Shows or hides the portrait, picture or model, whichever `set` chose.
+function Portrait.setVisible(p: Portrait, on: boolean)
+	local picture = on and p.picture ~= nil and p.key ~= nil and string.sub(p.key, -8) == "|picture"
+	p.frame.Visible = on and not picture
+	if p.picture then
+		p.picture.Visible = picture
+	end
+end
+
+-- Shows def `def` in team `team`'s color (rebuilds only on a change): its
+-- picture when it has one, else its model.
 function Portrait.set(p: Portrait, def: any, team: number)
+	if showPicture(p, def) then
+		p.key, p.template = `{def.id}|picture`, nil
+		return
+	end
 	local template = Models.template(def)
 	local key = `{def.id}|{team}`
 	if key == p.key and template == p.template then

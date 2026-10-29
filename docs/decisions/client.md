@@ -2360,3 +2360,12 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - Bug found: the button's UIPadding also moved the icon, onto the label. The icon now sits at -(ICON + 2) inside the padding, 3 px from the edge.
   - All three images fetch; the resource bar, build tile costs, health cross and every command button show their icons (`debug_out/screens/c260-ui-icons.jpg`).
 - Studio check at strategic zoom: the new unit icons show in team colours, with the Commanders' heads, on the map and the minimap (`debug_out/screens/c258-strategic-icons.jpg`).
+
+### C-262 — Unit pictures in portraits, live model until uploaded (2026-10-30)
+
+- 2D-E's E-11 (the user's pick): pre-rendered 128-px pictures of each unit in its setting, in its faction's own colour (untinted; the user dropped the team mask). They're packed by E into `assets/2d/pictures/pictures.json`: `{ tile, sheets: [{ file, size }], units: { defId: { sheet, rect } }, missing }`.
+- `tools/icons/pictures.mjs` writes `UI/UnitPictures.luau`. Each sheet's id comes from `tools/icons/assets.json` `pictures`, a list of `{ image, sha256 }` by sheet; an id whose sheet changed is dropped. It also holds each unit's sheet and top-left pixel, and `UnitPictures.of(defId)` returns nil without an uploaded picture.
+- `UI/Portrait.set` shows the picture (one cropped ImageLabel beside the ViewportFrame) when the def has one, else the live model as before. `Portrait.setVisible` hides or shows whichever it chose; the unit panel uses it in place of setting the frame's visibility.
+- The build menu, the unit panel and the pre-game tiles all go through `Portrait`, so they all take the pictures.
+- Today there are no pictures yet: C is rendering, and E packs them. Every def keeps its live model.
+- Studio: build tiles and the unit panel show their models as before, with no errors. The pictures themselves are checked after their upload.
