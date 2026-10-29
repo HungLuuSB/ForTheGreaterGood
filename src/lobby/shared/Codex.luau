@@ -65,7 +65,7 @@ Codex.ROLES = {
 	r("ground", "Self-propelled artillery", 1, { "ord_verdict" }, { "chs_hellmouth" }),
 	r("ground", "Mobile IR SAM", 1, { "ord_halo" }, { "chs_hornet" }),
 	r("ground", "Mobile radar", 1, { "ord_oracle" }, { "chs_watcher" }),
-	r("ground", "Main battle tank", 2, { "ord_paladin" }, { "chs_juggernaut" }),
+	r("ground", "Main battle tank", 2, { "ord_paladin" }, {}), -- Chaos: none until the user picks one (S-213 retired the Goliath, chs_goliath)
 	r("ground", "MLRS", 2, { "ord_judgement" }, { "chs_hydra" }),
 	r("ground", "Mobile radar SAM", 2, { "ord_seraph" }, { "chs_gorgon" }),
 	r("ground", "Mobile jammer", 2, { "ord_veil" }, { "chs_shroud" }),
@@ -83,7 +83,7 @@ Codex.ROLES = {
 	r("ground", "Heavy plasma", 2, { "ord_fatboy" }, { "chs_tzar" }),
 	r("ground", "Heavy laser bot", 2, {}, { "chs_centurion" }),
 	r("ground", "Heavy assault bot", 2, {}, { "chs_mammoth" }),
-	r("ground", "Experimental assault walker", 3, { "ord_titan" }, { "chs_korgoth" }),
+	r("ground", "Experimental assault walker", 3, { "ord_titan" }, { "chs_juggernaut" }),
 
 	r("air", "Fighter", 1, { "ord_falcon" }, { "chs_harpy" }),
 	r("air", "Attack helicopter", 1, { "ord_guardian" }, { "chs_wasp" }),
