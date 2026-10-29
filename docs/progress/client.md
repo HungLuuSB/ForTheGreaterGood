@@ -56,6 +56,12 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, unit pictures and emblems uploaded: C-265)
+
+- **Unit pictures live (C-265):** E's 197 pre-rendered pictures are uploaded on four sheets, so the build tiles and the unit panel show them in place of the live model.
+- **Faction emblems uploaded:** the ids are in `UI/FactionEmblems` for lobby-D: the atlas, each emblem's rects from 16 to 256 px, tints, and `of(faction, px)`. Nothing in the match draws them yet.
+- Ready to merge: `5e9451da` (C-265; carries 2D-E's 2d up to a8a12d1d (E-11 pictures, the emblems). test_client 345 / 345, build passed (882 scripts, 2468 requires). Studio, Coastline: pictures in the build tiles and unit panel, cleanly cropped)
+
 ## Summary (2026-10-30, D-Gun preview, command cursor, unit pictures ready: C-262..C-264)
 
 - **D-Gun aim preview (C-264):**
