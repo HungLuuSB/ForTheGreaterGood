@@ -149,8 +149,8 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
     salvo: () => [[6, 4], [11, 13], [4, 22]].map(([x, y]) => F(`M${x} ${y} H${x + 12} C${x + 15} ${y} ${x + 18} ${y + 3} ${x + 18} ${y + 3} C${x + 18} ${y + 3} ${x + 15} ${y + 6} ${x + 12} ${y + 6} H${x} Z`)).join(""),
     // lock: a reticle's corner brackets round a dot
     lock: () => L("M3.5 10.5 V3.5 H10.5 M21.5 3.5 H28.5 V10.5 M28.5 21.5 V28.5 H21.5 M10.5 28.5 H3.5 V21.5", 3) + C(16, 16, 4.6),
-    // guidance: a missile on a curved track (thick body, square fins, so it doesn't read as a bird)
-    guidance: () => L("M3.5 29 Q4 17 12.5 13.5", 2.6) + G("rotate(-32 20 11)", F("M11 8 H24 L30.5 11 L24 14 H11 Z") + F("M11 8 L8 3.5 H12.5 L15 8 Z M11 14 L8 18.5 H12.5 L15 14 Z")),
+    // guidance: a missile on a curved track (thick body, square fins, so it doesn't read as a bird); the track meets the tail along the missile's axis
+    guidance: () => L("M3.5 29 Q6.4 19.5 11.5 16.3", 2.6) + G("rotate(-32 20 11)", F("M11 8 H24 L30.5 11 L24 14 H11 Z") + F("M11 8 L8 3.5 H12.5 L15 8 Z M11 14 L8 18.5 H12.5 L15 14 Z")),
     // ammo: rounds carried, three cartridges on a clip
     ammo: () => [9, 16, 23].map((x) => F(`M${x - 2.8} 25 V11 C${x - 2.8} 7 ${x} 4 ${x} 4 C${x} 4 ${x + 2.8} 7 ${x + 2.8} 11 V25 Z`) + HL(`M${x - 2.8} 12.5 H${x + 2.8}`, 1.5)).join("") + F("M4 25 H28 V29 H4 Z"),
     // sonar: pings spreading under the waterline
