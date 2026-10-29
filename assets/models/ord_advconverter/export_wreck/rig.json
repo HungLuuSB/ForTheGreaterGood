@@ -1,0 +1,84 @@
+{
+  "id": "ord_advconverter_wreck",
+  "wreckOf": "ord_advconverter",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0481,
+        4.4344,
+        0.0324
+      ],
+      "size": [
+        23.6063,
+        9.3503,
+        23.486
+      ]
+    },
+    "coil": {
+      "parent": "base",
+      "center": [
+        0.0143,
+        3.9847,
+        -0.0679
+      ],
+      "size": [
+        13.0952,
+        6.9033,
+        10.8581
+      ],
+      "pivot": [
+        0.0,
+        0.7,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "coil"
+  ],
+  "anim": {
+    "coil": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 3052,
+    "coil": 1024,
+    "total": 4076
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

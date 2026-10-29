@@ -1,0 +1,48 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 5404 triangles, glow share 0.2%",
+  "bar": {
+    "model": "rbxassetid://102979014267140",
+    "meshes": {
+      "base": "rbxassetid://115266348126075",
+      "base_glow_running": "rbxassetid://85117256028804"
+    },
+    "decals": {
+      "ALB": "rbxassetid://117640579900950",
+      "RGH": "rbxassetid://110202555544569",
+      "NOR": "rbxassetid://121634137738400",
+      "MTL": "rbxassetid://129885618927776",
+      "EMI": "rbxassetid://75183253354058"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://73457855485472",
+      "NOR": "rbxassetid://131075496066604",
+      "RGH": "rbxassetid://123964457882215",
+      "MTL": "rbxassetid://123321551235114",
+      "EMI": "rbxassetid://120587465900066"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advdepot_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://101685612259629",
+    "meshes": {
+      "base": "rbxassetid://74127882543034"
+    },
+    "decals": {
+      "ALB": "rbxassetid://122406904625694",
+      "RGH": "rbxassetid://128482635549347",
+      "NOR": "rbxassetid://110653145625339",
+      "MTL": "rbxassetid://108635069819804",
+      "EMI": "rbxassetid://123522166375881"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://128795993012644",
+      "NOR": "rbxassetid://122287841705747",
+      "RGH": "rbxassetid://118909936541916",
+      "MTL": "rbxassetid://85243141889341",
+      "EMI": "rbxassetid://83130773256299"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advdepot_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 4432 triangles"
+  }
+}

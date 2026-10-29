@@ -11,16 +11,6 @@ local RunAll = require("../../server/Tests/RunAll")
 local defs = Defs.load()
 local codex = Codex.build(defs)
 
--- Units the sim stream announced ahead of their defs (playtest feedback 3,
--- H20/H25-H31/H39-H41): their roles may name them before the defs land.
-local AWAITED = {
-	"ord_advsolar", "chs_advsolar", "ord_capacitor", "chs_accumulator",
-	"ord_advconverter", "chs_advconverter", "ord_advdepot", "chs_advdepot",
-	"ord_advcapacitor", "chs_advaccumulator", "ord_advfusion", "chs_advfusion",
-	"ord_nano", "chs_nano", "ord_seaextractor", "chs_seaextractor",
-	"ord_gantry", "chs_gantry", "ord_titan", "chs_korgoth", "chs_mammoth",
-}
-
 return function(t: RunAll.Context)
 	t.test("every role lists real units of its own faction, once", function()
 		local seen: { [string]: string } = {}
@@ -29,7 +19,7 @@ return function(t: RunAll.Context)
 			for side, list in { order = role.order, chaos = role.chaos } do
 				for _, id in list do
 					local def = defs.units[id]
-					t.expect(def ~= nil or table.find(AWAITED, id) ~= nil, `{role.name}: no def {id}`)
+					t.expect(def ~= nil, `{role.name}: no def {id}`)
 					if def then
 						t.equal(def.faction, side, `{role.name}: {id}`)
 					end
@@ -52,6 +42,8 @@ return function(t: RunAll.Context)
 		t.equal(codex.entries.chs_inferno, nil)
 		t.equal(codex.entries.chs_spike, nil)
 		t.equal(codex.entries.ord_bulwark, nil)
+		t.equal(codex.entries.ord_generator, nil)
+		t.equal(codex.entries.chs_generator, nil)
 		t.expect(codex.entries.ord_sovereign ~= nil, "Command Vehicles show though nothing builds them")
 		local fake = { units = table.clone(defs.units), weapons = defs.weapons }
 		fake.units.ord_paladin = table.clone(defs.units.ord_paladin)

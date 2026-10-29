@@ -1,0 +1,171 @@
+{
+  "id": "chs_gantry",
+  "footprintStuds": 56,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        9.9,
+        0.0
+      ],
+      "size": [
+        56.0442,
+        19.8,
+        55.4834
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        4.2,
+        -3.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -18.9,
+        10.0,
+        -14.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        18.9,
+        10.0,
+        -14.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        -18.9,
+        10.0,
+        -3.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        18.9,
+        10.0,
+        -3.0
+      ]
+    },
+    "nano5": {
+      "parent": "base",
+      "at": [
+        -18.9,
+        10.0,
+        8.0
+      ]
+    },
+    "nano6": {
+      "parent": "base",
+      "at": [
+        18.9,
+        10.0,
+        8.0
+      ]
+    },
+    "nano7": {
+      "parent": "base",
+      "at": [
+        -7.5,
+        12.0,
+        13.6
+      ]
+    },
+    "nano8": {
+      "parent": "base",
+      "at": [
+        7.5,
+        12.0,
+        13.6
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.1625,
+        0.0
+      ],
+      "size": [
+        54.74,
+        7.325,
+        51.9
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        14.605,
+        4.7638
+      ],
+      "size": [
+        37.62,
+        10.61,
+        38.9277
+      ]
+    }
+  ],
+  "glowShare": 0.0071,
+  "triangles": {
+    "base": 5408,
+    "total": 5408
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

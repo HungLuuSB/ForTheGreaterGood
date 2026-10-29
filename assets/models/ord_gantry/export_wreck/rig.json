@@ -1,0 +1,111 @@
+{
+  "id": "ord_gantry_wreck",
+  "wreckOf": "ord_gantry",
+  "footprintStuds": 56,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.1524,
+        18.949,
+        0.1218
+      ],
+      "size": [
+        55.5035,
+        39.193,
+        55.6309
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.8,
+        -9.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -13.6,
+        24.7,
+        -15.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        13.6,
+        24.7,
+        -15.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        -13.6,
+        24.7,
+        -9.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        13.6,
+        24.7,
+        -9.0
+      ]
+    },
+    "nano5": {
+      "parent": "base",
+      "at": [
+        -13.6,
+        24.7,
+        -3.0
+      ]
+    },
+    "nano6": {
+      "parent": "base",
+      "at": [
+        13.6,
+        24.7,
+        -3.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 3576,
+    "total": 3576
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

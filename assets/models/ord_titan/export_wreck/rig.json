@@ -1,0 +1,318 @@
+{
+  "id": "ord_titan_wreck",
+  "wreckOf": "ord_titan",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.3235,
+        9.8095,
+        0.0111
+      ],
+      "size": [
+        6.5203,
+        3.2988,
+        5.1204
+      ]
+    },
+    "thighL": {
+      "parent": "base",
+      "center": [
+        -3.639,
+        7.3107,
+        -0.637
+      ],
+      "size": [
+        3.8559,
+        7.3402,
+        5.6399
+      ],
+      "pivot": [
+        -3.6750000000000003,
+        9.66,
+        0.0
+      ]
+    },
+    "shinL": {
+      "parent": "thighL",
+      "center": [
+        -3.7424,
+        3.2821,
+        -0.1165
+      ],
+      "size": [
+        3.6448,
+        3.6937,
+        4.6535
+      ],
+      "pivot": [
+        -3.6750000000000003,
+        5.0232,
+        -1.2285000000000001
+      ]
+    },
+    "footL": {
+      "parent": "shinL",
+      "center": [
+        -3.7188,
+        1.1946,
+        -0.3677
+      ],
+      "size": [
+        3.7565,
+        3.1359,
+        6.9656
+      ],
+      "pivot": [
+        -3.6750000000000003,
+        1.9109999999999998,
+        0.21000000000000002
+      ]
+    },
+    "thighR": {
+      "parent": "base",
+      "center": [
+        3.6533,
+        7.1917,
+        -0.5865
+      ],
+      "size": [
+        3.5542,
+        7.2063,
+        5.1151
+      ],
+      "pivot": [
+        3.6750000000000003,
+        9.66,
+        0.0
+      ]
+    },
+    "shinR": {
+      "parent": "thighR",
+      "center": [
+        3.7886,
+        3.4055,
+        0.1499
+      ],
+      "size": [
+        2.7442,
+        3.0671,
+        4.3021
+      ],
+      "pivot": [
+        3.6750000000000003,
+        5.0232,
+        -1.2285000000000001
+      ]
+    },
+    "footR": {
+      "parent": "shinR",
+      "center": [
+        3.7594,
+        1.0851,
+        -0.561
+      ],
+      "size": [
+        4.1404,
+        3.6327,
+        7.5344
+      ],
+      "pivot": [
+        3.6750000000000003,
+        1.9109999999999998,
+        0.21000000000000002
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.1843,
+        16.9137,
+        0.1818
+      ],
+      "size": [
+        21.3979,
+        11.5804,
+        11.8832
+      ],
+      "pivot": [
+        0.0,
+        11.13,
+        0.0
+      ]
+    },
+    "missile_pod": {
+      "parent": "torso",
+      "center": [
+        -3.41,
+        19.4479,
+        3.008
+      ],
+      "size": [
+        3.8933,
+        5.5159,
+        3.6163
+      ],
+      "pivot": [
+        -3.2550000000000003,
+        22.05,
+        3.045
+      ]
+    },
+    "beam_arm": {
+      "parent": "torso",
+      "center": [
+        7.4458,
+        13.3771,
+        -4.1814
+      ],
+      "size": [
+        3.9147,
+        9.1895,
+        13.6216
+      ],
+      "pivot": [
+        6.93,
+        16.38,
+        0.0
+      ]
+    },
+    "blaster_arm": {
+      "parent": "torso",
+      "center": [
+        -7.4521,
+        13.3743,
+        -2.8867
+      ],
+      "size": [
+        4.7941,
+        9.0901,
+        11.3895
+      ],
+      "pivot": [
+        -6.93,
+        16.38,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "beam_muzzle": {
+      "parent": "beam_arm",
+      "at": [
+        7.3500000000000005,
+        10.5,
+        -10.920000000000002
+      ]
+    },
+    "blaster_muzzle1": {
+      "parent": "blaster_arm",
+      "at": [
+        -8.106,
+        10.5,
+        -8.505
+      ]
+    },
+    "blaster_muzzle2": {
+      "parent": "blaster_arm",
+      "at": [
+        -6.594,
+        10.5,
+        -8.505
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "thighL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 184,
+    "thighL": 388,
+    "shinL": 120,
+    "footL": 304,
+    "thighR": 388,
+    "shinR": 108,
+    "footR": 236,
+    "torso": 1384,
+    "missile_pod": 104,
+    "beam_arm": 576,
+    "blaster_arm": 508,
+    "total": 4300
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

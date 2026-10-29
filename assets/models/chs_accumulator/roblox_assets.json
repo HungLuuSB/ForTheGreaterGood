@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 2540 triangles, glow share 3.5%",
+  "bar": {
+    "model": "rbxassetid://140671145449205",
+    "meshes": {
+      "base": "rbxassetid://102142455969695",
+      "base_glow_power": "rbxassetid://95941123296821",
+      "base_glow_running": "rbxassetid://134447344985674"
+    },
+    "decals": {
+      "ALB": "rbxassetid://108814670696362",
+      "RGH": "rbxassetid://80085979194690",
+      "NOR": "rbxassetid://101356592471843",
+      "MTL": "rbxassetid://81314878379068",
+      "EMI": "rbxassetid://113559404345958"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://103223295894519",
+      "NOR": "rbxassetid://78922393118622",
+      "RGH": "rbxassetid://74016508296705",
+      "MTL": "rbxassetid://96511291652240",
+      "EMI": "rbxassetid://108635386465756"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_accumulator_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://124352771815667",
+    "meshes": {
+      "base": "rbxassetid://106436749080793"
+    },
+    "decals": {
+      "ALB": "rbxassetid://122121094627537",
+      "RGH": "rbxassetid://135146955086368",
+      "NOR": "rbxassetid://116434433502674",
+      "MTL": "rbxassetid://129670539854328",
+      "EMI": "rbxassetid://118334323879221"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://121251767039332",
+      "NOR": "rbxassetid://111954450361471",
+      "RGH": "rbxassetid://137684944479651",
+      "MTL": "rbxassetid://134098112989223",
+      "EMI": "rbxassetid://77146900044603"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_accumulator_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 2408 triangles"
+  }
+}

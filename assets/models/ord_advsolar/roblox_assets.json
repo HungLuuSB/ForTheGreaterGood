@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 2936 triangles, glow share 5.7%",
+  "bar": {
+    "model": "rbxassetid://134829626344885",
+    "meshes": {
+      "base": "rbxassetid://106765995212040",
+      "base_glow_power": "rbxassetid://132709485455105",
+      "base_glow_running": "rbxassetid://121286541452173"
+    },
+    "decals": {
+      "ALB": "rbxassetid://103635097205987",
+      "RGH": "rbxassetid://134997672910269",
+      "NOR": "rbxassetid://99075907415765",
+      "MTL": "rbxassetid://123705181584626",
+      "EMI": "rbxassetid://101325753240563"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://81009625704542",
+      "NOR": "rbxassetid://95969498104133",
+      "RGH": "rbxassetid://87832054860508",
+      "MTL": "rbxassetid://95057530270758",
+      "EMI": "rbxassetid://94238560570688"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advsolar_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://126989238211025",
+    "meshes": {
+      "base": "rbxassetid://133924527410245"
+    },
+    "decals": {
+      "ALB": "rbxassetid://102654220285604",
+      "RGH": "rbxassetid://87130355799685",
+      "NOR": "rbxassetid://101819325628966",
+      "MTL": "rbxassetid://92243483079770",
+      "EMI": "rbxassetid://80815430557161"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://93929252196667",
+      "NOR": "rbxassetid://85765150150626",
+      "RGH": "rbxassetid://82787535497000",
+      "MTL": "rbxassetid://103333953946352",
+      "EMI": "rbxassetid://137716317672728"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advsolar_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 2804 triangles"
+  }
+}

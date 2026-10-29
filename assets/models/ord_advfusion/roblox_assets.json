@@ -1,0 +1,53 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 5880 triangles, glow share 4.9%",
+  "bar": {
+    "model": "rbxassetid://75277696694015",
+    "meshes": {
+      "base": "rbxassetid://125967048225966",
+      "base_glow_power": "rbxassetid://131398424593937",
+      "base_glow_running": "rbxassetid://109197912862036",
+      "core": "rbxassetid://131461721553994",
+      "core_glow_head": "rbxassetid://127567812275820",
+      "core_glow_running": "rbxassetid://123608313067331"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73428297475836",
+      "RGH": "rbxassetid://100904079212320",
+      "NOR": "rbxassetid://127344096590126",
+      "MTL": "rbxassetid://132460270569337",
+      "EMI": "rbxassetid://127420926887136"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://94768579650127",
+      "NOR": "rbxassetid://134121262905579",
+      "RGH": "rbxassetid://92686769230813",
+      "MTL": "rbxassetid://94415996740219",
+      "EMI": "rbxassetid://77670212902391"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advfusion_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://114991192533705",
+    "meshes": {
+      "base": "rbxassetid://136924493024633",
+      "core": "rbxassetid://87228595192566"
+    },
+    "decals": {
+      "ALB": "rbxassetid://94581461592626",
+      "RGH": "rbxassetid://98092066515680",
+      "NOR": "rbxassetid://91777749286288",
+      "MTL": "rbxassetid://78733842580055",
+      "EMI": "rbxassetid://85503719400889"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://80511414851685",
+      "NOR": "rbxassetid://73591549923080",
+      "RGH": "rbxassetid://136530414061543",
+      "MTL": "rbxassetid://86282667376394",
+      "EMI": "rbxassetid://99404145698242"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advfusion_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 5156 triangles"
+  }
+}
