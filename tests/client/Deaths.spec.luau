@@ -18,7 +18,7 @@ local defs = Defs.load()
 
 return function(t: any)
 	t.test("a wreck means a shake; no wreck means flung pieces", function()
-		local def = defs.units.chs_juggernaut
+		local def = defs.units.chs_goliath
 		local shake = Deaths.plan(4, def, 60, 17)
 		t.equal(shake.kind, "shake")
 		t.expect(shake.wreck and #shake.pieces == 0)

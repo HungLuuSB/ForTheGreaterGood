@@ -2300,3 +2300,21 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - Supply Extractor: the offshore extractors. Power Generator: the advanced solars. Supply Converter: the advanced converters. Fusion Reactor: the advanced fusions.
   - Storage: the capacitor and accumulator, the T2 depots, the T2 capacitor and accumulator.
   - The generators are marked retired; chs_juggernaut's catalogue name is Goliath. The sheet image is unchanged (no upload); `UI/IconAtlas` carries the new mappings.
+
+### C-254 — Amphibious walkers drawn on the seafloor (H18) (2026-10-29)
+
+- `World.floats` drew every move class with the amphibious surface on the water: AMPHIB_WALKER (S-210: both Commanders, the Titan, the Juggernaut) shares that surface with the floating amphibious tanks, so the walkers stood on top of the sea. It now leaves AMPHIB_WALKER on the ground; the Tideguard still floats. `PortraitStage.spec` covers the four walkers and the offshore extractor.
+- H20 needed nothing: the offshore extractors (`placement = "seafloor"`) already sit on the bed.
+- Studio, Coastline (20 studs of water over a bed at -12): Sovereign, Warlord, Titan and Juggernaut stand at -12 (the T3s' heads clear the surface at +8), the extractors at -12, the Tideguard on the surface (`debug_out/screens/c254-seafloor-walkers.jpg`).
+- Also checked in that playtest, no change needed: the scouts' laser draws hot yellow (H11); a Mason sent 220 studs away shows no nano stream until it stops in reach (H1, S-208); on models-C's meshes the Mammoth walks in diagonal pairs, the Titan's thighs alternate, and both nano turrets turn and pitch their nozzle onto the work they assist (C-252's rigs).
+
+### C-255 — Still water (2026-10-29)
+
+- The user: the water's moving texture looked odd. The two scrolling ripple Textures on every water surface (C-236) are gone, with their EditableImage and tweens; the water is the plain see-through planes over the darker depth planes.
+
+### C-256 — S-213 lands through the client branch: chs_juggernaut is the T3 bot, chs_goliath the T2 tank (2026-10-29)
+
+- sim-A's S-213 (748ddf25) swaps the Chaos ids: the T3 bot `chs_korgoth` is now `chs_juggernaut` (weapons `chs_juggernaut_heatray`, `_shotgun`, `_missiles`); the T2 tank once named Juggernaut is `chs_goliath` ("Goliath", `chs_goliath_cannon`), retired. Every stream keys on unit ids, so it lands as one merge from this branch: sim-A's commit, lobby-D's Codex (e4aef962, Ready 5b2a078d), models-C's Blockouts, Meshes, assets and MeshMaterials (a1030665, tip bfded620), and the client's part.
+- Client: the arms script `PieceScripts/chs_juggernaut` is renamed `chs_goliath`; the Bot gait's hip and scale tables, `PieceScripts/Registry` and `UI/IconAtlas` take the new ids (the T3 bot still borrows the Main Battle Tank tile until 2D-E's icons, request E1). The Deaths, PieceAnim, Ambient and PortraitStage specs follow.
+- The test scenes in `src/roblox/MatchConfig.luau` that spawned the T2 tank now spawn `chs_goliath` (committed from the file's committed version only; the user's local edits stay out).
+- Studio, Coastline: `chs_juggernaut` draws as the meshed T3 bot and walks on the Bot gait, `chs_goliath` as the meshed tank; no piece-script errors (`debug_out/screens/c256-juggernaut-t3.jpg`).

@@ -1,0 +1,95 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Animated pieces (M-27): 1844 triangles, glow share 5.0%",
+  "bar": {
+    "model": "rbxassetid://98229801831237",
+    "meshes": {
+      "armL": "rbxassetid://125958134940904",
+      "armL_glow_running": "rbxassetid://120844694970766",
+      "armL_glow_weapon": "rbxassetid://139259505436777",
+      "armR": "rbxassetid://79025790211394",
+      "armR_glow_running": "rbxassetid://112788200830523",
+      "armR_glow_weapon": "rbxassetid://70436073290802",
+      "base": "rbxassetid://111556404150487",
+      "base_glow_head": "rbxassetid://104067457910288",
+      "base_glow_running": "rbxassetid://76826621455100",
+      "trackL": "rbxassetid://110041737626201",
+      "trackR": "rbxassetid://90406320327921",
+      "turret": "rbxassetid://119491082504258",
+      "turret_glow_running": "rbxassetid://115703380289263"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73285710295267",
+      "RGH": "rbxassetid://119712818627373",
+      "NOR": "rbxassetid://112261339992998",
+      "MTL": "rbxassetid://78802300811925",
+      "EMI": "rbxassetid://122541933358696"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://121805878728842",
+      "NOR": "rbxassetid://79850107131082",
+      "RGH": "rbxassetid://96588588716711",
+      "MTL": "rbxassetid://107738590716746",
+      "EMI": "rbxassetid://139821381842272"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_juggernaut_bar in FTGG Art"
+  },
+  "bar_1": {
+    "model": "rbxassetid://114402565517622",
+    "meshes": {
+      "armL": "rbxassetid://133403698041044",
+      "armL_glow_running": "rbxassetid://109380910494970",
+      "armL_glow_weapon": "rbxassetid://105295960678557",
+      "armR": "rbxassetid://73408287705270",
+      "armR_glow_running": "rbxassetid://138687794088102",
+      "armR_glow_weapon": "rbxassetid://140293176130570",
+      "base": "rbxassetid://135137819162120",
+      "base_glow_head": "rbxassetid://77411540574050",
+      "base_glow_running": "rbxassetid://92396899889296",
+      "turret": "rbxassetid://116021011093180",
+      "turret_glow_running": "rbxassetid://124392661287688"
+    },
+    "decals": {
+      "ALB": "rbxassetid://127126349659340",
+      "RGH": "rbxassetid://111010845086614",
+      "NOR": "rbxassetid://117472261964055",
+      "MTL": "rbxassetid://110083310328398",
+      "EMI": "rbxassetid://92444784699312"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://87982680658310",
+      "NOR": "rbxassetid://112329290586756",
+      "RGH": "rbxassetid://111422990287492",
+      "MTL": "rbxassetid://72914391888578",
+      "EMI": "rbxassetid://104842864265047"
+    },
+    "note": "2026-10-22, first BAR upload (M-15): 1844 triangles, glow share 5.0%"
+  },
+  "wreck": {
+    "model": "rbxassetid://121068576949343",
+    "meshes": {
+      "armL": "rbxassetid://75650101529717",
+      "armR": "rbxassetid://91369894561446",
+      "base": "rbxassetid://93440512014265",
+      "trackL": "rbxassetid://124368803127811",
+      "trackR": "rbxassetid://103800926147089",
+      "turret": "rbxassetid://124354487827449"
+    },
+    "decals": {
+      "ALB": "rbxassetid://90481259814782",
+      "RGH": "rbxassetid://103384636229258",
+      "NOR": "rbxassetid://94685440555967",
+      "MTL": "rbxassetid://127039362674776",
+      "EMI": "rbxassetid://81315591520989"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://73411305825157",
+      "NOR": "rbxassetid://107905618067578",
+      "RGH": "rbxassetid://130174483948394",
+      "MTL": "rbxassetid://91802887944409",
+      "EMI": "rbxassetid://70425434067777"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_juggernaut_wreck_bar in FTGG Art",
+    "revision": "wreck rigged in FTGG Art 2026-10-26 (clamp scale from measured base_bar), review: 1832 triangles"
+  }
+}

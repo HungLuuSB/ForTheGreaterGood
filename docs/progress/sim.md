@@ -551,6 +551,12 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - Side effects through shared weapons: Lancer vs Mire 1.36 / 1.57 → 2.39 / 2.04 (the Mire got the Chaos cannon's spread); Tideguard vs Ravager 0.27 → 0.53; Paladin vs Ravager 0.37 → 0.84 / 1.11.
 - **AI tuning numbers** (S-7, S-17): placeholders, as agreed.
 
+## For the 2D stream (E)
+
+Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E reads this section; the sim stream doesn't edit E's files.
+
+1. **S-213 (2026-10-29):** the Chaos T3 bot's id is now `chs_juggernaut` (was `chs_korgoth`); the retired T2 tank is `chs_goliath` (was `chs_juggernaut`). Its unit picture and icon sheet entry should follow the new ids. The T3 walker still borrows the T2 tank's tile in B's `IconAtlas`; it needs its own art, with the Titan's. B swaps the `IconAtlas` keys.
+
 ## For the client stream
 
 - **2026-10-24, for B:**
@@ -789,6 +795,7 @@ Four Claude sessions work in parallel, one per stream. Each has its own git work
 | B, client | `client-B` | `FTGG-client` | `m-client-foundation` | `src/client`, `src/roblox`, icons, `docs/contracts/` | `docs/progress/client.md`, `docs/decisions/client.md` (C-) | the match place "For The Greater Good" (placeId 89435699207932) |
 | C, models | `models-C` | `FTGG-models` | `m-models` | `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/`, `assets/models/`, `place/` | `docs/progress/models.md`, `docs/decisions/models.md` (M-) | "FTGG Art", Rojo port 34873 |
 | D, lobby | `lobby-D` | `FTGG-lobby` | `m-lobby` | `src/lobby/**`, `lobby.project.json`, `docs/contracts/match.md` | `docs/progress/lobby.md`, `docs/decisions/lobby.md` (L-) | "FTGG Lobby", Rojo port 34874 |
+| E, 2D assets (since 2026-10-29) | session E | `FTGG-2d` | `2d` | the icon sheet source, unit pictures, command and resource icons, thumbnails (B keeps `tools/icons/render.mjs`, `IconAtlas` and the UI wiring) | its own progress file | none |
 
 - **Integration (A only):**
   - In `../FTGG-integration`, per `CLAUDE.md`.

@@ -1,5 +1,5 @@
 --!strict
--- Juggernaut (guide 14.4, C-30, C-33): the torso turns to the target and
+-- Goliath (chs_goliath, the T2 tank once named Juggernaut; guide 14.4, C-30, C-33): the torso turns to the target and
 -- both gun arms follow the server's pitch, and the arms recoil in turn
 -- when it fires. The timing is the server's (S-20, Shared/Combat/Aim): the
 -- weapon rests with the arms hanging at `turret.restPitch`, raises them at
