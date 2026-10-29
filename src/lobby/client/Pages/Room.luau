@@ -21,6 +21,7 @@ local Listing = require("../../shared/Listing")
 local MatchConfig = require("../../shared/MatchConfig")
 local SpawnBoxes = require("../../shared/SpawnBoxes")
 local BoxEditor = require("../BoxEditor")
+local Emblem = require("../Emblem")
 local MapImage = require("../MapImage")
 local MapPicker = require("../MapPicker")
 local Net = require("../Net")
@@ -84,7 +85,7 @@ local function editSeat(gui: Instance, index: number)
 	end
 	local m = memberOf(room, s.user)
 	local title = if s.kind == "ai" then "AI player" elseif mine then "Your seat" else (if m then m.name else "Player")
-	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 260 else 240))
+	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 268 else 248))
 	Kit.list(p.content, Kit.SPACE.s)
 	local function send(fields: any)
 		local msg = table.clone(fields)
@@ -97,9 +98,9 @@ local function editSeat(gui: Instance, index: number)
 		Net.send(msg)
 	end
 	if mine or s.kind == "ai" then
-		Kit.segmented(Kit.row(p.content, "Faction", 1), options(Config.FACTIONS), s.faction, function(v)
+		Emblem.picker(Kit.row(p.content, "Faction", 1, 94), Config.FACTIONS, s.faction, function(v)
 			send({ faction = v })
-		end, 90)
+		end)
 		if mine then
 			-- F35: the match's pre-game has the last word on factions
 			local note = Kit.text(p.content, "A first choice: you can change it in the match before it starts.", "small", Kit.COLOR.dim)
@@ -397,7 +398,13 @@ function Room.new(frame: Frame, _router: any): any
 		end
 		Ui.label(chip, who, "label", nil, 2)
 		if s then
-			Ui.label(chip, Ui.label2(s.faction), "small", if s.faction == "order" then Color3.fromRGB(140, 180, 240) else Color3.fromRGB(236, 120, 100), 3)
+			-- the faction's emblem; its name until the emblems are uploaded
+			local emblem = Emblem.label(chip, s.faction, 16)
+			if emblem then
+				emblem.LayoutOrder = 3
+			else
+				Ui.label(chip, Ui.label2(s.faction), "small", if s.faction == "order" then Color3.fromRGB(140, 180, 240) else Color3.fromRGB(236, 120, 100), 3)
+			end
 			local role = index and roles[index]
 			if role then
 				-- two or more AIs on a side share the work (the sim picks the same)
@@ -643,7 +650,11 @@ function Room.new(frame: Frame, _router: any): any
 			local yl = Kit.list(you, Kit.SPACE.s, true)
 			yl.VerticalAlignment = Enum.VerticalAlignment.Center
 			Ui.swatch(you, Ui.rgb(colors[mySlot]), 14).LayoutOrder = 1
-			Ui.label(you, `{Ui.label2(s.faction)}{if room.settings.mode == "TEAM" then ` · Team {s.team}` else ""}`, "label", nil, 2)
+			local emblem = Emblem.label(you, s.faction, 16)
+			if emblem then
+				emblem.LayoutOrder = 2
+			end
+			Ui.label(you, `{Ui.label2(s.faction)}{if room.settings.mode == "TEAM" then ` · Team {s.team}` else ""}`, "label", nil, 3)
 			if setup then
 				Ui.chevron(cell)
 				local hit = Instance.new("TextButton")

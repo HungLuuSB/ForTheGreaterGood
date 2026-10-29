@@ -2,6 +2,16 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-30: faction emblems, D-E2)
+
+- Merged main `40368ba8` (S-216, S-217: no Codex change, it reads costs from the defs and shows no death blasts) and `411f7cb0` (B's C-265..C-269 with `UI/FactionEmblems` and `UI/UnitPictures`).
+- **`lobby.project.json`** mounts client-B's `UI/FactionEmblems` read-only (`ClientKit.UI.FactionEmblems`).
+- **`client/Emblem`** (new): a tinted emblem label, a faction picker (a card per faction, its 64 px emblem over its name, the chosen one lit in its tint) and emblems in a `Kit.segmented` faction switch. Without an uploaded atlas the names show alone.
+- **Where:** Skirmish's "Your faction" / "Opponent faction" and the seat and AI editors use the picker; the Units tab's Order / Chaos switch has 16 px emblems and the article header a 28 px one; the room's seat chips show a 16 px emblem instead of the faction name, and the "You" row an emblem before it.
+- **Studio** (`debug_out/screens/`): `lobby_emblems_skirmish`, `lobby_emblems_units`, `lobby_emblems_room`, `lobby_emblems_ai_editor` (Team mode). Picking a card sends the change (the AI's chip switched to Order). No script errors.
+- Requests D-E2 and B-10 are done.
+- Lobby specs 67 / 67; the build check passes (651 scripts, 1084 requires).
+
 ## Summary (2026-10-30: the Units article's real icons)
 
 - Merged main `6e4f6303` (B's C-258..C-261: E's UI icons uploaded, atlas `rbxassetid://98955338730678`, `UI/UiIcons` with 47 keys).
@@ -506,7 +516,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 - **B-4. Kit additions** (I use the kit read-only): a text input (`Kit.input`, the lobby has its own in `src/lobby/client/Ui.luau`), and a `fill` option on `Kit.button` for green / red action buttons.
 - **B-5. (later) Replays from the lobby:** a `kind = "replay"` match config for a reserved server that plays a saved replay (contract "reserved for a later version").
 
-- **B-10. The faction emblems' asset ID (with E's D-E2).** Once the emblems are uploaded: their image and rects (E's `assets/2d/emblems/keys.json`) in a read-only client module, as `UI/UiIcons` does for the stat icons.
+- **B-10. Done (C-265, `UI/FactionEmblems`, on main 411f7cb0).** The faction emblems' asset ID (with E's D-E2). Once the emblems are uploaded: their image and rects (E's `assets/2d/emblems/keys.json`) in a read-only client module, as `UI/UiIcons` does for the stat icons.
 - **B-9. Done (C-259, `UI/UiIcons`, on main 6e4f6303).** The UI icons' asset IDs (with E's D-E1). Once E's resource and stat icons are uploaded, put their asset IDs and atlas rects in a client module next to `IconAtlas` (key → image and rect per size, E's `keys.json` keys). The lobby requires it read-only, like `IconAtlas`.
 - **B-6. Done (C-184, ddc588f).** **Key-art viewer stutter (2026-10-24, the user approved):** UDim2 offsets are whole pixels, so `UI/KeyArt` moved its layers in 1 px jumps. Move them by scale instead (fractional), give tiles a 1 px overlap and a 0.001° rotation (sub-pixel drawing). Tested live: smooth, 60 fps.
 
@@ -524,7 +534,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 Since 2026-10-29 (the user), session E owns the 2D assets: the icon sheet's source, unit pictures, command and resource icons, thumbnails. client-B keeps `render.mjs`, `IconAtlas` and the UI wiring. The lobby reads the icons only through B's `IconAtlas` (the Units list, read-only), so an icon request goes to E here, and its wiring to B.
 
 - **D-E1. Done (2026-10-30): the Units article uses them.** The Codex's stat icons (E-7 done on branch `2d`, ccd4bde1; E-8 done, 41fa001e: health, dps, range, speed, sight, radar, build, plus armor, value, airSight; E-9 next, the weapon-card keys).** E-7: supply (crate), power (bolt), time (hourglass), wind, tidal, at 16 / 24 / 32 px, white for tinting, with an atlas and `keys.json`. They're not uploaded yet: the upload waits for your approval. E-8 keeps StatBars' `GLYPH` keys (health, dps, range, speed, sight, radar, build) and adds armor, value and airSight. Once they're uploaded, the lobby swaps `StatBars`' text glyphs for these images (the glyph stays as a fallback). It needs B-9 below first.
-- **D-E2. Faction emblems (E, on `2d` d9d67900; your pick: Order `order_bastion`, Chaos `chaos_maw`).** Not uploaded yet: the upload waits for your approval, then B-10. The lobby will use them in the faction choices (Skirmish, the seat editor and AI editor; 64 or 128 px), the Units tab's Order / Chaos switch and article header, and the room's seat chips (16 or 24 px), tinted Order blue / Chaos red. Text names stay as the fallback.
+- **D-E2. Done (2026-10-30; uploaded as `rbxassetid://136358453510061`, B-10).** Faction emblems (E, on `2d` d9d67900; your pick: Order `order_bastion`, Chaos `chaos_maw`). The lobby will use them in the faction choices (Skirmish, the seat editor and AI editor; 64 or 128 px), the Units tab's Order / Chaos switch and article header, and the room's seat chips (16 or 24 px), tinted Order blue / Chaos red. Text names stay as the fallback.
 
 ## Plan and status
 
