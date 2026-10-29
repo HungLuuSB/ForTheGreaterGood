@@ -6,8 +6,11 @@
 -- The defs have no role field: the roles below are guide section 13's
 -- tables (one role, its Order and its Chaos units; a faction-only role
 -- leaves the other side empty). A def no role lists still shows, under
--- "Other", so a new unit never breaks the page. Retired defs (nothing can
--- build them, and they're not a Command Vehicle) don't show.
+-- "Other", so a new unit never breaks the page. A role may name a unit
+-- the defs don't have yet (announced by the sim stream ahead of its def);
+-- it shows once the def lands. Retired defs (`retired`, or nothing can
+-- build them and they're not a Command Vehicle) don't show, and neither
+-- side lists the other's missing or retired units as counterparts.
 --
 -- The numbers follow the in-game unit panel (client-B's Core/UnitStats):
 -- damage per second = damage per shot × shots per reload ÷ reload, against
@@ -79,6 +82,8 @@ Codex.ROLES = {
 	r("ground", "AA bot", 1, { "ord_kestrel" }, { "chs_needle" }),
 	r("ground", "Heavy plasma", 2, { "ord_fatboy" }, { "chs_tzar" }),
 	r("ground", "Heavy laser bot", 2, {}, { "chs_centurion" }),
+	r("ground", "Heavy assault bot", 2, {}, { "chs_mammoth" }),
+	r("ground", "Experimental assault walker", 3, { "ord_titan" }, { "chs_korgoth" }),
 
 	r("air", "Fighter", 1, { "ord_falcon" }, { "chs_harpy" }),
 	r("air", "Attack helicopter", 1, { "ord_guardian" }, { "chs_wasp" }),
@@ -131,25 +136,34 @@ Codex.ROLES = {
 	r("strategic", "Nuclear missile silo", 3, { "ord_reckoning" }, { "chs_ragnarok" }),
 
 	r("economy", "Supply extractor", 1, { "ord_extractor" }, { "chs_extractor" }),
+	r("economy", "Underwater supply extractor", 1, { "ord_seaextractor" }, { "chs_seaextractor" }),
 	r("economy", "Solar array", 1, { "ord_solar" }, { "chs_solar" }),
+	r("economy", "Advanced solar collector", 1, { "ord_advsolar" }, { "chs_advsolar" }),
 	r("economy", "Wind turbine", 1, { "ord_windmill" }, { "chs_windmill" }),
 	r("economy", "Tidal generator", 1, { "ord_tidal" }, { "chs_tidal" }),
 	r("economy", "Power generator", 1, { "ord_generator" }, { "chs_generator" }),
 	r("economy", "Supply converter", 1, { "ord_converter" }, { "chs_converter" }),
 	r("economy", "Depot", 1, { "ord_depot" }, { "chs_depot" }),
+	r("economy", "Energy storage", 1, { "ord_capacitor" }, { "chs_accumulator" }),
 	r("economy", "Advanced extractor", 2, { "ord_advextractor" }, { "chs_advextractor" }),
+	r("economy", "Advanced supply converter", 2, { "ord_advconverter" }, { "chs_advconverter" }),
+	r("economy", "Advanced depot", 2, { "ord_advdepot" }, { "chs_advdepot" }),
+	r("economy", "Advanced energy storage", 2, { "ord_advcapacitor" }, { "chs_advaccumulator" }),
 	r("economy", "Fusion reactor", 2, { "ord_fusion" }, { "chs_fusion" }),
+	r("economy", "Advanced fusion reactor", 2, { "ord_advfusion" }, { "chs_advfusion" }),
 
 	r("factory", "Vehicle plant", 1, { "ord_vehplant" }, { "chs_vehplant" }),
 	r("factory", "Airfield", 1, { "ord_airfield" }, { "chs_airfield" }),
 	r("factory", "Shipyard", 1, { "ord_shipyard" }, { "chs_shipyard" }),
 	r("factory", "Rearm pad", 1, { "ord_airpad" }, { "chs_airpad" }),
 	r("factory", "Bot lab", 1, { "ord_botlab" }, { "chs_botlab" }),
+	r("factory", "Construction turret", 1, { "ord_nano" }, { "chs_nano" }),
 	r("factory", "Advanced vehicle plant", 2, { "ord_advvehplant" }, { "chs_advvehplant" }),
 	r("factory", "Advanced airfield", 2, { "ord_advairfield" }, { "chs_advairfield" }),
 	r("factory", "Advanced shipyard", 2, { "ord_advshipyard" }, { "chs_advshipyard" }),
 	r("factory", "Advanced rearm pad", 2, { "ord_empyrean" }, { "chs_rookery" }),
 	r("factory", "Advanced bot lab", 2, { "ord_advbotlab" }, { "chs_advbotlab" }),
+	r("factory", "Experimental gantry", 3, { "ord_gantry" }, { "chs_gantry" }),
 }
 
 export type Entry = {
@@ -211,7 +225,7 @@ function Codex.build(defs: any): Codex
 	local byFaction: { [string]: { Entry } } = { order = {}, chaos = {} }
 	for id, def in defs.units do
 		local commander = def.tier == 0
-		if builtBy[id] == nil and not commander then
+		if def.retired or builtBy[id] == nil and not commander then
 			continue -- retired: nothing builds it
 		end
 		local role = roleOf[id]
@@ -223,12 +237,21 @@ function Codex.build(defs: any): Codex
 			faction = faction,
 			role = role,
 			section = if role then role.section else sectionOf(def),
-			counterparts = table.clone(other),
+			counterparts = table.clone(other), -- trimmed to listed entries below
 			builtBy = builtBy[id] or {},
 		}
 		entries[id] = e
 		byFaction[faction] = byFaction[faction] or {}
 		table.insert(byFaction[faction], e)
+	end
+	for _, e in entries do
+		local shown = {}
+		for _, other in e.counterparts do
+			if entries[other] then
+				table.insert(shown, other)
+			end
+		end
+		e.counterparts = shown
 	end
 	for _, list in byFaction do
 		table.sort(list, function(a, b)
