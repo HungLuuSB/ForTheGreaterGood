@@ -9,6 +9,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Key art at random:** each loading screen takes a random approved art, never the last one shown. Studio: four Quick plays showed Volley → Commander's stand → Converging → Commander's stand; no errors.
 - **Lobby max players:** explained in L-27; recommended 50 (the guide's step 5.1 now says 50). It's a place setting, so it's yours to change.
 - Lobby specs 67 / 67; the build check passes (648 scripts, 1077 requires).
+- Ready to merge: `abc8a09a` (key art at random; L-27; touches only `src/lobby/client/Overlays/Loading.luau` and the lobby docs)
 
 ## Summary (2026-10-29: all three key arts in; handover check)
 
