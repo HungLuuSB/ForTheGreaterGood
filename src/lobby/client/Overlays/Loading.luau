@@ -5,9 +5,8 @@
 -- teleporting; also while moving to a room on another lobby server (L-15).
 -- In Studio the Studio stand-in match runs here instead (L-6), with its
 -- controls: end the match now, make the "server" die, or go back early.
--- Each showing takes the next key art in turn, so every approved art
--- (1 "Commander's stand" once it's listed, 2 "Volley", 3 "Converging")
--- comes round.
+-- Each showing takes an approved key art at random (the user, 2026-10-29),
+-- never the one shown last time.
 
 local RunService = game:GetService("RunService")
 
@@ -122,7 +121,7 @@ function Loading.new(gui: ScreenGui): any
 
 	local tipIndex = math.random(1, #TIPS)
 	local names = artNames()
-	local artIndex = math.random(1, math.max(1, #names))
+	local artIndex = 0 -- the one shown last (0: none yet)
 	local mode: string? = nil
 	local started = 0
 
@@ -166,7 +165,12 @@ function Loading.new(gui: ScreenGui): any
 			end
 			if newMode ~= mode then
 				if mode == nil and newMode ~= nil then
-					artIndex = artIndex % math.max(1, #names) + 1
+					if #names > 1 and artIndex > 0 then
+						-- one of the others: a step of 1..n-1 past the last
+						artIndex = (artIndex + math.random(1, #names - 1) - 1) % #names + 1
+					else
+						artIndex = math.random(1, math.max(1, #names))
+					end
 					local shown = art.show(names[artIndex])
 					root.BackgroundTransparency = if shown then 1 else 0.45
 					Scene.setCovered(shown) -- the art is opaque: pause the battle behind it

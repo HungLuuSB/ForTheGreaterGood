@@ -182,3 +182,11 @@ The user approved it (queue item 5). "Invite" in the room calls `SocialService:P
 
 - **Decision:** the user, from playtest 2. The room's Map row opens a panel: the maps grouped small to large, a big preview, and an information column (size and cells, starts and how many teams, then wind, tides and terrain features from the map's `info` once sim-A's MapRegistry sends them). The host chooses there; everyone else can look.
 - **No suggested landing points:** the room's map and the Skirmish preview drop the numbered start markers. Players pick their start in the match (S-171).
+
+## L-27 (2026-10-29): the user's answers on cheats, forced start, spectators, key art, lobby size
+
+- **Cheats:** agreed as built. The host may turn them on in any room; such matches are listed on the profile and don't count; the match server enforces the allow-list (C-119).
+- **Forced start:** the host's force start goes straight to the countdown, and at the start whoever hasn't picked a spot gets the best free one. The match's pre-game already does exactly this (`Pregame`, S-174: START 1 is a 3 s countdown that un-readying can't cancel; `start` gives every unpicked player `Pregame.bestSpot`). The lobby's forced start skips only the room's ready check; the match's pick time still runs.
+- **Spectators:** they join and watch, nothing more for now. The match place gives them no seat and the full view (C-79).
+- **Key art:** at random on each loading screen, never the one shown last time (`Overlays/Loading`); the joining screen already picks at random (`UI/KeyArt`).
+- **Lobby max players (a place setting, the user's):** recommended 50, was 20. Rooms hold 16 people, AIs included (L-25), and a room on another lobby server is joined by moving to that server (L-15), which fails while it is full. At 20, one full room leaves room for 4 more players, so joining a busy room often fails. At 50 a server holds a few full rooms plus browsers. A lobby server's load is small: room logic and chat; the 3D background runs on each player's machine. 2 stays only for the playtest's Part A, so four testers spread over two servers.
