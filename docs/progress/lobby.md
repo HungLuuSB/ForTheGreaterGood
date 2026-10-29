@@ -8,6 +8,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Codex:** the Experimental assault walker row is Titan / `chs_juggernaut`. The Main battle tank row has no Chaos unit until you pick one, so the Paladin shows without a counterpart and Goliath is hidden.
 - `Codex.spec` follows: the counterpart pair is Titan ↔ Juggernaut, the Paladin has none, and Goliath is hidden. Lobby specs 67 / 67; the build check passes. In Studio the synced Codex gives the same result.
 - Ready to merge: `e4aef962` (Codex for S-213; includes the merge of sim-A's `748ddf25`, so it lands with or after it; touches only `src/lobby`)
+- Ready to merge: `428ad8c1` (progress only: a Requests section for the 2D stream, session E; touches only the lobby progress)
 
 ## Summary (2026-10-29: your answers on the review list, L-27)
 
