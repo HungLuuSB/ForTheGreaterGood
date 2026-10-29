@@ -6,6 +6,15 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 ## Summary (latest: playtest feedback 3, 2026-10-29, branch `m-sim-2`)
 
+**After the round (2026-10-29, the user):**
+- **S-213: the T3 bot is `chs_juggernaut`.** `chs_korgoth` became `chs_juggernaut` (its weapons `chs_juggernaut_heatray` / `_shotgun` / `_missiles`). The T2 tank that had the id is now `chs_goliath` ("Goliath", weapon `chs_goliath_cannon`), retired and on no build list.
+- **Shorter T3 range:**
+  - Titan: beam 420 → 320, missiles 520 → 390.
+  - Juggernaut: heat ray 300 → 230, missiles 700 → 520.
+  - The close guns are unchanged.
+- The client, the models and the Codex key on unit ids, so B, C and D swap their keys too. It lands as one merge, through the last of their branches.
+- `tools/studio/sync_all.cmd`: a double-click start for the three places' live syncs.
+
 **The playtest 3 round:** the user's FTGG-FEEDBACK-3, items H1–H43. Owners and status are in `docs/progress/playtest-2026-10-28.md`.
 - Decisions: S-197..S-212.
 - Protocol 40 → 41.
@@ -786,8 +795,8 @@ Four Claude sessions work in parallel, one per stream. Each has its own git work
   - Run `integrate.sh` once per "Ready to merge" commit, strictly one after another (chained with `&&` in one background command, never in parallel).
   - After each push, tell the streams, and each merges `main` itself.
 - **Live sync:**
-  - Match place: `lune run serve` and `rojo serve serve.project.json` in this folder.
-  - Each Studio stream runs its own pair in its own worktree; D's is `lune run src/lobby/tools/sync serve` and `rojo serve lobby.project.json`.
+  - All three places: double-click `tools/studio/sync_all.cmd` (or run `tools/studio/sync_all.ps1 [match] [lobby] [art]`). It starts each place's converter and Rojo in its stream's worktree: match on 34872 from `FTGG-client`, art on 34873 from `FTGG-models`, lobby on 34874 from `FTGG-lobby` (`tools/studio/places.json`). A place whose port is already listening is skipped.
+  - By hand: `lune run serve` and `rojo serve serve.project.json --port <port>` in the worktree; D's pair is `lune run src/lobby/tools/sync serve` and `rojo serve lobby.project.json`.
   - Never wipe `build/serve/` while a sync runs.
 - **Messages between sessions:** SendMessage to the session name works only when both sessions run in the same permission mode (bypass so far). Otherwise use the progress files: "Ready to merge" lines, and each stream's Requests section.
 - **The user's standing rules for A:**

@@ -74,7 +74,7 @@ end
 
 return function(t: RunAll.Context)
 	t.test("a Juggernaut can't fire before its arms rise from rest to firing pitch", function()
-		local tr = duel("chs_juggernaut", 30, 120)
+		local tr = duel("chs_goliath", 30, 120)
 		local turret = tr.turret
 		t.equal(turret.restPitch, -65, "its arms rest at -65°")
 		t.equal(tr.pitch[0], math.rad(-65), "a new Juggernaut starts with its arms down")
@@ -95,7 +95,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("with no target the arms stay up for the restore delay, then lower to rest", function()
-		local tr = duel("chs_juggernaut", 10, 260)
+		local tr = duel("chs_goliath", 10, 260)
 		local turret = tr.turret
 		local gone = tr.gone :: number
 		-- the last tick the weapon still aimed at it
@@ -116,7 +116,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a client running the shared aim model matches the server exactly", function()
-		local tr = duel("chs_juggernaut", 20, 200)
+		local tr = duel("chs_goliath", 20, 200)
 		-- the client starts at the rest pose and steps with the same wanted
 		-- aims (from the target it knows, or the aim updates it gets)
 		local restYaw, restPitch = Aim.rest(tr.turret)
