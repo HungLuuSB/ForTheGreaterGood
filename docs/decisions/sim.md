@@ -2983,3 +2983,23 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - a lost part keeps its units, and a complete snapshot drops a missing blip;
   - a bad part number is refused.
 
+
+## S-213 — The Chaos T3 bot takes the id `chs_juggernaut`; the T2 Goliath retires; shorter T3 range (the user) (2026-10-29)
+
+- **Asked (the user):** "reduce the range of T3 Titan and T3 Juggernaut (rename it as chs_juggernaut too), the old juggernaut will be renamed and retired".
+- **Ids:**
+  - `chs_korgoth` → `chs_juggernaut`, and its weapons `chs_korgoth_*` → `chs_juggernaut_heatray` / `_shotgun` / `_missiles`.
+  - The T2 tank `chs_juggernaut` (named Goliath since S-203) → `chs_goliath`, weapon `chs_goliath_cannon`, `retired = true`. It's off the Chaos advanced vehicle plant's list; the def stays for tests and the faction report (`.lune/factions.luau` still compares it with the Paladin).
+  - This breaks the rule that ids never change (S-157), at the user's request. Old replays and scenes that name either id now load the other unit.
+  - Chaos's T2 plant has no main battle tank now; the Paladin's counterpart row is empty until the user picks one.
+- **Range:** the long weapons lose about a quarter; the close guns (Titan's blasters 160, Juggernaut's shotguns 150) stay.
+
+  | Weapon | Was | Now |
+  |---|---|---|
+  | `ord_titan_beam` | 420 | 320 |
+  | `ord_titan_missiles` | 520 | 390 |
+  | `chs_juggernaut_heatray` | 300 | 230 |
+  | `chs_juggernaut_missiles` | 700 | 520 |
+
+- **Other streams:** the client (icons, piece scripts, meshes) and the lobby Codex look units up by id, so B swaps `IconAtlas` and `PieceScripts`, C swaps the Blockouts and Meshes registry keys (`chs_juggernaut` → `chs_goliath`, `chs_korgoth` → `chs_juggernaut`), and D swaps the Codex rows. Main takes it in one merge through the last branch in the chain.
+- **Test:** `Playtest3Units.spec` checks the ids, the retirement, the gantry list and both walkers' longest range.

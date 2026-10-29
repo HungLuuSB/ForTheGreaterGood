@@ -3,9 +3,9 @@
 -- single-target laser, red outside with an orange-white core; charged while
 -- it reloads (S-205).
 return {
-	id = "chs_korgoth_heatray",
+	id = "chs_juggernaut_heatray",
 	type = "BEAM",
-	range = 300,
+	range = 230, -- shorter T3 range (S-213, the user): was 300
 	closeDamage = 1.5,
 	reload = 3,
 	accuracy = 0,

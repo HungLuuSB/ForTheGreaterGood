@@ -3,7 +3,7 @@
 return {
 	id = "ord_titan_missiles",
 	type = "HOMING",
-	range = 520,
+	range = 390, -- shorter T3 range (S-213, the user): was 520
 	reload = 6,
 	salvo = { count = 4, delay = 0.25 },
 	projectileSpeed = 300,

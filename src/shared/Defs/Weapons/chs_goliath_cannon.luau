@@ -3,7 +3,7 @@
 -- lowered (guide 14.4, S-20). Raising them from rest to a level shot takes
 -- ~0.8 s, and they stay up 3 s after the last target before lowering.
 return {
-	id = "chs_juggernaut_cannon",
+	id = "chs_goliath_cannon",
 	type = "BALLISTIC",
 	range = 195, -- faction pass (S-62)
 	reload = 2.2, -- faction pass, tuned (S-62)

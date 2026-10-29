@@ -110,7 +110,7 @@ end
 
 local DUELS = {
 	{ "T1 tank", "ord_lancer", "chs_ravager" },
-	{ "T2 tank", "ord_paladin", "chs_juggernaut" },
+	{ "T2 tank", "ord_paladin", "chs_goliath" },
 	{ "T1 artillery", "ord_verdict", "chs_hellmouth" },
 	{ "T2 MLRS", "ord_judgement", "chs_hydra" },
 	{ "T1 fighter", "ord_falcon", "chs_harpy" },
@@ -193,7 +193,7 @@ for _, r in HOLDERS do
 end
 
 local EMPLACEMENTS = { { "Artillery emplacement", "ord_edict", "chs_cataclysm" } }
-local ASSAULT = { "ord_lancer", "chs_ravager", "ord_paladin", "chs_juggernaut" }
+local ASSAULT = { "ord_lancer", "chs_ravager", "ord_paladin", "chs_goliath" }
 out("")
 out("### Artillery emplacements: each version against the same tank assault (defend)")
 out("")
@@ -221,7 +221,7 @@ end
 local SPECIALS = {
 	{ "Locust swarm against Lancers", { "ord_lancer" }, { "chs_locust" }, { "close", "long", "flank" } },
 	{ "Warden holding against Ravagers", { "ord_warden" }, { "chs_ravager" }, { "defend" } },
-	{ "Citadel holding against a tank assault", { "ord_citadel" }, { "chs_ravager", "chs_juggernaut" }, { "defend" } },
+	{ "Citadel holding against a tank assault", { "ord_citadel" }, { "chs_ravager", "chs_goliath" }, { "defend" } },
 	{ "Citadel holding against Cyclops siege mortars with a Watcher radar", { "ord_citadel" }, { "chs_cyclops", "chs_watcher" }, { "defend" } },
 	{ "Citadel holding against Minotaurs", { "ord_citadel" }, { "chs_minotaur" }, { "defend" } },
 }
