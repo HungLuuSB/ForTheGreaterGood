@@ -2325,3 +2325,21 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - `Render/Glow.collectPulses` finds each pulse piece and every part welded to it, with their resting sizes and joint offsets. `Glow.step` resizes them about the piece's pivot: sizes, the piece's Motor6D `C1`, the welds' `C0` and attachment positions times the scale. That's only within `PULSE_NEAR` (450 studs) of the camera, and only on a change of `PULSE_STEP` (0.3%) or more. A model going back to the pool is put back at rest.
 - For that, glow parts in `MeshModels` and welded parts in `BlockoutBuilder` are joined with a `Weld` (C0 offset) instead of a `WeldConstraint`, whose offset can't be scaled. Nothing in the client treats the two differently.
 - Studio, Coastline: both advanced fusions' cores, the advanced converter's coil and the advanced capacitor's cells swing 4% each way over 2 s, their glow shells scaling with them and staying on (`debug_out/screens/c257-pulse-pieces.jpg`).
+
+### C-258 — 2D-E's icon set on two sheets, with placeholders (2026-10-29)
+
+- 2D-E's approved set (draft 7, `docs/art/icons/ftgg-unit-icons.html`, f6da8aca) maps all 203 defs once over 109 icons, plus 10 placeholders (`ph: 1`, no defs, one per frame). `tools/icons/render.mjs` accepts them and gives each a tile; the atlas lists them as `IconAtlas.placeholders[frame]`. 129 tiles of 96 × 112 (109 unit, 10 placeholder, 10 contact) on two 1024-px sheets; the tinted-white check's worst pixel is 14.2 / 255, as E's dry run.
+- A def in no catalogue item is a build warning now, not a failure. `Core/Icons.entry` gives it its type's placeholder by the sheet's "Placeholder rule" (`Icons.placeholderFrame`): a structure takes defense if armed, else struct; HELI takes vtol, else air; SUB takes sub, else ship; WALKER and AMPHIB_WALKER take walker; AMPHIB and HOVER take their own; the rest take vehicle. `.lune/icon_defs` now passes the move class and whether the def is armed. The Commanders draw their heads but keep the walker frame, so radar shows a plain walker (E's request); a spec guards it.
+- The experimental mechs are drawn at 1.4× (E's `big`); the specs' cap follows.
+- `tools/icons/assets.json` records each sheet's pixel hash (`sha256`) at upload. A sheet whose pixels changed loses its id, so a stale image is never shipped; that dropped the old sheet 1 id. `IconAtlas.spec` fails until both sheets are uploaded (the user approves uploads).
+
+### C-259 — 2D-E's resource and stat icons wired, with text marks until uploaded (2026-10-29)
+
+- `tools/icons/ui_icons.mjs` writes `UI/UiIcons.luau` from E's `assets/2d/ui/keys.json` (E-7, E-8: supply, power, time, wind, tidal, health, dps, range, speed, sight, radar, build, armor, value, airSight). It holds the atlas id (`assets.json` `ui`: { image, sha256 }, dropped when the atlas changes), the sizes (16, 24, 32), and per key the name, group, tint and rect per size. It's pure data, so lobby-D can require it for the Codex.
+- `UI/UiIcon.make(key, size, color?)` makes the ImageLabel from the smallest atlas size at least `size`, or returns nil while there's no id. Each place keeps its text mark until then:
+  - the resource bar's ■ / ϟ;
+  - the team panel's ■ / ϟ buttons;
+  - the unit panel's health cross;
+  - a build tile's supply and power cost: icon right of the number.
+- Rich-text lines (tooltips, the unit panel's flow line) keep their glyphs: rich text can't hold images.
+- Studio, without an upload: the UI builds as before (■ ϟ, the two-bar cross), no errors. The icons themselves are checked after the upload.
