@@ -56,6 +56,16 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, explosions and missile booster: C-267)
+
+- **The D-Gun's effects work now (C-267):** C-266's bolt never ran as intended. The template attributes were lost (fixed by models-C) and a client loop sat in the wrong place (fixed here). The bolt now burns for its whole flight.
+- **New explosions from models-C:**
+  - impacts, unit deaths, structure deaths (heavier, with chain blasts and rubble fires) and the nuke play C's templates;
+  - missiles fly with C's booster flame;
+  - debris arms and chain blasts scale with the blast.
+- Not yet: C's blast-mark decals, which need an upload.
+- Ready to merge: `5cfcd875` (C-267, supersedes c0e38cc3's D-Gun claim; carries m-models 39aa66e8. test_client 347 / 347, build passed (882 scripts, 2468 requires). Studio, Coastline: D-Gun bolt held for its flight, nuke launch, booster and blast, structure death; no errors)
+
 ## Summary (2026-10-30, D-Gun effects: C-266)
 
 - **D-Gun effects (C-266):** the Commander's D-Gun plays models-C's effects:
