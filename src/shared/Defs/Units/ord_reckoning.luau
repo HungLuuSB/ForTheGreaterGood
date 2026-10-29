@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_reckoning",
 	name = "Reckoning",
-	description = "Nuclear missile silo. Builds warheads into a stockpile; launches one at an ordered spot anywhere on the map.",
+	description = "Nuclear missile silo. Builds warheads and launches one at any spot on the map.",
 	faction = "order",
 	tier = 3,
 	categories = { "STRUCTURE" },

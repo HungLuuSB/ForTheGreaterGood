@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_gantry",
 	name = "Experimental Gantry",
-	description = "T3 factory: experimental assault mechs.",
+	description = "T3 factory. Builds experimental assault mechs.",
 	faction = "order",
 	tier = 3,
 	cost = { supply = 3500, power = 30000, buildTime = 60000 },

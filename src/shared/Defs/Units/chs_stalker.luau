@@ -9,7 +9,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	pieces = { "base", "dish" },
 	name = "Stalker",
-	description = "Mobile fire-control radar. Cheaper, shorter-ranged and less precise than Order's; drains power.",
+	description = "Mobile fire-control radar. Tracks radar contacts for the guns; unarmed, drains power.",
 	faction = "chaos",
 	categories = { "GROUND", "LIGHT", "RADAR_EMITTER" },
 	armorClass = "LIGHT",

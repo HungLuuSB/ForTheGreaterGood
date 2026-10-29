@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_allseer",
 	name = "All-Seer",
-	description = "Long-range radar.",
+	description = "Long-range radar. Spots enemy units far beyond sight.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE", "RADAR_EMITTER" },

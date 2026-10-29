@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Builder, {
 	id = "ord_sovereign",
 	name = "Sovereign",
-	description = "Command Vehicle. Builds the first economy and factories. Losing it loses the match.",
+	description = "Command vehicle. Builds the first economy and factories; losing it loses the match.",
 	faction = "order",
 	tier = 0,
 	categories = { "GROUND", "WORKER", "COMMANDER" },

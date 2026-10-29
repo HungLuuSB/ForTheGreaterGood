@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "ord_archon",
 	name = "Archon",
-	description = "Air superiority fighter. Stealthy (0.35), DIRCM, radar missiles.",
+	description = "Air superiority fighter. A stealthy fighter with radar-guided missiles and DIRCM.",
 	faction = "order",
 	tier = 2,
 	domain = "air",

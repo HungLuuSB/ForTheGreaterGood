@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_sanctum",
 	name = "Sanctum",
-	description = "Point defence. Shoots down enemy missiles and rockets over its cover with interceptors; never fires at units.",
+	description = "Point defence. Shoots down enemy missiles and rockets over its cover; never fires at units.",
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE", "RADAR_EMITTER" },

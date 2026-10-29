@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_radiance",
 	name = "Radiance",
-	description = "Beam tower. A precise, very heavy shot at long range for 700 power. Off: retracts into its armor.",
+	description = "Beam tower. A long-range heavy beam for 700 power a shot; retracts into its armor when off.",
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE" },
