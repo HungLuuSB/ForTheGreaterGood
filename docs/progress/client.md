@@ -56,6 +56,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, blast marks: C-268)
+
+- **Blast marks (C-268):** explosions leave models-C's soot mark with a glow that cools in 2 s, instead of a flat dark disc. C's templated explosions leave one too.
+- Ready to merge: `3c137805` (C-268; carries m-models 2d0afbe4. test_client 347 / 347, build passed (882 scripts, 2469 requires). Studio, Coastline: six marks after a D-Gun shot, both variants, no shadows)
+
 ## Summary (2026-10-30, explosions and missile booster: C-267)
 
 - **The D-Gun's effects work now (C-267):** C-266's bolt never ran as intended. The template attributes were lost (fixed by models-C) and a client loop sat in the wrong place (fixed here). The bolt now burns for its whole flight.
