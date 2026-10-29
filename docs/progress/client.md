@@ -19,13 +19,9 @@ Written for a new session (the project is moving to another Claude account). Eve
 
 ### Open items (client-B's)
 
-- **Own icons for the 21 playtest-3 units (C-253).**
-  - Today they borrow existing tiles: Main Battle Tank, Vehicle Plant, Adv. Vehicle Plant, Supply Extractor, Power Generator, Supply Converter, Fusion Reactor and Storage.
-  - The sheet is full at 90 tiles, so own tiles need a new catalogue draft in `docs/art/icons/ftgg-unit-icons.html` and `node tools/icons/render.mjs`. That makes a second sheet `assets/icons/ftgg-icons-2.png`.
-  - The user must approve its upload to Roblox; its asset id then goes into `tools/icons/assets.json`.
-  - Every new unit ID must be in exactly one catalogue item's `defs`, or render.mjs fails and `IconAtlas.spec` / `Icons.spec` fail.
+- **Own icons for the 21 playtest-3 units:** not client-B's to draw (the user, 2026-10-29). They borrow existing tiles (C-253) until the new icons arrive; then map them in `UI/IconAtlas` (each new unit ID in exactly one catalogue item's `defs`, or `IconAtlas.spec` / `Icons.spec` fail).
 - **Pulse pieces (C-252):** the glow breathes; the scale half of rig.md's `pulse` isn't done.
-- **Not tested with a real mouse:** hovering and dragging the resource bars' share and converter markers (C-245). The Studio harness can't click GUI.
+- **Not tested with a real mouse:** hovering and dragging the resource bars' share and converter markers (C-245). The Studio harness can't click GUI; the user is testing them (2026-10-29).
 - sim-A once suggested an orange-white core for `chs_korgoth_heatray`. Today the core is white lerped 30% toward the beam colour (C-248, `Render/BeamShots`).
 
 ### How to work
