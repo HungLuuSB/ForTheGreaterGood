@@ -11,9 +11,9 @@ Written for a new session (the project is moving to another Claude account). Eve
 ### Where it stands
 
 - Branch `m-client-foundation` (worktree `C:\Workspace\Projects\FTGG-client`) has main d06f303b merged in: all of playtest 3 and the handover, with C-248..C-253 integrated.
-  - C-254 and C-255 (seafloor walkers, still water) aren't on main yet: see the Ready line in the newest summary below.
+  - C-254..C-256 (seafloor walkers, still water, the S-213 id swap) aren't on main yet: see the Ready line in the newest summary below.
 - Suites on the branch: `lune run test_client` 335 / 335, `lune run build` passed (877 scripts, 2457 requires).
-- The last decision is **C-255**; the next one is **C-256**, in [`../decisions/client.md`](../decisions/client.md).
+- The last decision is **C-256**; the next one is **C-257**, in [`../decisions/client.md`](../decisions/client.md).
 - The live sync for the three places runs from `tools/studio/sync_all.cmd` (double-click; `sync_all.ps1`, ports in `places.json`, FTGG Match on 34872). Connect the Rojo plugin in FTGG Match to 34872.
 - **`src/roblox/MatchConfig.luau` has a local, uncommitted change that is the user's own test setting.** `ACTIVE = "skirmish"`, the `air` profile at speed 0.1, and two Radiances removed from one test scene. Never commit it and never revert it: leave it in the working tree. A lobby match ignores MatchConfig; it only sets what Play in Studio starts.
 
@@ -63,6 +63,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - On the Server, `ServerStorage.FtggDebug:Invoke("spawn", defId, player, x, z, heading, count?, spacing?)` and `("damage", id, amount)`.
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
+
+## Summary (2026-10-29, S-213 id swap: C-256)
+
+- **Chaos ids swapped (C-256, S-213):** the T3 bot is now `chs_juggernaut` and the old T2 tank `chs_goliath` (Goliath, retired), across sim-A's defs, models-C's blockouts and meshes, lobby-D's Codex and the client (piece scripts, icons, test scenes). It lands as this one branch. The Juggernaut still borrows the tank icon until 2D-E's (request E1).
+- Ready to merge: `0c4386f9` (C-256; carries m-sim-2 748ddf25, m-lobby 5b2a078d, m-models bfded620, and C-254 / C-255. test 616 / 616, test_client 335 / 335, lobby specs 67 / 67, build passed (877 scripts, 2457 requires), lobby build passed (648, 1077). Studio, Coastline: the meshed T3 bot walks as chs_juggernaut, chs_goliath draws as the tank, no script errors)
 
 ## Summary (2026-10-29, after the handover: C-254, C-255)
 
