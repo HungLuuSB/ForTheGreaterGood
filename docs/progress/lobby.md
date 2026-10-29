@@ -8,6 +8,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Key art 1 "Commander's stand"** is now in the manifest, approved, next to "Volley" and "Converging". In Studio, the loading screen takes each in turn, and Quick play showed all three in three runs (`debug_out/screens/lobby_loading_commanders_stand.jpg`). No script errors. C-1 is done.
 - **Playtest 3's units:** every one of the 21 has an approved mesh in the manifest (models-C, 2026-10-29), so the Units showroom draws their models now, not blockout boxes (as in the match, from the manifest's status). No lobby change was needed.
 - Lobby specs 67 / 67.
+- Ready to merge: `4bf77f36` (progress only: key art 1 checked, handover status; touches only the lobby progress)
 - **Open:** only the user's items under "Needs my review" (cheats, forced start, spectators, key art order, lobby max players).
 
 - Merged main `de7be455` (playtest 3, S-203..S-210: the 21 new unit defs, the Goliath rename, the Generators retired). It includes `3ddbc46c`, which added these units' roles ahead of the defs.
