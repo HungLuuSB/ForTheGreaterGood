@@ -40,6 +40,7 @@ export type State = {
 	tick: number,
 	units: { [number]: World.Unit },
 	selection: { number },
+	recalled: boolean, -- the selection came from a control-group recall (the build menu leaves the digits to the groups then, C-248)
 	groups: { [number]: { number } },
 	camera: { x: number, z: number, zoom: number, strategic: boolean, rect: { number }, corners: { number }? },
 	hover: { unit: number?, x: number, z: number }?,
@@ -95,6 +96,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		tick = world.latestTick,
 		units = world.units,
 		selection = sel.ids,
+		recalled = false,
 		groups = sel.groups,
 		camera = { x = 0, z = 0, zoom = 0, strategic = false, rect = { 0, 0, 0, 0 } },
 		hover = nil,
@@ -137,6 +139,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 
 	function actions.select(ids: { number }, mode: ("replace" | "add" | "toggle")?)
 		Selection.set(sel, world, ids, mode)
+		state.recalled = false
 		return true
 	end
 
@@ -151,6 +154,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		end
 		table.sort(ids)
 		Selection.set(sel, world, ids, "replace")
+		state.recalled = false
 		return true
 	end
 
@@ -167,6 +171,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			return false, "groups are 1..9"
 		end
 		Selection.recallGroup(sel, world, n, add)
+		state.recalled = true
 		return true
 	end
 
@@ -473,8 +478,9 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 	end
 
 	-- A row of the ghost's structure dragged from (x1, z1) to (x2, z2): one
-	-- BUILD per valid spot, queued after the first (guide 15.6).
-	function actions.placeRow(x1: number, z1: number, x2: number, z2: number, queue: boolean?, keep: boolean?)
+	-- BUILD per valid spot, queued after the first (guide 15.6). `grid`
+	-- (Alt): rows and columns over the dragged box instead (H4).
+	function actions.placeRow(x1: number, z1: number, x2: number, z2: number, queue: boolean?, keep: boolean?, grid: boolean?)
 		local p = state.placement
 		if p == nil then
 			return false, "not placing"
@@ -482,7 +488,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		local def = world.defs.unitByIndex[p.defIndex]
 		local builders = buildersOf(p.defId)
 		local placed = 0
-		for _, spot in Placement.row(world, def, x1, z1, x2, z2) do
+		for _, spot in Placement.drag(world, def, x1, z1, x2, z2, grid) do
 			-- queued builds, this row's earlier spots included (C-165)
 			local r = Placement.check(world, def, spot[1], spot[2], Placement.planned(world, api.waypoints.byUnit))
 			if r.ok then

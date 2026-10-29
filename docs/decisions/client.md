@@ -2190,3 +2190,36 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Two of C's colour maps fail to load in Studio (`ContentProvider` Failure): `fx_feature_tree_2` (rbxassetid://71786331211211, the conifer, which draws grey) and `fx_feature_rock_1` (rbxassetid://111245066781069). Sent to models-C.
 - S-200 (silos hold 10, anti-nukes 20): the health bar's stock count gets 18 pixels for two digits.
 - S-202 (every weapon targets radar blips): no client line reads `canTargetRadar`, so nothing changes.
+
+### C-248 — Playtest feedback 3, client part one: digits, rows, grids, footprints, planned orders, rings, HP (2026-10-29, H2, H3, H4, H17, H21, H26, H34, H38)
+
+- **H17, build-menu digits:**
+  - A builder's number keys did nothing until a tab key (or B) armed them.
+  - Now a mobile builder picked by click or box arms them at once, and so does a clicked tab.
+  - A selection recalled from a control group (`Api.state.recalled`) or a factory leaves the digits to the groups until B or a tab key. Otherwise 2 then 2 couldn't jump the camera, and nothing could switch groups.
+  - Studio: the Commander selected by the API showed hotkeys 1–6 straight away, and a real 3 started a solar's placement.
+- **H2, rows:**
+  - `Placement.row` spread its spots over the whole drag (`t = i / (n − 1)`), so they all slid and snapped elsewhere as the drag grew. The user saw the 3rd and 4th generators jump and leave a gap.
+  - Each spot is now one footprint further along the drag's longer axis from the snapped first spot. The slope comes from the drag itself, so a longer drag only adds spots, and a diagonal never overlaps.
+- **H4, grids:**
+  - Alt + drag (Shift as usual queues) lays `Placement.grid`: rows and columns one footprint apart over the dragged box, as a growing box only adds spots.
+  - The rows run along the box's longer side in a serpentine, so a builder walks them end to end.
+  - The preview draws the grid (up to 80 ghosts).
+  - Specs in `Placement.spec`. Studio: a 4 × 3 grid of solars and a 2 × 2 grid of wind turbines, laid edge to edge.
+- **H3, footprints:** planned structures draw their footprint as build cells (`Render/Footprint`): the 8-stud cells under it as lines on the ground, the outline thicker, a segment per cell edge so they follow hills. Queued builds have yellow cells in place of the flat plate that sank into slopes. A dragged row's or grid's ghosts have green or red cells, as each spot checks.
+- **H26, planned commands:**
+  - The order lines and points of selected units (move, fight, attack, build…) sit in one Model per order kind, each with an AlwaysOnTop Highlight in that kind's colour, as the planned buildings have had since G15. Hills, trees and units no longer hide them.
+  - Each pooled part keeps its layer, so nothing is re-parented per frame. At most one Highlight per order kind: about 10, under Roblox's 31.
+- **H21, Commander rings:**
+  - A D-Gun weapon (`fx.trail == "dgun"`) gets its own ring kind, `dgun`, in the nuke arc's orange.
+  - A def with a D-Gun, so a Commander, gets a `blast` ring at `deathBlast.aoe`, deep red and wider. Fusion reactors' blasts don't ring.
+  - Today the blast (120) sits on the laser ring (120). sim-A's H5 / H6 cuts separate them.
+  - Spec in `Ranges.spec`; Studio: the four rings round the Sovereign.
+- **H34, health as a number:** first "current / max" right of the name. Then the user: "replace the healthbar with the current health only (change color from green to deep red)". So the unit panel's health bar under the portrait is now the current health alone, a deep red number (205, 35, 35). A wreck's or feature's resource bar stays, and the health bars over units in the world are unchanged. Studio: a Sovereign hit for 777 reads 2224.
+- **H38, beam colour:** a BEAM weapon's `fx.color` rides on its tracer (`beamColor`) and tints models-C's beam rig. The glow and filaments take the colour, the core is white lerped 30% toward it, and rigs pool by faction and colour. It takes effect once sim-A gives Radiance its electric blue.
+- **H11:** the scouts' hit-scan laser needs nothing new: `fx.tracer = "laser"` with `fx.color` already draws as Lasers (C-198).
+- **The user's report, "when I hover over these threshold bars, the UI moves to the right":**
+  - The eco markers' tooltip was a child of the bar's row, which has a UIListLayout. Showing it added an item to the row and pushed the blocks along.
+  - It now hangs off the ScreenGui, under the hovered marker, in the Settings UIScale's units.
+  - Studio: the supply block stays at x 435 with the tip shown. The test harness's mouse can't reach Roblox's top strip, so the hover itself is unchecked.
+- **H16, nuke panel hidden at far zoom: not reproduced.** Coastline, a stocked Reckoning, attack mode. The arc, blast ring, flight-time label, unit panel and command card all stay at full zoom (900): set by the API, by a real mouse wheel, and with the silo strategic-tier off camera. Needs the user's details.

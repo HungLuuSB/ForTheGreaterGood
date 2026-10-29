@@ -2,9 +2,10 @@
 -- Unit panel (C-68; BAR style since C-71), bottom left under the build
 -- grid, a functional PLACEHOLDER. One unit selected: a portrait tile (its
 -- model at an angle with its type icon bottom right, as in the build menu;
--- a contact's icon alone), name and role, a health bar and, for own units,
--- what it adds to or takes from the economy now ("+5" supply, "−10" power;
--- Core/UnitFlow, C-125: no HP numbers), then its stats as the player may know them
+-- a contact's icon alone), name and role, its current health (a deep red
+-- number where a bar was, H34) and, for own units, what it adds to or takes
+-- from the economy now ("+5" supply, "−10" power; Core/UnitFlow, C-125),
+-- then its stats as the player may know them
 -- (Core/UnitStats, C-76: combat, mobility and sensors, economy, state with
 -- the server's fire / move state and ammo), the team's radar precision, the
 -- next missile's progress, on / off and repeat, and a factory's queue as the
@@ -52,6 +53,7 @@ export type UI = {
 	flowSupply: TextLabel,
 	flowPower: TextLabel,
 	name: TextLabel,
+	hp: TextLabel, -- a unit's current health, in the bar's place (H34)
 	role: TextLabel,
 	stats: TextLabel,
 	health: Frame,
@@ -131,6 +133,12 @@ function UnitPanel.new(api: Api.Api): UI
 	local name = textLabel(panel, Enum.Font.GothamBold, 15, Color3.fromRGB(190, 228, 96)) -- yellow-green (reference 3, C-203)
 	name.Position = UDim2.fromOffset(72, 4)
 	name.Size = UDim2.new(1, -78, 0, 18)
+	-- a unit's current health, in the bar's place (the user: the number
+	-- only, deep red; the bar stays for a wreck's or a feature's resource)
+	local hp = textLabel(panel, Enum.Font.GothamBold, 13, Color3.fromRGB(205, 35, 35))
+	hp.Name = "HP"
+	hp.Position = UDim2.fromOffset(4, 65)
+	hp.Size = UDim2.fromOffset(68, 14)
 	local role = textLabel(panel, Enum.Font.Gotham, 11, Color3.fromRGB(190, 190, 190))
 	role.Position = UDim2.fromOffset(72, 21)
 	role.Size = UDim2.new(1, -78, 0, 14)
@@ -154,7 +162,7 @@ function UnitPanel.new(api: Api.Api): UI
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	return {
 		gui = gui, panel = panel, portrait = portrait, portraitGlyph = pg, portraitView = view, cornerGlyph = corner,
-		flowSupply = flowSupply, flowPower = flowPower, name = name, role = role, stats = stats,
+		flowSupply = flowSupply, flowPower = flowPower, name = name, hp = hp, role = role, stats = stats,
 		health = health, healthFill = fill, types = types, typeButtons = {}, typeGlyphs = {}, typePortraits = {},
 		icons = Icons.table(api.world.defs), codes = Icons.codes(api.world.defs), key = "",
 	}
@@ -169,6 +177,7 @@ local function one(ui: UI, api: Api.Api, id: number)
 	local u = world.units[id]
 	if u == nil then
 		ui.name.Text, ui.role.Text, ui.stats.Text = "(out of view)", "", ""
+		ui.hp.Visible = false
 		return
 	end
 	local sheet = UnitStats.of(world, u)
@@ -187,10 +196,12 @@ local function one(ui: UI, api: Api.Api, id: number)
 	ui.portraitView.frame.Visible = def ~= nil
 	ui.cornerGlyph.root.Visible = def ~= nil
 	ui.portraitGlyph.root.Visible = def == nil
-	ui.health.Visible = sheet.health ~= nil
-	ui.healthFill.BackgroundColor3 = HEALTH
-	if sheet.health and sheet.maxHealth then
-		ui.healthFill.Size = UDim2.fromScale(math.clamp(sheet.health / sheet.maxHealth, 0, 1), 1)
+	-- health as a number in place of the bar (H34, then the user: "replace the
+	-- healthbar with the current health only", deep red)
+	ui.health.Visible = false
+	ui.hp.Visible = sheet.health ~= nil
+	if sheet.health then
+		ui.hp.Text = tostring(math.ceil(sheet.health))
 	end
 	-- what it adds to / takes from the economy now (own units: the client knows their state)
 	local own = def ~= nil and sheet.access == "own"
@@ -318,11 +329,12 @@ function UnitPanel.step(ui: UI, api: Api.Api)
 		ui.types.Visible = false
 		wreck(ui, api, w)
 		ui.health.Visible = w.fullSupply > 0
+		ui.hp.Visible = false
 		ui.key = ""
 		return
 	end
 	local single = subject ~= nil
-	for _, f in { ui.portrait, ui.health, ui.name, ui.role, ui.stats, ui.flowSupply, ui.flowPower } :: { GuiObject } do
+	for _, f in { ui.portrait, ui.health, ui.name, ui.hp, ui.role, ui.stats, ui.flowSupply, ui.flowPower } :: { GuiObject } do
 		f.Visible = single
 	end
 	ui.types.Visible = not single

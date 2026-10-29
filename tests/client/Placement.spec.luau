@@ -11,6 +11,7 @@ local NetOut = require("../../src/server/Sim/NetOut")
 local ServerPlacement = require("../../src/server/Sim/Placement")
 local Sim = require("../../src/server/Sim/Sim")
 local Spawn = require("../../src/server/Sim/Spawn")
+local Grid = require("@shared/Grid/Grid")
 local Prng = require("@shared/Util/Prng")
 
 local DT = 1 / 15
@@ -273,5 +274,52 @@ return function(t: any)
 			table.insert(kinds, `{o.kind}:{o.defIndex}@{math.floor(o.x or 0)},{math.floor(o.z or 0)}`)
 		end
 		t.equal(#sim.orders.queue[cv], 1 + n, "extractor then the row, all queued on the server: " .. table.concat(kinds, " "))
+	end)
+
+	t.test("a longer row only adds spots, one footprint apart (H2)", function()
+		local sim, world = setup("gen:11:48", "empty")
+		local solar = defOf(sim, "ord_solar")
+		local step = solar.footprint * Grid.CELL_SIZE
+		for _, dir in { { 1, 0 }, { 0, -1 }, { 1, 0.4 }, { -0.7, 1 } } do
+			local last: { { number } } = {}
+			for len = 0, 60, 1.5 do
+				local spots = Placement.row(world, solar, 3, 5, 3 + dir[1] * len, 5 + dir[2] * len)
+				t.expect(#spots >= #last, `the row never shrinks as it grows ({#last} → {#spots})`)
+				for i, s in last do
+					t.equal(spots[i][1], s[1], `spot {i} stays put (x)`)
+					t.equal(spots[i][2], s[2], `spot {i} stays put (z)`)
+				end
+				for i = 2, #spots do
+					local a, b = spots[i - 1], spots[i]
+					local gap = math.max(math.abs(b[1] - a[1]), math.abs(b[2] - a[2]))
+					t.equal(gap, step, `neighbours one footprint apart, no overlap or gap ({gap})`)
+				end
+				last = spots
+			end
+			t.expect(#last >= 3, `a long drag lays a long row ({#last})`)
+		end
+	end)
+
+	t.test("Alt + drag lays a grid; a bigger box only adds spots (H4)", function()
+		local sim, world = setup("gen:11:48", "empty")
+		local solar = defOf(sim, "ord_solar")
+		local step = solar.footprint * Grid.CELL_SIZE
+		local spots = Placement.grid(world, solar, 3, 5, 3 + 3 * step, 5 - 1 * step)
+		t.equal(#spots, 8, "4 columns by 2 rows")
+		local seen = {}
+		for i, s in spots do
+			seen[`{s[1]},{s[2]}`] = true
+			if i > 1 then
+				local a = spots[i - 1]
+				t.equal(math.abs(s[1] - a[1]) + math.abs(s[2] - a[2]), step, "the serpentine walks to a neighbour each time")
+			end
+		end
+		local bigger = Placement.grid(world, solar, 3, 5, 3 + 4.2 * step, 5 - 2.1 * step)
+		t.equal(#bigger, 15, "5 by 3")
+		for _, s in bigger do
+			seen[`{s[1]},{s[2]}`] = nil
+		end
+		t.equal(next(seen), nil, "every spot of the smaller grid is in the bigger one")
+		t.equal(#Placement.drag(world, solar, 3, 5, 3 + 3 * step, 5 - step, false), #Placement.row(world, solar, 3, 5, 3 + 3 * step, 5 - step), "without Alt a drag is a row")
 	end)
 end
