@@ -2,6 +2,18 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-29: Codex roles for playtest 3's units)
+
+- sim-A's playtest 3 plan (`docs/progress/playtest-2026-10-28.md`, H20, H25–H31, H39–H41) announced 21 new unit IDs. They now have Codex roles, ahead of their defs, so the lobby suite passes when the defs reach main:
+  - **Economy:** Underwater supply extractor (`ord_seaextractor` / `chs_seaextractor`), Advanced solar collector, Energy storage (`ord_capacitor` / `chs_accumulator`), Advanced supply converter, Advanced depot, Advanced energy storage (`ord_advcapacitor` / `chs_advaccumulator`), Advanced fusion reactor.
+  - **Factories:** Construction turret (`ord_nano` / `chs_nano`), Experimental gantry (T3).
+  - **Ground:** Experimental assault walker (Titan `ord_titan` / Juggernaut `chs_korgoth`), Heavy assault bot (Mammoth `chs_mammoth`, Chaos only). The T2 tank `chs_juggernaut` keeps its Main battle tank role; its new name Goliath comes from the def.
+- **Retired:** a def with `retired = true` (the Generator, H22) stays out even if a build list still names it.
+- **Counterparts:** trimmed to units that show, so a pair whose other half is retired or hasn't landed never links to a missing article.
+- `Codex.spec`: a role may name a unit the defs don't have only if it is on the spec's `AWAITED` list (these 21). New check: a retired def on a build list neither shows nor counts as a counterpart.
+- Lobby specs 67 / 67; the build check passes (598 scripts, 1002 requires). There's no Studio check: the Units page looks the same until the defs land.
+- Ready to merge: `3ddbc46c` (Codex roles for playtest 3's new units; touches only `src/lobby`)
+
 ## Summary (2026-10-26: map facts in the panel, Supreme Strait)
 
 - Merged main `c829d2a7` (S-193 `MapRegistry.details`, the new map Supreme Strait).
