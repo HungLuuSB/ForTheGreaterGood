@@ -278,6 +278,7 @@ end
 Effects.LARGE_IMPACT = 1.8
 Effects.FLAME_SECONDS = 0.35 -- a flame stream's life (S-181)
 Effects.HUGE_BLAST = 90 -- studs: a death blast this wide plays the nuke's look scaled to it (F15)
+Effects.HEAVY_BLAST = 50 -- studs: a death blast this wide (T3 walkers, S-217) plays models-C's heavier StructureDeath (C-270)
 Effects.BLAST_SHOWN = 0.6 -- an ordinary death blast's burst, as a share of its damage radius
 Effects.BOLT_HEIGHT = 5 -- studs a D-Gun bolt rides over the ground (the server's Combat.BOLT_HEIGHT, S-194)
 Effects.BOLT_BEHIND = 1.5 -- seconds of a D-Gun bolt's path behind it where a death counts as its burn
@@ -1345,11 +1346,14 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 				if blast then
 					-- every unit explodes when killed (S-70, S-178, F15), its blast's
 					-- size from its def: a huge one (a Commander, a fusion reactor) as
-					-- the nuke's look scaled to its radius, smaller than a nuke's;
-					-- others a burst of part of the blast's reach
+					-- the nuke's look scaled to its radius, smaller than a nuke's; a
+					-- heavy one (a T3 walker's, S-217) the heavier StructureDeath; others
+					-- a burst of part of the blast's reach
 					local huge = blast.aoe >= Effects.HUGE_BLAST
+					local heavy = not huge and blast.aoe >= Effects.HEAVY_BLAST
 					local radius = if huge then blast.aoe else blast.aoe * Effects.BLAST_SHOWN
-					local big = burst(fx, now, d.x, ground + 2, d.z, radius, if huge then "nuke" else "impact", if huge then Effects.DEATH_SECONDS * 2 else Effects.EXPLOSION_SECONDS)
+					local kind = if huge then "nuke" elseif heavy then "structureDeath" else "impact"
+					local big = burst(fx, now, d.x, ground + 2, d.z, radius, kind, if huge or heavy then Effects.DEATH_SECONDS * 2 else Effects.EXPLOSION_SECONDS)
 					big.ground = ground
 					big.noCrater = huge or nil -- a nuke's look without its crater
 				end
