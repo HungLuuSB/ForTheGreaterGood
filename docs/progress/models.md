@@ -975,6 +975,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `a1030665` (S-213 id swap, for sim-A's `748ddf25` (merged here): `chs_korgoth` becomes `chs_juggernaut`, the old tank `chs_juggernaut` becomes `chs_goliath` in the Blockouts and Meshes registries, asset folders, manifest and MeshMaterials; asset IDs unchanged. `test_client` fails 3 tests until B adds the icon and piece-script swap, so integrate through B's tip).
 - Ready to merge: `2174e58f` (E-11 build-menu unit pictures, contains `60527a80` and `e3e353bb`; team paint baked in the faction colour: `assets/models/tools/pictures.py` and `pictures_defs.luau` render each unit's picture and team mask into `debug_out/pictures/` for 2D session E; `portraits.py` importable, and its glow-colour lookup fixed. Tools and docs only, nothing under `src/`).
 12. **Models → client session (explosions, missiles, ground marks, 2026-10-30; `39aa66e8`):**
+   - **Done (clients-B, 2026-10-30): C-267 `5cfcd875` wires Nuke, StructureDeath and MissileExhaust (DgunBolt now held too), honours GroundOnly, and scales attachment positions and acceleration. C-268 `3c137805` draws the blast marks, templated ground bursts included. Checked in Studio on Coastline.**
    - **Re-check the D-Gun first.** Until now its templates reached the place with no `EmitCount` / `EmitDelay` / `Continuous` (a Rojo quirk, fixed here). Your `Vfx.follow` keyed on `Continuous` never saw it.
    - **New names:**
      - add `nuke = "Nuke"` to `Vfx.TEMPLATE_NAMES`, played at `b.radius / 150` as now;
