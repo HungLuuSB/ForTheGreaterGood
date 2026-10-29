@@ -503,6 +503,12 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 
   Each art is 4 depth layers in 2 × 2 tiles of 1024 × 576. Once you approve the uploads, they go in the manifest's `keyArt`. The lobby's loading screen shows them as soon as they're listed. **Status 2026-10-24:** 2 "Volley" and 3 "Converging" are listed and show in the lobby; 1 "Commander's stand" waits for its upload and manifest entry.
 
+### For 2d-E (2D assets session, `FTGG-2d`)
+
+Since 2026-10-29 (the user), session E owns the 2D assets: the icon sheet's source, unit pictures, command and resource icons, thumbnails. client-B keeps `render.mjs`, `IconAtlas` and the UI wiring. The lobby reads the icons only through B's `IconAtlas` (the Units list, read-only), so an icon request goes to E here, and its wiring to B.
+
+- None open.
+
 ## Plan and status
 
 | Step | Status |
