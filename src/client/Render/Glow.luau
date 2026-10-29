@@ -6,6 +6,9 @@
 -- energy stall, factories pulse while producing, a `pulse` piece's glow
 -- (GlowPiece, Core/PieceMotion) breathes, weapons flash per shot,
 -- unfinished units stay dark. Only changed values are written.
+-- A `pulse` piece also swells and shrinks with its breath (C-257): the
+-- piece and every part welded to it are resized about the piece's pivot
+-- (sizes and joint offsets times Core/Glow.scale), near the camera only.
 -- Headlights: a pool of shadowless SpotLights on the nearest on-screen
 -- vehicles with `head` glow parts, at close zoom or under the night and
 -- dusk atmospheres, capped by the graphics light budget. Client only.
@@ -28,8 +31,15 @@ Glow.HEAD_BRIGHTNESS = 2.5
 Glow.HEAD_RANGE = 36
 Glow.HEAD_ANGLE = 55
 Glow.RATIO_OVERRIDE = nil :: number? -- debug (Invoke("glowratio", r)): pretend the team's power ratio is r
+Glow.PULSE_NEAR = 450 -- studs from the camera within which pulse pieces change size
+Glow.PULSE_STEP = 0.003 -- smaller size changes aren't written
 
 export type Part = { sa: SurfaceAppearance, channel: string, rest: number, shown: number, pulsing: boolean }
+-- One resized part of a pulse piece: its resting size, and the joint that
+-- holds it with that joint's resting offset (Motor6D C1 for the piece
+-- itself, Weld C0 for what's welded on).
+type Scaled = { part: BasePart, size: Vector3, joint: JointInstance?, rest: CFrame, c1: boolean }
+export type Pulse = { parts: { Scaled }, attachments: { { at: Attachment, rest: Vector3 } }, shown: number }
 
 -- The `pulse` pieces of `def`, by name (nil: none).
 local function pulsePieces(def: any?): { [string]: boolean }?
@@ -71,8 +81,77 @@ function Glow.collect(model: Model, def: any?): ({ Part }?, { BasePart }?)
 	return (if #out > 0 then out else nil), (if #heads > 0 then heads else nil)
 end
 
--- Back to resting strength, headlight off (the model goes back to the pool).
-function Glow.reset(parts: { Part }?, root: BasePart?)
+-- The pulse pieces of a model of `def`, each with every part welded to it
+-- (nil: none).
+function Glow.collectPulses(model: Model, def: any?): { Pulse }?
+	local pulses = pulsePieces(def)
+	if pulses == nil then
+		return nil
+	end
+	local welded: { [BasePart]: { Weld } } = {}
+	for _, d in model:GetDescendants() do
+		if d:IsA("Weld") and d.Part0 and d.Part1 then
+			local list = welded[d.Part0] or {}
+			table.insert(list, d)
+			welded[d.Part0] = list
+		end
+	end
+	local out: { Pulse } = {}
+	for name in pulses do
+		local piece = model:FindFirstChild(name, true)
+		if piece == nil or not piece:IsA("BasePart") then
+			continue
+		end
+		local motor = piece:FindFirstChildOfClass("Motor6D")
+		local pulse: Pulse = { parts = {}, attachments = {}, shown = 1 }
+		table.insert(pulse.parts, { part = piece, size = piece.Size, joint = motor, rest = if motor then motor.C1 else CFrame.identity, c1 = true })
+		local queue = { piece }
+		while #queue > 0 do
+			local part = table.remove(queue) :: BasePart
+			for _, a in part:GetChildren() do
+				if a:IsA("Attachment") then
+					table.insert(pulse.attachments, { at = a, rest = a.Position })
+				end
+			end
+			for _, w in welded[part] or {} do
+				local p1 = w.Part1 :: BasePart
+				table.insert(pulse.parts, { part = p1, size = p1.Size, joint = w, rest = w.C0, c1 = false })
+				table.insert(queue, p1)
+			end
+		end
+		table.insert(out, pulse)
+	end
+	return if #out > 0 then out else nil
+end
+
+-- Resizes a pulse piece to `k` × its rest about its pivot.
+local function scalePulse(pulse: Pulse, k: number)
+	for _, s in pulse.parts do
+		s.part.Size = s.size * k
+		local joint = s.joint
+		if joint then
+			local offset = CFrame.new(s.rest.Position * k) * s.rest.Rotation
+			if s.c1 then
+				(joint :: Motor6D).C1 = offset
+			else
+				(joint :: Weld).C0 = offset
+			end
+		end
+	end
+	for _, a in pulse.attachments do
+		a.at.Position = a.rest * k
+	end
+	pulse.shown = k
+end
+
+-- Back to resting strength and size, headlight off (the model goes back to
+-- the pool).
+function Glow.reset(parts: { Part }?, root: BasePart?, pulses: { Pulse }?)
+	for _, pulse in pulses or {} do
+		if pulse.shown ~= 1 then
+			scalePulse(pulse, 1)
+		end
+	end
 	local headlight = root and root:FindFirstChild("FtggHeadlight")
 	if headlight then
 		headlight.Parent = nil -- chosen again (or not) at the next refresh
@@ -190,10 +269,11 @@ function Glow.step(state: State, renderer: any, world: any, now: number, camera:
 	c.now = now
 	c.level = Glow.LEVEL
 	local models, parts, writes = 0, 0, 0
+	local eye = camera.CFrame.Position
 	for id, d in renderer.drawn do
-		local glows = d.glows
+		local glows, pulses = d.glows, d.pulses
 		local u = world.units[id]
-		if glows and u then
+		if (glows or pulses) and u then
 			models += 1
 			c.built = (u.build or 1) >= 1
 			c.ratio = if u.team == myTeam then ratio else 1
@@ -202,7 +282,16 @@ function Glow.step(state: State, renderer: any, world: any, now: number, camera:
 			local shot = state.lastShot[id]
 			c.sinceShot = if shot then now - shot else math.huge
 			c.phase = (id * 0.618) % 1
-			for _, p in glows do
+			if pulses then
+				local k = if (d.root.Position - eye).Magnitude < Glow.PULSE_NEAR then CoreGlow.scale(c) else 1
+				for _, pulse in pulses do
+					if math.abs(pulse.shown - k) >= Glow.PULSE_STEP or (k == 1 and pulse.shown ~= 1) then
+						scalePulse(pulse, k)
+						writes += 1
+					end
+				end
+			end
+			for _, p in glows or {} do
 				parts += 1
 				local target = CoreGlow.strength(p.channel, p.rest, c, p.pulsing)
 				if CoreGlow.changed(p.shown, target) then
