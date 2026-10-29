@@ -872,6 +872,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `145e7b32` (the user approved the 42 older wrecks: every wreck is approved; `ground.lakelands.step = 8` in the manifest for client-B's C-235; manifest, ground.py, docs).
 - Ready to merge: `d0383a51` (the last four meshes with wrecks: ord_pharos, chs_scylla, ord_empyrean, chs_rookery, `review`, so their blockouts draw until approved; every def now has a mesh; `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs).
 - Ready to merge: `2ab88c4d` (the user approved the last four meshes and wrecks: all 182 units draw their approved meshes; manifest, docs; includes the merge of `main` ae6356ad).
+- Ready to merge: `7f5e8ebe` (the playtest-3 and handover summary at the top of this file, for the move to another account; `assets/models/tools/rig_batch.py` and `contact_sheet.py` move in from the session scratchpad; status table refreshed (203 defs, all approved); `_VfxProto.luau` deleted, it was untracked and identical to `place/Vfx.model.json`. Docs and tools only, nothing in game changes).
 
 ## Requests
 
