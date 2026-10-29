@@ -26,10 +26,10 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
   - amphibious and hover units on a shoreline;
   - aircraft banked over clouds.
   Order's ground is green, Chaos's is ash.
-- **The mask:** the team paint alone in lit white, with everything else transparent.
+- **Team paint:** baked in the faction colour, Order blue #4084E6 and Chaos red #DE463E (the user, 2026-10-30, via E). There is no mask pass now; `--masks` still renders `<id>_mask.png` (lit white team paint) if it's ever needed.
 - **Tools:**
   - `assets/models/tools/pictures_defs.luau` writes `debug_out/pictures/defs.json`: the non-retired defs and each one's setting.
-  - `assets/models/tools/pictures.py` (Blender) renders `debug_out/pictures/<id>.png` and `<id>_mask.png` at 256×256, about 10 s per unit. Its docstring has the commands.
+  - `assets/models/tools/pictures.py` (Blender) renders `debug_out/pictures/<id>.png` at 256×256, about 10 s per unit. Its docstring has the commands.
 - **Output:** the PNGs are regenerable and not committed. E reads them from `debug_out/pictures/` and commits only the packed sheets, in `assets/2d/pictures/`.
 - **When to re-render:** whenever a mesh changes or a unit is added.
 - **Fix in passing:** `portraits.py` now strips the `_bar` suffix from glow-part names. Before, every glow rendered in the fallback grey instead of its channel colour.

@@ -3,14 +3,16 @@ diorama per unit def, its approved mesh standing in its own setting, the same
 camera and light rig for every unit so the grid reads as a set.
 
     lune run assets/models/tools/pictures_defs.luau   (debug_out/pictures/defs.json)
-    blender -b --factory-startup --python-exit-code 1 -P assets/models/tools/pictures.py -- [--ids a,b,c] [first count]
+    blender -b --factory-startup --python-exit-code 1 -P assets/models/tools/pictures.py -- [--masks] [--ids a,b,c] [first count]
 
-Per def, 256 x 256 RGBA PNGs in debug_out/pictures/ (regenerable, not
-committed; E composites and packs them):
-- <id>.png: the picture, opaque. Team paint in neutral grey (150), since the
-  mask covers it; glows on.
-- <id>_mask.png: the team paint alone in lit white with its shading; the
-  setting and everything else held out (alpha 0). B tints it in game.
+Per def, a 256 x 256 PNG in debug_out/pictures/ (regenerable, not committed;
+E packs them):
+- <id>.png: the picture, opaque, glows on. The team paint is baked in the
+  faction's colour, Order blue and Chaos red (the user, 2026-10-30), so the
+  game shows it as is.
+- <id>_mask.png, only with --masks (the first look, for a team tint in game):
+  the team paint alone in lit white with its shading, the setting and
+  everything else held out (alpha 0).
 
 Settings (pictures_defs.luau): ground units and bots on a terrain patch with
 track marks or footprints, structures on a gravel apron with props, ships in
@@ -45,7 +47,10 @@ SIZE = 256
 LENS = 50
 SAMPLES = 64
 FILL = 0.76  # the unit's larger projected extent, as a share of the frame
-GREY = (150, 150, 150)  # team paint under the mask
+# The team paint, baked in the faction's colour (the user, 2026-10-30: "keep the unit as their
+# faction color ... Orders is blue, Chaos is red"): TeamColors.luau's first cold and warm entries.
+FACTION_TEAM = {"order": (64, 132, 230), "chaos": (222, 70, 62)}
+MASKS = False  # the team-mask pass (<id>_mask.png), off since the paint is baked; --masks turns it on
 WATERLINE = 0.18  # PortraitStage.WATERLINE: the water surface, a share of the hull's height
 VIEW = lib.R(-1.0, 0.75, -1.15).normalized()  # portraits.py's three-quarter view, front-left
 # The user's approval note (2026-10-30, via E): "increase their glow and color".
@@ -722,7 +727,7 @@ def underwater(rng, r, lo, hi, z_bed):
 
 
 def load_unit(e, col):
-    portraits.TEAM = GREY
+    portraits.TEAM = FACTION_TEAM.get(e["faction"], FACTION_TEAM["order"])
     objs = portraits.build_mesh({"id": e["model"], "faction": e["faction"]}, col)
     bpy.context.view_layer.update()
     lo, hi = portraits.world_bounds(objs)
@@ -775,12 +780,17 @@ def boost_unit(objs):
                 if n.bl_idname == "ShaderNodeMath" and n.operation == "MULTIPLY" and abs(n.inputs[1].default_value - 4.0) < 1e-6:
                     n.inputs[1].default_value = GLOW
             bsdf = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled"), None)
-            if bsdf and bsdf.inputs["Base Color"].links:
-                src = bsdf.inputs["Base Color"].links[0].from_socket
-                hs = nt.nodes.new("ShaderNodeHueSaturation")
-                hs.inputs["Saturation"].default_value = UNIT_SATURATION
-                nt.links.new(src, hs.inputs["Color"])
-                nt.links.new(hs.outputs["Color"], bsdf.inputs["Base Color"])
+            if not (bsdf and bsdf.inputs["Base Color"].links):
+                continue
+            target = bsdf.inputs["Base Color"]
+            mix = target.links[0].from_node
+            if mix.bl_idname == "ShaderNodeMix" and mix.inputs[7].links:  # the team mix: saturate the paint (B), not the team colour (A)
+                target = mix.inputs[7]
+            src = target.links[0].from_socket
+            hs = nt.nodes.new("ShaderNodeHueSaturation")
+            hs.inputs["Saturation"].default_value = UNIT_SATURATION
+            nt.links.new(src, hs.inputs["Color"])
+            nt.links.new(hs.outputs["Color"], target)
 
 
 def blur(a, radius):
@@ -895,6 +905,8 @@ def picture(scene, cam, e):
     scene.render.film_transparent = False
     render(scene, os.path.join(OUT, f"{e['id']}.png"))
     bloom(os.path.join(OUT, f"{e['id']}.png"))
+    if not MASKS:
+        return {"setting": s}
     # the mask: same camera, the setting held out, the team paint in white
     scene.render.film_transparent = True
     for o in bpy.data.objects:
@@ -907,12 +919,16 @@ def picture(scene, cam, e):
     scene.view_settings.exposure = MASK_EXPOSURE
     render(scene, os.path.join(OUT, f"{e['id']}_mask.png"))
     scene.view_settings.exposure = 0.0
-    return {"setting": s, "fill": FILL}
+    return {"setting": s}
 
 
 def main():
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     entries = json.load(open(os.path.join(OUT, "defs.json"), encoding="utf-8"))
+    global MASKS
+    if "--masks" in args:
+        MASKS = True
+        args.remove("--masks")
     if args and args[0] == "--ids":
         want = args[1].split(",")
         entries = [e for e in entries if e["id"] in want]
