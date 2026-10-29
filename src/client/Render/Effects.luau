@@ -342,6 +342,12 @@ local function shellFor(r: Renderer, id: number, inUse: { [number]: boolean }): 
 		inUse[k] = true
 		return r.shells[k]
 	end
+	-- bolts no longer drawn: their held effect stops, its burning path fades
+	for key in r.vfx.held do
+		if type(key) == "number" and not bolts[key] then
+			Vfx.release(r.vfx, key, vt)
+		end
+	end
 	for i, s in r.shells do
 		if not inUse[i] then
 			if s.owner and r.slotOf[s.owner] == i then
@@ -390,9 +396,21 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		end
 	end
 	local lights, liveMissiles = 0, {}
+	local bolts: { [number]: boolean } = {}
 	for _, v in visible do
 		local p = v[1] :: Effects.Proj
 		local kind = p.weapon.type
+		if p.weapon.fx and p.weapon.fx.trail == "dgun" then
+			-- the D-Gun's bolt: models-C's DgunBolt held on it while it flies,
+			-- facing its flight (C-266); the plain ball below without one
+			local pos = Vector3.new(v[2], v[3], v[4])
+			local flat = Vector3.new(p.vx, 0, p.vz)
+			local frame = if flat.Magnitude > 1e-3 then CFrame.lookAt(pos, pos + flat) else CFrame.new(pos)
+			if Vfx.follow(r.vfx, p.id, "dgunBolt", frame, vt) then
+				bolts[p.id] = true
+				continue
+			end
+		end
 		if kind == "HOMING" or p.weapon.strategic then
 			local style = p.weapon.fx and p.weapon.fx.trail
 			if MISSILE_STYLE[style] == nil then

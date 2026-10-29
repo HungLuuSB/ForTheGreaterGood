@@ -2413,3 +2413,19 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - An id whose atlas changed since its upload is dropped, as for every other sheet. Nothing in the match draws an emblem yet.
 - Spec: `FactionEmblems.spec` (both factions, every rect on the atlas, `pick`).
 - Studio, Coastline: the build tiles and the unit panel show the pictures (Order blue, in their setting), cropped cleanly with no neighbour bleeding in (`debug_out/screens/2026-10-30-unit-pictures.png`).
+
+### C-266 — The D-Gun's effects (2026-10-30, models-C's templates)
+
+- The user asked C for the D-Gun's VFX. C made four templates in `place/Vfx.model.json` (m-models 51db9785, merged in). They're authored at real size, so they play at scale 1, and their colour is fixed (255, 200, 90), not team-tinted.
+- `Render/Vfx`:
+  - `TEMPLATE_NAMES` gains `dgunMuzzle`, `dgunHit`, `dgunEnd` and `dgunBolt`.
+  - While the place has no template, the first three fall back to the built-in muzzle, hit and impact (`Vfx.FALLBACK`).
+  - **Held templates:** a template with the attribute `Continuous` is held by an owner. `Vfx.follow(key, kind, frame)` starts it on the first call and moves it on later ones; `Vfx.release(key)` ends it.
+  - While held, its emitters saved Enabled with no EmitCount run, and its lights with no LightSeconds stay lit. Released, it stops and is reused once its longest particles have faded (the burning path's 3.5 s). A full pool never steals a held copy.
+- `Render/Effects`: a D-Gun bolt is drawn as the held `DgunBolt`, facing its flight on the level. Bolts no longer drawn are released. The plain ball stays as the fallback without the template.
+- `Core/Effects`:
+  - a D-Gun's SPAWN_PROJ flash is `dgunMuzzle`;
+  - its one IMPACT (the end of its range) is `dgunEnd`, played level so its ring lies flat;
+  - the server sends no IMPACT for the units the bolt passes through (S-194). So a DEATH within the bolt's reach of its last 1.5 s of path plays `dgunHit` there too (`Effects.boltThrough`).
+- Spec (`Dgun.spec`): the bolt through three tanks plays one `dgunMuzzle`, one `dgunEnd` and three `dgunHit`.
+- **Studio, Coastline:** the Sovereign fired through a row of its own Lancers. The muzzle, the held bolt, the end and both hits played as templates, with no errors (`debug_out/screens/2026-10-30-dgun-vfx-launch.jpg`, `…-dgun-vfx-path.jpg`). The flight itself is about a second, too short to frame well by tool; the burning path and the end scorch show after it.
