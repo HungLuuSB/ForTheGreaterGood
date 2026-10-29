@@ -2463,3 +2463,9 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - The part casts no shadow (decals would throw a blob) and sits `MARK_LIFT` (0.6) studs over the ground. At +0.08, Terrain's sand ripples hid it.
 - **Templated bursts get the mark too.** C's Impact and Death templates replace the built-in rig, which used to leave the disc, so they had no lasting mark at all. Any ground burst of a kind with a scorch (its own kind's or its fallback's) now leaves one at that kind's size.
 - **Studio, Coastline:** a D-Gun shot through three Lancers left six marks, both variants, with no shadows. The glow faded and the soot stayed (`debug_out/screens/2026-10-30-blast-marks-glow.jpg`, `…-soot.jpg`).
+
+### C-269 — The re-rendered unit pictures uploaded (2026-10-30)
+
+- The user wanted C's re-render of the unit pictures (no fog, more glow, more colour). E repacked it into the same four sheets and rects (2d 68c390e0, merged in up to ee9cfd2a).
+- The old sheet ids went stale with the new pixels. The user approved the upload; the new ids are 129402755258680, 137517755831073, 118640861030060 and 108902714225981 in `tools/icons/assets.json`, with their hashes. `UI/UnitPictures` is regenerated: 197 of 197 on uploaded sheets.
+- Studio, Coastline: the build tiles and the unit panel load the new sheets (`debug_out/screens/2026-10-30-unit-pictures-rerender.png`).

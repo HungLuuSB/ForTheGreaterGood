@@ -10,10 +10,10 @@ UnitPictures.TILE = 126 -- pixels per picture
 
 -- one image per sheet
 UnitPictures.sheets = {
-	"rbxassetid://122608829388990",
-	"rbxassetid://77489597273393",
-	"rbxassetid://138922904621520",
-	"rbxassetid://97328947914631",
+	"rbxassetid://129402755258680",
+	"rbxassetid://137517755831073",
+	"rbxassetid://118640861030060",
+	"rbxassetid://108902714225981",
 } :: { string }
 
 -- def id → { sheet, x, y }: its picture's sheet and top-left pixel
