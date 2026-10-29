@@ -83,6 +83,7 @@
 
 local Grid = require("@shared/Grid/Grid")
 local Alerts = require("./Alerts")
+local Build = require("./Build")
 local Cheats = require("./Cheats")
 local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
@@ -1231,8 +1232,9 @@ function NetOut.step(sim: Types.Sim)
 			end
 			-- a builder's nano-spray target (S-194, G7, G4): what it builds,
 			-- repairs or assists, and the wreck it reclaims or resurrects
+			-- (S-208, H1: only once it is in reach, not while it walks there)
 			local workKind, workTarget = WK.NONE, 0
-			if d.buildPower then
+			if d.buildPower and Build.inReach(sim, id) then
 				local b = sim.build
 				local unit = b.target[id] or 0
 				if unit ~= 0 and w.slot[unit] ~= nil then

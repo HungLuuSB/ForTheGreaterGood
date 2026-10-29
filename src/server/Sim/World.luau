@@ -89,6 +89,7 @@ export type World = {
 	wTargetProj: { [number]: number }, -- interceptors: the enemy strategic missile targeted (projectile ID, 0 = none; S-48)
 	wTargetProjSerial: { [number]: number }, -- its Combat.pSerial
 	wStockProgress: { [number]: number }, -- 0..1 of the next missile
+	wCharge: { [number]: number }, -- heavy-shot weapons: 0..1 of the next shot's cost paid (Stockpile.chargeStep, S-205); nil = charged
 	wSalvo: { [number]: number }, -- salvo weapons: shots left in the salvo under way (S-69)
 	wSalvoWait: { [number]: number }, -- seconds until its next shot
 	wRampTarget: { [number]: number }, -- ramping weapons (S-157): the target it has been on (0 = none)
@@ -147,6 +148,7 @@ function World.new(): World
 		wTargetProj = {},
 		wTargetProjSerial = {},
 		wStockProgress = {},
+		wCharge = {},
 		wSalvo = {},
 		wSalvoWait = {},
 		wRampTarget = {},
@@ -363,6 +365,7 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wBlocked[key] = nil
 		w.wStock[key] = nil
 		w.wStockProgress[key] = nil
+		w.wCharge[key] = nil
 		w.wSalvo[key] = nil
 		w.wSalvoWait[key] = nil
 		w.wRampTarget[key] = nil
@@ -486,6 +489,10 @@ function World.hash(w: World, h: number?): number
 			if stock ~= nil then
 				hv = Hash.u32(hv, stock)
 				hv = Hash.number(hv, w.wStockProgress[key])
+			end
+			local charge = w.wCharge[key]
+			if charge ~= nil then -- only while charging: other hashes are as before (S-205)
+				hv = Hash.number(hv, charge)
 			end
 			local salvo = w.wSalvo[key]
 			if salvo ~= nil and salvo > 0 then -- only during a salvo: other hashes are as before (S-69)

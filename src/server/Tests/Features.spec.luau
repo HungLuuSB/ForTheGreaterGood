@@ -70,7 +70,7 @@ return function(t: RunAll.Context)
 		t.expect(turns >= 40, `{turns} headings`)
 		-- nothing is built on a rock
 		local rock = nearest(sim, FeatureDefs.ROCK, 0, 0)
-		local ok = Placement.check(sim, sim.defs.units.ord_generator, c.wreckX[rock], c.wreckZ[rock], nil, 1)
+		local ok = Placement.check(sim, sim.defs.units.ord_solar, c.wreckX[rock], c.wreckZ[rock], nil, 1)
 		t.expect(not ok, "a generator can't go on a rock")
 	end)
 

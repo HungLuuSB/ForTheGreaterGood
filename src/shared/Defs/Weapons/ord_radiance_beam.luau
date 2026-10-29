@@ -8,7 +8,7 @@
 return {
 	id = "ord_radiance_beam",
 	type = "BEAM",
-	range = 650,
+	range = 488, -- -25% (S-203, the user's H7; was 650)
 	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 9,
 	accuracy = 0,
@@ -21,5 +21,5 @@ return {
 	priority = { "ARMORED", "GROUND", "STRUCTURE" },
 	shotCost = { power = 700 },
 	turret = { yawRate = 45, pitchRate = 30, tolerance = 1, minPitch = -10, maxPitch = 30, arc = 360 },
-	fx = { muzzle = "beam_charge", impact = "beam_impact", sound = "beam_heavy" },
+	fx = { muzzle = "beam_charge", impact = "beam_impact", sound = "beam_heavy", color = { r = 60, g = 150, b = 255 } }, -- electric blue (S-203, the user's H38)
 }

@@ -160,13 +160,13 @@ return function(t: RunAll.Context)
 		_, why = Placement.check(sim, defs.ord_extractor, dx, dz)
 		t.equal(why, "occupied")
 		Spawn.unit(sim, "ord_lancer", 1, 40, 40)
-		_, why = Placement.check(sim, defs.ord_generator, 40, 40)
+		_, why = Placement.check(sim, defs.ord_solar, 40, 40)
 		t.equal(why, "units in the way")
 
 		local wall = Sim.new({ seed = 1, players = PLAYERS, mapId = "wall:64" })
 		local wg = (wall.map :: any).grid
 		local wx, wz = wg:cellCenter(32, 40)
-		_, why = Placement.check(wall, wall.defs.units.ord_generator, wx, wz)
+		_, why = Placement.check(wall, wall.defs.units.ord_solar, wx, wz)
 		t.equal(why, "terrain", "no land structures on water")
 	end)
 
@@ -184,7 +184,7 @@ return function(t: RunAll.Context)
 			local pm = sim.map :: Passability.PassMap
 			local g = pm.grid
 			local checked = { land = 0, water = 0, terrain = 0 }
-			for _, defId in { "ord_generator", "ord_tidal" } do
+			for _, defId in { "ord_solar", "ord_tidal" } do
 				local def = sim.defs.units[defId]
 				local placement = def.placement or "land"
 				for cz = 0, g.cellsZ - 1, 2 do -- (every other cell: footprint-2 tidals fit wall:64's small lake, S-104)
@@ -261,7 +261,7 @@ return function(t: RunAll.Context)
 				table.remove(structures, i)
 				Sim.step(sim)
 			else
-				local def = if rng:chance(0.5) then "ord_vehplant" else "ord_generator"
+				local def = if rng:chance(0.5) then "ord_vehplant" else "ord_solar"
 				local id = Spawn.unit(sim, def, 1, rng:nextNumber(-480, 480), rng:nextNumber(-480, 480))
 				table.insert(structures, id)
 			end

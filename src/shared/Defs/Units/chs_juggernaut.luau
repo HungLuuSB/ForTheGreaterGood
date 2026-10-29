@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.2 "Main battle tank", T2); stats to balance in M8.
 return Templates.extend(Templates.TankT1, {
 	id = "chs_juggernaut",
-	name = "Juggernaut",
+	name = "Goliath", -- (S-203) was Juggernaut: the name went to the Chaos T3 bot (chs_korgoth, the user's H40)
 	description = "Main battle tank. Heavy armor, heavy gun. Raises its arms to fire.",
 	faction = "chaos",
 	tier = 2,

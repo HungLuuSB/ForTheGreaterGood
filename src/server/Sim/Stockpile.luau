@@ -151,4 +151,106 @@ function Stockpile.step(sim: Types.Sim, demandS: { [number]: number }, demandP: 
 	end
 end
 
+-- Heavy shots (S-205, the user's playtest 3 H32: "Bulwark only shoot its
+-- primary turret for once and never used it again"). A weapon whose shot
+-- costs CHARGE_MIN power or more (the beam towers, the Centurion's lance)
+-- no longer needs the whole cost in the team's stores the moment it fires:
+-- in a real match construction keeps power near zero, so after the first
+-- shot it never fired again. Instead it pays the next shot while it
+-- reloads, cost / reload per second, as a priority consumer like a missile
+-- refill (a low-priority unit's last), and fires once both are done. The
+-- D-Gun (a bolt, ordered by hand) still pays at once. Spawned charged.
+Stockpile.CHARGE_MIN = 100
+
+-- Does `weapon` charge its shots (rather than pay at once)?
+function Stockpile.charges(weapon: any): boolean
+	local cost = weapon.shotCost
+	return cost ~= nil and (cost.power or 0) + (cost.supply or 0) >= Stockpile.CHARGE_MIN and not weapon.bolt
+end
+
+-- Per DefSet: unit def index → its charging slots, or false.
+local chargeCache: { [any]: { [number]: { number } | false } } = setmetatable({}, { __mode = "k" }) :: any
+local function chargingSlots(sim: Types.Sim, defIndex: number): { number } | false
+	local byDef = chargeCache[sim.defs]
+	if byDef == nil then
+		byDef = {}
+		chargeCache[sim.defs] = byDef
+	end
+	local slots = byDef[defIndex]
+	if slots == nil then
+		local list = {}
+		for i, s in sim.defs.unitByIndex[defIndex].weapons do
+			if Stockpile.charges(sim.defs.weaponByIndex[s.weaponIndex]) then
+				table.insert(list, i)
+			end
+		end
+		slots = if #list > 0 then list else false
+		byDef[defIndex] = slots
+	end
+	return slots :: { number } | false
+end
+
+-- Is slot `key` charged for its next shot?
+function Stockpile.charged(w: World.World, key: number): boolean
+	local c = w.wCharge[key]
+	return c == nil or c >= 1
+end
+
+-- A shot of slot `key` spent the charge: the next one starts.
+function Stockpile.discharge(w: World.World, key: number)
+	w.wCharge[key] = 0
+end
+
+-- Construction-step economy consumer (Build.step, after the refills).
+function Stockpile.chargeStep(sim: Types.Sim, demandS: { [number]: number }, demandP: { [number]: number }, priorityS: { [number]: number }, priorityP: { [number]: number }, lowS: { [number]: number }, lowP: { [number]: number })
+	local w = sim.world
+	local eco = sim.eco
+	for _, id in w.ids do
+		local slots = chargingSlots(sim, w.defIndex[id])
+		if not slots or w.buildProgress[id] < 1 then
+			continue
+		end
+		local weapons = sim.defs.unitByIndex[w.defIndex[id]].weapons
+		for _, slot in slots do
+			local key = World.slotKey(id, slot)
+			local p = w.wCharge[key]
+			if p == nil then
+				continue -- charged
+			end
+			local weapon = sim.defs.weaponByIndex[weapons[slot].weaponIndex]
+			local cost = weapon.shotCost :: { supply: number?, power: number? }
+			local cs, cp = cost.supply or 0, cost.power or 0
+			local rate = 1 / math.max(weapon.reload, Stockpile.DT) -- shots per second at full economy
+			local team = w.team[id]
+			local acc = eco.accounts[team]
+			demandS[team] += cs * rate
+			demandP[team] += cp * rate
+			local step
+			if bit32.band(w.state[id], World.State.LOW_PRIORITY) ~= 0 then
+				lowS[team] += cs * rate
+				lowP[team] += cp * rate
+				step = rate * Stockpile.DT * Economy.effective(acc, cs, cp, true)
+			else
+				priorityS[team] += cs * rate
+				priorityP[team] += cp * rate
+				step = rate * Stockpile.DT * Economy.priorityEffective(acc, cs, cp)
+			end
+			if cs > 0 then
+				step = math.min(step, Economy.allowance(acc.supply) / cs)
+			end
+			if cp > 0 then
+				step = math.min(step, Economy.allowance(acc.power) / cp)
+			end
+			if step <= 0 then
+				continue
+			end
+			step = math.min(step, 1 - p)
+			acc.supply.spent += cs * step
+			acc.power.spent += cp * step
+			p += step
+			w.wCharge[key] = if p >= 1 - 1e-9 then nil else p
+		end
+	end
+end
+
 return Stockpile

@@ -48,8 +48,8 @@ local function battle(seed: number): (Sim.Sim, { number }, { number })
 	table.insert(mine, Spawn.unit(sim, "ord_oracle", 1, -340, 0))
 	table.insert(mine, Spawn.unit(sim, "ord_veil", 1, -320, 60))
 	table.insert(theirs, Spawn.unit(sim, "chs_watcher", 2, 340, 0))
-	Spawn.unit(sim, "chs_generator", 2, 200, -200)
-	Spawn.unit(sim, "ord_generator", 1, -200, 200)
+	Spawn.unit(sim, "chs_solar", 2, 200, -200)
+	Spawn.unit(sim, "ord_solar", 1, -200, 200)
 	camera(sim, 1, 0, 20, 50, 70) -- west half
 	camera(sim, 2, 45, 20, 95, 70) -- east half
 	return sim, mine, theirs
@@ -251,7 +251,7 @@ return function(t: RunAll.Context)
 		local g = (sim.map :: any).grid
 		local c = sim.combat
 		local w = sim.world
-		local gen = Spawn.unit(sim, "ord_generator", 1, -150, 0)
+		local gen = Spawn.unit(sim, "ord_solar", 1, -150, 0)
 		World.setHealth(w, gen, 1e6) -- outlasts the shelling: shells keep coming
 		local lancer = Spawn.unit(sim, "ord_lancer", 1, -360, 0)
 		w.fireState[lancer] = World.FireState.HOLD_FIRE
@@ -655,7 +655,7 @@ return function(t: RunAll.Context)
 		t.equal(otherView.idle[enemy], true, "each player hears of its own")
 		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = sim.defs.units.ord_lancer.index, cell = 0, offX = 0, offZ = 0, facing = 0 })
 		local cell, ox, oz = g:encode(-200, -300)
-		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { mason }, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { mason }, defIndex = sim.defs.units.ord_solar.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
 		step(10)
 		t.equal(view.idle[mason], nil, "building: busy")
 		t.equal(view.idle[plant], nil, "producing: busy")
@@ -1016,7 +1016,7 @@ return function(t: RunAll.Context)
 
 	t.test("the Eco channel carries the team's account when it changes", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:64" })
-		Spawn.unit(sim, "ord_generator", 1, 0, 0)
+		Spawn.unit(sim, "ord_solar", 1, 0, 0)
 		local view = Client.new((sim.map :: any).grid)
 		local sent = 0
 		for _ = 1, 60 do

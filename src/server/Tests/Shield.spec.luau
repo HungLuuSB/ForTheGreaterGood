@@ -11,13 +11,14 @@ local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
 local Client = require("./Support/Client")
 local RunAll = require("./RunAll")
+local BeamDefs = require("./Support/BeamDefs") -- the beam towers at their old ranges (S-203)
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
 local CX, CZ = 0, -150 -- the dome's spot, as in the client's "shield" profile (C-89)
 
 -- An Order Phalanx at (CX, CZ) on flat:128, at `fraction` charge.
 local function dome(seed: number, fraction: number?): (Sim.Sim, number)
-	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+	local sim = Sim.new({ defs = BeamDefs.load(), seed = seed, players = PLAYERS, mapId = "flat:128" })
 	local gen = Spawn.unit(sim, "ord_phalanx", 1, CX, CZ)
 	if fraction then
 		sim.combat.shieldCharge[gen] = sim.defs.units.ord_phalanx.shield.capacity * fraction
@@ -77,7 +78,7 @@ local function distance(x: number, z: number): number
 	return math.sqrt((x - CX) ^ 2 + (z - CZ) ^ 2)
 end
 
-local ALL_WEIGHTS = { "chs_mg", "chs_autocannon", "chs_mlrs", "chs_light_cannon", "chs_rockets", "chs_heavy_cannon", "chs_mortar", "chs_heavy_bomb", "chs_siege_mortar", "chs_radar_sam" }
+local ALL_WEIGHTS = { "chs_autocannon", "chs_mlrs", "chs_light_cannon", "chs_rockets", "chs_heavy_cannon", "chs_mortar", "chs_heavy_bomb", "chs_siege_mortar", "chs_radar_sam" }
 
 -- Runs `fn` with the braking field on (S-93 destroys every projectile at
 -- the surface; the field of S-79..S-85 stays behind ShieldField.ABSORB_MASS
@@ -200,7 +201,7 @@ return function(t: RunAll.Context)
 		-- a Ravager firing straight at a Mason under the dome, low over flat
 		-- ground: slowed almost to a stop, gravity bends them down, and they
 		-- used to sink through the band without ever turning
-		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "flat:64" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 9, players = PLAYERS, mapId = "flat:64" })
 		local w = sim.world
 		local gen = Spawn.unit(sim, "ord_phalanx", 1, 0, -100)
 		local mason = Spawn.unit(sim, "ord_mason", 1, 0, -40)
@@ -498,7 +499,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a built generator starts empty and down, then charges up on power", function()
-		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 8, players = PLAYERS, mapId = "flat:128" })
 		local gen = Spawn.unit(sim, "ord_phalanx", 1, CX, CZ)
 		-- as a construction frame enters (Build's frames start at progress 0)
 		Shield.removed(sim, gen)
@@ -573,12 +574,12 @@ return function(t: RunAll.Context)
 		-- `n` Ravagers shell a tank under a Phalanx for 60 s; the dome's charge
 		-- at 30 and 60 s (it held 100% throughout before S-150)
 		local function siege(n: number): (number, number)
-			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+			local sim = Sim.new({ defs = BeamDefs.load(), seed = 1, players = PLAYERS, mapId = "flat:96" })
 			local w = sim.world
 			local gen = Spawn.unit(sim, "ord_phalanx", 1, 0, 0)
 			Spawn.unit(sim, "ord_sovereign", 1, -300, -300)
 			for i = 1, 4 do
-				Spawn.unit(sim, "ord_generator", 1, -330 + i * 20, -330)
+				Spawn.unit(sim, "ord_solar", 1, -330 + i * 20, -330)
 			end
 			-- the tank near the dome's east edge (radius 120): the Ravagers'
 			-- 78-stud guns (S-179) reach it from outside the dome
@@ -668,7 +669,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("the shield profile: every attacker row fires, nothing in the dome's core is hurt while it stands", function()
-		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 11, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local gen = Spawn.unit(sim, "ord_phalanx", 1, CX, CZ)
 		-- the plant in the core; the radar and builder near the edge stand in the
@@ -737,7 +738,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a dome stops a beam at its surface; Radiance's hit-ray hurts only up to it (client request 50, S-116)", function()
-		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 8, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local carapace = Spawn.unit(sim, "chs_carapace", 2, 0, 200)
 		local capacity = sim.defs.units.chs_carapace.shield.capacity
@@ -775,7 +776,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a lingering beam held on a dome drains a big share of its charge (client request 51, S-117)", function()
-		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 9, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local carapace = Spawn.unit(sim, "chs_carapace", 2, 0, 200)
 		local capacity = sim.defs.units.chs_carapace.shield.capacity
@@ -812,7 +813,7 @@ return function(t: RunAll.Context)
 	t.test("an ordered attack on a shield generator sticks; a dome dropping mid-beam lets the beam through (client request 54, S-121)", function()
 		local Packer = require("@shared/Net/Packer")
 		local Schema = require("@shared/Net/Schema")
-		local sim = Sim.new({ seed = 10, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 10, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local carapace = Spawn.unit(sim, "chs_carapace", 2, 0, 250)
 		local capacity = sim.defs.units.chs_carapace.shield.capacity
@@ -865,7 +866,7 @@ return function(t: RunAll.Context)
 		local Schema = require("@shared/Net/Schema")
 		local capacity = 400
 		local function setup(seed: number): (Sim.Sim, number, number)
-			local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+			local sim = Sim.new({ defs = BeamDefs.load(), seed = seed, players = PLAYERS, mapId = "flat:128" })
 			local w = sim.world
 			local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
 			-- only the attack order's beam (S-185: idle weapons search on every

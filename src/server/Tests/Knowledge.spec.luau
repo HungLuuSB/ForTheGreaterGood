@@ -82,8 +82,8 @@ return function(t: RunAll.Context)
 	t.test("planning placement uses team knowledge; the physical check doesn't", function()
 		local sim = Sim.new({ seed = 6, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
-		local gen = sim.defs.units.ord_generator
-		local enemy = Spawn.unit(sim, "chs_generator", 2, 0, 0)
+		local gen = sim.defs.units.ord_solar
+		local enemy = Spawn.unit(sim, "chs_solar", 2, 0, 0)
 		steps(sim, 2)
 		t.equal(Sensors.level(sim, 1, enemy), L.HIDDEN, "Order doesn't know the Chaos generator")
 		t.expect(Placement.check(sim, gen, 0, 0, 1, 1), "the planner thinks the spot is free")
@@ -150,7 +150,7 @@ return function(t: RunAll.Context)
 		local w = sim.world
 		local hx, hz, dir = brain.homeX, brain.homeZ, brain.toward
 		local tank = Spawn.unit(sim, "chs_ravager", 2, hx + dir * 300, hz)
-		local gen = Spawn.unit(sim, "chs_generator", 2, hx, hz + 400)
+		local gen = Spawn.unit(sim, "chs_solar", 2, hx, hz + 400)
 		w.fireState[tank] = World.FireState.HOLD_FIRE
 		local tankSpotter = Spawn.unit(sim, "ord_lancer", 1, hx + dir * 300, hz + 60)
 		w.fireState[tankSpotter] = World.FireState.HOLD_FIRE
@@ -248,7 +248,7 @@ return function(t: RunAll.Context)
 		local w = sim.world
 		local hx, hz, dir = brain.homeX, brain.homeZ, brain.toward
 		local tank = Spawn.unit(sim, "chs_ravager", 2, hx + dir * 300, hz)
-		local gen = Spawn.unit(sim, "chs_generator", 2, hx, hz + 400)
+		local gen = Spawn.unit(sim, "chs_solar", 2, hx, hz + 400)
 		w.fireState[tank] = World.FireState.HOLD_FIRE
 		local spotter = Spawn.unit(sim, "ord_lancer", 1, hx + dir * 300, hz + 60)
 		w.fireState[spotter] = World.FireState.HOLD_FIRE

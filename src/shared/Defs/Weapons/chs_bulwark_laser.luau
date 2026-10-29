@@ -6,7 +6,7 @@
 return {
 	id = "chs_bulwark_laser",
 	type = "HITSCAN",
-	range = 215,
+	range = 172, -- -20% with the beam (S-203, the user's H7; was 215)
 	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.5,
 	shotCost = { power = 12 }, -- lasers cost energy per shot (S-187, the user)

@@ -1,0 +1,26 @@
+--!strict
+-- Juggernaut's long-range vertical-launch missiles (S-209, H40).
+return {
+	id = "chs_korgoth_missiles",
+	type = "HOMING",
+	range = 700,
+	reload = 8,
+	salvo = { count = 4, delay = 0.3 },
+	projectileSpeed = 300,
+	accuracy = 1,
+	turnRate = 70,
+	launch = "vertical",
+	climbHeight = 60,
+	guidance = "RADAR",
+	lockRange = 700,
+	burnThrough = 0.35,
+	terminalRange = 40,
+	canTargetRadar = true,
+	damage = { LIGHT = 260, ARMORED = 210, STRUCTURE = 180, SHIP = 190, AIR = 0, SUB = 0 },
+	aoe = 16,
+	edgeEffectiveness = 0.4,
+	targets = { "GROUND", "NAVAL", "STRUCTURE" },
+	priority = { "ARMORED", "GROUND", "STRUCTURE" },
+	turret = { yawRate = 60, pitchRate = 45, tolerance = 10, minPitch = -10, maxPitch = 85, arc = 360 },
+	fx = { muzzle = "missile_launch_large", trail = "smoke_thick", impact = "explosion_medium", sound = "sam_radar" },
+}
