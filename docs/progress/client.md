@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Rigs for the playtest-3 units (C-252, models-C's notes):** the Mammoth walks on four legs in diagonal pairs; the Titan and Juggernaut take long, heavy strides; missiles leave from the missile pods; construction turrets turn and pitch their emitter to their work; fusion cores, converter coils and capacitor cells breathe their glow. Keyed by def ID, ready for when sim-A's defs and models-C's models reach main.
+- Ready to merge: `5d938f5e` (C-252; test_client 335 / 335, build passed. Not yet in Studio: the units' defs and models aren't on main)
 - **Nano particles; the Commander faces its work (C-251):** builders and factories spray streams of glowing nano particles instead of light beams. The Commander turns its upper body to what it builds and keeps it there. Specs follow S-203 (generator retired, D-Gun range 80), and the server no longer times out building the lobby's map list.
 - Ready to merge: `f7b2e64e` (C-251; test_client 332 / 332, build passed. With m-sim-2 8a111001: 329 / 332, the 3 left are the new units' icons and C's gantry blockout. Studio: the stream, the factory spray, the torso on the work)
 - **Shots at the edge of vision (C-250, H37):** a beam or laser from a shooter the client holds at a stale spot no longer stretches across the map; only its hit shows.
