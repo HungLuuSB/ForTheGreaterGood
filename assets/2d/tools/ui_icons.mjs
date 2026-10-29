@@ -64,12 +64,16 @@ files.set("ftgg-ui-icons.png", png(`<svg xmlns="http://www.w3.org/2000/svg" widt
 keys.atlasSize = [ATLAS_W, atlasH];
 files.set("keys.json", Buffer.from(JSON.stringify(keys, null, "\t") + "\n"));
 
+// keys.json may come back from git with CRLF line ends (core.autocrlf), so text compares without them
+const sameFile = (a, b, name) =>
+	name.endsWith(".json") ? a.toString().replace(/\r\n/g, "\n") === b.toString() : a.equals(b);
+
 if (check) {
 	const stale = [];
 	for (const [name, bytes] of files) {
 		const path = `${OUT}/${name}`;
 		if (!existsSync(path)) stale.push(`${path} is missing`);
-		else if (!readFileSync(path).equals(bytes)) stale.push(`${path} is stale`);
+		else if (!sameFile(readFileSync(path), bytes, name)) stale.push(`${path} is stale`);
 	}
 	const extra = existsSync(OUT) ? readdirSync(OUT).filter((f) => !files.has(f)) : [];
 	for (const f of extra) stale.push(`${OUT}/${f} is no tile of the sheet`);
