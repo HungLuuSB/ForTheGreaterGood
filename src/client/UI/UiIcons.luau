@@ -29,6 +29,18 @@ UiIcons.icons = {
 	armor = { name = "Armor class", group = "stat", tint = { 169, 182, 196 }, rect = { [16] = { 216, 0, 16, 16 }, [24] = { 312, 18, 24, 24 }, [32] = { 408, 44, 32, 32 } } },
 	value = { name = "Value", group = "stat", tint = { 226, 200, 120 }, rect = { [16] = { 234, 0, 16, 16 }, [24] = { 338, 18, 24, 24 }, [32] = { 442, 44, 32, 32 } } },
 	airSight = { name = "Air sight", group = "stat", tint = { 156, 200, 240 }, rect = { [16] = { 252, 0, 16, 16 }, [24] = { 364, 18, 24, 24 }, [32] = { 476, 44, 32, 32 } } },
+	stock = { name = "Stockpile", group = "weapon", tint = { 214, 218, 226 }, rect = { [16] = { 270, 0, 16, 16 }, [24] = { 390, 18, 24, 24 }, [32] = { 510, 44, 32, 32 } } },
+	reload = { name = "Reload", group = "weapon", tint = { 196, 200, 208 }, rect = { [16] = { 288, 0, 16, 16 }, [24] = { 416, 18, 24, 24 }, [32] = { 544, 44, 32, 32 } } },
+	alpha = { name = "Alpha (biggest hit)", group = "weapon", tint = { 236, 104, 92 }, rect = { [16] = { 306, 0, 16, 16 }, [24] = { 442, 18, 24, 24 }, [32] = { 578, 44, 32, 32 } } },
+	aoe = { name = "Area of effect", group = "weapon", tint = { 240, 144, 60 }, rect = { [16] = { 324, 0, 16, 16 }, [24] = { 468, 18, 24, 24 }, [32] = { 612, 44, 32, 32 } } },
+	projectile = { name = "Projectile speed", group = "weapon", tint = { 214, 218, 226 }, rect = { [16] = { 342, 0, 16, 16 }, [24] = { 494, 18, 24, 24 }, [32] = { 646, 44, 32, 32 } } },
+	salvo = { name = "Salvo", group = "weapon", tint = { 236, 104, 92 }, rect = { [16] = { 360, 0, 16, 16 }, [24] = { 520, 18, 24, 24 }, [32] = { 680, 44, 32, 32 } } },
+	lock = { name = "Lock range", group = "weapon", tint = { 242, 212, 92 }, rect = { [16] = { 378, 0, 16, 16 }, [24] = { 546, 18, 24, 24 }, [32] = { 714, 44, 32, 32 } } },
+	guidance = { name = "Guidance", group = "weapon", tint = { 242, 212, 92 }, rect = { [16] = { 396, 0, 16, 16 }, [24] = { 572, 18, 24, 24 }, [32] = { 748, 44, 32, 32 } } },
+	ammo = { name = "Ammo", group = "weapon", tint = { 196, 200, 208 }, rect = { [16] = { 414, 0, 16, 16 }, [24] = { 598, 18, 24, 24 }, [32] = { 782, 44, 32, 32 } } },
+	sonar = { name = "Sonar", group = "sensor", tint = { 90, 168, 224 }, rect = { [16] = { 432, 0, 16, 16 }, [24] = { 624, 18, 24, 24 }, [32] = { 816, 44, 32, 32 } } },
+	jam = { name = "Jammer", group = "sensor", tint = { 176, 140, 240 }, rect = { [16] = { 450, 0, 16, 16 }, [24] = { 650, 18, 24, 24 }, [32] = { 850, 44, 32, 32 } } },
+	countermeasures = { name = "Countermeasures", group = "sensor", tint = { 240, 176, 96 }, rect = { [16] = { 468, 0, 16, 16 }, [24] = { 676, 18, 24, 24 }, [32] = { 884, 44, 32, 32 } } },
 } :: { [string]: Icon }
 
 return UiIcons
