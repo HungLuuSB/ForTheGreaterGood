@@ -110,11 +110,22 @@ function ResourceBar.new(): Bar
 		blocks[name] = { demand = demand, income = income, stored = stored, storage = storage, fill = fill, back = back, markers = {} }
 	end
 	-- the level markers: a thin bar across the fill, a wider invisible handle
-	local tip = text(root, 11, Color3.new(1, 1, 1), Enum.TextXAlignment.Center, UDim2.fromOffset(0, 42), UDim2.fromOffset(300, 16))
+	-- (the tip hangs off the screen, not the bar's row: in the row's list it
+	-- pushed the blocks right while it showed)
+	local tip = text(gui, 11, Color3.new(1, 1, 1), Enum.TextXAlignment.Center, UDim2.new(), UDim2.fromOffset(300, 16))
+	tip.AnchorPoint = Vector2.new(0.5, 0)
 	tip.BackgroundColor3 = BG
 	tip.BackgroundTransparency = 0.15
 	tip.Visible = false
 	tip.ZIndex = 5
+	local function showTip(m: Marker, line: string)
+		local h = m.handle
+		local scale = gui:FindFirstChild("SettingsScale")
+		local k = if scale and scale:IsA("UIScale") then scale.Scale else 1 -- (screen pixels → the scaled gui's)
+		tip.Text = line
+		tip.Position = UDim2.fromOffset((h.AbsolutePosition.X + h.AbsoluteSize.X / 2) / k, (root.AbsolutePosition.Y + root.AbsoluteSize.Y) / k + 4)
+		tip.Visible = true
+	end
 	local markers: { Marker } = {}
 	local function marker(block: string, level: number, color: Color3, help: string)
 		local b = blocks[block]
@@ -142,8 +153,7 @@ function ResourceBar.new(): Bar
 			m.dragging = m.shown
 		end)
 		handle.MouseEnter:Connect(function()
-			tip.Text = help
-			tip.Visible = true
+			showTip(m, help)
 		end)
 		handle.MouseLeave:Connect(function()
 			tip.Visible = false
@@ -161,8 +171,7 @@ function ResourceBar.new(): Bar
 				local back = m.handle.Parent :: Frame
 				local x = UserInputService:GetMouseLocation().X - back.AbsolutePosition.X
 				m.dragging = math.clamp(math.floor(x / back.AbsoluteSize.X * 100 + 0.5), 0, 100)
-				tip.Text = `{m.help}: {m.dragging}%`
-				tip.Visible = true
+				showTip(m, `{m.help}: {m.dragging}%`)
 			end
 		end
 	end)

@@ -57,7 +57,7 @@ return function(t: any)
 		t.equal(#Bars.list(world, { [cv] = true }), 1, "selected: one bar")
 		api.actions.select({ cv })
 		local u = world.units[cv]
-		assert(api.actions.beginPlacement("ord_generator"))
+		assert(api.actions.beginPlacement("ord_solar"))
 		assert(api.actions.place(u.x + 30, u.z - 20, false, false))
 		local frameId
 		local samples, twoBars = 0, 0
@@ -65,7 +65,7 @@ return function(t: any)
 		run(15 * 40, function()
 			for id, w in world.units do
 				local d = World.def(world, w)
-				if d and d.id == "ord_generator" then
+				if d and d.id == "ord_solar" then
 					frameId = id
 				end
 			end

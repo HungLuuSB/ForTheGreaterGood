@@ -82,6 +82,7 @@ export type UnitDef = {
 	buildPower: number?,
 	canResurrect: boolean?, -- builders: RESURRECT brings a wreck's unit back (S-168)
 	buildOptions: { string }?,
+	buildsLike: { string }?, -- builders whose build lists this one's adds after its own (S-206: air builders build what ground builders build)
 	upgradesFrom: { string }?, -- structures this one may be built over in place, the builder's own (S-108)
 	spoof: string?, -- a def its untracked radar contacts pass for (S-109, the Wraith)
 	buildRange: number?,
@@ -92,7 +93,9 @@ export type UnitDef = {
 	pinpointer: boolean?, -- raises its ally team's radar precision (Shared/Combat/Pinpoint, S-59)
 	pinpointFull: number?, -- this type's count for full precision (default Pinpoint.FULL, 6; S-62)
 	deploy: { time: number, armor: number }?, -- unpacks when it stands still: seconds each way, damage divisor deployed (S-64)
-	deathBlast: { damage: number, aoe: number, edge: number }?, -- explodes when killed: every unit in `aoe`, own included (S-70)
+	deathBlast: { damage: number, aoe: number, edge: number, onlyDefs: { string }?, notSelfDestruct: boolean? }?, -- explodes when killed: every unit in `aoe`, own included (S-70); onlyDefs: hurts only those defs, notSelfDestruct: no blast when self-destructed (S-209, the nano)
+	selfDestructBlast: { damage: number, aoe: number, edge: number }?, -- self-destructed: this blast instead of the scaled death blast (S-209, the Juggernaut)
+	assistOnly: boolean?, -- a builder with no build list of its own: assists, repairs, reclaims (S-209, the nano turret)
 	-- shield dome generator (S-79; Shared/Combat/ShieldField, Sim/Shield):
 	-- a dome of `radius` round it; `capacity` charge in shell masses;
 	-- `recharge` charge per second, drawing `power` power per second while
@@ -105,7 +108,7 @@ export type UnitDef = {
 	muzzleHeight: number?, -- studs above its base its weapons fire from; default 0.6 × height
 	retired: boolean?, -- no longer built (on no build list); kept so old replays and scenes load (S-157)
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
-	placement: ("land" | "water" | "either")?, -- structures only
+	placement: ("land" | "water" | "either" | "seafloor")?, -- structures only; seafloor: under the sea, on its bottom (S-209)
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
 	ammoCost: { supply: number?, power: number? }?, -- per round rearmed
 	rearmTime: number?, -- seconds per round at full economy
@@ -336,6 +339,7 @@ local UNIT_SPEC: Spec = {
 		buildPower = opt(POSITIVE),
 		canResurrect = { kind = "boolean", optional = true },
 		buildOptions = { kind = "list", optional = true, item = STRING, minItems = 1 },
+		buildsLike = { kind = "list", optional = true, item = STRING, minItems = 1 },
 		upgradesFrom = { kind = "list", optional = true, item = STRING, minItems = 1 },
 		spoof = opt(STRING),
 		buildRange = opt(POSITIVE),
@@ -358,7 +362,9 @@ local UNIT_SPEC: Spec = {
 		deploy = { kind = "record", optional = true, fields = { time = POSITIVE, armor = { kind = "number", min = 1 } } },
 		height = opt(POSITIVE),
 		muzzleHeight = opt(POSITIVE),
-		deathBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 } } },
+		deathBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 }, onlyDefs = { kind = "list", optional = true, item = STRING, minItems = 1 }, notSelfDestruct = { kind = "boolean", optional = true } } },
+		selfDestructBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 } } },
+		assistOnly = { kind = "boolean", optional = true },
 		shield = { kind = "record", optional = true, fields = { radius = POSITIVE, capacity = POSITIVE, recharge = POSITIVE, power = NON_NEGATIVE } },
 		retract = { kind = "record", optional = true, fields = { armor = { kind = "number", min = 1 } } },
 		retired = { kind = "boolean", optional = true },
@@ -367,7 +373,7 @@ local UNIT_SPEC: Spec = {
 			optional = true,
 			fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) },
 		},
-		placement = { kind = "string", optional = true, enum = set({ "land", "water", "either" }) },
+		placement = { kind = "string", optional = true, enum = set({ "land", "water", "either", "seafloor" }) },
 		-- aircraft ammo and rearming (guide 8.6, 12.2)
 		ammo = { kind = "integer", optional = true, min = 1 },
 		ammoCost = {
@@ -813,7 +819,7 @@ function Defs.validate(raw: RawDefs): { string }
 
 		-- helpers (S-181: Lazarus, Graverobber) repair, reclaim and resurrect
 		-- with build power and a build range, but build nothing
-		local isBuilder = u.buildOptions ~= nil or (u.canResurrect == true and u.domain ~= "structure")
+		local isBuilder = u.buildOptions ~= nil or u.assistOnly == true or (u.canResurrect == true and u.domain ~= "structure")
 		if isBuilder and u.buildPower == nil then
 			report("buildPower: builders (units with buildOptions) need buildPower > 0")
 		elseif not isBuilder and u.buildPower ~= nil then
@@ -831,6 +837,19 @@ function Defs.validate(raw: RawDefs): { string }
 					report(`buildOptions[{i}]: unknown unit {describe(option)}`)
 				elseif type(option) == "string" and type(units[option]) == "table" and units[option].retired then
 					report(`buildOptions[{i}]: {option} is retired (S-157)`)
+				end
+			end
+		end
+		if type(u.buildsLike) == "table" then
+			if u.buildOptions == nil then
+				report("buildsLike: only builders (units with buildOptions) copy other build lists")
+			end
+			for i, other in u.buildsLike do
+				local o = if type(other) == "string" then units[other] else nil
+				if type(o) ~= "table" or o.buildOptions == nil then
+					report(`buildsLike[{i}]: {describe(other)} is not a builder`)
+				elseif o.faction ~= u.faction then
+					report(`buildsLike[{i}]: {other} is another faction's`)
 				end
 			end
 		end
@@ -957,6 +976,25 @@ function Defs.build(raw: RawDefs): DefSet
 			maxRange = math.max(maxRange, w.range)
 		end
 		u.maxRange = maxRange
+		if u.buildsLike then
+			-- (S-206) its own list, then each named builder's, without repeats
+			local seen, list = {}, {}
+			for _, option in u.buildOptions do
+				if not seen[option] then
+					seen[option] = true
+					table.insert(list, option)
+				end
+			end
+			for _, other in u.buildsLike do
+				for _, option in raw.units[other].buildOptions or {} do
+					if not seen[option] then
+						seen[option] = true
+						table.insert(list, option)
+					end
+				end
+			end
+			u.buildOptions = list
+		end
 		if u.deathBlast == nil and not u.retired then
 			u.deathBlast = Defs.defaultDeathBlast(u)
 		end

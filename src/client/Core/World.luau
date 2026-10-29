@@ -50,6 +50,7 @@ export type Unit = {
 	snaps: { Snap }, -- tactical: ascending sim ticks
 	lastTick: number, -- sim tick of the last position applied (drops reordered unreliable records)
 	movedTick: number?, -- sim tick its position or heading last changed (C-45)
+	snapTick: number?, -- a strategic unit's: the wire tick of the last snapshot that listed it (NetIn keeps it through one snapshot without it, C-249)
 	health: number?, -- 0..1, the latest the server sent
 	shownHealth: number?, -- what the bars show: health as of the render tick (C-49, World.settle)
 	healthLog: { { number } }?, -- health changes not shown yet: { tick, health }, oldest first

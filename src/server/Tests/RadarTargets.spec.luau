@@ -61,7 +61,7 @@ return function(t: RunAll.Context)
 		local function run(radar: boolean): number
 			local sim, talos = setup(2, radar)
 			local w = sim.world
-			local gen = Spawn.unit(sim, "ord_generator", 1, 0, 300)
+			local gen = Spawn.unit(sim, "ord_solar", 1, 0, 300)
 			World.setHealth(w, gen, 1e6)
 			-- a scout sees it for a moment, then dies: the team remembers a ghost
 			local scout = Spawn.unit(sim, "chs_scrapper", 2, 30, 300)

@@ -8,6 +8,7 @@ local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
 local RunAll = require("./RunAll")
+local BeamDefs = require("./Support/BeamDefs") -- the beam towers at their old ranges (S-203)
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
 
@@ -44,7 +45,7 @@ end
 -- studs, held still and harmless, and (with `spotter`) a scout of player 1
 -- beside the tank so the tower's team sees it.
 local function range(seed: number, tower: string, dist: number, spotter: boolean): (Sim.Sim, number, number)
-	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+	local sim = Sim.new({ defs = BeamDefs.load(), seed = seed, players = PLAYERS, mapId = "flat:128" })
 	local w = sim.world
 	local t = Spawn.unit(sim, tower, 1, 0, 0)
 	local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, dist, math.pi)
@@ -85,18 +86,21 @@ return function(t: RunAll.Context)
 		t.expect(afterFirstTick ~= nil and afterFirstTick < full / 10, `a lingering beam: one tick's share first ({afterFirstTick})`)
 		local hit = before - w.health[tank]
 		t.expect(math.abs(hit - 2 * full) < 0.01 * full, `2 × {full} on an armored tank, each over 2.5 s ({hit})`)
-		t.expect(math.abs((acc.power.drawn - drawn) - 2 * 700) < 1, `700 power a shot ({acc.power.drawn - drawn})`)
-		-- empty stores: no shot
+		-- 700 a shot, paid while it reloads (S-205): spawned charged, the
+		-- second shot's 700 and part of the third's by now
+		local paid = acc.power.drawn - drawn
+		t.expect(paid >= 700 - 1 and paid < 2 * 700, `700 power a shot, charged while reloading ({paid})`)
+		-- empty stores: the charge stops, no shot
 		local held = 0
 		held = shots(sim, tower, 15 * 20, function()
-			acc.power.stored = 600 -- less than a shot, every tick
+			acc.power.stored = 0
 		end)
-		t.equal(held, 0, "no shot while the stores hold less than 700")
+		t.equal(held, 0, "no shot while the stores are empty")
 	end)
 
 	t.test("Radiance fires at radar blips and misses wobbling ones without Pinpointers (S-113)", function()
 		local function run(pinpointers: number): (number, number)
-			local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:128" })
+			local sim = Sim.new({ defs = BeamDefs.load(), seed = 3, players = PLAYERS, mapId = "flat:128" })
 			local w = sim.world
 			local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
 			Spawn.unit(sim, "ord_watchtower", 1, -40, 0) -- radar only (350 since S-179; sight 160): the tank is a blip
@@ -131,7 +135,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("Radiance's beam is a hit-ray: enemies on its line are hurt, allies aren't (S-115)", function()
-		local sim = Sim.new({ seed = 6, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 6, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		-- the tower picks the Juggernaut (armored first); a worker stands on
 		-- the line just in front of it, an Order tank further back
@@ -155,7 +159,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a single-target beam burns the first enemy on its line: one stepping in takes the share, with a new FIRE (S-163)", function()
-		local sim = Sim.new({ seed = 6, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 6, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tower = Spawn.unit(sim, "chs_inferno", 2, 0, 300)
 		local target = Spawn.unit(sim, "ord_paladin", 1, 0, -100, 0)
@@ -190,7 +194,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("beam towers fire at an attack-ground point; the ray hurts what stands on its line (S-119, client request 53)", function()
-		local sim = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 7, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
 		local crossing = Spawn.unit(sim, "chs_ravager", 2, 0, 0, math.pi) -- on the line, not visible to Order
@@ -213,7 +217,7 @@ return function(t: RunAll.Context)
 		t.expect(ends ~= nil and math.abs(ends[2] - 300) < 20, `the beam ends at the point ({ends and ends[2]})`)
 		t.expect(w.health[crossing] < 1e6, "the Ravager on the line took the ray")
 		-- the Inferno: a single-target beam; nothing on the line is a miss on the ground
-		local sim2 = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:128" })
+		local sim2 = Sim.new({ defs = BeamDefs.load(), seed = 7, players = PLAYERS, mapId = "flat:128" })
 		local w2 = sim2.world
 		local inferno = Spawn.unit(sim2, "chs_inferno", 2, 0, 300)
 		local nobody = Spawn.unit(sim2, "ord_lancer", 1, 200, -200, 0) -- off the line
@@ -236,7 +240,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a burning beam holds the barrel on its line until it ends (S-119, client request 53)", function()
-		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 8, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
 		local runner = Spawn.unit(sim, "chs_ravager", 2, -200, 200, math.pi / 2)
@@ -269,7 +273,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a manual target stays while it lives, unseen too; when it dies the tower picks its own at once (S-125, client request 57)", function()
-		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 9, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
 		local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, 250, math.pi)
@@ -309,10 +313,10 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a beam at a destroyed structure's ghost misses at the spot instead of crashing the tick (S-126); ghosts only on orders (S-127)", function()
-		local sim = Sim.new({ seed = 10, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 10, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
-		local gen = Spawn.unit(sim, "chs_generator", 2, 0, 200)
+		local gen = Spawn.unit(sim, "chs_solar", 2, 0, 200)
 		local scout = Spawn.unit(sim, "ord_herald", 1, 40, 100, 0)
 		World.setFireState(w, scout, World.FireState.HOLD_FIRE)
 		for _ = 1, 6 do
@@ -355,10 +359,10 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("units don't pick a structure ghost on their own (S-127, the user)", function()
-		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 11, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
-		local gen = Spawn.unit(sim, "chs_generator", 2, 0, 200)
+		local gen = Spawn.unit(sim, "chs_solar", 2, 0, 200)
 		World.setHealth(w, gen, 1e6) -- (it may take a beam while still seen)
 		local scout = Spawn.unit(sim, "ord_herald", 1, 40, 100, 0)
 		World.setFireState(w, scout, World.FireState.HOLD_FIRE)
@@ -380,7 +384,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("the Inferno doesn't fire at radar-only contacts; seen, it does", function()
-		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BeamDefs.load(), seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		power(sim, 2, 5000)
 		local tower = Spawn.unit(sim, "chs_inferno", 2, 0, 0)
@@ -418,7 +422,7 @@ return function(t: RunAll.Context)
 
 	t.test("flak towers shoot down aircraft over the base", function()
 		for _, pair in { { "ord_lumen", "chs_harpy" }, { "chs_hailstorm", "ord_falcon" } } do
-			local sim = Sim.new({ seed = 4, players = PLAYERS, mapId = "flat:64" })
+			local sim = Sim.new({ defs = BeamDefs.load(), seed = 4, players = PLAYERS, mapId = "flat:64" })
 			local w = sim.world
 			local owner = if string.sub(pair[1], 1, 4) == "ord_" then 1 else 2
 			local tower = Spawn.unit(sim, pair[1], owner, 0, 0)
@@ -436,7 +440,7 @@ return function(t: RunAll.Context)
 	-- battery picks the artillery, though the tank is nearer.
 	t.test("missile batteries pick artillery over a nearer tank and outrange it", function()
 		for _, set in { { "ord_sanction", "ord_watchtower", "chs_hellmouth", "chs_ravager", "ord_tribunal" }, { "chs_scourge", "chs_eye", "ord_verdict", "ord_lancer", "chs_seekerspire" } } do
-			local sim = Sim.new({ seed = 5, players = PLAYERS, mapId = "flat:128" })
+			local sim = Sim.new({ defs = BeamDefs.load(), seed = 5, players = PLAYERS, mapId = "flat:128" })
 			local w = sim.world
 			local owner = if string.sub(set[1], 1, 4) == "ord_" then 1 else 2
 			local battery = Spawn.unit(sim, set[1], owner, 0, -400) -- (flat:128 spans ±512)

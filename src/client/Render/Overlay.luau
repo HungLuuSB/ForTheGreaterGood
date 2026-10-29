@@ -3,6 +3,9 @@
 -- their order lines (from the client's waypoints) colored by kind, a
 -- preview of a right-drag line move, and a short flash where an order
 -- went. Pooled parts in workspace.Overlay; positions are set each frame.
+-- The order lines and points (planned commands) sit in one Model per order
+-- colour with an AlwaysOnTop Highlight of that colour (H26, as the queued
+-- builds since G15): hills, trees and units no longer hide them.
 
 local Schema = require("@shared/Net/Schema")
 local Api = require("../Api")
@@ -34,6 +37,7 @@ export type Overlay = {
 	pools: { [string]: { BasePart } },
 	used: { [string]: number },
 	flashes: { { x: number, z: number, color: Color3, born: number } },
+	layers: { [number]: Model }, -- order kind → its highlighted Model (H26)
 }
 
 local function newPart(kind: string): BasePart
@@ -57,23 +61,48 @@ function Overlay.new(): Overlay
 	local folder = Instance.new("Folder")
 	folder.Name = "Overlay"
 	folder.Parent = workspace
-	return { folder = folder, pools = {}, used = {}, flashes = {} }
+	return { folder = folder, pools = {}, used = {}, flashes = {}, layers = {} }
 end
 
-local function take(o: Overlay, kind: string): BasePart
-	local pool = o.pools[kind]
+-- The highlighted Model for order kind `cmd`'s lines and points (H26).
+local function layer(o: Overlay, cmd: number): Model
+	local m = o.layers[cmd]
+	if m == nil then
+		local color = KIND_COLOR[cmd] or RING_COLOR
+		local made = Instance.new("Model")
+		made.Name = `Orders{cmd}`
+		local h = Instance.new("Highlight")
+		h.FillColor, h.OutlineColor = color, color
+		h.FillTransparency, h.OutlineTransparency = 0.3, 0.7
+		h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		h.Parent = made
+		made.Parent = o.folder
+		o.layers[cmd] = made
+		m = made
+	end
+	return m :: Model
+end
+
+-- A pooled part of `kind`; with `cmd`, in that order kind's highlighted
+-- layer (its own pool, so a part keeps its parent from frame to frame).
+local function take(o: Overlay, kind: string, cmd: number?): BasePart
+	local key = if cmd then `{kind}/{cmd}` else kind
+	local pool = o.pools[key]
 	if pool == nil then
 		pool = {}
-		o.pools[kind] = pool
+		o.pools[key] = pool
 	end
-	local n = (o.used[kind] or 0) + 1
-	o.used[kind] = n
+	local n = (o.used[key] or 0) + 1
+	o.used[key] = n
 	local p = pool[n]
 	if p == nil then
 		p = newPart(kind)
 		pool[n] = p
 	end
-	p.Parent = o.folder
+	local parent: Instance = if cmd then layer(o, cmd) else o.folder
+	if p.Parent ~= parent then
+		p.Parent = parent
+	end
 	return p
 end
 
@@ -85,13 +114,13 @@ local function disc(p: BasePart, x: number, y: number, z: number, d: number, col
 	p.Transparency = transparency
 end
 
-local function segment(o: Overlay, a: Vector3, b: Vector3, color: Color3)
+local function segment(o: Overlay, a: Vector3, b: Vector3, color: Color3, cmd: number?)
 	local d = b - a
 	local len = d.Magnitude
 	if len < 0.5 then
 		return
 	end
-	local p = take(o, "line")
+	local p = take(o, "line", cmd)
 	p.Size = Vector3.new(0.35, 0.08, len)
 	p.CFrame = CFrame.lookAt(a + d / 2, b)
 	p.Color = color
@@ -149,8 +178,8 @@ function Overlay.step(o: Overlay, api: Api.Api, now: number, lineFrom: Vector3?,
 			for _, point in list do
 				local to = Vector3.new(point.x, groundY(point.x, point.z), point.z)
 				local color = KIND_COLOR[point.kind] or RING_COLOR
-				segment(o, from, to, color)
-				disc(take(o, "dot"), to.X, to.Y, to.Z, 1.4, color, 0.2)
+				segment(o, from, to, color, point.kind)
+				disc(take(o, "dot", point.kind), to.X, to.Y, to.Z, 1.4, color, 0.2)
 				if point.radius then
 					disc(take(o, "ring"), to.X, to.Y, to.Z, point.radius * 2, color, 0.85) -- Smart Reclaim's zone (S-183)
 				end

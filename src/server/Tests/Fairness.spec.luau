@@ -19,7 +19,7 @@ local function mirrorFight(unit: string, eastFirst: boolean, shift: number): (nu
 	local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 3, allyTeam = 2 } }, mapId = "flat:64" })
 	local w = sim.world
 	for j = 1, shift do
-		Spawn.unit(sim, "ord_generator", 1, -200, -200 + j * 16)
+		Spawn.unit(sim, "ord_solar", 1, -200, -200 + j * 16)
 	end
 	local west, east = {}, {}
 	local n = 6

@@ -11,6 +11,7 @@ local NetOut = require("../../src/server/Sim/NetOut")
 local ServerPlacement = require("../../src/server/Sim/Placement")
 local Sim = require("../../src/server/Sim/Sim")
 local Spawn = require("../../src/server/Sim/Spawn")
+local Grid = require("@shared/Grid/Grid")
 local Prng = require("@shared/Util/Prng")
 
 local DT = 1 / 15
@@ -135,12 +136,12 @@ return function(t: any)
 		local cv = World.ownIds(world)[1]
 		api.actions.select({ cv })
 		local u = world.units[cv]
-		t.expect(api.actions.beginPlacement("ord_generator"))
+		t.expect(api.actions.beginPlacement("ord_solar"))
 		t.expect(api.actions.place(u.x + 36, u.z - 20, false, false))
 		t.expect(api.actions.beginPlacement("ord_solar"))
 		t.expect(api.actions.placeRow(u.x + 20, u.z + 40, u.x + 44, u.z + 40, true, false))
 		local queued = #api.waypoints.byUnit[cv]
-		t.expect(queued >= 3, `generator + a row of solars queued ({queued})`)
+		t.expect(queued >= 3, `a solar + a row of solars queued ({queued})`)
 		local function serverBuilds(): number
 			local n = 0
 			for _, o in sim.orders.queue[cv] or {} do
@@ -171,7 +172,7 @@ return function(t: any)
 		local frames = 0
 		for _, s in world.units do
 			local d = World.def(world, s)
-			if d and (d.id == "ord_generator" or d.id == "ord_solar") then
+			if d and d.id == "ord_solar" then
 				frames += 1
 			end
 		end
@@ -183,11 +184,11 @@ return function(t: any)
 		run(3)
 		local cv = World.ownIds(world)[1]
 		api.actions.select({ cv })
-		t.expect(api.actions.beginPlacement("ord_generator"))
+		t.expect(api.actions.beginPlacement("ord_solar"))
 		local u = world.units[cv]
 		local x, z = u.x + 80, u.z + 80
 		t.expect(api.actions.place(x, z, true, true), "the first one, queued, placing kept (Shift)")
-		local size = world.defs.units.ord_generator.footprint * 8
+		local size = world.defs.units.ord_solar.footprint * 8
 		local ok, why = api.actions.updatePlacement(x + size / 2, z)
 		t.expect(not ok and why == "occupied", `half over the queued one: {why}`)
 		t.expect(not api.actions.place(x + size / 2, z, true, true), "and it isn't sent")
@@ -203,15 +204,15 @@ return function(t: any)
 		local sim, world, api, run, sentCount = setup("start:48", "standard_start")
 		local cv = World.ownIds(world)[1]
 		t.expect(cv ~= nil, "the Command Vehicle is known")
-		local ok, why = api.actions.beginPlacement("ord_generator")
+		local ok, why = api.actions.beginPlacement("ord_solar")
 		t.expect(not ok and why == "no selected builder can build it", "needs a builder selected")
 		api.actions.select({ cv })
-		t.expect(api.actions.beginPlacement("ord_generator"))
+		t.expect(api.actions.beginPlacement("ord_solar"))
 		local u = world.units[cv]
 		local x, z = u.x + 40, u.z
 		t.expect(api.actions.updatePlacement(x, z), "a free spot is valid")
 		local p = api.state.placement :: any
-		t.equal(p.defId, "ord_generator")
+		t.equal(p.defId, "ord_solar")
 		t.expect(api.actions.rotatePlacement())
 		t.equal(p.facing, 1)
 		local before = sentCount()
@@ -222,11 +223,11 @@ return function(t: any)
 		local frame
 		for _, w in world.units do
 			local d = World.def(world, w)
-			if d and d.id == "ord_generator" then
+			if d and d.id == "ord_solar" then
 				frame = w
 			end
 		end
-		t.expect(frame ~= nil, "the generator frame entered the client world")
+		t.expect(frame ~= nil, "the solar frame entered the client world")
 		t.expect(math.abs(frame.x - p.x) < 0.1 and math.abs(frame.z - p.z) < 0.1, "at the ghost's snapped spot")
 		t.expect((frame.build or 0) > 0, "construction has started")
 	end)
@@ -273,5 +274,52 @@ return function(t: any)
 			table.insert(kinds, `{o.kind}:{o.defIndex}@{math.floor(o.x or 0)},{math.floor(o.z or 0)}`)
 		end
 		t.equal(#sim.orders.queue[cv], 1 + n, "extractor then the row, all queued on the server: " .. table.concat(kinds, " "))
+	end)
+
+	t.test("a longer row only adds spots, one footprint apart (H2)", function()
+		local sim, world = setup("gen:11:48", "empty")
+		local solar = defOf(sim, "ord_solar")
+		local step = solar.footprint * Grid.CELL_SIZE
+		for _, dir in { { 1, 0 }, { 0, -1 }, { 1, 0.4 }, { -0.7, 1 } } do
+			local last: { { number } } = {}
+			for len = 0, 60, 1.5 do
+				local spots = Placement.row(world, solar, 3, 5, 3 + dir[1] * len, 5 + dir[2] * len)
+				t.expect(#spots >= #last, `the row never shrinks as it grows ({#last} → {#spots})`)
+				for i, s in last do
+					t.equal(spots[i][1], s[1], `spot {i} stays put (x)`)
+					t.equal(spots[i][2], s[2], `spot {i} stays put (z)`)
+				end
+				for i = 2, #spots do
+					local a, b = spots[i - 1], spots[i]
+					local gap = math.max(math.abs(b[1] - a[1]), math.abs(b[2] - a[2]))
+					t.equal(gap, step, `neighbours one footprint apart, no overlap or gap ({gap})`)
+				end
+				last = spots
+			end
+			t.expect(#last >= 3, `a long drag lays a long row ({#last})`)
+		end
+	end)
+
+	t.test("Alt + drag lays a grid; a bigger box only adds spots (H4)", function()
+		local sim, world = setup("gen:11:48", "empty")
+		local solar = defOf(sim, "ord_solar")
+		local step = solar.footprint * Grid.CELL_SIZE
+		local spots = Placement.grid(world, solar, 3, 5, 3 + 3 * step, 5 - 1 * step)
+		t.equal(#spots, 8, "4 columns by 2 rows")
+		local seen = {}
+		for i, s in spots do
+			seen[`{s[1]},{s[2]}`] = true
+			if i > 1 then
+				local a = spots[i - 1]
+				t.equal(math.abs(s[1] - a[1]) + math.abs(s[2] - a[2]), step, "the serpentine walks to a neighbour each time")
+			end
+		end
+		local bigger = Placement.grid(world, solar, 3, 5, 3 + 4.2 * step, 5 - 2.1 * step)
+		t.equal(#bigger, 15, "5 by 3")
+		for _, s in bigger do
+			seen[`{s[1]},{s[2]}`] = nil
+		end
+		t.equal(next(seen), nil, "every spot of the smaller grid is in the bigger one")
+		t.equal(#Placement.drag(world, solar, 3, 5, 3 + 3 * step, 5 - step, false), #Placement.row(world, solar, 3, 5, 3 + 3 * step, 5 - step), "without Alt a drag is a row")
 	end)
 end

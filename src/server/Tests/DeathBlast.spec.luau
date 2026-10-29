@@ -39,7 +39,7 @@ return function(t: RunAll.Context)
 	t.test("every unit blasts on death, by its worth and power (S-178): a generator's hurts, a scout's barely; Commanders' are huge", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
-		local gen = Spawn.unit(sim, "ord_generator", 1, 0, 0)
+		local gen = Spawn.unit(sim, "ord_solar", 1, 0, 0)
 		local tank = Spawn.unit(sim, "chs_ravager", 2, -20, 0)
 		World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 		local hp = w.health[tank]
@@ -50,7 +50,7 @@ return function(t: RunAll.Context)
 		t.expect(not World.isAlive(w, gen), "the generator died")
 		t.expect(w.health[tank] < hp and w.health[tank] > 0, `its blast hurt the tank next to it ({hp} → {w.health[tank]})`)
 		local defs = sim.defs.units
-		t.expect(defs.ord_generator.deathBlast.damage > 4 * defs.chs_jackal.deathBlast.damage, "a generator's blast is far bigger than a scout's")
+		t.expect(defs.ord_solar.deathBlast.damage > 4 * defs.chs_jackal.deathBlast.damage, "a generator's blast is far bigger than a scout's")
 		t.expect(defs.ord_sovereign.deathBlast.aoe < sim.defs.weapons.ord_nuke.aoe :: number, "a Commander's blast is smaller than a nuke's")
 		t.expect(defs.ord_sovereign.deathBlast.damage >= 4000, "but huge")
 	end)
@@ -58,7 +58,7 @@ return function(t: RunAll.Context)
 	t.test("self-destructs and an upgraded extractor set off no blast", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
-		local gen = Spawn.unit(sim, "ord_generator", 1, 0, 0)
+		local gen = Spawn.unit(sim, "ord_solar", 1, 0, 0)
 		local tank = Spawn.unit(sim, "chs_ravager", 2, -20, 0)
 		World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 		local hp = w.health[tank]

@@ -6,7 +6,9 @@
 -- scorch decal (models-C's values: widths, tip, fan, flares). Drawn
 -- for the shot's whole duration (the sim's beamDuration: Radiance 3 s,
 -- Inferno 1.5 s, Core/Effects.beamSeconds) with C's taper at its end; the
--- beam narrows to a point at the target end (the user).
+-- beam narrows to a point at the target end (the user). A weapon with an
+-- fx.color (H38) tints its glow and filaments that colour, the core near
+-- white; rigs pool by faction and colour.
 -- Used once the entry is approved (or with ANYWAY for review); until then
 -- Render/Effects draws its placeholder ray.
 
@@ -24,6 +26,7 @@ local entry = (Meshes :: any).beam
 export type Rig = {
 	F: any,
 	faction: string,
+	key: string, -- faction and tint: what a free rig is reused for
 	anchor: Part,
 	muzzle: Attachment,
 	hit: Attachment,
@@ -120,12 +123,22 @@ local function billboard(name: string, adornee: Attachment, image: string, color
 	return g
 end
 
--- One rig for `faction` (models-C's build, on a hidden anchor of our own).
-local function build(s: State, faction: string): Rig
+local function rigKey(faction: string, tint: { number }?): string
+	return if tint then `{faction}/{tint[1]},{tint[2]},{tint[3]}` else faction
+end
+
+-- One rig for `faction` (models-C's build, on a hidden anchor of our own),
+-- tinted by the weapon's colour if it has one.
+local function build(s: State, faction: string, tint: { number }?): Rig
 	local raw = entry.factions[faction] or entry.factions.order
 	local T = entry.textures
 	local F = table.clone(raw)
 	F.coreColor, F.glowColor, F.filamentColor = rgb(raw.coreColor), rgb(raw.glowColor), rgb(raw.filamentColor)
+	if tint then
+		local c = rgb(tint)
+		F.glowColor, F.filamentColor = c, c
+		F.coreColor = Color3.new(1, 1, 1):Lerp(c, 0.3) -- white-hot, just tinted
+	end
 	local anchor = Instance.new("Part")
 	anchor.Name = "Shot"
 	anchor.Anchored, anchor.CanCollide, anchor.CanQuery, anchor.CanTouch = true, false, false, false
@@ -137,6 +150,7 @@ local function build(s: State, faction: string): Rig
 	local rig: Rig = {
 		F = F,
 		faction = faction,
+		key = rigKey(faction, tint),
 		anchor = anchor,
 		muzzle = muzzle,
 		hit = hit,
@@ -308,13 +322,14 @@ function BeamShots.step(s: State, tracers: { any }, now: number, groundY: (numbe
 	for _, t in tracers do
 		if t.beam and s.rigs[t] == nil and s.count < BeamShots.MAX then
 			local rig: Rig? = nil
+			local key = rigKey(t.beam, t.beamColor)
 			for i, r in s.free do
-				if r.faction == t.beam then
+				if r.key == key then
 					rig = table.remove(s.free, i)
 					break
 				end
 			end
-			local r = rig or build(s, t.beam)
+			local r = rig or build(s, t.beam, t.beamColor)
 			r.age, r.life = 0, t.life
 			r.span = r.F.charge + t.life + r.F.scorchTime + 0.1
 			r.muzzle.WorldPosition = Vector3.new(t.x0, t.y0, t.z0)

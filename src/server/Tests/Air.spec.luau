@@ -204,7 +204,7 @@ return function(t: RunAll.Context)
 			local w = sim.world
 			local pad = Spawn.unit(sim, "ord_airpad", 1, 0, 0)
 			if stall then
-				Spawn.unit(sim, "ord_generator", 1, 200, 200) -- 20 power/s, nothing stored
+				Spawn.unit(sim, "ord_solar", 1, 200, 200) -- 20 power/s, nothing stored
 				sim.eco.accounts[1].power.stored = 0
 			end
 			local falcon = Spawn.unit(sim, "ord_falcon", 1, 40, 0)
@@ -279,7 +279,13 @@ return function(t: RunAll.Context)
 				Sim.step(sim)
 			end
 		end
-		moveTo(sim, 1, { bomber }, 150, -100)
+		-- an attack-move: since S-204 (the user's H12) a plain move flies to
+		-- its goal and makes no runs on the way
+		local g = (sim.map :: any).grid
+		local cell, ox, oz = g:encode(150, -100)
+		local wr = Packer.Writer.new()
+		Schema.encodeCommand(wr, { cmdType = Schema.CmdType.FIGHT, flags = 0, unitIds = { bomber }, cell = cell, offX = ox, offZ = oz })
+		assert(Sim.submit(sim, 1, wr:finish()))
 		return sim, bomber, targets
 	end
 
