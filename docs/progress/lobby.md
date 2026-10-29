@@ -10,6 +10,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Studio** (`debug_out/screens/`): `lobby_units_icons_stats` (Paladin: supply crate, power bolt, hourglass, health, speed, sight, DPS, range), `lobby_units_icons_weapon` (the heavy cannon's rows), `lobby_units_icons_seraph` (the radar SAM: the header's bolt and 900, stockpile, lock range). No script errors.
 - Requests D-E1 and B-9 are done.
 - Lobby specs 67 / 67; the build check passes (649 scripts, 1078 requires).
+- Ready to merge: `957cd3be` (the Units article's icons; includes the merge of main `6e4f6303`; touches only `src/lobby`, `lobby.project.json` and the lobby progress)
 
 ## Summary (2026-10-29: S-213's Chaos id swap in the Codex)
 
