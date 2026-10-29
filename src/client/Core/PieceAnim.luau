@@ -447,6 +447,7 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } }, wo
 			if moving ~= u.moving then
 				u.moving = moving
 				PieceAnim.call(u, if moving then "StartMoving" else "StopMoving")
+				u.workKey = nil -- StopMoving squares the torso up: turn it to the work again (C-251)
 			end
 		end
 		local landed = bit32.band(wu.state or 0, LANDED) ~= 0
@@ -503,18 +504,23 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } }, wo
 				yaw = math.deg((rel + math.pi) % (2 * math.pi) - math.pi)
 			end
 			local key = if yaw then tostring(math.floor((yaw :: number) / 3)) else ""
-			if key ~= (u.workKey or "") then
+			if key ~= u.workKey then
 				u.workKey = key
 				PieceAnim.call(u, "Work", yaw)
 			end
 		end
+		-- working, idle weapons leave their turret alone: the Commander's guns
+		-- sit on the torso Work turns, and every small change of their idle
+		-- aim swung it back to the front (the user: "the commander does not
+		-- look at it while building"; C-251). A weapon in action takes over.
+		local working = u.workKey ~= nil and u.workKey ~= ""
 		for slot, a in wu.aim do
 			local seen = u.seenAim[slot]
 			local state = Schema.weaponStateAt(wu.weapon or 0, slot)
 			local active = state == WS.AIMING or state == WS.READY
 			local changed = seen == nil or seen[1] ~= a.yaw or seen[2] ~= a.pitch
 			local due = active and s.now - (u.lastAimCall[slot] or -math.huge) >= PieceAnim.REAIM
-			if changed or due then
+			if (changed or due) and (active or not working) then
 				u.seenAim[slot] = { a.yaw, a.pitch }
 				u.lastAimCall[slot] = s.now
 				PieceAnim.call(u, "AimWeapon", slot, math.deg(a.yaw), math.deg(a.pitch), active)

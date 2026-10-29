@@ -300,6 +300,9 @@ if Config.lobby then
 		local layers = MapRegistry.load(id)
 		local entry = MapRegistry.NAMED[name] or MapRegistry.HANDMADE[name]
 		table.insert(lobbyMaps, { id = id, name = entry.name, starts = #layers.starts })
+		-- (a yield between maps: building them all in one go ran past Studio's
+		-- script timeout once the start got slow, and the server never came up)
+		task.wait()
 	end
 	lobby = Lobby.new(lobbyMaps, Config.seats)
 end

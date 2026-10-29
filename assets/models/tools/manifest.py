@@ -94,7 +94,8 @@ def key_arts():
 # baked map ground (C-167, docs/contracts/map-ground.md): assets/maps/<name>/export/ground.json
 # (the bake) and assets/maps/<name>/roblox_assets.json (mesh IDs); textures per ground material
 # in assets/maps/materials/roblox_assets.json. Maps the user approved:
-GROUND_APPROVED = {"lakelands", "plains", "supreme_strait"}  # 2026-10-26; plains, supreme_strait 2026-10-27
+GROUND_APPROVED = {"lakelands", "plains", "supreme_strait", "ridgeline", "coastline", "twin_lakes", "crossroads",
+                   "normandy", "canyon"}  # 2026-10-26; plains, supreme_strait 2026-10-27; the other six 2026-10-29
 GROUND_NOTE = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))"
 MAPS_DIR = os.path.join(ROOT, "assets", "maps")
 

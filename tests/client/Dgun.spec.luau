@@ -28,7 +28,7 @@ return function(t: any)
 		local cmd = Spawn.unit(sim, "ord_sovereign", 1, -60, 0, math.pi / 2)
 		local tanks = {}
 		for i = 0, 2 do
-			table.insert(tanks, Spawn.unit(sim, "chs_ravager", 2, -10 + i * 30, 0, 0))
+			table.insert(tanks, Spawn.unit(sim, "chs_ravager", 2, -42 + i * 18, 0, 0)) -- 18, 36, 54 studs out: inside the D-Gun's 80 (H5, S-203)
 		end
 		local burned: { [number]: boolean } = {}
 		for _, id in tanks do
@@ -56,7 +56,7 @@ return function(t: any)
 		end
 		api.actions.select({ cmd })
 		t.expect(api.actions.setCommandMode("dgun"))
-		t.expect(api.actions.commandAt(100, 0, nil, false, false), "the D-Gun order went out")
+		t.expect(api.actions.commandAt(15, 0, nil, false, false), "the D-Gun order went out") -- 75 studs: in range, the bolt runs on to its end
 		local bolt, impacts, flights, worst, heightOff = nil, 0, 0, 0, 0
 		for _ = 1, 15 * 6 do
 			step()
@@ -90,7 +90,9 @@ return function(t: any)
 		t.equal(alive, 0, "every tank on its path burned")
 		t.equal(deaths, 3, "the client saw each tank die on the bolt's path")
 		t.equal(impacts, 1, "the bolt's one IMPACT, at the end of its range")
-		t.expect(flights >= 25, `drawn on through the tanks to the end of its range ({flights} ticks)`)
+		local gun = sim.defs.weapons.ord_sovereign_dgun
+		local full = gun.range / gun.projectileSpeed * 15 -- ticks to the end of its range (34 at 160, 17 at 80)
+		t.expect(flights >= full * 0.7, `drawn on through the tanks to the end of its range ({flights} of {full} ticks)`)
 		t.expect(worst < 1, `with the server's bolt ({worst})`)
 		t.expect(heightOff < 1e-6, "riding 5 studs over the ground")
 		t.equal(fx.projectiles[bolt :: number], nil, "gone at the end")

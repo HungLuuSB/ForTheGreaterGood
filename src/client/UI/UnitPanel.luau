@@ -2,9 +2,11 @@
 -- Unit panel (C-68; BAR style since C-71), bottom left under the build
 -- grid, a functional PLACEHOLDER. One unit selected: a portrait tile (its
 -- model at an angle with its type icon bottom right, as in the build menu;
--- a contact's icon alone), name and role, a health bar and, for own units,
--- what it adds to or takes from the economy now ("+5" supply, "−10" power;
--- Core/UnitFlow, C-125: no HP numbers), then its stats as the player may know them
+-- a contact's icon alone), name and role, its current health (a green
+-- cross and a number where a bar was, the number green at full, orange at
+-- half, red when low; H34) and, for own units, what it adds to or takes
+-- from the economy now ("+5" supply, "−10" power; Core/UnitFlow, C-125),
+-- then its stats as the player may know them
 -- (Core/UnitStats, C-76: combat, mobility and sensors, economy, state with
 -- the server's fire / move state and ammo), the team's radar precision, the
 -- next missile's progress, on / off and repeat, and a factory's queue as the
@@ -37,10 +39,22 @@ local UnitPanel = {}
 
 local BG = Kit.COLOR.panel
 local HEALTH = Color3.fromRGB(80, 200, 90)
+local HEALTH_MID = Color3.fromRGB(240, 150, 40) -- the health number at half (orange)
+local HEALTH_LOW = Color3.fromRGB(205, 35, 35) -- and near none (deep red)
 local SUPPLY = Color3.fromRGB(235, 235, 235) -- the supply bar's white (Kit's ■)
 local POWER = Color3.fromRGB(255, 214, 60) -- the power bar's yellow (Kit's ϟ)
 local TILE = Color3.fromRGB(58, 62, 70)
 local WIDTH = 460 -- wide enough for a stat line at a glance (C-76)
+
+-- The health number's colour for share `k` (0..1) left: green at full,
+-- orange at half, deep red near none, blended between (the user).
+function UnitPanel.healthColor(k: number): Color3
+	k = math.clamp(k, 0, 1)
+	if k >= 0.5 then
+		return HEALTH_MID:Lerp(HEALTH, (k - 0.5) / 0.5)
+	end
+	return HEALTH_LOW:Lerp(HEALTH_MID, k / 0.5)
+end
 
 export type UI = {
 	gui: ScreenGui,
@@ -52,6 +66,7 @@ export type UI = {
 	flowSupply: TextLabel,
 	flowPower: TextLabel,
 	name: TextLabel,
+	hp: TextLabel, -- a unit's current health, in the bar's place (H34)
 	role: TextLabel,
 	stats: TextLabel,
 	health: Frame,
@@ -131,6 +146,31 @@ function UnitPanel.new(api: Api.Api): UI
 	local name = textLabel(panel, Enum.Font.GothamBold, 15, Color3.fromRGB(190, 228, 96)) -- yellow-green (reference 3, C-203)
 	name.Position = UDim2.fromOffset(72, 4)
 	name.Size = UDim2.new(1, -78, 0, 18)
+	-- a unit's current health, in the bar's place (the user: the number
+	-- only; the bar stays for a wreck's or a feature's resource)
+	local hp = textLabel(panel, Enum.Font.GothamBold, 13, HEALTH)
+	hp.Name = "HP"
+	hp.Position = UDim2.fromOffset(19, 65)
+	hp.Size = UDim2.fromOffset(53, 14)
+	-- its icon: a green cross before the number (two bars, no font glyph needed)
+	local cross = Instance.new("Frame")
+	cross.Name = "HealthIcon"
+	cross.BackgroundTransparency = 1
+	cross.Position = UDim2.fromOffset(5, 66)
+	cross.Size = UDim2.fromOffset(11, 11)
+	cross.Parent = hp.Parent
+	for _, size in { UDim2.fromOffset(11, 3), UDim2.fromOffset(3, 11) } do
+		local bar = Instance.new("Frame")
+		bar.AnchorPoint = Vector2.new(0.5, 0.5)
+		bar.Position = UDim2.fromScale(0.5, 0.5)
+		bar.Size = size
+		bar.BackgroundColor3 = HEALTH
+		bar.BorderSizePixel = 0
+		bar.Parent = cross
+	end
+	hp:GetPropertyChangedSignal("Visible"):Connect(function()
+		cross.Visible = hp.Visible -- shown and hidden with the number
+	end)
 	local role = textLabel(panel, Enum.Font.Gotham, 11, Color3.fromRGB(190, 190, 190))
 	role.Position = UDim2.fromOffset(72, 21)
 	role.Size = UDim2.new(1, -78, 0, 14)
@@ -154,7 +194,7 @@ function UnitPanel.new(api: Api.Api): UI
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	return {
 		gui = gui, panel = panel, portrait = portrait, portraitGlyph = pg, portraitView = view, cornerGlyph = corner,
-		flowSupply = flowSupply, flowPower = flowPower, name = name, role = role, stats = stats,
+		flowSupply = flowSupply, flowPower = flowPower, name = name, hp = hp, role = role, stats = stats,
 		health = health, healthFill = fill, types = types, typeButtons = {}, typeGlyphs = {}, typePortraits = {},
 		icons = Icons.table(api.world.defs), codes = Icons.codes(api.world.defs), key = "",
 	}
@@ -169,6 +209,7 @@ local function one(ui: UI, api: Api.Api, id: number)
 	local u = world.units[id]
 	if u == nil then
 		ui.name.Text, ui.role.Text, ui.stats.Text = "(out of view)", "", ""
+		ui.hp.Visible = false
 		return
 	end
 	local sheet = UnitStats.of(world, u)
@@ -187,10 +228,13 @@ local function one(ui: UI, api: Api.Api, id: number)
 	ui.portraitView.frame.Visible = def ~= nil
 	ui.cornerGlyph.root.Visible = def ~= nil
 	ui.portraitGlyph.root.Visible = def == nil
-	ui.health.Visible = sheet.health ~= nil
-	ui.healthFill.BackgroundColor3 = HEALTH
-	if sheet.health and sheet.maxHealth then
-		ui.healthFill.Size = UDim2.fromScale(math.clamp(sheet.health / sheet.maxHealth, 0, 1), 1)
+	-- health as a number in place of the bar (H34, then the user: "replace the
+	-- healthbar with the current health only"), its colour by the share left
+	ui.health.Visible = false
+	ui.hp.Visible = sheet.health ~= nil
+	if sheet.health then
+		ui.hp.Text = tostring(math.ceil(sheet.health))
+		ui.hp.TextColor3 = UnitPanel.healthColor(if sheet.maxHealth and sheet.maxHealth > 0 then sheet.health / sheet.maxHealth else 1)
 	end
 	-- what it adds to / takes from the economy now (own units: the client knows their state)
 	local own = def ~= nil and sheet.access == "own"
@@ -318,11 +362,12 @@ function UnitPanel.step(ui: UI, api: Api.Api)
 		ui.types.Visible = false
 		wreck(ui, api, w)
 		ui.health.Visible = w.fullSupply > 0
+		ui.hp.Visible = false
 		ui.key = ""
 		return
 	end
 	local single = subject ~= nil
-	for _, f in { ui.portrait, ui.health, ui.name, ui.role, ui.stats, ui.flowSupply, ui.flowPower } :: { GuiObject } do
+	for _, f in { ui.portrait, ui.health, ui.name, ui.hp, ui.role, ui.stats, ui.flowSupply, ui.flowPower } :: { GuiObject } do
 		f.Visible = single
 	end
 	ui.types.Visible = not single

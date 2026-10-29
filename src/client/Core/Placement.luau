@@ -240,17 +240,23 @@ function Placement.area(world: World.World, def: any, cx: number, cz: number, ra
 end
 
 -- Centers for a row of `def` dragged from (x1, z1) to (x2, z2): one per
--- footprint along the drag, snapped (guide 15.6 "drag for rows").
+-- footprint along the drag, snapped (guide 15.6 "drag for rows"). Each
+-- spot is one footprint further along the drag's longer axis from the
+-- snapped first one (BAR's line), so a longer drag only adds spots: the
+-- ones laid never move (H2: they used to spread over the whole drag and
+-- jump as it grew, leaving gaps), and a diagonal never overlaps.
 function Placement.row(world: World.World, def: any, x1: number, z1: number, x2: number, z2: number): { { number } }
 	local step = def.footprint * Grid.CELL_SIZE
+	local _, _, sx, sz = Placement.snap(world.grid, def.footprint, x1, z1)
+	-- (the slope from the drag itself: the snapped start would tilt it as the drag grows)
 	local dx, dz = x2 - x1, z2 - z1
-	local len = math.sqrt(dx * dx + dz * dz)
-	local n = math.floor(len / step) + 1
+	local major = math.max(math.abs(dx), math.abs(dz))
+	local n = math.floor(major / step + 0.5) + 1
 	local out = {}
 	local seen: { [string]: boolean } = {}
 	for i = 0, n - 1 do
-		local t = if n == 1 then 0 else i / (n - 1)
-		local _, _, cx, cz = Placement.snap(world.grid, def.footprint, x1 + dx * t, z1 + dz * t)
+		local t = if major < 1e-6 then 0 else i * step / major
+		local _, _, cx, cz = Placement.snap(world.grid, def.footprint, sx + dx * t, sz + dz * t)
 		local key = `{cx},{cz}`
 		if not seen[key] then
 			seen[key] = true
@@ -258,6 +264,45 @@ function Placement.row(world: World.World, def: any, x1: number, z1: number, x2:
 		end
 	end
 	return out
+end
+
+-- Centers for a grid of `def` over the box dragged from (x1, z1) to
+-- (x2, z2) (Alt + drag, H4): rows and columns one footprint apart from the
+-- snapped first spot, so a bigger box only adds spots, as a row does. Rows
+-- run along the box's longer side, in a serpentine, so a builder walks
+-- them end to end.
+function Placement.grid(world: World.World, def: any, x1: number, z1: number, x2: number, z2: number): { { number } }
+	local step = def.footprint * Grid.CELL_SIZE
+	local _, _, sx, sz = Placement.snap(world.grid, def.footprint, x1, z1)
+	local dx, dz = x2 - x1, z2 - z1
+	local nx = math.floor(math.abs(dx) / step + 0.5) + 1
+	local nz = math.floor(math.abs(dz) / step + 0.5) + 1
+	local ux, uz = if dx < 0 then -step else step, if dz < 0 then -step else step
+	local alongX = nx >= nz
+	local rows, cols = if alongX then nz else nx, if alongX then nx else nz
+	local out = {}
+	local seen: { [string]: boolean } = {}
+	for r = 0, rows - 1 do
+		for k = 0, cols - 1 do
+			local c = if r % 2 == 0 then k else cols - 1 - k
+			local i, j = if alongX then c else r, if alongX then r else c
+			local _, _, cx, cz = Placement.snap(world.grid, def.footprint, sx + ux * i, sz + uz * j)
+			local key = `{cx},{cz}`
+			if not seen[key] then
+				seen[key] = true
+				table.insert(out, { cx, cz })
+			end
+		end
+	end
+	return out
+end
+
+-- A drag's spots: a grid (Alt) or a row.
+function Placement.drag(world: World.World, def: any, x1: number, z1: number, x2: number, z2: number, grid: boolean?): { { number } }
+	if grid then
+		return Placement.grid(world, def, x1, z1, x2, z2)
+	end
+	return Placement.row(world, def, x1, z1, x2, z2)
 end
 
 return Placement

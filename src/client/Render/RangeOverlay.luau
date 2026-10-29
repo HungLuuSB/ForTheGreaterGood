@@ -27,6 +27,8 @@ RangeOverlay.FOLLOW_EPS = 0.01 -- studs: an owner moving less than this since th
 local COLOR: { [string]: Color3 } = {
 	weapon = Color3.fromRGB(235, 60, 50),
 	aa = Color3.fromRGB(240, 120, 220),
+	dgun = Color3.fromRGB(255, 170, 60), -- the nuke arc's orange (H21)
+	blast = Color3.fromRGB(200, 0, 0), -- a Commander's death blast: deep red, wide (H21)
 	sight = Color3.fromRGB(235, 235, 235),
 	radar = Color3.fromRGB(90, 220, 110),
 	track = Color3.fromRGB(60, 170, 80),
@@ -35,7 +37,7 @@ local COLOR: { [string]: Color3 } = {
 	enemyAa = Color3.fromRGB(165, 70, 235),
 }
 local SHOWN = 0.25 -- transparency of a drawn segment
-local WIDTH: { [string]: number } = { weapon = 0.4, aa = 0.4, sight = 0.3, radar = 0.3, track = 0.3, jammer = 0.3, enemyWeapon = 0.5, enemyAa = 0.5 }
+local WIDTH: { [string]: number } = { weapon = 0.4, aa = 0.4, dgun = 0.4, blast = 0.7, sight = 0.3, radar = 0.3, track = 0.3, jammer = 0.3, enemyWeapon = 0.5, enemyAa = 0.5 }
 
 -- A drawn polyline: points (x, z) where its owner was at the rebuild;
 -- segments first .. first + #xs - 2 of the pool.
