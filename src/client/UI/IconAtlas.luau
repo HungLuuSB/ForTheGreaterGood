@@ -10,8 +10,8 @@ export type Entry = { tile: string, scale: number, frame: string, name: string }
 
 -- one image per sheet; a tile's third number is its sheet
 IconAtlas.images = {
-	"",
-	"",
+	"rbxassetid://73786884026732",
+	"rbxassetid://126240026480583",
 } :: { string }
 IconAtlas.TILE_W = 96 -- pixels per icon on the sheet
 IconAtlas.TILE_H = 112

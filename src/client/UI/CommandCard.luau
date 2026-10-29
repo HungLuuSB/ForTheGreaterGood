@@ -169,8 +169,9 @@ function CommandCard.new(api: Api.Api): UI
 		local icon = UiIcon.make(name, ICON, ICON_COLOR)
 		if icon then
 			-- the icon at the left, the label beside it, scaled down to fit
+			-- (the padding below moves children too: 3 px from the edge is -(ICON + 2) inside it)
 			icon.AnchorPoint = Vector2.new(0, 0.5)
-			icon.Position = UDim2.new(0, 3, 0.5, if STATES[name] then -1 else 0)
+			icon.Position = UDim2.new(0, -(ICON + 2), 0.5, if STATES[name] then -1 else 0)
 			icon.Parent = b
 			local pad = Instance.new("UIPadding")
 			pad.PaddingLeft, pad.PaddingRight = UDim.new(0, ICON + 5), UDim.new(0, 2)

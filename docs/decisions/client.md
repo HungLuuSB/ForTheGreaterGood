@@ -2352,3 +2352,11 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - `CommandCard` puts the command's icon (14 px, E's white #E8EAEE) at the left of each button once the atlas is uploaded. The label sits beside it, scaled to fit between 8 and 11 px; state buttons keep their segments under it. On a greyed-out Repeat or On / Off button the icon dims with the label. Until the upload, the buttons are the text labels as before.
 - `UiIcons.spec` checks that every command has an icon.
 - Studio, without an upload: the command card shows its text labels as before, with no errors.
+
+### C-261 — The icon sheets and the UI icon atlas uploaded (2026-10-29)
+
+- The user approved the upload. Both unit icon sheets and 2D-E's UI icon atlas (47 keys, 1024 × 136) are on Roblox, with their pixel hashes in `tools/icons/assets.json`: sheet 1 73786884026732, sheet 2 126240026480583, UI atlas 98955338730678. `IconAtlas` and `UiIcons` are regenerated with the ids.
+- Studio check on the command card, Coastline:
+  - Bug found: the button's UIPadding also moved the icon, onto the label. The icon now sits at -(ICON + 2) inside the padding, 3 px from the edge.
+  - All three images fetch; the resource bar, build tile costs, health cross and every command button show their icons (`debug_out/screens/c260-ui-icons.jpg`).
+- Studio check at strategic zoom: the new unit icons show in team colours, with the Commanders' heads, on the map and the minimap (`debug_out/screens/c258-strategic-icons.jpg`).

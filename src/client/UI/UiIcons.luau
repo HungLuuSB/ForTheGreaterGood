@@ -9,7 +9,7 @@ local UiIcons = {}
 
 export type Icon = { name: string, group: string, tint: { number }, rect: { [number]: { number } } }
 
-UiIcons.image = ""
+UiIcons.image = "rbxassetid://98955338730678"
 UiIcons.sizes = { 16, 24, 32 } :: { number } -- pixels; a rect per size
 UiIcons.atlasSize = { 1024, 136 } :: { number } -- the atlas image, pixels
 
