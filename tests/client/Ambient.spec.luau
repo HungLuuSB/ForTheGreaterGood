@@ -216,13 +216,13 @@ return function(t: any)
 		u.state = 0
 		run(s, world, 1.5)
 		t.expect(math.abs(angle(s, 1, "legFL", 1)) < math.rad(0.5), "at rest when stopped")
-		for _, id in { "ord_titan", "chs_korgoth" } do
+		for _, id in { "ord_titan", "chs_juggernaut" } do
 			local def = standIn("chs_centurion", id, { movement = { maxSpeed = 10, accel = 8, brake = 18, turnRate = 60 } })
 			t.equal(Registry.forDef(def), Bot, `{id} walks as a bot`)
 			t.equal(Bot.gait(def), "biped")
 			t.expect(Bot.stride(def) >= Bot.stride(defs.units.chs_centurion), `{id}: strides at least as long as the Centurion's`)
 		end
-		t.expect(Bot.SCALE.ord_titan < 1 and Bot.HIP.chs_korgoth > 9, "heavy, high hips")
+		t.expect(Bot.SCALE.ord_titan < 1 and Bot.HIP.chs_juggernaut > 9, "heavy, high hips")
 	end)
 
 	t.test("a construction turret turns to its work and pitches its emitter down to it (models-C)", function()
