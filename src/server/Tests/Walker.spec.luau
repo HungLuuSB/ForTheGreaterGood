@@ -8,15 +8,45 @@ local MapRegistry = require("@shared/Grid/MapRegistry")
 local Passability = require("@shared/Grid/Passability")
 local Defs = require("@shared/Defs/Defs")
 local Quadtree = require("../Sim/Path/Quadtree")
+local Sensors = require("../Sim/Sensors")
+local Sim = require("../Sim/Sim")
+local Spawn = require("../Sim/Spawn")
+local World = require("../Sim/World")
 local RunAll = require("./RunAll")
 
 return function(t: RunAll.Context)
-	t.test("both Commanders walk as WALKER at footprint 2", function()
+	t.test("both Commanders walk as AMPHIB_WALKER (WALKER's slopes, the seafloor too; S-210) at footprint 2", function()
 		local defs = Defs.load()
 		for _, id in { "ord_sovereign", "chs_warlord" } do
-			t.equal(defs.units[id].moveClass, "WALKER", id)
+			t.equal(defs.units[id].moveClass, "AMPHIB_WALKER", id)
 			t.equal(defs.units[id].footprint, 2, id)
 		end
+	end)
+
+	t.test("a Commander in deep water walks the seafloor submerged: enemy radar doesn't see it (S-210, H18 / H19)", function()
+		local sim = Sim.new({ seed = 2, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "map:coastline" }) -- (Supreme Strait's sea is 9 studs at most: a 12-stud Commander wades there)
+		local layers = (sim.map :: any).layers
+		local g = layers.grid
+		-- the deepest water on the map
+		local best, bx, bz = -1, 0, 0
+		for cz = 0, g.cellsZ - 1 do
+			for cx = 0, g.cellsX - 1 do
+				local d = Layers.getWater(layers, cz * g.cellsX + cx)
+				if d > best then
+					best = d
+					bx, bz = g:cellCenter(cx, cz)
+				end
+			end
+		end
+		t.expect(best >= 12, `deep water on the map ({best})`)
+		local com = Spawn.unit(sim, "ord_sovereign", 1, bx, bz)
+		local radar = Spawn.unit(sim, "chs_allseer", 2, bx + 60, bz)
+		World.setBuildProgress(sim.world, radar, 1)
+		for _ = 1, 30 do
+			Sim.step(sim)
+		end
+		t.expect(bit32.band(sim.world.state[com], World.State.SUBMERGED) ~= 0, "submerged")
+		t.equal(Sensors.level(sim, 2, com), Sensors.Level.HIDDEN, "hidden from the enemy's radar (no sonar)")
 	end)
 
 	local ids = {}

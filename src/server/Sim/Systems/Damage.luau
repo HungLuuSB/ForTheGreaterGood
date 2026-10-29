@@ -24,17 +24,32 @@ local dead: { number } = {}
 -- A self-destruct's (S-194) is bigger: SelfDestruct.blastScale.
 local blastWeapon: { [any]: any } = setmetatable({}, { __mode = "k" }) :: any
 local selfBlastWeapon: { [any]: any } = setmetatable({}, { __mode = "k" }) :: any
-local function blastOf(def: any, selfDestructed: boolean?): any
+-- A def's own `selfDestructBlast` replaces the scaled one (S-209, the
+-- Juggernaut: almost a nuke); `deathBlast.onlyDefs` limits who it hurts (the
+-- nano turrets hurt only nanos).
+local function blastOf(sim: Types.Sim, def: any, selfDestructed: boolean?): any
 	local cache = if selfDestructed then selfBlastWeapon else blastWeapon
 	local b = cache[def]
 	if b == nil then
 		local d = def.deathBlast
-		local k = if selfDestructed then SelfDestruct.blastScale(def) else 1
-		local damage = d.damage * k
+		local own = if selfDestructed then def.selfDestructBlast else nil
+		local k = if selfDestructed and own == nil then SelfDestruct.blastScale(def) else 1
+		local damage = (if own then own.damage else d.damage) * k
+		local only = nil
+		if d.onlyDefs then
+			only = {}
+			for _, id in d.onlyDefs do
+				local u = sim.defs.units[id]
+				if u then
+					only[u.index] = true
+				end
+			end
+		end
 		b = {
 			damage = { LIGHT = damage, ARMORED = damage, STRUCTURE = damage, SHIP = damage, AIR = 0, SUB = 0 },
-			aoe = d.aoe * k,
-			edgeEffectiveness = d.edge,
+			aoe = (if own then own.aoe else d.aoe) * k,
+			edgeEffectiveness = if own then own.edge else d.edge,
+			onlyDefs = only,
 		}
 		cache[def] = b
 	end
@@ -147,13 +162,14 @@ return function(sim: Types.Sim)
 		c.stats.kills += 1
 		local quiet = sim.match.quiet[id]
 		sim.match.quiet[id] = nil
-		if def.deathBlast and not frame and not quiet and not upgradedFrom(sim, id) then
+		local noBlast = selfDestructed and def.deathBlast ~= nil and def.deathBlast.notSelfDestruct == true -- (S-209: a self-destructed nano hurts nobody)
+		if def.deathBlast and not frame and not quiet and not noBlast and not upgradedFrom(sim, id) then
 			-- its death blast (guide 8.5, S-70; every unit since S-178): every
 			-- unit in reach, own and allied included (team 0 is nobody's);
 			-- applied next tick, so blasts can set each other off. Not for a
 			-- self-destruct (S-144) or a structure an upgrade frame stands on
 			local x, z = w.posX[id], w.posZ[id]
-			Combat.explode(c, w, x, Combat.groundHeight(c, x, z) + 4, z, blastOf(def, selfDestructed), 0, 0, 0, w.owner[id])
+			Combat.explode(c, w, x, Combat.groundHeight(c, x, z) + 4, z, blastOf(sim, def, selfDestructed), 0, 0, 0, w.owner[id])
 			Combat.addEvent(c, { kind = "BLAST", tick = sim.tick, unit = id, other = 0, x = x, z = z })
 		end
 		Lifecycle.remove(sim, id)

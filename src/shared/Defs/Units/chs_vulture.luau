@@ -19,7 +19,8 @@ return Templates.extend(Templates.Unit, {
 	sensors = { sight = 120 },
 	buildPower = 90,
 	buildRange = 34, -- 70% of 48 (client request 7, S-19)
-	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_airfield", "chs_advairfield", "chs_airpad", "chs_thorn", "chs_eye" },
+	buildOptions = { "chs_extractor", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_airfield", "chs_advairfield", "chs_airpad", "chs_thorn", "chs_eye" },
+	buildsLike = { "chs_scrapper", "chs_tinker" }, -- and everything they build (S-206, the user's H35)
 	pieces = { "base", "nano" },
 	icon = "worker",
 	model = "chs_vulture",

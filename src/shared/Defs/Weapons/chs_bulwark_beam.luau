@@ -4,7 +4,7 @@
 return {
 	id = "chs_bulwark_beam",
 	type = "BEAM",
-	range = 480,
+	range = 384, -- -20% (S-203, the user's H7; was 480)
 	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 7,
 	accuracy = 0,

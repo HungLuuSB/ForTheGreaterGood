@@ -134,7 +134,7 @@ return function(t: RunAll.Context)
 		t.equal(#owned(sim, 1, "ord_advextractor"), 1, "an empty deposit takes a T2 directly")
 		-- other structures still can't go over an extractor
 		local sim2, arch2, dx2, dz2 = setup(4, 1)
-		build(sim2, 1, arch2, "ord_generator", dx2, dz2)
+		build(sim2, 1, arch2, "ord_solar", dx2, dz2)
 		t.equal(failed(sim2, 15 * 10), "occupied", "a generator can't")
 	end)
 

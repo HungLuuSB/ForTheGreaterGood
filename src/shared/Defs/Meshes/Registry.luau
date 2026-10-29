@@ -2119,8 +2119,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 2.2683, 1.102, 1.7879 },
 				},
 			},
-			note = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))",
-			status = "review",
+			status = "approved",
 			tiles = {
 				{
 					center = { -532.1789, 33.9431, -986.9169 },
@@ -2679,8 +2678,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 109.6675, 26.6176, 159.2225 },
 				},
 			},
-			note = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))",
-			status = "review",
+			status = "approved",
 			tiles = {
 				{
 					center = { -384, 4.5, -384 },
@@ -3215,8 +3213,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 168.9944, 12.2159, 212.8955 },
 				},
 			},
-			note = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))",
-			status = "review",
+			status = "approved",
 			tiles = {
 				{
 					center = { -640, 23.9765, -640 },
@@ -6363,8 +6360,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 252.6165, 19.2064, 33.0039 },
 				},
 			},
-			note = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))",
-			status = "review",
+			status = "approved",
 			tiles = {
 				{
 					center = { -896, 33.1875, -896 },
@@ -8063,8 +8059,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 123.5173, 15.3843, 95.4641 },
 				},
 			},
-			note = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))",
-			status = "review",
+			status = "approved",
 			tiles = {
 				{
 					center = { -384, 21.1875, -384 },
@@ -10550,8 +10545,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 14.922, 6.8274, 23.4784 },
 				},
 			},
-			note = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))",
-			status = "review",
+			status = "approved",
 			tiles = {
 				{
 					center = { -640, 20.875, -640 },

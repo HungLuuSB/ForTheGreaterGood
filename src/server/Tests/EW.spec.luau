@@ -147,7 +147,7 @@ end
 local function targetRange(seed: number, defId: string, defs: Defs.DefSet?): (Sim.Sim, number, number)
 	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = MAP, defs = defs or BASE })
 	local target = Spawn.unit(sim, defId, 1, 0, 0)
-	Spawn.unit(sim, "ord_generator", 1, -300, 300)
+	Spawn.unit(sim, "ord_solar", 1, -300, 300)
 	local owner = Spawn.unit(sim, "chs_thorn", 2, 450, 450)
 	hold(sim, { target, owner })
 	World.setHealth(sim.world, target, 1e7)
@@ -366,7 +366,7 @@ return function(t: RunAll.Context)
 		-- the same with the team's power gone: no recharge, so no DIRCM roll
 		local stalled, g2, o2 = targetRange(4, "ord_guardian")
 		for _, id in stalled.world.ids do
-			if stalled.defs.unitByIndex[stalled.world.defIndex[id]].id == "ord_generator" then
+			if stalled.defs.unitByIndex[stalled.world.defIndex[id]].id == "ord_solar" then
 				Combat.queueDamage(stalled.combat, id, 1e9, 0)
 			end
 		end

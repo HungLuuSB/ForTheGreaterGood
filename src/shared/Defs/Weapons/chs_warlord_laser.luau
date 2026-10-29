@@ -4,7 +4,7 @@
 return {
 	id = "chs_warlord_laser",
 	type = "HITSCAN",
-	range = 120,
+	range = 90, -- -25% (S-203, the user's H6; was 120)
 	closeDamage = 1.5, -- lasers hit harder up close (S-178)
 	reload = 0.6,
 	shotCost = { power = 10 }, -- lasers cost energy per shot (S-187)

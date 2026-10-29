@@ -53,8 +53,8 @@ end
 -- a Command Vehicle and two generators parked in a corner (+60 power/s).
 local function fund(sim: Sim.Sim)
 	Spawn.unit(sim, "ord_sovereign", 1, -200, -200)
-	Spawn.unit(sim, "ord_generator", 1, -230, -230)
-	Spawn.unit(sim, "ord_generator", 1, -230, -200)
+	Spawn.unit(sim, "ord_solar", 1, -230, -230)
+	Spawn.unit(sim, "ord_solar", 1, -230, -200)
 end
 
 local function newStart(): (Sim.Sim, number, number, number)
@@ -71,7 +71,7 @@ local function generatorTime(withMason: boolean): number
 	if withMason then
 		table.insert(ids, Spawn.unit(sim, "ord_mason", 1, sx, sz + 20, math.pi / 2))
 	end
-	build(sim, ids, "ord_generator", sx + 60, sz)
+	build(sim, ids, "ord_solar", sx + 60, sz)
 	local frame = 0
 	local done = runUntil(sim, 2000, function()
 		return frame ~= 0 and sim.world.buildProgress[frame] == 1
@@ -87,7 +87,7 @@ return function(t: RunAll.Context)
 	t.test("the Command Vehicle drives over and builds a generator that then produces", function()
 		local sim, cv, sx, sz = newStart()
 		local acc = sim.eco.accounts[1]
-		build(sim, { cv }, "ord_generator", sx + 60, sz)
+		build(sim, { cv }, "ord_solar", sx + 60, sz)
 		local frame, started, maxDist = 0, 0, 0
 		local w = sim.world
 		local done = runUntil(sim, 2000, function()
@@ -97,7 +97,7 @@ return function(t: RunAll.Context)
 				frame, started = e.unit, s.tick
 				-- the frame starts only in range of where it stands (S-19: it used
 				-- to start in range of the requested point, then the builder drove on)
-				local reach = (s.defs.units.ord_sovereign.buildRange :: number) + s.defs.units.ord_generator.footprint * 4
+				local reach = (s.defs.units.ord_sovereign.buildRange :: number) + s.defs.units.ord_solar.footprint * 4
 				t.expect(math.abs(w.posX[cv] - w.posX[frame]) <= reach + 1e-6, `in range when the frame starts ({math.abs(w.posX[cv] - w.posX[frame])} studs)`)
 			end
 			if frame ~= 0 then
@@ -106,9 +106,9 @@ return function(t: RunAll.Context)
 			t.expect(acc.supply.stored >= 0 and acc.power.stored >= 0, "stored never negative")
 		end)
 		t.expect(done ~= nil, "the generator was finished")
-		local d = sim.defs.units.ord_generator
-		-- 1,200 work units at BP 300 = 4 s = 60 ticks of building (no stall at 1,000 supply)
-		t.expect(math.abs((done :: number) - started - 60) <= 2, `build took {(done :: number) - started} ticks`)
+		local d = sim.defs.units.ord_solar
+		-- 900 work units at BP 300 = 3 s = 45 ticks of building (no stall at 1,000 supply)
+		t.expect(math.abs((done :: number) - started - 45) <= 2, `build took {(done :: number) - started} ticks`)
 		t.equal(w.health[frame], d.health, "health grows to full with progress")
 		t.expect(maxDist <= (sim.defs.units.ord_sovereign.buildRange :: number) + 4 + 1, "the CV stayed within build range")
 		Sim.step(sim) -- (economy step comes at the next multiple of 5)
@@ -554,7 +554,7 @@ return function(t: RunAll.Context)
 	t.test("construction is deterministic", function()
 		local function run(): number
 			local sim, cv, sx, sz = newStart()
-			build(sim, { cv }, "ord_generator", sx + 60, sz)
+			build(sim, { cv }, "ord_solar", sx + 60, sz)
 			for _ = 1, 400 do
 				Sim.step(sim)
 			end

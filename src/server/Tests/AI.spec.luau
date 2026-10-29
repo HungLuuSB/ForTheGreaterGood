@@ -206,7 +206,7 @@ return function(t: RunAll.Context)
 		-- the economy grows and the army follows)
 		run(sim, { brain }, 900 * 8, false)
 		local army = #owned(sim, 1, "ord_lancer") + #owned(sim, 1, "ord_verdict")
-		t.expect(#owned(sim, 1, "ord_generator") >= 4, `generators keep up with the plant ({#owned(sim, 1, "ord_generator")})`)
+		t.expect(#owned(sim, 1, "ord_solar") >= 4, `generators keep up with the plant ({#owned(sim, 1, "ord_solar")})`)
 		t.expect(army >= 8, `an army by 8 minutes ({army})`)
 		-- (0.5 since S-114: extractors alternate with generators from the
 		-- start, so more is built on about the same power)

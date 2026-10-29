@@ -166,7 +166,7 @@ return function(t: RunAll.Context)
 			local sim = Sim.new({ seed = 3, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = mapId })
 			Spawn.unit(sim, "ord_sovereign", 1, -400, -400) -- income
 			for i = 1, 4 do
-				Spawn.unit(sim, "ord_generator", 1, -430 + i * 30, -460)
+				Spawn.unit(sim, "ord_solar", 1, -430 + i * 30, -460)
 			end
 			local plant = Spawn.unit(sim, factory, 1, fx, 0, math.pi / 2)
 			cmd(sim, { plant }, worker, fx, 0)

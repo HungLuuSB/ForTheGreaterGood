@@ -3,12 +3,12 @@
 return {
 	id = "chs_tzar_cannon",
 	type = "BALLISTIC",
-	range = 270,
+	range = 230, -- -15% (S-203, the user's H43; was 270)
 	reload = 4.5,
 	projectileSpeed = 150,
 	gravity = 60,
 	accuracy = 2,
-	damage = { LIGHT = 1100, ARMORED = 980, STRUCTURE = 1300, SHIP = 1000, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 880, ARMORED = 784, STRUCTURE = 1040, SHIP = 800, AIR = 0, SUB = 0 }, -- -20% (S-203, the user's H42)
 	aoe = 40,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
