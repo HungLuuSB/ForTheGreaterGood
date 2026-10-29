@@ -2,6 +2,14 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-29: your answers on the review list, L-27)
+
+- **Cheats:** as built. **Spectators:** join and watch only; the match already does that (C-79).
+- **Forced start:** what you described (straight to the countdown; whoever hasn't picked gets the best free spot) is the match pre-game's own force start (S-174). The lobby's forced start skips only the room's ready check, then the match's pick time runs as usual.
+- **Key art at random:** each loading screen takes a random approved art, never the last one shown. Studio: four Quick plays showed Volley → Commander's stand → Converging → Commander's stand; no errors.
+- **Lobby max players:** explained in L-27; recommended 50 (the guide's step 5.1 now says 50). It's a place setting, so it's yours to change.
+- Lobby specs 67 / 67; the build check passes (648 scripts, 1077 requires).
+
 ## Summary (2026-10-29: all three key arts in; handover check)
 
 - `m-lobby` holds main `d06f303b` (playtest 3 and the handover summaries). Nothing of the lobby is waiting to merge.
@@ -383,7 +391,7 @@ The match place is the main game's place file (its maps, terrain and models live
 
 1. **Places** tab:
    - **⋯** on FTGG Match → **Configure Place** → Max players **16**.
-   - **⋯** on FTGG Testplace → **Configure Place** → Max players **20**. Use **2** only for Part A of the test plan below (two lobby servers with four testers); a plain friends' playtest can stay at 20.
+   - **⋯** on FTGG Testplace → **Configure Place** → Max players **50** (L-27). Use **2** only for Part A of the test plan below (two lobby servers with four testers).
 2. **Permissions** tab: Playability **Private**. Collaborators: add each friend's Roblox username with **Play**. You stay the owner.
 3. **Security** tab: EditableImage allowed (done 2026-10-24; without it the menus can't draw).
 4. If Roblox asks for the maturity questionnaire, fill it in.
@@ -414,9 +422,9 @@ Servers started before a publish keep the old code. Before anyone joins: Creator
 | 2-4 | **A2.** A: Multiplayer → Create room "Cross A", public. C and D open Multiplayer. C clicks "Cross A". | Within ~15 s C and D see "Cross A [other server]" and "1 room on 2 lobby servers". C's move fails because S1 is full: a short loading screen, then the toast "Couldn't move you to Cross A's lobby server (...)". C stays usable on S2. |
 | 4-6 | **A3.** B closes Roblox. C clicks "Cross A" again. | Loading screen "Moving to the room's lobby server...", then C is in Cross A with A. A's log: `C joined room XXXXX from server ...`. |
 | 6-8 | **A4.** D (alone on S2) creates a **private** room "Cross D" and reads its code aloud. A: Leave, type the code in "Room code", **Join by code**. | The private room never shows in anyone's browser. A moves to S2 and lands in Cross D. |
-| 8-9 | **A5.** A sets FTGG Testplace's Max players to **20** (step 5.1). Everyone closes Roblox. | Empty servers close; the next ones are 20-player servers. |
+| 8-9 | **A5.** A sets FTGG Testplace's Max players to **50** (step 5.1). Everyone closes Roblox. | Empty servers close; the next ones are 50-player servers. |
 
-**Part B: matches (9-28 min, lobby 20, match 16)**
+**Part B: matches (9-28 min, lobby 50, match 16)**
 
 | Time | Who does what | Watch |
 |---|---|---|
@@ -438,17 +446,17 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 
 1. **Done (2026-10-24): rooms across lobby servers** (L-15). Needs the live test (Part A above).
 2. **Guide 16.3 says "map vote".** Your design has the host pick the map (BAR). I followed your design; the guide is the sim stream's file, so I asked sim-A to update it (request A-3).
-3. **Cheats:** the host can turn them on in any room. Matches with cheats are listed on the profile but don't count. The match server still enforces the allow-list (C-119). OK?
-4. **Forced start** skips only the ready check; every other rule holds.
-5. **Spectators** are members without a seat (when the map's starts are full, or by choice). They're in the config and may watch the match; client-B needs to support it (request B-1).
-6. **Start positions:** the lobby orders players so the sim's player ID is the start index (Teams: ally teams together). So sim request 64 (chosen starts) isn't needed for version 1. BAR's start boxes or chosen starts could come later.
-7. **Players beyond 16:** the room cap is 16 humans (players and spectators); FFA seats up to 8, Teams 4 × 4.
+3. **Decided (2026-10-29, "Agreed"): cheats** (L-27). The host can turn them on in any room; such matches are listed on the profile but don't count; the match server enforces the allow-list (C-119).
+4. **Decided (2026-10-29): forced start** (L-27). In the lobby it skips only the ready check. In the match, the host's force start goes straight to the 3 s countdown, and whoever hasn't picked a spot gets the best free one at the start. The match's pre-game already does this (`Pregame`, S-174). Open: should the lobby's forced start also skip the match's pick time? (Below.)
+5. **Decided (2026-10-29): spectators only join and watch** (L-27). The match place supports it (C-79: no seat, every unit, no fog).
+6. **Outdated:** starts are picked in the match's pre-game since S-171 / S-174, in spawn boxes the host may draw in the room (L-20).
+7. **Outdated:** a room holds 16 people, AIs included (L-25).
 8. **Done (2026-10-24): lobby settings saved on the profile** (L-16).
-12. **Key art order:** I read "show key arts 1 and 3" as: every approved art comes round, one per loading screen in turn (2 "Volley" included). Say if the lobby should show only 1 and 3 and leave Volley to the match's loading screen.
-13. **Lobby max players:** 2 for Part A of the playtest only, so four testers fill two lobby servers; 20 afterwards.
+12. **Decided (2026-10-29): key art at random** (L-27): each loading screen takes an approved art at random, never the last one shown (the joining screen already picked at random).
+13. **Lobby max players (a place setting, yours to set):** how many people share one lobby server. Recommended: **50** (was 20). See L-27's note and the guide's step 5.1.
 9. **Done (2026-10-23): the config validator is in `src/shared`** (`@shared/Match/MatchConfig`, S-145; the lobby uses it since its merge of main). sim-A moves validate / validateResult and their constants to `src/shared/Match/MatchConfig.luau` (from m-lobby 287b99e). Then the lobby and client-B drop their copies. `build` and `summary` stay in `src/lobby`.
 11. **Decided (2026-10-23): layered key art with parallax** from models-C for both loading screens (L-13, `docs/contracts/key-art.md`). Uploads still need your approval.
-10. **Merge check:** `integrate.sh` doesn't run the lobby's 32 specs. sim-A agreed to add `lune run src/lobby/tools/test` (a failure blocks the push) once its running merges finish; until then I run them before every "Ready to merge" line.
+10. **Done (S-145): the merge check** runs the lobby's suite (`lune run src/lobby/tools/test`; a failure blocks the push).
 
 ## Requests
 
