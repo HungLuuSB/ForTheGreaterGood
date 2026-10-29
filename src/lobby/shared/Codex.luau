@@ -141,7 +141,6 @@ Codex.ROLES = {
 	r("economy", "Advanced solar collector", 1, { "ord_advsolar" }, { "chs_advsolar" }),
 	r("economy", "Wind turbine", 1, { "ord_windmill" }, { "chs_windmill" }),
 	r("economy", "Tidal generator", 1, { "ord_tidal" }, { "chs_tidal" }),
-	r("economy", "Power generator", 1, { "ord_generator" }, { "chs_generator" }),
 	r("economy", "Supply converter", 1, { "ord_converter" }, { "chs_converter" }),
 	r("economy", "Depot", 1, { "ord_depot" }, { "chs_depot" }),
 	r("economy", "Energy storage", 1, { "ord_capacitor" }, { "chs_accumulator" }),
