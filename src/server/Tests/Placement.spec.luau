@@ -13,7 +13,7 @@ local Spawn = require("../Sim/Spawn")
 local RunAll = require("./RunAll")
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
-local CLASSES = { "WHEELED", "TRACKED", "HEAVY_TRACKED", "HOVER", "AMPHIB", "SHIP", "SUB", "HELI", "JET", "WALKER" }
+local CLASSES = { "WHEELED", "TRACKED", "HEAVY_TRACKED", "HOVER", "AMPHIB", "SHIP", "SUB", "HELI", "JET", "WALKER", "AMPHIB_WALKER" }
 
 -- A tree's structure without leaf IDs: leaves as "x,z,size,open", the
 -- neighbor set of each open leaf, and the component of each open leaf.

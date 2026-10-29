@@ -641,6 +641,10 @@ function Combat.explode(
 		if id == direct or (w.ally[id] == team and not c.friendlyFire) then
 			continue
 		end
+		local only = (weapon :: any).onlyDefs
+		if only and not only[w.defIndex[id]] then
+			continue -- a blast that hurts only some defs (S-209: nanos)
+		end
 		local p = c.profiles[w.defIndex[id]]
 		local base = Combat.unitBase(c, w, id)
 		local d = Ballistics.distanceToCylinder(x, y, z, w.posX[id], w.posZ[id], p.radius, base, base + p.height)

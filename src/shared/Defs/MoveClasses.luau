@@ -31,6 +31,9 @@ local classes: { [string]: MoveClass } = {
 	-- walking mechs (S-159, the user: about 40°, BAR-bot style): the Commanders
 	-- climb what tanks can't, Normandy's hedgerows (35–38°) included
 	WALKER = { id = "WALKER", bit = 9, surface = "land", maxSlope = 40, maxFord = 2, pathing = "flowfield" },
+	-- walking mechs that also walk the seafloor (S-210, the user's playtest 3
+	-- H18, H40): the Commanders, Titan and Juggernaut; submerged in deep water
+	AMPHIB_WALKER = { id = "AMPHIB_WALKER", bit = 10, surface = "amphib", maxSlope = 40, pathing = "flowfield" },
 }
 
 for _, mc in classes do

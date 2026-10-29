@@ -2924,3 +2924,30 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **H15:** the AI took every map start but its own as an "enemy start": allies' and empty ones too. So a Hard AI (safe expansion) never took a deposit nearer any other start, and a Chaos AI waited for an escort for those. Now its enemy starts are the enemy side's Commanders when it starts (the map's other starts only if none stands yet). The scout loop uses them too.
 - **H33:** the AI's beam tower already takes blips (S-202), but its only radar was one T1 tower near home, short of the beam's range. Its T2 builders now build a long-range radar (Beacon / All-Seer) right after the beam tower.
 - **Tests:** AIRoles.spec: roles by spot on Supreme Strait (front balanced, back air on each side); an AI's enemy starts are the two enemy Commanders' spots in a 2v2. Pregame.spec: 8v8 on Supreme Strait, player 1 takes the 4th start, and every start of the side ends up taken.
+
+## S-208 — The nano-spray target goes on the wire only in reach (the user) (2026-10-29)
+
+- **Asked:** H1 "Issues with Builder showing the nano line even though they are far away."
+- **Was:** the STATE record's work target (S-194) was the builder's job from the moment it was given, so the client drew the spray while the builder still walked there.
+- **Now:** NetOut sends `workKind` / `workTarget` only while `Build.inReach` (the builder within buildRange plus the target's half footprint, or of the wreck); otherwise WorkKind NONE. No wire change.
+- **Test:** BuilderApproach.spec: a Mason sent to repair a frame 300 studs off has the job but isn't in reach while it walks, and is in reach within its build range.
+
+## S-209 — Playtest 3's new units: economy, construction turret, submerged extractor, gantry, Titan, Juggernaut, Mammoth (the user) (2026-10-29)
+
+- **Asked:** H20, H25, H27–H31, H39–H41 (`docs/progress/playtest-2026-10-28.md`). The user asked that the defs and BAR reference images go to models-C (renders from beyondallreason.info, `debug_out/refs/playtest3/`, local).
+- **Defs** (21 units, 7 weapons; numbers scaled from our roster, the user's figures where given):
+  - T1: Advanced Solar Collector `ord_advsolar` / `chs_advsolar` (+80 power, +100 storage); Capacitor Bank `ord_capacitor` / Accumulator `chs_accumulator` (+6,000 power storage); Construction Turret `ord_nano` / `chs_nano` (build power 200, reach 150, `assistOnly`); Offshore Extractor `ord_seaextractor` / Sunken Excavator `chs_seaextractor` (categories STRUCTURE + SUB, armor SUB, `placement = "seafloor"`).
+  - T2: Advanced Supply Converter / Great Smelter (600 power → 10.3 supply), Supply Vault / Great Hoard (+10,000 supply), Grid Reservoir / Great Accumulator (+60,000 power), Advanced Fusion Reactor / Great Hellforge (+3,000 power, +9,000 storage, a 6,000-damage 180-stud death blast); Mammoth `chs_mammoth` (6,200 health, speed 6, twin green lasers 2 shots a second; the user named Warden's laser, the green laser is Geryon's).
+  - T3: Experimental Gantry `ord_gantry` / `chs_gantry` (footprint 7); Titan `ord_titan` (30,000 health; tachyon beam, IR VLS missiles, close plasma blasters; +250 power, +1,000 storage); Juggernaut `chs_korgoth` (36,000 health; heat ray, two shotgun cannons, radar VLS missiles; `selfDestructBlast` 12,000 over 220 studs). `chs_juggernaut` (the T2 tank) is named Goliath.
+- **Who builds them:** T1 workers and the Commanders: advanced solar, the T1 storage, the nano; the Commanders and T1 naval workers: the submerged extractor; T2 workers (land and naval): the T2 economy; T2 land workers: the gantry; the Chaos Advanced Bot Pit: the Mammoth. Air workers get them through `buildsLike` (S-206).
+- **Schema and behaviour:** `assistOnly`, `selfDestructBlast`, `deathBlast.onlyDefs` / `notSelfDestruct` and `placement = "seafloor"` validate.
+  - Wired (Damage, `Combat.explode`): a nano's death blast hurts only nanos (600 at the centre, 40 studs: a packed row chain-explodes), a self-destructed nano blasts nothing, and a self-destructed Juggernaut uses its own blast (12,000 over 220 studs) instead of the scaled death blast.
+  - Still to do: the nano's automatic FIGHT (assist, repair, reclaim in reach when idle) and the seafloor placement of the submerged extractor.
+- **Tests:** Playtest3Units.spec: the nano blast hurts the next nano, not tanks of either side, and a self-destructed one hurts nothing; a self-destructed Juggernaut reaches a tank 160 studs off; the economy numbers (solar, advanced solar, storage, converter, advanced fusion, windmill, the retired Generator).
+
+## S-210 — Amphibious walkers: the Commanders, Titan and Juggernaut walk the seafloor (the user) (2026-10-29)
+
+- **Asked:** H18 "Commander can walk underwater"; H19 "When underwater, commander is hidden from radar blips, only SONAR can detect (apply to amphibious when they're under water)".
+- **Now:** a new move class AMPHIB_WALKER (bit 10): WALKER's 40° slopes on land, and the seafloor like AMPHIB. Both Commanders, Titan and Juggernaut use it. Movement sets SUBMERGED for every amphibious surface class (it checked the AMPHIB id), so in water at least as deep as the unit is tall (a Commander: 12 studs) it is submerged. Submerged units are SONAR or HIDDEN only (S-39), so H19 needed nothing new.
+- **Note:** Supreme Strait's sea is 9 studs at most: a Commander wades there, visible, as a sub can't dive there either. Coastline, Crossroads and The Lakelands have water deep enough.
+- **Tests:** Walker.spec: the Commanders are AMPHIB_WALKER; a Commander in Coastline's deepest water is submerged and hidden from an All-Seer. Passability.spec: the new class's row (it enters every depth).

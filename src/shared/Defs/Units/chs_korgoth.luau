@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	faction = "chaos",
 	tier = 3,
 	domain = "ground",
-	moveClass = "AMPHIB", -- walks on the seafloor (H40)
+	moveClass = "AMPHIB_WALKER", -- walks on the seafloor (H40, S-210)
 	footprint = 3,
 	categories = { "GROUND", "ARMORED" },
 	armorClass = "ARMORED",
