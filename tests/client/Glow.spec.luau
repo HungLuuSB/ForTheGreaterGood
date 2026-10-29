@@ -72,6 +72,19 @@ return function(t: any)
 		t.equal(Glow.strength("running", 2, ctx({ retracted = true })), 2)
 	end)
 
+	t.test("a pulse piece's glow breathes about its rest, dims on a stall, stays dark while built (models-C)", function()
+		local lo, hi = math.huge, -math.huge
+		for i = 0, 199 do
+			local s = Glow.strength("power", 2, ctx({ now = i / 100 }), true)
+			lo, hi = math.min(lo, s), math.max(hi, s)
+		end
+		t.expect(math.abs(lo - 2 * Glow.CORE_LOW) < 0.01 and math.abs(hi - 2 * Glow.CORE_HIGH) < 0.01, `breathes {lo}..{hi}`)
+		t.equal(Glow.strength("power", 2, ctx({ now = 0.3 })), 2, "other parts stay at rest")
+		t.expect(Glow.strength("power", 2, ctx({ now = 1, ratio = 0.5 }), true) < Glow.strength("power", 2, ctx({ now = 1 }), true), "dimmer on a stall")
+		t.equal(Glow.strength("power", 2, ctx({ built = false }), true), 0)
+		t.equal(Glow.strength("power", 2, ctx({ now = 0.5, level = "low" }), true), 2, "low: no breath")
+	end)
+
 	t.test("only real changes are written", function()
 		t.expect(not Glow.changed(2, 2.01), "a hundredth is skipped")
 		t.expect(Glow.changed(2, 2.5), "a real change")

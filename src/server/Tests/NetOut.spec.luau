@@ -117,7 +117,7 @@ return function(t: RunAll.Context)
 				end
 				-- radar contacts: wobbled cell only
 				for _, msg in outbox.Strategic do
-					for _, r in (Packer.readAll(msg, Schema.decodeStrategic, Schema.decodeTickHeader)) do
+					for _, r in (Packer.readAll(msg, Schema.decodeStrategic, Schema.decodeStrategicHeader)) do
 						if bit32.band(r.flags, Schema.StrategicFlag.RADAR_ONLY) ~= 0 then
 							local kx, kz = Sensors.knownPosition(sim, team, r.unitId)
 							t.equal(r.cell, (g:encode(kx :: number, kz :: number)), "radar cell is the wobbled one")

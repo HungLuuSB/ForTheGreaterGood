@@ -1,0 +1,155 @@
+{
+  "id": "ord_gantry",
+  "footprintStuds": 56,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        19.25,
+        0.0
+      ],
+      "size": [
+        55.4654,
+        38.5,
+        55.4654
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.8,
+        -9.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -13.6,
+        24.7,
+        -15.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        13.6,
+        24.7,
+        -15.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        -13.6,
+        24.7,
+        -9.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        13.6,
+        24.7,
+        -9.0
+      ]
+    },
+    "nano5": {
+      "parent": "base",
+      "at": [
+        -13.6,
+        24.7,
+        -3.0
+      ]
+    },
+    "nano6": {
+      "parent": "base",
+      "at": [
+        13.6,
+        24.7,
+        -3.0
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        19.635,
+        0.0
+      ],
+      "size": [
+        52.0,
+        38.05,
+        52.0
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        12.855,
+        -3.2675
+      ],
+      "size": [
+        28.2,
+        24.51,
+        24.465
+      ]
+    }
+  ],
+  "glowShare": 0.0118,
+  "triangles": {
+    "base": 4576,
+    "total": 4576
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

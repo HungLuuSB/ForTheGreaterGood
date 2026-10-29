@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 7558 triangles, glow share 8.7%",
+  "bar": {
+    "model": "rbxassetid://125796908162174",
+    "meshes": {
+      "base": "rbxassetid://117345539523734",
+      "base_glow_running": "rbxassetid://73220599371301",
+      "core": "rbxassetid://114732077035855",
+      "core_glow_head": "rbxassetid://86303273892394",
+      "core_glow_power": "rbxassetid://118631035902150"
+    },
+    "decals": {
+      "ALB": "rbxassetid://105996828642829",
+      "RGH": "rbxassetid://106772645369834",
+      "NOR": "rbxassetid://96793962659336",
+      "MTL": "rbxassetid://129667177621421",
+      "EMI": "rbxassetid://73065608518163"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://114372144061328",
+      "NOR": "rbxassetid://93123866473788",
+      "RGH": "rbxassetid://94342308830811",
+      "MTL": "rbxassetid://119153748954596",
+      "EMI": "rbxassetid://89201008335537"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advfusion_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://92581136773877",
+    "meshes": {
+      "base": "rbxassetid://135372046578954",
+      "core": "rbxassetid://127136988034673"
+    },
+    "decals": {
+      "ALB": "rbxassetid://120799855262778",
+      "RGH": "rbxassetid://81789573199021",
+      "NOR": "rbxassetid://94834445631772",
+      "MTL": "rbxassetid://140045744311616",
+      "EMI": "rbxassetid://114593012534686"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://95440459711894",
+      "NOR": "rbxassetid://91762855844631",
+      "RGH": "rbxassetid://83652767348285",
+      "MTL": "rbxassetid://120614248271852",
+      "EMI": "rbxassetid://90554272969980"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advfusion_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 5726 triangles"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 4720 triangles, glow share 1.5%",
+  "bar": {
+    "model": "rbxassetid://123577046505078",
+    "meshes": {
+      "barrels": "rbxassetid://138720125312061",
+      "barrels_glow_running": "rbxassetid://101140878830829",
+      "barrels_glow_weapon": "rbxassetid://92372854544771",
+      "base": "rbxassetid://90864778876164",
+      "base_glow_head": "rbxassetid://97897411195962",
+      "base_glow_power": "rbxassetid://130704215860717",
+      "base_glow_running": "rbxassetid://139830266089174",
+      "base_glow_weapon": "rbxassetid://111367604310046",
+      "legBL": "rbxassetid://123801976045442",
+      "legBL_glow_power": "rbxassetid://87872494900533",
+      "legBR": "rbxassetid://118628691250954",
+      "legBR_glow_power": "rbxassetid://99827070891869",
+      "legFL": "rbxassetid://131025595182957",
+      "legFL_glow_power": "rbxassetid://140018750325446",
+      "legFR": "rbxassetid://99314551396435",
+      "legFR_glow_power": "rbxassetid://70979529117372",
+      "turret": "rbxassetid://91895482016131",
+      "turret_glow_running": "rbxassetid://138063506259485"
+    },
+    "decals": {
+      "ALB": "rbxassetid://75021476735593",
+      "RGH": "rbxassetid://130197629771617",
+      "NOR": "rbxassetid://118187613164938",
+      "MTL": "rbxassetid://139096007996776",
+      "EMI": "rbxassetid://135459278555308"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://131888667020684",
+      "NOR": "rbxassetid://117100129245571",
+      "RGH": "rbxassetid://131421353667754",
+      "MTL": "rbxassetid://88455901326686",
+      "EMI": "rbxassetid://94647599458875"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_mammoth_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://76287900718766",
+    "meshes": {
+      "barrels": "rbxassetid://86879711501950",
+      "base": "rbxassetid://99175416831151",
+      "legBL": "rbxassetid://81095747698170",
+      "legBR": "rbxassetid://138697796502137",
+      "legFL": "rbxassetid://88350265899310",
+      "legFR": "rbxassetid://83565884386505",
+      "turret": "rbxassetid://87788330021402"
+    },
+    "decals": {
+      "ALB": "rbxassetid://94756261534485",
+      "RGH": "rbxassetid://131719495852906",
+      "NOR": "rbxassetid://109926284904359",
+      "MTL": "rbxassetid://104587173284655",
+      "EMI": "rbxassetid://99623217161639"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://118415521237469",
+      "NOR": "rbxassetid://139982860966881",
+      "RGH": "rbxassetid://90324797104769",
+      "MTL": "rbxassetid://95157493299265",
+      "EMI": "rbxassetid://71811628544669"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_mammoth_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 4176 triangles"
+  }
+}

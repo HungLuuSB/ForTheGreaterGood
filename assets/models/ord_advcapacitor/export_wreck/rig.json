@@ -1,0 +1,84 @@
+{
+  "id": "ord_advcapacitor_wreck",
+  "wreckOf": "ord_advcapacitor",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0161,
+        5.5066,
+        0.0408
+      ],
+      "size": [
+        23.6754,
+        11.2862,
+        23.5616
+      ]
+    },
+    "cells": {
+      "parent": "base",
+      "center": [
+        -0.0332,
+        5.1254,
+        0.0761
+      ],
+      "size": [
+        15.4481,
+        7.6392,
+        8.127
+      ],
+      "pivot": [
+        0.0,
+        0.7,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "cells"
+  ],
+  "anim": {
+    "cells": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2744,
+    "cells": 1824,
+    "total": 4568
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

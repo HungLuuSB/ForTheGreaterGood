@@ -109,6 +109,10 @@ Build.STOP_INSIDE = 6 -- studs: an approaching builder stops this far inside its
 local function approach(sim: Types.Sim, id: number, x: number, z: number, targetHalf: number?)
 	local nav = sim.nav
 	local w = sim.world
+	if def(sim, id).domain == "structure" then
+		BuildState.idle(sim.build, id) -- a construction turret can't go to its work: it drops it (S-211)
+		return
+	end
 	if nav == nil then
 		return
 	end
@@ -201,7 +205,7 @@ function Build.commandAssist(sim: Types.Sim, ids: { number }, targetId: number)
 	end
 	for _, id in ids do
 		local d = def(sim, id)
-		if d.buildPower == nil or d.domain == "structure" or id == targetId or w.team[id] ~= w.team[targetId] then
+		if d.buildPower == nil or (d.domain == "structure" and not d.assistOnly) or id == targetId or w.team[id] ~= w.team[targetId] then
 			continue
 		end
 		BuildState.idle(b, id)
@@ -223,7 +227,7 @@ function Build.commandReclaim(sim: Types.Sim, ids: { number }, wreckId: number)
 	end
 	for _, id in ids do
 		local d = def(sim, id)
-		if d.buildPower == nil or d.domain == "structure" then
+		if d.buildPower == nil or (d.domain == "structure" and not d.assistOnly) then
 			continue
 		end
 		BuildState.idle(b, id)
@@ -273,6 +277,60 @@ end
 --------------------------------------------------------------------------------
 -- Tick
 --------------------------------------------------------------------------------
+
+Build.NANO_SCAN = 8 -- ticks between an idle construction turret's looks for work (S-211)
+
+-- An idle construction turret's next job in its reach (S-211, the user's
+-- playtest 3 H31: BAR's nano left on FIGHT): its team's unfinished frames
+-- first, then factories' production, then damaged units, then the wrecks
+-- and features to reclaim; nearest first within each.
+local function nanoPick(sim: Types.Sim, id: number, d: Defs.UnitDef)
+	local w = sim.world
+	local b = sim.build
+	local team = w.team[id]
+	local reach = d.buildRange or 0
+	local x, z = w.posX[id], w.posZ[id]
+	local best, bestRank, bestDist = 0, 4, math.huge
+	for _, o in w.ids do
+		if o == id or w.team[o] ~= team then
+			continue
+		end
+		local od = def(sim, o)
+		local q = b.queue[o]
+		local rank = if w.buildProgress[o] < 1
+			then 1
+			elseif od.domain == "structure" and od.buildOptions ~= nil and q ~= nil and #q > 0 then 2
+			elseif w.health[o] < od.health then 3
+			else 0
+		if rank == 0 or rank > bestRank then
+			continue
+		end
+		local dx, dz = w.posX[o] - x, w.posZ[o] - z
+		local dist = sqrt(dx * dx + dz * dz)
+		if dist <= reach + halfSize(od) and (rank < bestRank or dist < bestDist) then
+			best, bestRank, bestDist = o, rank, dist
+		end
+	end
+	if best ~= 0 then
+		b.target[id] = best
+		b.targetGen[id] = w.gen[best]
+		b.assist[id] = bestRank == 2
+		b.repair[id] = bestRank == 3 or nil
+		return
+	end
+	local c = sim.combat
+	local wreck = 0
+	for _, wid in c.wreckIds do
+		local dx, dz = c.wreckX[wid] - x, c.wreckZ[wid] - z
+		local dist = sqrt(dx * dx + dz * dz)
+		if dist <= reach + Grid.CELL_SIZE / 2 and dist < bestDist then
+			wreck, bestDist = wid, dist
+		end
+	end
+	if wreck ~= 0 then
+		b.reclaim[id] = wreck
+	end
+end
 
 -- Spawns an unfinished frame of `d` for `owner` centered near (x, z).
 local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: number, z: number, facing: number): number
@@ -563,7 +621,13 @@ function Build.step(sim: Types.Sim)
 			if q and #q > 0 then
 				addPower(id, bp, id)
 			end
-			continue
+			if not d.assistOnly then
+				continue
+			end
+			-- a construction turret: the jobs below, its own or found in reach (S-211)
+			if (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0 and (sim.tick + id) % Build.NANO_SCAN == 0 then
+				nanoPick(sim, id, d)
+			end
 		end
 
 		local pending = b.order[id]

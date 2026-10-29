@@ -6,6 +6,7 @@ local Default = require("./Default")
 local BeamTower = require("./BeamTower")
 local Commander = require("./Commander")
 local Bot = require("./Bot")
+local NanoTurret = require("./NanoTurret")
 
 local Registry = {}
 
@@ -30,6 +31,11 @@ Registry.SCRIPTS = table.freeze({
 	ord_fatboy = Bot,
 	chs_centurion = Bot,
 	chs_skitter = Bot, -- four legs: a diagonal gait
+	chs_mammoth = Bot, -- four whole legs, the same gait (S-209)
+	ord_titan = Bot, -- the experimentals, the leg kit ×2.1 (S-209)
+	chs_korgoth = Bot,
+	ord_nano = NanoTurret, -- construction turrets turn to their work (S-209)
+	chs_nano = NanoTurret,
 	chs_dragon = Bot.Dragon, -- its ducted fans
 }) :: { [string]: any }
 

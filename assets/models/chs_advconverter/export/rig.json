@@ -1,0 +1,150 @@
+{
+  "id": "chs_advconverter",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.0,
+        0.0
+      ],
+      "size": [
+        23.3438,
+        6.0,
+        23.3438
+      ]
+    },
+    "crucible": {
+      "parent": "base",
+      "center": [
+        0.0,
+        6.86,
+        0.0
+      ],
+      "size": [
+        12.056,
+        1.72,
+        12.056
+      ],
+      "pivot": [
+        0.0,
+        6.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "crucible"
+  ],
+  "visualPieces": [
+    "crucible"
+  ],
+  "anim": {
+    "crucible": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        0.7,
+        0.0
+      ],
+      "size": [
+        22.0,
+        0.2,
+        22.0
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.87,
+        -1.385
+      ],
+      "size": [
+        16.95,
+        2.24,
+        19.72
+      ]
+    },
+    {
+      "name": "crucible_glow_power",
+      "piece": "crucible",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        6.7142,
+        0.0
+      ],
+      "size": [
+        11.9946,
+        1.0241,
+        11.9946
+      ]
+    }
+  ],
+  "glowShare": 0.0195,
+  "triangles": {
+    "base": 5412,
+    "crucible": 564,
+    "total": 5976
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

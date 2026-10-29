@@ -311,7 +311,11 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 40, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 41, "protocol version changed: update the golden bytes below")
+		-- version 41: the Strategic header's part / parts (S-212)
+		local parts = { encodeOne(Schema.encodeStrategicHeader, 0x0102), encodeOne(Schema.encodeStrategicHeader, 0x0102) }
+		Schema.numberStrategicParts(parts)
+		t.equal(hex(parts[1]) .. " | " .. hex(parts[2]), "02 01 00 02 | 02 01 01 02")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,

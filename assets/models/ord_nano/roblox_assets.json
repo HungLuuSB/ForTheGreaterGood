@@ -1,0 +1,56 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 3124 triangles, glow share 2.4%",
+  "bar": {
+    "model": "rbxassetid://72273267734352",
+    "meshes": {
+      "base": "rbxassetid://133952289102478",
+      "base_glow_power": "rbxassetid://115116982758610",
+      "base_glow_running": "rbxassetid://107414371781472",
+      "nano": "rbxassetid://123789002006421",
+      "nano_glow_power": "rbxassetid://72870856175045",
+      "nano_glow_weapon": "rbxassetid://138727316644658",
+      "turret": "rbxassetid://92926751442127",
+      "turret_glow_running": "rbxassetid://113638769957711"
+    },
+    "decals": {
+      "ALB": "rbxassetid://75272316886499",
+      "RGH": "rbxassetid://91311027340376",
+      "NOR": "rbxassetid://80502412340748",
+      "MTL": "rbxassetid://74528128534963",
+      "EMI": "rbxassetid://125277905372272"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://90030715152541",
+      "NOR": "rbxassetid://114275202307404",
+      "RGH": "rbxassetid://74718423294798",
+      "MTL": "rbxassetid://98302541954920",
+      "EMI": "rbxassetid://139359276845058"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_nano_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://100089912577564",
+    "meshes": {
+      "base": "rbxassetid://118617537625508",
+      "nano": "rbxassetid://107189911427520",
+      "turret": "rbxassetid://83232722512266"
+    },
+    "decals": {
+      "ALB": "rbxassetid://128088182412712",
+      "RGH": "rbxassetid://84039571810084",
+      "NOR": "rbxassetid://136878083922471",
+      "MTL": "rbxassetid://102352314284345",
+      "EMI": "rbxassetid://117595167252689"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://136368268581906",
+      "NOR": "rbxassetid://73176796214283",
+      "RGH": "rbxassetid://122565450764648",
+      "MTL": "rbxassetid://77887415021641",
+      "EMI": "rbxassetid://91060312715361"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_nano_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 2816 triangles"
+  }
+}

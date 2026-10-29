@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 4828 triangles, glow share 4.2%",
+  "bar": {
+    "model": "rbxassetid://137130152789270",
+    "meshes": {
+      "base": "rbxassetid://95157839470201",
+      "base_glow_power": "rbxassetid://133052535830899",
+      "base_glow_running": "rbxassetid://82727712188134",
+      "cells": "rbxassetid://92401514162238",
+      "cells_glow_power": "rbxassetid://108141672480767"
+    },
+    "decals": {
+      "ALB": "rbxassetid://134629310308276",
+      "RGH": "rbxassetid://108739661677797",
+      "NOR": "rbxassetid://133599709682496",
+      "MTL": "rbxassetid://106677284827955",
+      "EMI": "rbxassetid://131343722988215"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://127773690320381",
+      "NOR": "rbxassetid://125445839827108",
+      "RGH": "rbxassetid://88509518642276",
+      "MTL": "rbxassetid://128090973503795",
+      "EMI": "rbxassetid://81053413949350"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advcapacitor_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://135350712814081",
+    "meshes": {
+      "base": "rbxassetid://76510470998999",
+      "cells": "rbxassetid://105864007247715"
+    },
+    "decals": {
+      "ALB": "rbxassetid://72481998704770",
+      "RGH": "rbxassetid://77421716276474",
+      "NOR": "rbxassetid://73455371750853",
+      "MTL": "rbxassetid://72299950992427",
+      "EMI": "rbxassetid://80425845758036"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://78789381717780",
+      "NOR": "rbxassetid://133941393715025",
+      "RGH": "rbxassetid://127804224592654",
+      "MTL": "rbxassetid://116154983059377",
+      "EMI": "rbxassetid://91866445110455"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advcapacitor_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 4568 triangles"
+  }
+}
