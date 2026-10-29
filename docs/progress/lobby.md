@@ -11,6 +11,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Studio** (`debug_out/screens/`): `lobby_emblems_skirmish`, `lobby_emblems_units`, `lobby_emblems_room`, `lobby_emblems_ai_editor` (Team mode). Picking a card sends the change (the AI's chip switched to Order). No script errors.
 - Requests D-E2 and B-10 are done.
 - Lobby specs 67 / 67; the build check passes (651 scripts, 1084 requires).
+- Ready to merge: `7ceb180c` (faction emblems; includes the merges of main `40368ba8` and `411f7cb0`; touches only `src/lobby`, `lobby.project.json` and the lobby progress)
 
 ## Summary (2026-10-30: the Units article's real icons)
 
