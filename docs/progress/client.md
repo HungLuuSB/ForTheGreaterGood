@@ -56,6 +56,57 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, re-rendered unit pictures: C-269)
+
+- **Clearer unit pictures (C-269):** C's re-render (no fog, more glow and colour), repacked by E, is uploaded. Build tiles and the unit panel show it.
+- Ready to merge: `4bb5b829` (C-269; carries 2D-E's 2d up to ee9cfd2a. test_client 347 / 347, build passed. Studio, Coastline: the new sheets load in the build tiles and unit panel)
+
+## Summary (2026-10-30, blast marks: C-268)
+
+- **Blast marks (C-268):** explosions leave models-C's soot mark with a glow that cools in 2 s, instead of a flat dark disc. C's templated explosions leave one too.
+- Ready to merge: `3c137805` (C-268; carries m-models 2d0afbe4. test_client 347 / 347, build passed (882 scripts, 2469 requires). Studio, Coastline: six marks after a D-Gun shot, both variants, no shadows)
+
+## Summary (2026-10-30, explosions and missile booster: C-267)
+
+- **The D-Gun's effects work now (C-267):** C-266's bolt never ran as intended. The template attributes were lost (fixed by models-C) and a client loop sat in the wrong place (fixed here). The bolt now burns for its whole flight.
+- **New explosions from models-C:**
+  - impacts, unit deaths, structure deaths (heavier, with chain blasts and rubble fires) and the nuke play C's templates;
+  - missiles fly with C's booster flame;
+  - debris arms and chain blasts scale with the blast.
+- Not yet: C's blast-mark decals, which need an upload.
+- Ready to merge: `5cfcd875` (C-267, supersedes c0e38cc3's D-Gun claim; carries m-models 39aa66e8. test_client 347 / 347, build passed (882 scripts, 2468 requires). Studio, Coastline: D-Gun bolt held for its flight, nuke launch, booster and blast, structure death; no errors)
+
+## Summary (2026-10-30, D-Gun effects: C-266)
+
+- **D-Gun effects (C-266):** the Commander's D-Gun plays models-C's effects:
+  - a muzzle blast on firing;
+  - the plasma bolt with its burning trail along the ground;
+  - a hit on every unit it burns through;
+  - a blast at the end of its range.
+- Ready to merge: `c0e38cc3` (C-266; carries m-models 51db9785 (the D-Gun templates). test_client 345 / 345, build passed (882 scripts, 2468 requires). Studio, Coastline: all four templates played on a shot through two Lancers, no errors)
+
+## Summary (2026-10-30, unit pictures and emblems uploaded: C-265)
+
+- **Unit pictures live (C-265):** E's 197 pre-rendered pictures are uploaded on four sheets, so the build tiles and the unit panel show them in place of the live model.
+- **Faction emblems uploaded:** the ids are in `UI/FactionEmblems` for lobby-D: the atlas, each emblem's rects from 16 to 256 px, tints, and `of(faction, px)`. Nothing in the match draws them yet.
+- Ready to merge: `5e9451da` (C-265; carries 2D-E's 2d up to a8a12d1d (E-11 pictures, the emblems). test_client 345 / 345, build passed (882 scripts, 2468 requires). Studio, Coastline: pictures in the build tiles and unit panel, cleanly cropped)
+
+## Summary (2026-10-30, D-Gun preview, command cursor, unit pictures ready: C-262..C-264)
+
+- **D-Gun aim preview (C-264):**
+  - With the D-Gun armed, the bolt's path and its 14-stud hitbox are drawn from the Commander over the whole 80-stud range, with a red ring on every unit it would burn (own units too).
+  - The path always stays inside the Commander's range. A ground click out of range fires from where the Commander stands.
+  - An enemy clicked out of range is walked to, with no path shown, and fired at once in range.
+- **Icon fixes (C-263):**
+  - build tile costs are level with their icons;
+  - the unit panel has E's health, supply and power icons;
+  - command buttons are plain labels, and the chosen command's icon becomes the mouse cursor;
+  - the weapon line reads "DPS: x";
+  - the resource bar's threshold tip is placed below its marker.
+- **Unit pictures (C-262):** portraits show E's pre-rendered unit picture once its sheet is uploaded, and the live model until then.
+- Asked of models-C: the D-Gun's effects (bolt, muzzle, hits, end) as `Vfx` templates.
+- Ready to merge: `c3c529e5` (C-262..C-264; test_client 343 / 343, build passed (881 scripts, 2468 requires). Studio, Coastline: the D-Gun band in range and capped at the ring for a far point, which fired on the spot; the command cursor; the cost rows; the unit panel icons. The threshold tip isn't hovered yet)
+
 ## Summary (2026-10-29, new icons: C-258..C-261)
 
 - **2D-E's icon set is in the game (C-258, C-261):** every unit has its icon from E's approved set, on two uploaded sheets. The Commanders show their own heads, but enemy radar still shows them as a plain walker. A unit added later without an icon gets its type's placeholder (a "?") instead of a blank frame, and the icon build warns about it.
