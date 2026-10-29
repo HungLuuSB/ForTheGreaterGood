@@ -362,7 +362,9 @@ return function(t: RunAll.Context)
 			{ 1, "ord_advextractor" }, { 1, "ord_bastion" }, { 1, "ord_sanction" }, { 1, "ord_providence" }, { 1, "ord_reckoning" },
 			{ 2, "chs_advextractor" }, { 2, "chs_maw" }, { 2, "chs_scourge" }, { 2, "chs_cerberus" },
 		}
-		run(sim, brains, 900 * 30, true, function()
+		-- (40 min since S-216: Hard builds fusion while power stalls and its
+		-- gantry before the silo)
+		run(sim, brains, 900 * 40, true, function()
 			local all = brains[1].nukes > 0
 			for _, pair in want do
 				local id = pair[2] :: string

@@ -190,6 +190,11 @@ Skirmish.ADV_BUILDER_SUPPLY = 600 -- supply stored before the advanced plant bui
 Skirmish.PINPOINTERS = 2 -- Pinpointers the T2 builder raises (S-101)
 Skirmish.CITADEL_SUPPLY = 1500 -- supply stored (or 90% of storage, if less) before Order hard's Citadel (S-101)
 Skirmish.BARRIERS = 6 -- Barrier segments in Order hard's wall (S-101)
+Skirmish.TECH_EXTRACTORS = 8 -- (S-216) extractors that tech up without stored supply: a match-long AI spends every unit as it comes, and never stored the 900 / 600 the advanced plant and T2 builder wait for
+Skirmish.TECH_TICKS = 10 * 60 * 15 -- (S-216) or this long with 6 extractors: Hard's safe deposits on a 1v1 map are 8 or 9
+Skirmish.CONVERTERS = 3 -- (S-216) T1 converters it adds while power sits full and supply runs short
+Skirmish.GANTRY_TICKS = 15 * 60 * 15 -- (S-216) hard's gantry also comes after this long with GANTRY_EXTRACTORS extractors
+Skirmish.GANTRY_EXTRACTORS = 8
 Skirmish.ADV_SOLAR_AFTER = 6 -- solars before its power comes from advanced solar (S-216)
 Skirmish.ADV_SOLAR_EQ = 4 -- an advanced solar counts as this many solars (80 / 20 power)
 Skirmish.NANO_REACH = 120 -- studs: a Construction Turret this near a factory's centre serves it (its reach is 150 from its own edge)
@@ -1248,7 +1253,9 @@ type Census = {
 	advSolars: number,
 	gantries: { number }, -- complete Experimental Gantries
 	gantryFrames: number,
+	gantryFrame: number, -- an unfinished gantry's ID (T1 builders help), or 0
 	navalBuilders: { number }, -- naval workers: offshore extractors
+	upkeep: number, -- power per second its extractors' upkeep costs (S-198), planned for by the generator rule (S-216)
 }
 
 local function census(brain: Brain): Census
@@ -1309,7 +1316,9 @@ local function census(brain: Brain): Census
 		advSolars = 0,
 		gantries = {},
 		gantryFrames = 0,
+		gantryFrame = 0,
 		navalBuilders = {},
+		upkeep = 0,
 	}
 	local advPlant = faction(brain, "advvehplant", "advvehplant")
 	local generator = faction(brain, "solar", "solar")
@@ -1364,6 +1373,9 @@ local function census(brain: Brain): Census
 			if d.assistOnly then
 				table.insert(c.nanos, { w.posX[id], w.posZ[id] }) -- (S-216)
 			end
+			if d.extractor then
+				c.upkeep += d.extractor.upkeep or 0
+			end
 			if done and d.extractor and d.id == brain.prefix .. "extractor" then
 				table.insert(c.t1Extractors, id)
 			end
@@ -1380,6 +1392,7 @@ local function census(brain: Brain): Census
 					table.insert(c.gantries, id)
 				else
 					c.gantryFrames += 1
+					c.gantryFrame = id
 				end
 			elseif d.buildOptions then
 				if d.id == brain.prefix .. "botlab" or d.id == brain.prefix .. "advbotlab" or d.id == brain.prefix .. "advairfield" then
@@ -1581,7 +1594,9 @@ local function think(brain: Brain)
 	-- hard: builders only assisting a factory leave it for these (the
 	-- airfield and shipyard are the Command Vehicle's to build)
 	local wantAir = cfg.air and #c.factories > 0 and (established or (cfg.earlyAir and c.extractors >= 2)) and #c.airfields + c.airFrames == 0
-	local wantNaval = cfg.naval and brain.seaX ~= nil and #c.factories > 0 and established and #c.shipyards + c.shipFrames == 0
+	-- (S-216) a sea map with free offshore deposits wants the shipyard early: its naval worker takes them
+	local offshoreWanted = cfg.offshore and brain.seaX ~= nil and #c.factories > 0 and c.extractors >= 6 and Skirmish.freeSeaDeposit(brain) ~= nil
+	local wantNaval = cfg.naval and brain.seaX ~= nil and #c.factories > 0 and (established or offshoreWanted) and #c.shipyards + c.shipFrames == 0
 	local wantTurret = c.turrets < turretsWanted and #c.factories > 0 and c.extractors >= 5 and #c.army >= 4
 	-- normal: once two generators stand, an army before anything else
 	-- (S-57): builders start no new job until the plant has rolled out
@@ -1761,13 +1776,24 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if cfg.techUp and not isCommander and #c.factories > 0 and #c.advFactories + #c.advFrames == 0 and acc.supply.stored > (cfg.advPlantSupply or Skirmish.ADV_PLANT_SUPPLY) then
+		if cfg.techUp and not isCommander and #c.factories > 0 and #c.advFactories + #c.advFrames == 0 and (acc.supply.stored > (cfg.advPlantSupply or Skirmish.ADV_PLANT_SUPPLY) or ((c.extractors >= Skirmish.TECH_EXTRACTORS or (sim.tick >= Skirmish.TECH_TICKS and c.extractors >= 6)) and #c.army >= 8)) then
 			-- tech up: the Advanced Vehicle Plant (fire-control radar, MLRS; S-7)
 			local adv = faction(brain, "advvehplant", "advvehplant")
 			local x, z = spotNear(brain, adv, brain.homeX - brain.toward * 40, brain.homeZ + 120, id)
 			if x and z then
 				build(brain, id, adv, x, z, Skirmish.enemyFacing(brain))
 				table.insert(c.advFrames, 0)
+				continue
+			end
+		end
+		if cfg.advEco and not isCommander and supplyShort and not powerShort and acc.power.stored >= acc.power.storage * 0.9
+			and (c.built[brain.prefix .. "converter"] or 0) < Skirmish.CONVERTERS and #c.factories > 0 then
+			-- (S-216) power sits full while supply runs short: turn it into supply
+			local conv = brain.prefix .. "converter"
+			local x, z = spotNear(brain, conv, brain.homeX - brain.toward * 80, brain.homeZ - 40, id)
+			if x and z then
+				build(brain, id, conv, x, z, 0)
+				c.built[conv] = (c.built[conv] or 0) + 1
 				continue
 			end
 		end
@@ -1801,7 +1827,7 @@ local function think(brain: Brain)
 		-- need, and one more only while power stalls and supply doesn't
 		-- (counts and stall memories, never the moment's income: mirror-safe,
 		-- S-31 / S-94)
-		local genWanted = math.ceil((factoryPower + builderPower + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP)) / Skirmish.GENERATOR_POWER)
+		local genWanted = math.ceil((factoryPower + builderPower + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP) + c.upkeep) / Skirmish.GENERATOR_POWER) -- (S-216: extractors' upkeep too)
 		local extractorFirst = cell ~= nil and (c.extractors < c.generators or (supplyShort and not powerShort))
 		local genCap = genWanted + (if powerShort and not supplyShort then Skirmish.GEN_SLACK else 0)
 		-- (S-216) an advanced solar makes ADV_SOLAR_EQ solars' power
@@ -1849,7 +1875,9 @@ local function think(brain: Brain)
 			end
 		end
 		local frame = c.advFrames[1]
-		if frame and frame ~= 0 then
+		if c.gantryFrame ~= 0 then
+			submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = c.gantryFrame }) -- (S-216) help the gantry
+		elseif frame and frame ~= 0 then
 			submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = frame }) -- help the tech-up
 		elseif #c.factories > 0 then
 			submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = c.factories[1] })
@@ -1915,7 +1943,12 @@ local function think(brain: Brain)
 		if not idleBuilder(sim, id) then
 			continue
 		end
-		local ux, uz = nextUpgrade()
+		-- (S-216) while power stalls, a fusion before more upgrades (each adds upkeep)
+		local fusionFirst = cfg.advEco and powerShort and count(brain.prefix .. "fusion") < Skirmish.FUSIONS
+		local ux, uz = nil, nil
+		if not fusionFirst then
+			ux, uz = nextUpgrade()
+		end
 		if ux and uz then
 			-- in-place upgrade (S-108): straight on the deposit, not via spotNear
 			brain.claims[lg:index(lg:cellAt(ux, uz))] = sim.tick
@@ -1937,6 +1970,11 @@ local function think(brain: Brain)
 		elseif c.shields == 0 then
 			job, cx, cz = faction(brain, "phalanx", "carapace"), brain.homeX + brain.toward * 40, brain.homeZ
 			c.shields += 1
+		elseif cfg.experimental and count(gantry) == 0 and (acc.supply.stored >= math.min(Skirmish.GANTRY_SUPPLY, acc.supply.storage * 0.8) or (sim.tick >= Skirmish.GANTRY_TICKS and c.extractors >= Skirmish.GANTRY_EXTRACTORS)) then
+			-- (S-216, hard) the Experimental Gantry: Titans / Juggernauts; late in the game it
+			-- comes before the rest of the list (in a match the builder never reached the end)
+			job, cx, cz = gantry, brain.homeX - brain.dirX * 70 + brain.dirZ * 120, brain.homeZ - brain.dirZ * 70 - brain.dirX * 120
+			c.built[gantry] = 1
 		elseif cfg.advEco and count(advDepot) == 0 and acc.supply.stored >= acc.supply.storage * 0.9 then
 			-- (S-216) supply sits full: more room for it
 			job, cx, cz = advDepot, brain.homeX - brain.dirX * 60, brain.homeZ - brain.dirZ * 60 - 50
@@ -1983,14 +2021,10 @@ local function think(brain: Brain)
 		elseif cfg.citadel and c.citadels == 0 and acc.supply.stored >= math.min(Skirmish.CITADEL_SUPPLY, acc.supply.storage * 0.9) then
 			job, cx, cz = "ord_citadel", brain.homeX + brain.dirX * 120, brain.homeZ + brain.dirZ * 120
 			c.citadels += 1
-		elseif cfg.advEco and count(advFusion) == 0 and count(fusion) >= 1 and acc.supply.stored >= math.min(Skirmish.ADV_FUSION_SUPPLY, acc.supply.storage * 0.8) then
-			-- (S-216) the big reactor, far behind the base
+		elseif cfg.advEco and count(advFusion) == 0 and count(fusion) >= Skirmish.FUSIONS and (powerShort or acc.supply.stored >= math.min(Skirmish.ADV_FUSION_SUPPLY, acc.supply.storage * 0.8)) then
+			-- (S-216) the big reactor, far behind the base: power still stalls with two fusions, or it's rich
 			job, cx, cz = advFusion, brain.homeX - brain.dirX * 150, brain.homeZ - brain.dirZ * 150
 			c.built[advFusion] = 1
-		elseif cfg.experimental and count(gantry) == 0 and acc.supply.stored >= math.min(Skirmish.GANTRY_SUPPLY, acc.supply.storage * 0.8) then
-			-- (S-216, hard) the Experimental Gantry: Titans / Juggernauts
-			job, cx, cz = gantry, brain.homeX - brain.dirX * 70 + brain.dirZ * 120, brain.homeZ - brain.dirZ * 70 - brain.dirX * 120
-			c.built[gantry] = 1
 		end
 		if job then
 			local x, z = spotNear(brain, job, cx, cz, id)
@@ -2076,7 +2110,7 @@ local function think(brain: Brain)
 		local q = sim.build.queue[f] or {}
 		for _ = #q + 1, cfg.queue do
 			local item
-			if cfg.t2Builder and t2Planned < 1 and acc.supply.stored >= Skirmish.ADV_BUILDER_SUPPLY then
+			if cfg.t2Builder and t2Planned < 1 and (acc.supply.stored >= Skirmish.ADV_BUILDER_SUPPLY or c.extractors >= Skirmish.TECH_EXTRACTORS or (sim.tick >= Skirmish.TECH_TICKS and c.extractors >= 6)) then
 				item = t2BuilderUnit -- shield and Pinpointers (S-101)
 				t2Planned += 1
 			elseif c.enemySilo and mobilePlanned < 1 then
