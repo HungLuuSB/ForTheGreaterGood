@@ -1,9 +1,12 @@
 {
-  "note": "Effect textures (M-27, docs/contracts/fx.md \"Effect textures\"): white RGB, the pattern in alpha; uploaded as Decals through Open Cloud (opencloud.json), image IDs from the Decals.",
+  "note": "Effect textures (M-27, docs/contracts/fx.md \"Effect textures\"): white RGB, the pattern in alpha; uploaded as Decals through Open Cloud (opencloud.json), image IDs from the Decals. blastMarkA / blastMarkB / blastMarkGlow: the explosion ground marks (assets/fx/scorch, decals in its opencloud.json; soot greyscale in RGB, the glow white for tinting; uploaded with the user's approval 2026-10-30).",
   "textures": {
     "radarPulse": "rbxassetid://113771866546969",
     "sonarPing": "rbxassetid://120009987380670",
     "jammerStatic": "rbxassetid://124485150689074",
-    "heatShimmer": "rbxassetid://105647146631109"
+    "heatShimmer": "rbxassetid://105647146631109",
+    "blastMarkA": "rbxassetid://127181533587397",
+    "blastMarkB": "rbxassetid://93758455546732",
+    "blastMarkGlow": "rbxassetid://110858208734239"
   }
 }
