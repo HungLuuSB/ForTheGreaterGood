@@ -534,6 +534,18 @@
       }
     },
     {
+      "Name": "chs_goliath",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://121805878728842",
+        "NormalMapContent": "rbxassetid://79850107131082",
+        "RoughnessMapContent": "rbxassetid://96588588716711",
+        "MetalnessMapContent": "rbxassetid://107738590716746",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_gorgon",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -667,18 +679,6 @@
     },
     {
       "Name": "chs_juggernaut",
-      "ClassName": "SurfaceAppearance",
-      "Properties": {
-        "AlphaMode": "Overlay",
-        "ColorMapContent": "rbxassetid://121805878728842",
-        "NormalMapContent": "rbxassetid://79850107131082",
-        "RoughnessMapContent": "rbxassetid://96588588716711",
-        "MetalnessMapContent": "rbxassetid://107738590716746",
-        "EmissiveStrength": 0
-      }
-    },
-    {
-      "Name": "chs_korgoth",
       "ClassName": "SurfaceAppearance",
       "Properties": {
         "AlphaMode": "Overlay",
@@ -3390,6 +3390,18 @@
       }
     },
     {
+      "Name": "wreck_chs_goliath",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://73411305825157",
+        "NormalMapContent": "rbxassetid://107905618067578",
+        "RoughnessMapContent": "rbxassetid://130174483948394",
+        "MetalnessMapContent": "rbxassetid://91802887944409",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_gorgon",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3523,18 +3535,6 @@
     },
     {
       "Name": "wreck_chs_juggernaut",
-      "ClassName": "SurfaceAppearance",
-      "Properties": {
-        "AlphaMode": "Overlay",
-        "ColorMapContent": "rbxassetid://73411305825157",
-        "NormalMapContent": "rbxassetid://107905618067578",
-        "RoughnessMapContent": "rbxassetid://130174483948394",
-        "MetalnessMapContent": "rbxassetid://91802887944409",
-        "EmissiveStrength": 0
-      }
-    },
-    {
-      "Name": "wreck_chs_korgoth",
       "ClassName": "SurfaceAppearance",
       "Properties": {
         "AlphaMode": "Overlay",

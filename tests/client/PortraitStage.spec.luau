@@ -34,10 +34,14 @@ return function(t: any)
 		end
 	end)
 
-	t.test("in the world, ships, water structures and amphibious units ride the water surface; tanks and aircraft don't", function()
+	t.test("in the world, ships, water structures and amphibious units ride the water surface; tanks, amphibious walkers, seafloor structures and aircraft don't", function()
 		local u = defs.units
 		t.expect(World.floats(u.chs_tidal), "a water structure")
 		t.expect(World.floats(u.ord_tideguard), "amphibious")
+		for _, id in { "ord_sovereign", "chs_warlord", "ord_titan", "chs_juggernaut" } do
+			t.expect(not World.floats(u[id]), `{id} walks the seafloor (AMPHIB_WALKER, C-254)`)
+		end
+		t.expect(not World.floats(u.ord_seaextractor), "an offshore extractor sits on the seafloor (H20)")
 		t.expect(not World.floats(u.ord_lancer), "a tank drives on the bed (it can't go deep)")
 		t.expect(not World.floats(u.ord_falcon), "aircraft fly above the ground")
 		t.expect(not World.floats(u.ord_vehplant))

@@ -65,7 +65,7 @@ return function(t: RunAll.Context)
 	t.test("the Juggernaut self-destructs almost like a nuke: 220 studs (H40)", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:96" })
 		local w = sim.world
-		local jug = Spawn.unit(sim, "chs_korgoth", 1, 0, 0)
+		local jug = Spawn.unit(sim, "chs_juggernaut", 1, 0, 0)
 		local far = Spawn.unit(sim, "ord_paladin", 2, 160, 0)
 		World.setFireState(w, jug, World.FireState.HOLD_FIRE)
 		World.setFireState(w, far, World.FireState.HOLD_FIRE)
@@ -159,5 +159,19 @@ return function(t: RunAll.Context)
 		t.equal((u.chs_accumulator.storage :: any).power, 6000, "Accumulator: +6,000")
 		t.equal((u.ord_advcapacitor.storage :: any).power, 60000, "Grid Reservoir: +60,000")
 		t.equal((u.chs_advaccumulator.storage :: any).power, 60000, "Great Accumulator: +60,000")
+	end)
+
+	t.test("chs_juggernaut is the T3 bot from the gantry; the T2 tank is chs_goliath, retired; both T3 walkers reach less far (S-213, the user)", function()
+		local defs = Sim.new({ seed = 1, players = PLAYERS }).defs
+		local u = defs.units
+		t.equal(u.chs_juggernaut.tier, 3, "chs_juggernaut: T3")
+		t.equal(u.chs_juggernaut.name, "Juggernaut", "named Juggernaut")
+		t.expect(table.find(u.chs_gantry.buildOptions :: { string }, "chs_juggernaut") ~= nil, "the gantry builds it")
+		t.equal(u.chs_korgoth, nil, "no chs_korgoth any more")
+		t.equal(u.chs_goliath.tier, 2, "chs_goliath: the T2 tank")
+		t.expect(u.chs_goliath.retired == true, "chs_goliath: retired")
+		t.expect(table.find(u.chs_advvehplant.buildOptions :: { string }, "chs_goliath") == nil, "on no build list")
+		t.equal(u.ord_titan.maxRange, 390, "Titan: 390 (missiles; was 520)")
+		t.equal(u.chs_juggernaut.maxRange, 520, "Juggernaut: 520 (missiles; was 700)")
 	end)
 end

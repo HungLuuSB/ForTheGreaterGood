@@ -2,14 +2,14 @@
 -- Piece scripts (guide 14, C-30): the scheduler's helpers behave like BAR's
 -- (turn speeds, waits, sleeps, signal masks), turrets drawn by the default
 -- script stay within a tick of the server's aim in a real duel, and the
--- Juggernaut raises its arms to aim, recoils, and lowers them after the
+-- Goliath raises its arms to aim, recoils, and lowers them after the
 -- restore delay.
 
 local Commands = require("../../src/client/Core/Commands")
 local NetIn = require("../../src/client/Core/NetIn")
 local PieceAnim = require("../../src/client/Core/PieceAnim")
 local Default = require("../../src/client/Core/PieceScripts/Default")
-local Jug = require("../../src/client/Core/PieceScripts/chs_juggernaut")
+local Jug = require("../../src/client/Core/PieceScripts/chs_goliath")
 local Registry = require("../../src/client/Core/PieceScripts/Registry")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
@@ -281,14 +281,14 @@ return function(t: any)
 		t.expect(worst <= 1, "never more than a tick behind the server")
 	end)
 
-	t.test("Juggernaut: the arms follow the server's raise, hold and lowering (S-20), and recoil in turn", function()
+	t.test("Goliath: the arms follow the server's raise, hold and lowering (S-20), and recoil in turn", function()
 		local sim = Sim.new({ seed = 3, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:48", scenario = "empty" })
 		local world = World.new(sim.defs)
 		NetOut.join(sim, 1)
 		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 47, 47)))
-		local jug = Spawn.unit(sim, "chs_juggernaut", 1, -60, 0, math.pi / 2)
+		local jug = Spawn.unit(sim, "chs_goliath", 1, -60, 0, math.pi / 2)
 		local s = PieceAnim.new(sim.defs.weaponByIndex)
-		local def = sim.defs.units.chs_juggernaut
+		local def = sim.defs.units.chs_goliath
 		local turret = sim.defs.weaponByIndex[def.weapons[1].weaponIndex].turret
 		t.expect(Registry.forDef(def) == Jug and Registry.forDef(sim.defs.units.chs_ravager) == Default, "the registry picks the scripts")
 		local SUBS = 4
@@ -348,7 +348,7 @@ return function(t: any)
 				end
 			end
 		end
-		print(string.format("    juggernaut: %d samples, arms worst %.2f of a tick's travel off the server, %d shots", compared, worst, shots))
+		print(string.format("    goliath: %d samples, arms worst %.2f of a tick's travel off the server, %d shots", compared, worst, shots))
 		t.expect(restSeen and raisedSeen and loweredAgain, "arms down, then up, then down again")
 		t.expect(shots > 0 and upAtShot, "it fired, and only with its arms up")
 		t.expect(worst <= 1, "the arms never more than a tick off the server's pitch")

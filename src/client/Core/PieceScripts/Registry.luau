@@ -11,7 +11,7 @@ local NanoTurret = require("./NanoTurret")
 local Registry = {}
 
 Registry.SCRIPTS = table.freeze({
-	chs_juggernaut = require("./chs_juggernaut"),
+	chs_goliath = require("./chs_goliath"),
 	ord_warden = require("./ord_warden"),
 	chs_minotaur = require("./chs_minotaur"),
 	ord_radiance = BeamTower,
@@ -33,7 +33,7 @@ Registry.SCRIPTS = table.freeze({
 	chs_skitter = Bot, -- four legs: a diagonal gait
 	chs_mammoth = Bot, -- four whole legs, the same gait (S-209)
 	ord_titan = Bot, -- the experimentals, the leg kit ×2.1 (S-209)
-	chs_korgoth = Bot,
+	chs_juggernaut = Bot,
 	ord_nano = NanoTurret, -- construction turrets turn to their work (S-209)
 	chs_nano = NanoTurret,
 	chs_dragon = Bot.Dragon, -- its ducted fans

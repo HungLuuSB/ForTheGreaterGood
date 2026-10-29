@@ -8,6 +8,13 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 
 **Start here.** This section is enough to carry on the models stream. The sections below are history.
 
+**S-213 id swap (2026-10-29, sim-A's `748ddf25`, merged here):** the T3 bot `chs_korgoth` is now `chs_juggernaut`, and the old T2 tank `chs_juggernaut` is now `chs_goliath` (retired; it keeps its blockout and mesh).
+- Renamed to match: the blockout files and `Blockouts/Registry.luau` keys, the `assets/models/<id>` folders and their export file names, and the ids inside `build.py`, `rig.json` and `opencloud.json`.
+- Also updated: the `manifest.py` approval lists, `animate.py`, and the key-art tank lists.
+- Regenerated: the Meshes registry and `MeshMaterials`.
+- Unchanged: the asset IDs. The review rigs in FTGG Art keep their old names, as `modelPath` records.
+- B's part (the icon and the piece-script swap) is still open, so `test_client` fails 3 tests here (IconAtlas, Icons, PieceAnim Juggernaut) until B's tip.
+
 **Where it stands:** `m-models` is at `main` `d8611b86`. Every piece of models work is integrated; the last merges were `34cbaf59` and `82bedb2a`. Checks there: `lune run test` 615/615, `lune run test_client` 335/335, `lune run build` (879 scripts, 2457 requires resolve). Nothing is in review: all 203 defs have an approved mesh and an approved wreck (status table below), and all nine named maps have an approved baked ground (`GROUND_APPROVED` in `assets/models/tools/manifest.py`).
 
 **Done since the 10-24 queue:**
@@ -39,6 +46,7 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 - **Ownership:**
   - This stream owns `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/`, `assets/models/`, `assets/fx/`, the map bakes (`assets/maps/<name>/export`, `assets/maps/tools/`), `place/MeshMaterials.model.json`, `place/Vfx.model.json`, this file and `docs/decisions/models.md`. Studio: the "FTGG Art" place only.
   - Never edit `src/client` (client-B), the unit defs or `src/server` (sim-A), or the lobby (lobby-D). Ask them under "Requests".
+  - 2D assets (icon sheet source, unit pictures, command and resource icons, thumbnails) belong to session E (`C:\Workspace\Projects\FTGG-2d`, since 2026-10-29). B still owns `render.mjs`, IconAtlas and the UI wiring. Send 2D requests to E under "Requests".
 - **Routine:**
   - Commit each finished piece, add `Ready to merge: <sha>` to the merge queue below, and message sim-A. Sim-A integrates and pushes; this stream never pushes.
   - After an integration, merge `main` into `m-models` and run the three checks.
@@ -215,10 +223,10 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `chs_chimera` | Chimera | 2 | ground | hand-made | approved | approved |
 | `chs_cyclops` | Cyclops | 2 | ground | hand-made | approved | approved |
 | `chs_forgemaster` | Forgemaster | 2 | ground | hand-made | approved | approved |
+| `chs_goliath` | Goliath | 2 | ground | hand-made | approved | approved |
 | `chs_gorgon` | Gorgon | 2 | ground | hand-made | approved | approved |
 | `chs_griffin` | Griffin | 2 | ground | hand-made | approved | approved |
 | `chs_hydra` | Hydra | 2 | ground | hand-made | approved | approved |
-| `chs_juggernaut` | Goliath | 2 | ground | hand-made | approved | approved |
 | `chs_mammoth` | Mammoth | 2 | ground | hand-made | approved | approved |
 | `chs_minotaur` | Minotaur | 2 | ground | hand-made | approved | approved |
 | `chs_mire` | Mire | 2 | ground | hand-made | approved | approved |
@@ -313,7 +321,7 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `ord_tribunal` | Tribunal | 2 | structure | hand-made | approved | approved |
 | `ord_veilspire` | Veilspire | 2 | structure | hand-made | approved | approved |
 | `ord_witness` | Witness | 2 | structure | hand-made | approved | approved |
-| `chs_korgoth` | Juggernaut | 3 | ground | hand-made | approved | approved |
+| `chs_juggernaut` | Juggernaut | 3 | ground | hand-made | approved | approved |
 | `ord_titan` | Titan | 3 | ground | hand-made | approved | approved |
 | `chs_gantry` | Experimental Gantry | 3 | structure | hand-made | approved | approved |
 | `chs_ragnarok` | Ragnarok | 3 | structure | hand-made | approved | approved |
@@ -903,8 +911,10 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `d2399d26` (S-197 map features: `fx.feature_tree` (4 variants) and `fx.feature_rock` (3 variants) with `variants` lists like `fx.deposit`, `review`; `assets/fx/features/`, manifest, `place/MeshMaterials.model.json`; on top of `035eff8a`, so after protocol 40 too).
 - Ready to merge: `e12e8660` (the user approved the S-197 map features: `fx.feature_tree` and `fx.feature_rock`, every variant, now draw in game; includes `d2399d26` and the merge of `main` 2c36d0da; manifest, docs).
 - Ready to merge: `49251fea` (fresh colour maps for feature_tree_2 and feature_rock_1, which failed to load in FTGG Match (B's C-247 check); the new ones load in both places; manifest, `place/MeshMaterials.model.json`).
+11. **Models → 2D session E (S-213 id swap, 2026-10-29):** the old T2 tank `chs_juggernaut` is now `chs_goliath` (retired), and the T3 bot `chs_korgoth` is now `chs_juggernaut`. Please swap the 2D sources to match: the icon sheet source and unit pictures for the old tank go under `chs_goliath`, and the bot's go under `chs_juggernaut`. Right now `chs_goliath` has no icon tile, so IconAtlas.spec and Icons.spec fail. B still owns `render.mjs`, IconAtlas and the UI wiring, and reruns the render.
 - Ready to merge: `6bff49ab` (the user approved the six older grounds: `ground.ridgeline`, `ground.coastline`, `ground.twin_lakes`, `ground.crossroads`, `ground.normandy` and `ground.canyon` now draw in game, so every named map's ground is approved; manifest, docs).
 - Ready to merge: `41fa7420` (the Experimental Gantry blockouts `ord_gantry` / `chs_gantry`, each with a `buildpad` and spray emitters (Order nano1..6, Chaos nano1..8), registered; contains the merges of m-sim-2 `94380002` and `8a111001`, so integrate after those. Unblocks B's Nanoframe spec; `src/shared/Defs/Blockouts/` only besides the merges).
 - Ready to merge: `20b58b9b` (fix for `e0b61a1e`: registers `ord_gantry` / `chs_gantry` in `Blockouts/Registry.luau`; `41fa7420` added the blockout files but not the registry lines, so B's Nanoframe spec still failed. `src/shared/Defs/Blockouts/Registry.luau` only).
 - Ready to merge: `fc1383d0` (playtest-3 units, S-209: 21 hand-made blockouts registered and BAR-style meshes with wrecks, all `review` in the manifest, so the game draws the blockouts until approved; contains `20b58b9b` and the m-sim-2 `94380002` / `8a111001` merges. `assets/models/`, `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json`, tools, docs).
 - Ready to merge: `3f450b39` (the user approved the 21 playtest-3 meshes with their wrecks (`a54a4bdd`): they draw in game; the Mammoth's muzzles renamed `muzzle1` / `muzzle2` as attachments in its blockout and mesh, for sim-A's `2ef1569d` (merged here, so integrate after it); manifest, docs).
+- Ready to merge: `a1030665` (S-213 id swap, for sim-A's `748ddf25` (merged here): `chs_korgoth` becomes `chs_juggernaut`, the old tank `chs_juggernaut` becomes `chs_goliath` in the Blockouts and Meshes registries, asset folders, manifest and MeshMaterials; asset IDs unchanged. `test_client` fails 3 tests until B adds the icon and piece-script swap, so integrate through B's tip).

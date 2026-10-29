@@ -85,7 +85,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a T2 tank beats a lone T1 tower (S-157, the user: a Spike took half a Juggernaut; S-179)", function()
-		for _, case in { { "chs_guard", "ord_paladin" }, { "ord_sentry_tower", "chs_juggernaut" }, { "chs_guard", "chs_juggernaut" }, { "chs_spike", "chs_juggernaut" } } do
+		for _, case in { { "chs_guard", "ord_paladin" }, { "ord_sentry_tower", "chs_goliath" }, { "chs_guard", "chs_goliath" }, { "chs_spike", "chs_goliath" } } do
 			local f = fight(1, case[1], case[2], 1)
 			print(`    {case[2]} vs {case[1]}: {describe(f)}`)
 			-- (S-179: T1 towers doubled; a T2 tank still wins, with less to spare)
@@ -99,7 +99,7 @@ return function(t: RunAll.Context)
 		local beamer = Spawn.unit(sim, "ord_beamer", 1, 0, 0)
 		local tanks = {}
 		for i, x in { -40, 40 } do
-			local tank = Spawn.unit(sim, "chs_juggernaut", 2, x, 150, math.pi)
+			local tank = Spawn.unit(sim, "chs_goliath", 2, x, 150, math.pi)
 			World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 			World.setMoveState(w, tank, World.MoveState.HOLD_POSITION)
 			World.setHealth(w, tank, 1e6)
@@ -174,7 +174,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tower = Spawn.unit(sim, "ord_sentry_tower", 1, 0, 0)
-		local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, 120, math.pi)
+		local tank = Spawn.unit(sim, "chs_goliath", 2, 0, 120, math.pi)
 		World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 		World.setMoveState(w, tank, World.MoveState.HOLD_POSITION)
 		World.setHealth(w, tank, 1e6)
@@ -208,7 +208,7 @@ return function(t: RunAll.Context)
 			local w = sim.world
 			local gun = Spawn.unit(sim, id, 1, 0, 0)
 			local range = sim.defs.weapons[sim.defs.units[id].weapons[1].def].range
-			local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, range - 40, math.pi)
+			local tank = Spawn.unit(sim, "chs_goliath", 2, 0, range - 40, math.pi)
 			World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 			World.setMoveState(w, tank, World.MoveState.HOLD_POSITION)
 			World.setHealth(w, tank, 1e6)

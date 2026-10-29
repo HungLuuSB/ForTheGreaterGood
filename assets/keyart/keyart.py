@@ -1707,7 +1707,7 @@ def tank_explode(layer, uid, x, y, heading, seed, amp=0.9, size=3.4):
 
 
 LAND_ORDER = ["ord_paladin", "ord_lancer", "ord_lancer", "ord_warden", "ord_verdict", "ord_herald"]
-LAND_CHAOS = ["chs_minotaur", "chs_ravager", "chs_ravager", "chs_juggernaut", "chs_hellmouth", "chs_jackal"]
+LAND_CHAOS = ["chs_minotaur", "chs_ravager", "chs_ravager", "chs_goliath", "chs_hellmouth", "chs_jackal"]
 
 
 def daylight(scene, elevation, azimuth, sky_strength=0.3, sun_energy=4.5):

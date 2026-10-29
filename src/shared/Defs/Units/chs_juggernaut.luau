@@ -1,24 +1,36 @@
 --!strict
+-- Juggernaut: Chaos's T3 experimental assault bot (S-209, the user's
+-- playtest 3 H40; BAR's corkorg). Its id was chs_korgoth until it took
+-- chs_juggernaut from the T2 tank, now chs_goliath and retired (S-213). The strongest Chaos land
+-- unit: an immensely powerful single-target heat ray, two double-barrelled
+-- shotgun cannons, long-range vertical-launch missiles. Short-ranged for its
+-- size: focused long-range fire takes it down. Walks under water.
+-- Self-destructed, it goes up almost like a nuke.
 local Templates = require("../Templates")
 
--- Placeholder (guide 13.2 "Main battle tank", T2); stats to balance in M8.
-return Templates.extend(Templates.TankT1, {
+return Templates.extend(Templates.Unit, {
 	id = "chs_juggernaut",
-	name = "Goliath", -- (S-203) was Juggernaut: the name went to the Chaos T3 bot (chs_korgoth, the user's H40)
-	description = "Main battle tank. Heavy armor, heavy gun. Raises its arms to fire.",
+	name = "Juggernaut",
+	description = "T3 experimental assault bot. A heat ray, two shotgun cannons and long-range missiles; walks under water. Self-destructed, nearly a nuke.",
 	faction = "chaos",
-	tier = 2,
+	tier = 3,
 	domain = "ground",
+	moveClass = "AMPHIB_WALKER", -- walks on the seafloor (H40, S-210)
+	footprint = 3,
 	categories = { "GROUND", "ARMORED" },
 	armorClass = "ARMORED",
-	moveClass = "HEAVY_TRACKED",
-	footprint = 2, -- size shows tech level (S-104)
-	cost = { supply = 280, power = 2800, buildTime = 7000 },
-	health = 3000, -- tier rebalance (S-157, the user): was 2500; faction pass (S-62)
-	movement = { maxSpeed = 15, accel = 10, brake = 20, turnRate = 80 },
-	sensors = { sight = 210 },
-	weapons = { { def = "chs_juggernaut_cannon", turretPiece = "turret", muzzle = "muzzle" } },
-	pieces = { "base", "turret", "armL", "armR", "muzzle" }, -- the arms raise to fire (guide 14.4, S-20)
-	icon = "tank_heavy",
+	cost = { supply = 3600, power = 52000, buildTime = 120000 },
+	health = 36000,
+	movement = { maxSpeed = 7.2, accel = 5, brake = 12, turnRate = 100 },
+	sensors = { sight = 240 },
+	weapons = {
+		{ def = "chs_juggernaut_heatray", turretPiece = "torso", pitchPiece = "ray_arm", muzzle = "ray_muzzle" },
+		{ def = "chs_juggernaut_shotgun", turretPiece = "torso", pitchPiece = "gunL", muzzle = "gunL_muzzle1", muzzles = { "gunL_muzzle1", "gunL_muzzle2" } },
+		{ def = "chs_juggernaut_shotgun", turretPiece = "torso", pitchPiece = "gunR", muzzle = "gunR_muzzle1", muzzles = { "gunR_muzzle1", "gunR_muzzle2" } },
+		{ def = "chs_juggernaut_missiles", turretPiece = "torso", muzzle = "missile_pod" },
+	},
+	pieces = { "base", "thighL", "shinL", "footL", "thighR", "shinR", "footR", "torso", "ray_arm", "ray_muzzle", "gunL", "gunL_muzzle1", "gunL_muzzle2", "gunR", "gunR_muzzle1", "gunR_muzzle2", "missile_pod" },
+	selfDestructBlast = { damage = 12000, aoe = 220, edge = 0.25 }, -- almost a nuke (H40)
+	icon = "experimental",
 	model = "chs_juggernaut",
 })

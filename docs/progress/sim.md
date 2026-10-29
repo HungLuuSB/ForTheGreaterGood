@@ -6,6 +6,15 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 ## Summary (latest: playtest feedback 3, 2026-10-29, branch `m-sim-2`)
 
+**After the round (2026-10-29, the user):**
+- **S-213: the T3 bot is `chs_juggernaut`.** `chs_korgoth` became `chs_juggernaut` (its weapons `chs_juggernaut_heatray` / `_shotgun` / `_missiles`). The T2 tank that had the id is now `chs_goliath` ("Goliath", weapon `chs_goliath_cannon`), retired and on no build list.
+- **Shorter T3 range:**
+  - Titan: beam 420 → 320, missiles 520 → 390.
+  - Juggernaut: heat ray 300 → 230, missiles 700 → 520.
+  - The close guns are unchanged.
+- The client, the models and the Codex key on unit ids, so B, C and D swap their keys too. It lands as one merge, through the last of their branches.
+- `tools/studio/sync_all.cmd`: a double-click start for the three places' live syncs.
+
 **The playtest 3 round:** the user's FTGG-FEEDBACK-3, items H1–H43. Owners and status are in `docs/progress/playtest-2026-10-28.md`.
 - Decisions: S-197..S-212.
 - Protocol 40 → 41.
@@ -542,6 +551,12 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - Side effects through shared weapons: Lancer vs Mire 1.36 / 1.57 → 2.39 / 2.04 (the Mire got the Chaos cannon's spread); Tideguard vs Ravager 0.27 → 0.53; Paladin vs Ravager 0.37 → 0.84 / 1.11.
 - **AI tuning numbers** (S-7, S-17): placeholders, as agreed.
 
+## For the 2D stream (E)
+
+Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E reads this section; the sim stream doesn't edit E's files.
+
+1. **S-213 (2026-10-29):** the Chaos T3 bot's id is now `chs_juggernaut` (was `chs_korgoth`); the retired T2 tank is `chs_goliath` (was `chs_juggernaut`). Its unit picture and icon sheet entry should follow the new ids. The T3 walker still borrows the T2 tank's tile in B's `IconAtlas`; it needs its own art, with the Titan's. B swaps the `IconAtlas` keys.
+
 ## For the client stream
 
 - **2026-10-24, for B:**
@@ -780,6 +795,7 @@ Four Claude sessions work in parallel, one per stream. Each has its own git work
 | B, client | `client-B` | `FTGG-client` | `m-client-foundation` | `src/client`, `src/roblox`, icons, `docs/contracts/` | `docs/progress/client.md`, `docs/decisions/client.md` (C-) | the match place "For The Greater Good" (placeId 89435699207932) |
 | C, models | `models-C` | `FTGG-models` | `m-models` | `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/`, `assets/models/`, `place/` | `docs/progress/models.md`, `docs/decisions/models.md` (M-) | "FTGG Art", Rojo port 34873 |
 | D, lobby | `lobby-D` | `FTGG-lobby` | `m-lobby` | `src/lobby/**`, `lobby.project.json`, `docs/contracts/match.md` | `docs/progress/lobby.md`, `docs/decisions/lobby.md` (L-) | "FTGG Lobby", Rojo port 34874 |
+| E, 2D assets (since 2026-10-29) | session E | `FTGG-2d` | `2d` | the icon sheet source, unit pictures, command and resource icons, thumbnails (B keeps `tools/icons/render.mjs`, `IconAtlas` and the UI wiring) | its own progress file | none |
 
 - **Integration (A only):**
   - In `../FTGG-integration`, per `CLAUDE.md`.

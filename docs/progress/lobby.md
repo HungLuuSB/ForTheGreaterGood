@@ -2,6 +2,13 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-29: S-213's Chaos id swap in the Codex)
+
+- Merged sim-A's `748ddf25` (S-213): the T3 bot `chs_korgoth` is now `chs_juggernaut` (Juggernaut); the T2 tank that was `chs_juggernaut` is `chs_goliath` (Goliath), retired and on no build list.
+- **Codex:** the Experimental assault walker row is Titan / `chs_juggernaut`. The Main battle tank row has no Chaos unit until you pick one, so the Paladin shows without a counterpart and Goliath is hidden.
+- `Codex.spec` follows: the counterpart pair is Titan ↔ Juggernaut, the Paladin has none, and Goliath is hidden. Lobby specs 67 / 67; the build check passes. In Studio the synced Codex gives the same result.
+- Ready to merge: `e4aef962` (Codex for S-213; includes the merge of sim-A's `748ddf25`, so it lands with or after it; touches only `src/lobby`)
+
 ## Summary (2026-10-29: your answers on the review list, L-27)
 
 - **Cheats:** as built. **Spectators:** join and watch only; the match already does that (C-79).
