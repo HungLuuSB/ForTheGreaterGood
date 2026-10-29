@@ -510,7 +510,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 
 Since 2026-10-29 (the user), session E owns the 2D assets: the icon sheet's source, unit pictures, command and resource icons, thumbnails. client-B keeps `render.mjs`, `IconAtlas` and the UI wiring. The lobby reads the icons only through B's `IconAtlas` (the Units list, read-only), so an icon request goes to E here, and its wiring to B.
 
-- **D-E1. The Codex's stat icons (E-7 done on branch `2d`, ccd4bde1; E-8 next).** E-7: supply (crate), power (bolt), time (hourglass), wind, tidal, at 16 / 24 / 32 px, white for tinting, with an atlas and `keys.json`. They're not uploaded yet: the upload waits for your approval. E-8 keeps StatBars' `GLYPH` keys (health, dps, range, speed, sight, radar, build) and adds armor, value and airSight. Once they're uploaded, the lobby swaps `StatBars`' text glyphs for these images (the glyph stays as a fallback). It needs B-9 below first.
+- **D-E1. The Codex's stat icons (E-7 done on branch `2d`, ccd4bde1; E-8 done, 41fa001e: health, dps, range, speed, sight, radar, build, plus armor, value, airSight; E-9 next, the weapon-card keys).** E-7: supply (crate), power (bolt), time (hourglass), wind, tidal, at 16 / 24 / 32 px, white for tinting, with an atlas and `keys.json`. They're not uploaded yet: the upload waits for your approval. E-8 keeps StatBars' `GLYPH` keys (health, dps, range, speed, sight, radar, build) and adds armor, value and airSight. Once they're uploaded, the lobby swaps `StatBars`' text glyphs for these images (the glyph stays as a fallback). It needs B-9 below first.
 
 ## Plan and status
 
