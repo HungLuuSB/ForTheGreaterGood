@@ -38,7 +38,7 @@ return function(t: RunAll.Context)
 			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:64" })
 			local w = sim.world
 			local tank = Spawn.unit(sim, "ord_paladin", 1, 0, 0)
-			local near = Spawn.unit(sim, "chs_juggernaut", 2, 20, 0)
+			local near = Spawn.unit(sim, "chs_goliath", 2, 20, 0)
 			World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 			World.setFireState(w, near, World.FireState.HOLD_FIRE)
 			local before = w.health[near]
@@ -109,7 +109,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "map:supreme_strait" })
 		local w = sim.world
 		local com = Spawn.unit(sim, "ord_sovereign", 1, -1076, 52, math.pi / 2)
-		local tank = Spawn.unit(sim, "chs_juggernaut", 2, -1020, 52)
+		local tank = Spawn.unit(sim, "chs_goliath", 2, -1020, 52)
 		World.setFireState(w, com, World.FireState.HOLD_FIRE)
 		World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 		local acc = sim.eco.accounts[1]
@@ -169,12 +169,12 @@ return function(t: RunAll.Context)
 		local com = Spawn.unit(sim, "ord_sovereign", 1, -100, 0, math.pi / 2)
 		local tanks = {}
 		for i = 1, 3 do
-			local id = Spawn.unit(sim, "chs_juggernaut", 2, -100 + i * 18, (i - 2) * 3) -- inside the bolt's 80 studs (S-203)
+			local id = Spawn.unit(sim, "chs_goliath", 2, -100 + i * 18, (i - 2) * 3) -- inside the bolt's 80 studs (S-203)
 			World.setFireState(w, id, World.FireState.HOLD_FIRE)
 			table.insert(tanks, id)
 		end
 		local enemyCom = Spawn.unit(sim, "chs_warlord", 2, -30, 0)
-		local beside = Spawn.unit(sim, "chs_juggernaut", 2, -50, 60) -- off the bolt's path
+		local beside = Spawn.unit(sim, "chs_goliath", 2, -50, 60) -- off the bolt's path
 		World.setFireState(w, enemyCom, World.FireState.HOLD_FIRE)
 		World.setFireState(w, beside, World.FireState.HOLD_FIRE)
 		World.setFireState(w, com, World.FireState.HOLD_FIRE) -- (the laser holds; the D-Gun is ordered)
@@ -200,7 +200,7 @@ return function(t: RunAll.Context)
 		local lost = comHealth - w.health[enemyCom]
 		-- (half from the bolt; the tanks' death blasts beside it add some)
 		t.expect(lost >= sim.defs.units.chs_warlord.health * Combat.BOLT_COMMANDER - 1, `the Commander lost half its health or more ({lost})`)
-		t.expect(w.slot[beside] ~= nil and w.health[beside] == sim.defs.units.chs_juggernaut.health, "a tank off its path is untouched")
+		t.expect(w.slot[beside] ~= nil and w.health[beside] == sim.defs.units.chs_goliath.health, "a tank off its path is untouched")
 		t.equal(sim.orders.dgunX[com], nil, "one bolt per order")
 	end)
 end

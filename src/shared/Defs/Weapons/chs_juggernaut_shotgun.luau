@@ -1,7 +1,7 @@
 --!strict
 -- Juggernaut's double-barrelled shotgun cannons (S-209, H40): a wide spray of slugs up close.
 return {
-	id = "chs_korgoth_shotgun",
+	id = "chs_juggernaut_shotgun",
 	type = "BALLISTIC",
 	range = 150,
 	reload = 1.6,

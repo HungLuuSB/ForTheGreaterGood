@@ -197,7 +197,7 @@ return function(t: RunAll.Context)
 		Spawn.unit(sim, "ord_beacon", 1, -400, 0)
 		local tribunal = Spawn.unit(sim, "ord_tribunal", 1, -400, 300)
 		local near = Spawn.unit(sim, "chs_ravager", 2, -100, 250) -- inside the Tribunal's 700
-		local far = Spawn.unit(sim, "chs_juggernaut", 2, 400, -350) -- radar only
+		local far = Spawn.unit(sim, "chs_goliath", 2, 400, -350) -- radar only
 		w.fireState[near] = World.FireState.HOLD_FIRE
 		w.fireState[far] = World.FireState.HOLD_FIRE
 		NetOut.setCamera(sim, 1, 0, 0, 0, 0) -- everything else strategic

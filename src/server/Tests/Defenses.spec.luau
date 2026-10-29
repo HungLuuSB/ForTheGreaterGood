@@ -48,7 +48,7 @@ local function range(seed: number, tower: string, dist: number, spotter: boolean
 	local sim = Sim.new({ defs = BeamDefs.load(), seed = seed, players = PLAYERS, mapId = "flat:128" })
 	local w = sim.world
 	local t = Spawn.unit(sim, tower, 1, 0, 0)
-	local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, dist, math.pi)
+	local tank = Spawn.unit(sim, "chs_goliath", 2, 0, dist, math.pi)
 	World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 	World.setMoveState(w, tank, World.MoveState.HOLD_POSITION)
 	World.setHealth(w, tank, 1e6)
@@ -107,7 +107,7 @@ return function(t: RunAll.Context)
 			for i = 1, pinpointers do
 				Spawn.unit(sim, "ord_witness", 1, -200 + i * 30, -460)
 			end
-			local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, 300, math.pi)
+			local tank = Spawn.unit(sim, "chs_goliath", 2, 0, 300, math.pi)
 			World.setFireState(w, tank, World.FireState.HOLD_FIRE)
 			World.setMoveState(w, tank, World.MoveState.HOLD_POSITION)
 			World.setHealth(w, tank, 1e6)
@@ -140,7 +140,7 @@ return function(t: RunAll.Context)
 		-- the tower picks the Juggernaut (armored first); a worker stands on
 		-- the line just in front of it, an Order tank further back
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
-		local far = Spawn.unit(sim, "chs_juggernaut", 2, 0, 300, math.pi)
+		local far = Spawn.unit(sim, "chs_goliath", 2, 0, 300, math.pi)
 		local near = Spawn.unit(sim, "chs_scrapper", 2, 0, 240, math.pi)
 		local ally = Spawn.unit(sim, "ord_lancer", 1, 0, 100, 0)
 		local scout = Spawn.unit(sim, "ord_herald", 1, 40, 250, 0)
@@ -276,7 +276,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ defs = BeamDefs.load(), seed = 9, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
-		local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, 250, math.pi)
+		local tank = Spawn.unit(sim, "chs_goliath", 2, 0, 250, math.pi)
 		local other = Spawn.unit(sim, "chs_ravager", 2, 300, -100, math.pi) -- visible, nearer: the tower's own pick
 		local spotter = Spawn.unit(sim, "ord_herald", 1, 40, 150, 0)
 		Spawn.unit(sim, "ord_herald", 1, 300, -200, 0) -- sees the Ravager

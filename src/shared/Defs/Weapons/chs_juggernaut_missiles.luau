@@ -1,9 +1,9 @@
 --!strict
 -- Juggernaut's long-range vertical-launch missiles (S-209, H40).
 return {
-	id = "chs_korgoth_missiles",
+	id = "chs_juggernaut_missiles",
 	type = "HOMING",
-	range = 700,
+	range = 520, -- shorter T3 range (S-213, the user): was 700
 	reload = 8,
 	salvo = { count = 4, delay = 0.3 },
 	projectileSpeed = 300,
