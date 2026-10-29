@@ -2,7 +2,13 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
-## Summary (2026-10-29: playtest 3's units in the Codex)
+## Summary (2026-10-29: all three key arts in; handover check)
+
+- `m-lobby` holds main `d06f303b` (playtest 3 and the handover summaries). Nothing of the lobby is waiting to merge.
+- **Key art 1 "Commander's stand"** is now in the manifest, approved, next to "Volley" and "Converging". In Studio, the loading screen takes each in turn, and Quick play showed all three in three runs (`debug_out/screens/lobby_loading_commanders_stand.jpg`). No script errors. C-1 is done.
+- **Playtest 3's units:** every one of the 21 has an approved mesh in the manifest (models-C, 2026-10-29), so the Units showroom draws their models now, not blockout boxes (as in the match, from the manifest's status). No lobby change was needed.
+- Lobby specs 67 / 67.
+- **Open:** only the user's items under "Needs my review" (cheats, forced start, spectators, key art order, lobby max players).
 
 - Merged main `de7be455` (playtest 3, S-203..S-210: the 21 new unit defs, the Goliath rename, the Generators retired). It includes `3ddbc46c`, which added these units' roles ahead of the defs.
 - The Codex spec now checks every one of the 21 against the real defs: the `AWAITED` exemption is gone. The Generators' role is removed, and the spec checks that both Generators stay hidden.
@@ -473,7 +479,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 
 ### For models-C (models session)
 
-- **C-1. Key art with parallax layers (2026-10-23, the user):** 3 key arts per `docs/contracts/key-art.md`:
+- **C-1. Done (2026-10-29): all three arts approved and listed; each shows on the lobby's loading screen.** Key art with parallax layers (2026-10-23, the user): 3 key arts per `docs/contracts/key-art.md`:
   1. "Commander's stand", a dusk land battle with ships on the far sea: **approved by you, rendered (m-models 37cfb7a), waiting for your upload approval**;
   2. a SAM site under air attack, at dusk (your style guide);
   3. a beach assault.
@@ -491,7 +497,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 | Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio |
 | Background battle scene with parallax (L-12) | done, checked in Studio with the real meshes |
 | Contract v1 and requests | done |
-| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only). Art 2 "Volley" on main and checked in Studio through Quick play: smooth (60 fps), the battle paused behind it (`lobby_loading_volley.jpg`) |
+| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only). All three arts checked in Studio through Quick play (`lobby_loading_commanders_stand.jpg`, `lobby_loading_volley.jpg`, `lobby_loading_converging.jpg`): smooth (60 fps), the battle paused behind them |
 | Match place from one setting (L-14) | done, checked in Studio (stand-in) |
 | Rooms across lobby servers (L-15) | done, checked in Studio with the stand-in peer server; live test in the playtest plan |
 | Lobby settings on the profile (L-16) | done, checked in Studio (stand-in store) |
