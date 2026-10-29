@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Builder, {
 	id = "ord_mason",
 	name = "Mason",
-	description = "Ground worker. Builds T1 economy and the Vehicle Plant; reclaims wrecks.",
+	description = "Ground worker. Builds the T1 economy and the Vehicle Plant, and reclaims wrecks.",
 	faction = "order",
 	cost = { supply = 135, power = 1650, buildTime = 3300 },
 	health = 750, -- faction pass (S-62)

@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "ord_sanctuary",
 	name = "Sanctuary",
-	description = "Carrier. Mobile airfield with rearm pads, radar and point defense.",
+	description = "Carrier. A mobile airfield with rearm pads, radar and point defence.",
 	faction = "order",
 	tier = 2,
 	domain = "naval",

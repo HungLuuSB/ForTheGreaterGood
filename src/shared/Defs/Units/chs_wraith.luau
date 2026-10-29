@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "chs_wraith",
 	name = "Wraith",
-	description = "Decoy drone. Shows as a strategic bomber on enemy radar until seen or tracked; draws SAM fire.",
+	description = "Decoy drone. Shows as a strategic bomber on enemy radar until seen or tracked.",
 	faction = "chaos",
 	tier = 2,
 	domain = "air",

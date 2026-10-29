@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "ord_sentry",
 	name = "Envoy", -- (S-157, the user: "Sentry" went to the laser tower)
-	description = "Corvette. Fast and cheap; light gun.",
+	description = "Corvette. A small fast ship with a light gun.",
 	faction = "order",
 	tier = 1,
 	domain = "naval",

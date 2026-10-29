@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_vehplant",
 	name = "Vehicle Foundry",
-	description = "T1 factory: ground worker and T1 ground units.",
+	description = "T1 vehicle factory. Builds the ground worker and T1 ground units.",
 	faction = "chaos",
 	cost = { supply = 580, power = 1100, buildTime = 6800 },
 	health = 3300,

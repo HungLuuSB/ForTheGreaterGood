@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "ord_halo",
 	name = "Halo",
-	description = "Mobile IR SAM. Short-range anti-air, ignores jamming.",
+	description = "Mobile IR SAM. Short-range heat-seeking missiles against aircraft; jamming can't stop them.",
 	faction = "order",
 	tier = 1,
 	domain = "ground",

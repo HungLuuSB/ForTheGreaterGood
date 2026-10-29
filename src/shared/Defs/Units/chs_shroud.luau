@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "chs_shroud",
 	name = "Shroud",
-	description = "Mobile jammer. Hides friendly units from enemy radar over a wide radius.",
+	description = "Mobile jammer. Hides nearby friendly units from enemy radar.",
 	faction = "chaos",
 	tier = 2,
 	domain = "ground",

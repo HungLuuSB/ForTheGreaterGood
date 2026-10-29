@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_bulwark",
 	name = "Bulwark",
-	description = "Beam tower. A precise, heavy beam for 500 power, and a green laser for what gets close. Off: retracts into its armor.",
+	description = "Beam tower. A heavy beam for 500 power a shot and a green laser for close targets; retracts into its armor when off.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE" },

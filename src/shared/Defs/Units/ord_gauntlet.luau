@@ -6,7 +6,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_gauntlet",
 	name = "Gauntlet",
-	description = "Lobbing gun. High-arc shells over walls, medium range; slow to land.",
+	description = "Lobbing gun. Fires shells on a high arc, over walls.",
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE" },

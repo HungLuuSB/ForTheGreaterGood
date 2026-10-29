@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_carapace",
 	name = "Carapace",
-	description = "Small shield dome. Turns enemy shells back while charged; recharging draws power.",
+	description = "Shield dome. Turns enemy shells back while charged; recharging draws power.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE" },

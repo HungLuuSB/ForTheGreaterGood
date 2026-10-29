@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Builder, {
 	id = "ord_artisan",
 	name = "Artisan",
-	description = "Bot constructor. Less build power and health than the Mason, but climbs anywhere.",
+	description = "Bot constructor. Builds and reclaims, and climbs steep slopes.",
 	faction = "order",
 	domain = "ground",
 	moveClass = "WALKER", -- bots climb steep slopes and turn on the spot

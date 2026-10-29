@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_advaccumulator",
 	name = "Great Accumulator",
-	description = "Hardened power storage. +60,000 power storage.",
+	description = "Advanced energy storage. Stores 60,000 power.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE" },

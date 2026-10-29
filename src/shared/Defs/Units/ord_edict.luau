@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_edict",
 	name = "Edict",
-	description = "Artillery emplacement. Very long range; can shell radar contacts.",
+	description = "Artillery emplacement. Very long-range guns that can shell radar contacts.",
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE", "ARTILLERY" },

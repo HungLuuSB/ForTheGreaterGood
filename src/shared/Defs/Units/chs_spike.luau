@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_spike",
 	name = "Spike",
-	description = "Gun turret.",
+	description = "Gun turret. A light cannon emplacement.",
 	faction = "chaos",
 	retired = true, -- (S-157) Guard (chs_guard) took its place as the T1 basic tower; kept for old replays and scenes
 	tier = 1,

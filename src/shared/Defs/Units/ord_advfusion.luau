@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_advfusion",
 	name = "Advanced Fusion Reactor",
-	description = "Advanced fusion reactor. +3,000 power, +9,000 power storage. Goes up like a small nuke.",
+	description = "Advanced fusion reactor. Makes 3,000 power and stores 9,000; explodes like a small nuke.",
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE" },

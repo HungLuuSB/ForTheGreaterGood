@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_overwatch",
 	name = "Overwatch",
-	description = "Twin laser tower. Two green barrels firing in turn: fast, hard-hitting, long range.",
+	description = "Twin laser tower. Two green laser barrels firing in turn.",
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE" },

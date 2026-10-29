@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "chs_goliath",
 	name = "Goliath", -- (S-203) was Juggernaut: the name went to the Chaos T3 bot (chs_korgoth, the user's H40)
-	description = "Main battle tank. Heavy armor, heavy gun. Raises its arms to fire.",
+	description = "Main battle tank. A heavy gun on armored arms that raise to fire.",
 	faction = "chaos",
 	retired = true, -- (S-213, the user)
 	tier = 2,

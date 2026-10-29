@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "chs_chimera",
 	name = "Chimera",
-	description = "Mobile anti-nuke. One interceptor; shoots down enemy nukes near it while stopped. No other weapon.",
+	description = "Mobile anti-nuke. Carries one interceptor and shoots down enemy nukes near it while stopped.",
 	faction = "chaos",
 	tier = 2,
 	domain = "ground",
