@@ -2254,3 +2254,20 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Ends aren't clamped to the map: aircraft fire from up to 512 studs past the edge (S-189).
 - `fx.skipped.stale` counts the dropped streaks (`Invoke("fx")`).
 - Spec `StaleShot.spec`. Studio, Coastline: three Ravagers against the Commander, 8 FIREs, none stale. The edge-of-vision case itself can't be staged on demand.
+
+### C-251 — Nano particles; the Commander faces its work; specs for S-203 (2026-10-29)
+
+- **Nano spray, the user:** "VFX for nanospray instead of random floating lightbeam? Can we spray nano particles?"
+  - `Render/NanoStream`: one ParticleEmitter on an attachment of our own, aimed from the nozzle at the target each frame. It shoots small glowing sparkles (the engine's sparkles texture), white-hot leaving the nozzle and the stream's colour on the way.
+  - Speed and lifetime follow the distance: a trip of about 0.55 s at 16–90 studs/s, so they arrive and fade there. A 6° spread fans the stream.
+  - Rate 90/s, size 0.35 → 0.8 → 0.45 studs, brightness 3. The first try (48/s, half the size) read as a few specks.
+  - Builders (`BuildSpray`) and factories' `nano1..N` (`FactoryFrames`) both use it, in place of their Beams. Builder sprays are team-coloured; reclaim is violet and flows back to the builder.
+  - Studio, Coastline: the Commander's stream onto a vehicle plant's frame, and the plant's two nozzles showering a Lancer on its pad.
+- **The Commander faces its work, the user:** "the commander does not look at it while building".
+  - The `Work` hook (G4) turned the torso to the work. But the Commander's guns are mounted on that torso, and each change of their idle aim (the server's turret settling) called `AimWeapon`, which squared it to the front within a second. Studio sample: −24° then 0 while the spray went on. `StopMoving` did the same after a walk to the site.
+  - Now, while a unit works, idle weapons leave their turret alone; a weapon in action still takes over. A change of moving re-issues the work turn. Studio: the torso turned to −168° (the plant behind its left shoulder) and held for the whole build, with the stream flowing from it.
+- **Server start:** the lobby's map list built every map in one go. Under load, Studio's script timeout cut it, and the server never came up. A `task.wait()` between maps. It still timed out inside one map's generation while sim-A's suites ran, so that's CPU starvation.
+- **Specs after S-203 (sim-A's m-sim-2 8a111001):**
+  - The generator is retired (H22), so `Placement.spec` and `Bars.spec` place solars.
+  - The D-Gun's range is 80 (H5), so `Dgun.spec` puts the tanks 18, 36 and 54 studs out, aims at 75, and expects a flight from the weapon's range and speed.
+  - All pass on main and on m-sim-2.
