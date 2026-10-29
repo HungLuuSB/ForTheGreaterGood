@@ -1,12 +1,13 @@
 --!strict
 -- Every unit def's icon facts as JSON on stdout, for tools/icons/render.mjs
--- (C-74): id, def index, icon family, domain, tier, name.
+-- (C-74): id, def index, icon family, domain, tier, name; move class and
+-- whether it is armed, for the sheet's placeholder rule (C-258).
 
 local serde = require("@lune/serde")
 local Defs = require("@shared/Defs/Defs")
 
 local out = {}
 for index, def in Defs.load().unitByIndex do
-	table.insert(out, { id = def.id, index = index, family = def.icon, domain = def.domain, tier = def.tier or 1, name = def.name })
+	table.insert(out, { id = def.id, index = index, family = def.icon, domain = def.domain, tier = def.tier or 1, name = def.name, moveClass = def.moveClass, armed = def.weapons ~= nil and #def.weapons > 0 })
 end
 print(serde.encode("json", out))

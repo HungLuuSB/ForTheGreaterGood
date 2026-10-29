@@ -6,8 +6,13 @@
 // iconSVG(it, "#ffffff", ...): white with a dark edge, so ImageColor3 tints
 // it per team. Tiles: one per (catalogue entry, frame, tier) and one contact
 // (dashed frame, no symbol or dots) per frame; ghosts are the unit tile at
-// 45% opacity (ImageTransparency), as in the HTML. Every unit def must map
-// to exactly one entry: its id in the entry's `defs` (draft 4).
+// 45% opacity (ImageTransparency), as in the HTML. Every unit def maps to
+// at most one entry: its id in the entry's `defs` (draft 4). Placeholder
+// entries (`ph: 1`, no defs; draft 7, C-258) get a tile each, written as
+// IconAtlas.placeholders by frame; a def in no entry is a warning, and the
+// client draws its type's placeholder by the sheet's "Placeholder rule".
+// A sheet whose pixels changed since its upload (assets.json `sha256`) loses
+// its asset id, so a stale image is never shipped.
 //
 // Run from the project root: node tools/icons/render.mjs
 // Writes assets/icons/ftgg-icons.png (then ftgg-icons-2.png ... once a sheet
@@ -16,6 +21,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { Resvg } from "@resvg/resvg-js";
 
 const HTML = "docs/art/icons/ftgg-unit-icons.html";
@@ -42,21 +48,34 @@ const items = CAT.flatMap((sec) => sec.items);
 const defsOf = (it) => String(it.defs || "").split(/\s+/).filter(Boolean);
 
 const problems = []; // fatal
+const fallbacks = []; // { def, frame }: defs drawn with a placeholder
 const mapping = []; // { def, item }
 const itemOf = new Map();
 for (const it of items) {
-	if (!it.defs) problems.push(`catalogue "${it.n}" has no defs`);
+	if (!it.defs && !it.ph) problems.push(`catalogue "${it.n}" has no defs`);
 	for (const id of defsOf(it)) {
 		if (itemOf.has(id)) problems.push(`${id} is listed under "${itemOf.get(id).n}" and "${it.n}"`);
 		else itemOf.set(id, it);
 	}
+}
+// The sheet's "Placeholder rule": the frame whose placeholder a def with no
+// entry gets (Core/Icons.placeholderFrame does the same in the client).
+function placeholderFrame(def) {
+	const mc = def.moveClass;
+	if (def.domain === "structure") return def.armed ? "defense" : "struct";
+	if (def.domain === "air") return mc === "HELI" ? "vtol" : "air";
+	if (def.domain === "naval") return mc === "SUB" ? "sub" : "ship";
+	if (mc === "WALKER" || mc === "AMPHIB_WALKER") return "walker";
+	if (mc === "AMPHIB") return "amphib";
+	if (mc === "HOVER") return "hover";
+	return "vehicle";
 }
 const known = new Set(defs.map((d) => d.id));
 for (const [id, it] of itemOf) if (!known.has(id)) problems.push(`catalogue "${it.n}" lists ${id}, which is no unit def`);
 for (const def of defs) {
 	const item = itemOf.get(def.id);
 	if (!item) {
-		problems.push(`${def.id} (${def.name}) is in no catalogue item`);
+		fallbacks.push({ def, frame: placeholderFrame(def) });
 		continue;
 	}
 	if (item.t !== def.tier) console.log(`note: ${def.id}: catalogue says T${item.t}, the def T${def.tier} (the catalogue's is drawn)`);
@@ -83,6 +102,14 @@ for (const m of mapping) {
 	// one tile per catalogue item: slug(name)_t<tier>
 	const unit = tile(`${slug(m.item.n)}_t${m.item.t}`, m.item, "unit");
 	byDef[m.def.id] = { tile: unit, scale: scaleOf(m.item), frame: m.item.f, name: m.item.n };
+}
+// placeholders: one per frame, used or not (a def added later falls back to one)
+const placeholders = {};
+for (const it of items) if (it.ph) placeholders[it.f] = tile(`${slug(it.n)}_t${it.t}`, it, "unit");
+for (const fb of fallbacks) if (!placeholders[fb.frame]) problems.push(`${fb.def.id} is in no catalogue item, and the sheet has no placeholder for its frame ${fb.frame}`);
+if (problems.length > 0) {
+	for (const p of problems) console.error(`PROBLEM: ${p}`);
+	process.exit(1);
 }
 const contacts = {};
 for (const f of Object.keys(FR)) contacts[f] = tile(`contact_${f}`, { f }, "contact");
@@ -130,9 +157,11 @@ const render = (svg) => new Resvg(svg, { fitTo: { mode: "original" } }).render()
 mkdirSync("assets/icons", { recursive: true });
 const onSheet = (n) => tiles.filter((t) => t.sheet === n);
 const whites = [];
+const hashes = [];
 for (let n = 1; n <= SHEETS; n++) {
 	const white = render(sheetSvg(onSheet(n).map((t) => place(iconSVG(t.it, "#ffffff", TW, t.mode), t.x, t.y, TW))));
 	writeFileSync(sheetFile(n), white.asPng());
+	hashes.push(createHash("sha256").update(white.pixels).digest("hex"));
 	whites.push(white);
 }
 
@@ -172,8 +201,13 @@ for (const [name, bg] of Object.entries({ grass: "#456f38", sand: "#bba878" })) 
 // ---- IconAtlas.luau ----
 const assets = existsSync("tools/icons/assets.json") ? JSON.parse(readFileSync("tools/icons/assets.json", "utf8")) : {};
 const asset = (id) => (id ? `rbxassetid://${String(id).replace(/\D/g, "")}` : "");
-// assets.json: { images: [sheet 1's id, sheet 2's, ...] } (the old { image } is sheet 1)
-const ids = assets.images || (assets.image ? [assets.image] : []);
+// assets.json: { images: [sheet 1's id, sheet 2's, ...], sha256: [each sheet's
+// pixel hash when it was uploaded] } (the old { image } is sheet 1). An id
+// whose sheet changed since, or that has no hash, is dropped: upload that
+// sheet again, then record its id and the hash this run prints.
+const uploaded = assets.images || (assets.image ? [assets.image] : []);
+const ids = uploaded.map((id, i) => (assets.sha256 && assets.sha256[i] === hashes[i] ? id : ""));
+const stale = uploaded.map((id, i) => (id && !ids[i] ? i + 1 : 0)).filter(Boolean);
 const q = (s) => JSON.stringify(s);
 const L = [];
 L.push("--!strict");
@@ -207,6 +241,12 @@ for (const d of defs) {
 }
 L.push("} :: { [string]: Entry }");
 L.push("");
+L.push("-- a unit def in no catalogue item draws its type's placeholder, by frame (the");
+L.push("-- sheet's \"Placeholder rule\", Core/Icons.placeholderFrame)");
+L.push("IconAtlas.placeholders = {");
+for (const [f, k] of Object.entries(placeholders)) L.push(`\t${f} = ${q(k)},`);
+L.push("} :: { [string]: string }");
+L.push("");
 L.push("-- radar / sonar contacts: the dashed frame with no symbol or dots, by frame");
 L.push("IconAtlas.contacts = {");
 for (const [f, k] of Object.entries(contacts)) L.push(`\t${f} = ${q(k)},`);
@@ -217,7 +257,9 @@ writeFileSync("src/client/UI/IconAtlas.luau", L.join("\n") + "\n");
 
 // ---- report ----
 console.log(`${defs.length} unit defs → ${mapping.length} mapped from ${items.length} catalogue items' defs`);
-console.log(`${tiles.length} tiles of ${TW} x ${TH} px on ${SHEETS} sheet(s) of ${PER_SHEET} (${COLS} x ${ROWS}): ${tiles.filter((t) => t.mode === "unit").length} unit, ${tiles.filter((t) => t.mode === "contact").length} contact`);
+console.log(`${tiles.length} tiles of ${TW} x ${TH} px on ${SHEETS} sheet(s) of ${PER_SHEET} (${COLS} x ${ROWS}): ${tiles.filter((t) => t.mode === "unit").length} unit (${Object.keys(placeholders).length} placeholders), ${tiles.filter((t) => t.mode === "contact").length} contact`);
+for (const fb of fallbacks) console.log(`WARNING: ${fb.def.id} (${fb.def.name}) is in no catalogue item: drawn with placeholder_${fb.frame}`);
+for (const n of stale) console.log(`WARNING: sheet ${n} changed since its upload: its asset id is dropped until it's uploaded again`);
 console.log(`white tinted vs the HTML in ${teamColor}: worst pixel ${worst.toFixed(1)} / 255, mean ${(sum / (SHEETS * SHEET * SHEET)).toFixed(3)} (dark edges get tinted)`);
-for (let n = 1; n <= SHEETS; n++) console.log(`sheet ${n}: ${sheetFile(n)}, ${onSheet(n).length} tiles, asset id ${ids[n - 1] || "(none: upload it, then add it to tools/icons/assets.json)"}`);
-for (const it of items) if (!mapping.some((m) => m.item === it)) console.log(`note: catalogue "${it.n}" is used by no def`);
+for (let n = 1; n <= SHEETS; n++) console.log(`sheet ${n}: ${sheetFile(n)}, ${onSheet(n).length} tiles, sha256 ${hashes[n - 1]}, asset id ${ids[n - 1] || "(none: upload it, then add its id and this sha256 to tools/icons/assets.json)"}`);
+for (const it of items) if (!it.ph && !mapping.some((m) => m.item === it)) console.log(`note: catalogue "${it.n}" is used by no def`);
