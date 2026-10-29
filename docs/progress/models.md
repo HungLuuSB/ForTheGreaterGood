@@ -4,6 +4,69 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
+## Summary (playtest-3 and handover, 2026-10-29)
+
+**Start here.** This section is enough to carry on the models stream. The sections below are history.
+
+**Where it stands:** `m-models` is at `main` `d8611b86`. Every piece of models work is integrated; the last merges were `34cbaf59` and `82bedb2a`. Checks there: `lune run test` 615/615, `lune run test_client` 335/335, `lune run build` (879 scripts, 2457 requires resolve). Nothing is in review: all 203 defs have an approved mesh and an approved wreck (status table below), and all nine named maps have an approved baked ground (`GROUND_APPROVED` in `assets/models/tools/manifest.py`).
+
+**Done since the 10-24 queue:**
+- **Grounds:** the user approved the six older named-map grounds on 2026-10-29: Ridgeline, Coastline, Twin Lakes, Crossroads, Normandy and The Canyon (rows 1 and 1b, `6bff49ab`).
+- **Playtest-3 units (row P3, sim-A's S-209 defs):** 21 units, each with:
+  - a hand-made blockout registered in `Blockouts/Registry.luau`;
+  - a BAR-style mesh and a wreck, uploaded, rigged in FTGG Art and recorded in `roblox_assets.json`.
+  The user approved them all with their wrecks on 2026-10-29 (the `2026-10-29: the playtest-3 units (S-209)` blocks in `APPROVED` / `APPROVED_WRECKS`).
+  - The gantries `ord_gantry` / `chs_gantry` have a `buildpad` and the spray emitters `nano1..6` / `nano1..8`. These follow B's Nanoframe spec, which passes on `main`.
+  - `ord_titan` / `chs_korgoth` use the bot leg kit (`Blockouts/Bots.luau`, `tools/bots.py`) at ×2.1 / ×2.15. Their muzzles are attachments, and `missile_pod` is a piece.
+  - The Mammoth's muzzles are `muzzle1` / `muzzle2`, attachments on `barrels` (sim-A's def `2ef1569d`). The rename went into the blockout, `build.py` and both `rig.json` files; nothing was re-uploaded.
+- **Rig notes to client-B:** wired in B's C-252 (`5d938f5e`):
+  - Mammoth: the four-leg gait, diagonal pairs FL+BR / FR+BL.
+  - Titan and Korgoth: the biped walk, hips 9.66 / 9.68.
+  - `missile_pod`: fires from its joint.
+  - Nano turrets: the NanoTurret piece script (`turret` yaws, `nano` pitches, positive x = up).
+  - Glow: the `pulse` glow breathes 0.55–1.45× at 0.5 Hz.
+
+**Open / waiting:**
+- **B's Studio check of the C-252 rigs.** B said they would report if a pivot axis or a sign is off. How to fix each kind of problem:
+  - A wrong pivot in the mesh: fix `assets/models/<id>/build.py`, rebuild, re-upload, re-rig and record (pipeline below).
+  - Only an Attachment or an animation entry wrong: `tools/anchors.py` / `tools/animate.py` and the rig, with no re-upload.
+  - A wrong blockout: `Blockouts/<id>.luau`.
+  Then commit, add a Ready line, and tell sim-A and B.
+- Nothing else is queued, and no request to this stream is open.
+- The temporary `src/shared/_VfxProto.luau` (F27 iteration) was deleted on 2026-10-29. It was identical to the committed `place/Vfx.model.json`. To change the death explosion, edit `assets/fx/vfx/build_vfx.py`, which writes that file.
+
+**How to continue:**
+- **Ownership:**
+  - This stream owns `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/`, `assets/models/`, `assets/fx/`, the map bakes (`assets/maps/<name>/export`, `assets/maps/tools/`), `place/MeshMaterials.model.json`, `place/Vfx.model.json`, this file and `docs/decisions/models.md`. Studio: the "FTGG Art" place only.
+  - Never edit `src/client` (client-B), the unit defs or `src/server` (sim-A), or the lobby (lobby-D). Ask them under "Requests".
+- **Routine:**
+  - Commit each finished piece, add `Ready to merge: <sha>` to the merge queue below, and message sim-A. Sim-A integrates and pushes; this stream never pushes.
+  - After an integration, merge `main` into `m-models` and run the three checks.
+  - Approvals come only from the user, never relayed by another session.
+  - A new unit ID goes to B (icon), C (this stream: blockout and mesh) and D (Codex).
+- **Mesh pipeline, per unit** (Blender 5.2, `"/c/Program Files/Blender Foundation/Blender 5.2/blender.exe"`):
+  1. Write `assets/models/<id>/build.py` (`unit.run` with its pieces, footprint, budget and previews), after the blockout and the BAR reference.
+  2. Build headless: `blender -b --factory-startup --python-exit-code 1 -P assets/models/<id>/build.py`. Run it again with `FTGG_WRECK=1` for `export_wreck/`.
+  3. Upload: `python assets/models/tools/opencloud.py assets/models/<id>/export <id> 11846985184`, and `.../export_wreck <id>_wreck`. The key comes from `ROBLOX_API_KEY`; never print it.
+  4. Rig in FTGG Art: `python assets/models/tools/rig_batch.py <id>...`. Its docstring has the Rojo copy step, the `execute_luau` snippet and the poll.
+  5. Record: save the batch result to a file and run `python assets/models/tools/record_assets.py <file> "<note>"`.
+  6. Regenerate: `python assets/models/tools/manifest.py`, `lune run mesh_materials`, `lune run assets/models/tools/status_table.luau`.
+  7. Add the unit to `APPROVED` / `APPROVED_WRECKS` only when the user approves it.
+  - Review sheets: `blender -b --factory-startup -P assets/models/tools/contact_sheet.py -- <out.png> <cols> <png>...` over the `preview_bar_*.png` renders.
+  - Fresh texture maps often fail to load for a few minutes after upload. Recheck with `AssetService:CreateEditableImageAsync` before re-uploading.
+- **Ground bakes:**
+  1. `lune run export_ground map:<name> assets/maps/<name>` (compare with the committed `ground.json`).
+  2. `blender -b --factory-startup --python-exit-code 1 -P assets/maps/tools/ground.py -- <name>`.
+  3. Upload: `python assets/maps/tools/upload.py <name> 11846985184`.
+  4. Load the parts in FTGG Art to get the mesh IDs into `assets/maps/<name>/roblox_assets.json`, then run `manifest.py`. **Unchecked:** `upload.py`'s docstring names a `rig_ground.luau` that isn't in the repo. The nine grounds were recorded from a Studio-side tool in an earlier session, so look in FTGG Art's `ServerStorage.ModelsTools` before the next bake and record the route here.
+  5. Add the map to `GROUND_APPROVED` only when the user approves it.
+  The contract is `docs/contracts/map-ground.md`, the decision M-35.
+- **Studio:**
+  - Live sync to FTGG Art on port 34873: `lune run serve`, then `rojo serve serve.project.json`.
+  - `src/shared/_ModelsBatch.luau` is the temporary batch input. It is in `.git/info/exclude`; never commit it.
+  - Review rigs live in `ReplicatedStorage.ModelReview` and the review scenes in `Workspace.*Review`.
+  - Don't change place settings. Save the place before closing Studio.
+
 ## Summary (third review queue, 2026-10-24)
 
 Your reviews:
@@ -25,7 +88,7 @@ Queue:
 | 3 | **T2 ship hull redesign** (not a rescale): every hull is now one lofted shell from `tools/ships.py`: a pointed raked bow, flared sides, a sheer line rising to the bow, a rounded bilge, a tapered stern with a transom, a dark boot-top and a sheer strake, with running strips that follow the sheer. Destroyers lean and fast (`ord_crusader`: forward deckhouse, tall bridge with wraparound glass and wings, tower mast, raked funnel, hangar and helideck; `chs_corsair`: narrower, sharper bow, raised bridge with an amber slit, two raked funnels, tall lattice mast); cruisers bulkier with stacked decks (`ord_dominion`: armored belt, three-level superstructure, superfiring triples fore and aft on barbettes; `chs_kraken`: reactive slabs, raised bridge, two funnels); carriers keep the flat deck over a real hull and a hangar deck, with a taller three-level island (`ord_sanctuary`, `chs_leviathan`). Guns raised on barbettes. Same pieces and muzzles, new pivots. The T2 workers and jammer (`ord_harbormaster`, `chs_reaver`, `chs_siren`), the T1 corvettes (`ord_sentry` Envoy, `chs_barracuda`) and the naval workers (`ord_tidewright`, `chs_wrecker`) had the same barge hull and get the lofted one too (back to review). Wrecks rebuilt for all | **approved** (2026-10-26) | `ships_v2_55_close.jpg`, `ships_v2_55_220.jpg` |
 | 4 | **Shepherd / Griffin** (mobile point defence, S-149), hand-made blockouts and meshes with wrecks: `ord_shepherd` (armored 6x6, sloped cab with wraparound glass, team skirts; the static `launcher` a vertical-launch module with a 2 x 4 grid of cell hatches and ready lights; a compact search panel on a mast, client-turned `radar`) / `chs_griffin` (lighter open 6x6, amber cab slit; the static `launcher` an open welded rack of twelve upright tubes with amber mouths, the deep stock; a lattice radar mast with a beacon). Both launch straight up from `muzzle` | **approved** (2026-10-26) | `pd_trucks_55_close.jpg`, `pd_trucks_55_220.jpg` |
 | 5 | **T2 structures at the S-104 sizes** (new builds, not rescales; 26 meshes, Order sand with cyan, Chaos gunmetal with amber, panel lines, vents, cable runs, hazard edges and base skirts). Factories fp 6 (48 studs): `ord_advvehplant` (two-bay armored hall with a moving gantry and a radar) / `chs_advvehplant` (open lattice gantry yard with two trolleys and a saw-tooth shed), `ord_advairfield` (two armored hangars, runway, control tower, radome) / `chs_advairfield` (patched apron, open hangar, lattice radar mast, fuel tanks), `ord_advshipyard` (portal gantry over a slip) / `chs_advshipyard` (three lattice cranes on piers). Economy: `ord_advextractor` / `chs_advextractor` (fp 3), `ord_fusion` (glowing core in a portal frame) / `chs_fusion` (banded reactor in a cage) (fp 4). Sensors and jammers: `ord_beacon` / `chs_allseer`, `ord_witness` / `chs_augur`, `ord_choir` / `chs_deepear`, `ord_veilspire` / `chs_blackout`, `ord_tribunal` / `chs_seekerspire`. Defences fp 3: `ord_edict` / `chs_cataclysm`, `ord_rampart` / `chs_breaker`, `ord_bastion` / `chs_maw`. Same pieces, anchors and anims as the blockouts (factory nanos on their gantries / trolleys). Triangles 2,492–7,866; glow 1.6–5.5%. Their 26 wrecks are in the manifest too (row 6) | **approved** (2026-10-26) | `t2struct_a_55_close.jpg`, `t2struct_a_55_220.jpg` (factories, extractors, fusion), `t2struct_b_55_close_right.jpg` and `t2struct_b_55_close_left_before.jpg` (sensors, jammers, defences; the left one was taken before `ord_tribunal`'s fix, `t2struct_tribunal_fixed.jpg` shows it now); Studio, Order front row, Chaos behind, a Lancer front left. Blender previews: `t2struct_sheet_a/b/c.png`. Four uploads had a texture map Roblox wouldn't load (`chs_fusion`, `ord_advairfield`, `ord_advextractor`, `chs_cataclysm`) and `ord_tribunal` drew white: all five re-uploaded; every T2 structure's maps now load in FTGG Art |
-| 6 | **Wrecks for every mesh that had none** (56 this round: the 26 T2 structures above and 30 more units: ord_silence, ord_barrier, chs_condor, chs_leech, ord_tidewatch, ord_zenith, chs_cyclops, chs_forgemaster, chs_gorgon, chs_hydra, chs_juggernaut, chs_minotaur, chs_shroud, chs_stalker, ord_arbiter, ord_architect, ord_judgement, ord_paladin, ord_seraph, ord_veil, ord_warden, chs_carapace, chs_hailstorm, chs_inferno, ord_lumen, ord_phalanx, ord_radiance, chs_ragnarok, ord_citadel, ord_reckoning). Each is its live mesh broken and burnt in Blender (`FTGG_WRECK=1`), rigged in FTGG Art with the clamp scale from its measured `base_bar`; every wreck's texture maps load there. Every meshed unit now has a wreck | review | Blender previews `assets/models/<id>/export_wreck/preview_bar_*.png` (local, gitignored); Studio: `ReplicatedStorage.ModelReview.<id>_wreck_bar` in FTGG Art |
+| 6 | **Wrecks for every mesh that had none** (56 this round: the 26 T2 structures above and 30 more units: ord_silence, ord_barrier, chs_condor, chs_leech, ord_tidewatch, ord_zenith, chs_cyclops, chs_forgemaster, chs_gorgon, chs_hydra, chs_juggernaut, chs_minotaur, chs_shroud, chs_stalker, ord_arbiter, ord_architect, ord_judgement, ord_paladin, ord_seraph, ord_veil, ord_warden, chs_carapace, chs_hailstorm, chs_inferno, ord_lumen, ord_phalanx, ord_radiance, chs_ragnarok, ord_citadel, ord_reckoning). Each is its live mesh broken and burnt in Blender (`FTGG_WRECK=1`), rigged in FTGG Art with the clamp scale from its measured `base_bar`; every wreck's texture maps load there. Every meshed unit now has a wreck | **approved** (`145e7b32`) | Blender previews `assets/models/<id>/export_wreck/preview_bar_*.png` (local, gitignored); Studio: `ReplicatedStorage.ModelReview.<id>_wreck_bar` in FTGG Art |
 | F18 | **Beta feedback F18: towers that stand high and proud** (blockouts first; meshes after your look review; footprints, pieces and build pads unchanged). T2 defences, fp 3, now real towers with the turret ring at 15–18 studs and tops at 23–25 (six Lancers; the old meshes were 6–15): `ord_bastion` (sloped plinth, slim square keep with four buttresses, team band, lit slits; broad wedge turret, twin guns, sensor mast) / `chs_maw` (scrap drum tower: fat lower drum with spikes, raking struts up a tall narrow drum; squat turret with the fat glowing maw), `ord_rampart` (sea-wall bunker, tall gun tower with four corner bartizans and a parapet; twin very long guns, rangefinder) / `chs_breaker` (lattice gun tower: four splayed legs, two tiers of X bracing, railed deck at 17.6; one very long gun, missile box), `ord_edict` (stepped three-tier fortress; casemate with a long gun raised 20°) / `chs_cataclysm` (tall round pit tower with struts and a spiked rim; fat mortar raised 40°). T1 laser towers, fp 2, your approved shapes kept but taller and heavier (wider skirts, taller columns, bigger heads and emitters with focus coils): `ord_sentry_tower` 16 → 20 studs / `chs_guard` 14 → 18, `ord_overwatch` 15 → 19 / `chs_geryon` (the green three-barrel drum) 16 → 20, `ord_beamer` 16 → 19 / `chs_twin_guard` 15 → 18. In game: all these towers' meshes are `review` (the S-157 laser tower meshes too), so the F18 blockouts draw in game since the merge; the rebuilt meshes follow for your review. **Meshes (approved blockouts, 2026-10-26):** each T2 defence keeps its approved turret, lifted onto a new tower body (`unit.lifted`), Edict's long gun raised 20° and Cataclysm's mortar 40° (`unit.pitched`); the six T1 laser / beam towers are their approved meshes scaled ×1.20–1.28 to their blockouts' heights; all with wrecks, every texture map loading in FTGG Art (`chs_advextractor` re-uploaded once) | **approved** (2026-10-26) | meshes: `f18_mesh_55_close_t2def.jpg`, `f18_mesh_55_close_lasers_extractors.jpg`, `f18_mesh_55_220.jpg` (Studio `Workspace.F18MeshReview`); blockouts: `f18_t2def_55_close.jpg`, `f18_t2def_55_220.jpg`, `f18_t2def_side.jpg` (new blockouts left, Order front / Chaos behind; old meshes and the T1 Sentry / Guard on the right; a Lancer front left), `f18_laser_55_close.jpg`, `f18_laser_side.jpg` (new Sentry / Guard, Overwatch / Geryon and Beamer / Twin Guard blockouts, Order front / Chaos behind, a new Bastion / Maw in the middle, the old meshes on the right). Studio: `Workspace.F18Review`, `Workspace.F18LaserReview` |
 | S-181 | **New units from the playtest (sim-A's S-181), blockouts**, approved and registered (S-181 is in `main` at `7c933c5c`; the game draws them now). Bot factories with build pads and nano emitters: `ord_botlab` (armored hall, portal gantry over a lit pad, 3 emitters) / `chs_botlab` "Bot Pit" (round scrap-walled pit open at the front, two crane masts whose hooks spray), `ord_advbotlab` (the same grown to fp 5: heavy gantry, 4 emitters, radar) / `chs_advbotlab` (bigger spiked pit, tower crane over it, lamp masts, furnace stacks). T1 bots, fp 1, on two legs (the Commander walker legs, rig.md 10, without hip yokes: client pieces `thighL` / `shinL` / `footL` and R, swing X, from the new `Blockouts/Bots.luau`; the Skitter's four `thighFL`… / `shinFL`…): `ord_artisan` (constructor, emitter arm) / `chs_tinker` (hunched, crane boom with a claw), `ord_lazarus` (medic: glass dome, team cross, repair arm) / `chs_graverobber` (scavenger: scrap hopper, claw arm), `ord_glint` (slim runner, a laser on each arm) / `chs_skitter` (four-legged crawler, plasma snout), `ord_mace` (long plasma barrel over the shoulder) / `chs_thug` (stocky, spiked pads, cannon forearm), `ord_kestrel` (missile pod on the shoulder) / `chs_needle` (three bare tubes over the back). T2: `ord_fatboy` (fat body on thick legs, a huge plasma cannon turret on top) / `chs_tzar` (long heavy tank, fat plasma cannon), `chs_centurion` (12-stud armored knight, shield, red laser lance). Air: `ord_liche` (swept flying wing, four buried engines, bomb bay with one huge bomb) / `chs_dragon` (dragon-headed hull with horns and glowing eyes, spined back, fan wings, fire nozzle under the belly, green lasers at the wing tips; 32-stud span). **Meshes (2026-10-26):** all 19 with wrecks, every texture map loading in FTGG Art. Bots on the shared leg kit `tools/bots.py` (the blockouts' hip / knee / ankle points: armored Order legs with team stripes, bare Chaos struts with pistons and claw toes; `swing` X anims in `tools/animate.py`), labs with their build pads and emitters in `tools/anchors.py` | **approved** (2026-10-26) | meshes: `s181_mesh_bots.jpg`, `s181_mesh_air.jpg`, `s181_mesh_labs.jpg` (Studio `Workspace.S181MeshReview`); blockouts: `s181_units.jpg`, `s181_bots_close.jpg`, `s181_factories.jpg`, `s181_air.jpg` (Order front / Chaos behind; a Lancer and a Paladin for scale). Studio: `Workspace.S181Review` |
 | F6 | **Advanced extractors: the T1's size, an upgraded T1** (your call 2026-10-26: "T2 of the T1 extractor must be the same size, they should look like an upgrade version"; asked sim-A to make both defs footprint 2, the T1's 2 × 2 deposit patch, instead of S-184's 4). `ord_advextractor`: the T1's slab and octagonal armored housing with its team deck, plus a second armored tier with a lit band and radiator fins, a taller turning drill tower with two glowing bands and a four-armed crown, twin pumps, hoppers, corner lights (11 studs to the T1's 6). `chs_advextractor`: the T1's four-legged pyramid derrick, taller with two tiers of bracing, armored feet with spikes, a heavier head with a lamp, a thicker turning drill with four glowing bands, two engine drums instead of one, fuel tanks (15 studs to the T1's 8). **Meshes:** each built from its T1's mesh code with the upgrade added (Order: the second armored tier, radiator fins, a taller drill tower with three bands and a four-armed crown; Chaos: the derrick nearly twice as tall, five brace rings, armored spiked feet, a second engine drum, fuel tanks), with wrecks | **approved** (2026-10-26) | meshes in `f18_mesh_55_close_lasers_extractors.jpg` (right: each T1 then its T2); `f6_advextractor_55_close.jpg` (left the T1 mesh, right the new T2 blockout; Order front, Chaos behind, a Lancer). Studio: `Workspace.F6Review` |
@@ -50,7 +113,7 @@ Queue:
 Every unit def: its blockout, mesh and wreck status in the mesh manifest (`review` = drawn as the blockout in game until you approve it).
 
 <!-- status-table:begin -->
-182 defs: 179 hand-made blockouts; 182 meshes (182 approved, 0 in review); 182 wrecks (182 approved). Generated by `lune run assets/models/tools/status_table.luau`.
+203 defs: 200 hand-made blockouts; 203 meshes (203 approved, 0 in review); 203 wrecks (203 approved). Generated by `lune run assets/models/tools/status_table.luau`.
 
 | Def | Name | Tier | Domain | Blockout | Mesh | Wreck |
 |---|---|---|---|---|---|---|
@@ -93,6 +156,8 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `ord_sentry` | Envoy | 1 | naval | hand-made | approved | approved |
 | `ord_silence` | Silence | 1 | naval | hand-made | approved | approved |
 | `ord_tidewright` | Tidewright | 1 | naval | hand-made | approved | approved |
+| `chs_accumulator` | Accumulator | 1 | structure | hand-made | approved | approved |
+| `chs_advsolar` | Advanced Sun Trap | 1 | structure | hand-made | approved | approved |
 | `chs_airfield` | Aerodrome | 1 | structure | hand-made | approved | approved |
 | `chs_airpad` | Roost | 1 | structure | hand-made | approved | approved |
 | `chs_botlab` | Bot Pit | 1 | structure | hand-made | approved | approved |
@@ -105,7 +170,9 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `chs_geryon` | Geryon | 1 | structure | hand-made | approved | approved |
 | `chs_guard` | Guard | 1 | structure | hand-made | approved | approved |
 | `chs_listener` | Listener | 1 | structure | hand-made | approved | approved |
+| `chs_nano` | Construction Turret | 1 | structure | hand-made | approved | approved |
 | `chs_riptide` | Riptide | 1 | structure | hand-made | approved | approved |
+| `chs_seaextractor` | Sunken Excavator | 1 | structure | hand-made | approved | approved |
 | `chs_shipyard` | Drydock | 1 | structure | hand-made | approved | approved |
 | `chs_smog` | Smog | 1 | structure | hand-made | approved | approved |
 | `chs_solar` | Sun Trap | 1 | structure | hand-made | approved | approved |
@@ -116,12 +183,14 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `chs_twin_guard` | Twin Guard | 1 | structure | hand-made | approved | approved |
 | `chs_vehplant` | Vehicle Foundry | 1 | structure | hand-made | approved | approved |
 | `chs_windmill` | Wind Pylon | 1 | structure | hand-made | approved | approved |
+| `ord_advsolar` | Advanced Solar Collector | 1 | structure | hand-made | approved | approved |
 | `ord_airfield` | Airfield | 1 | structure | hand-made | approved | approved |
 | `ord_airpad` | Aerie | 1 | structure | hand-made | approved | approved |
 | `ord_barrier` | Barrier | 1 | structure | hand-made | approved | approved |
 | `ord_beamer` | Beamer | 1 | structure | hand-made | approved | approved |
 | `ord_botlab` | Bot Lab | 1 | structure | hand-made | approved | approved |
 | `ord_bulwark` | Bulwark | 1 | structure | hand-made | approved | approved |
+| `ord_capacitor` | Capacitor Bank | 1 | structure | hand-made | approved | approved |
 | `ord_converter` | Supply Converter | 1 | structure | hand-made | approved | approved |
 | `ord_curtain` | Curtain | 1 | structure | hand-made | approved | approved |
 | `ord_depot` | Depot | 1 | structure | hand-made | approved | approved |
@@ -130,7 +199,9 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `ord_gauntlet` | Gauntlet | 1 | structure | hand-made | approved | approved |
 | `ord_generator` | Generator | 1 | structure | hand-made | approved | approved |
 | `ord_moat` | Moat | 1 | structure | hand-made | approved | approved |
+| `ord_nano` | Construction Turret | 1 | structure | hand-made | approved | approved |
 | `ord_overwatch` | Overwatch | 1 | structure | hand-made | approved | approved |
+| `ord_seaextractor` | Offshore Extractor | 1 | structure | hand-made | approved | approved |
 | `ord_sentry_tower` | Sentry | 1 | structure | hand-made | approved | approved |
 | `ord_shipyard` | Shipyard | 1 | structure | hand-made | approved | approved |
 | `ord_solar` | Solar Array | 1 | structure | hand-made | approved | approved |
@@ -147,7 +218,8 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `chs_gorgon` | Gorgon | 2 | ground | hand-made | approved | approved |
 | `chs_griffin` | Griffin | 2 | ground | hand-made | approved | approved |
 | `chs_hydra` | Hydra | 2 | ground | hand-made | approved | approved |
-| `chs_juggernaut` | Juggernaut | 2 | ground | hand-made | approved | approved |
+| `chs_juggernaut` | Goliath | 2 | ground | hand-made | approved | approved |
+| `chs_mammoth` | Mammoth | 2 | ground | hand-made | approved | approved |
 | `chs_minotaur` | Minotaur | 2 | ground | hand-made | approved | approved |
 | `chs_mire` | Mire | 2 | ground | hand-made | approved | approved |
 | `chs_shroud` | Shroud | 2 | ground | hand-made | approved | approved |
@@ -186,9 +258,13 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `ord_dominion` | Dominion | 2 | naval | hand-made | approved | approved |
 | `ord_harbormaster` | Harbormaster | 2 | naval | hand-made | approved | approved |
 | `ord_sanctuary` | Sanctuary | 2 | naval | hand-made | approved | approved |
+| `chs_advaccumulator` | Great Accumulator | 2 | structure | hand-made | approved | approved |
 | `chs_advairfield` | Advanced Aerodrome | 2 | structure | hand-made | approved | approved |
 | `chs_advbotlab` | Advanced Bot Pit | 2 | structure | hand-made | approved | approved |
+| `chs_advconverter` | Great Smelter | 2 | structure | hand-made | approved | approved |
+| `chs_advdepot` | Great Hoard | 2 | structure | hand-made | approved | approved |
 | `chs_advextractor` | Deep Excavator | 2 | structure | hand-made | approved | approved |
+| `chs_advfusion` | Great Hellforge | 2 | structure | hand-made | approved | approved |
 | `chs_advshipyard` | Advanced Drydock | 2 | structure | hand-made | approved | approved |
 | `chs_advvehplant` | Advanced Foundry | 2 | structure | hand-made | approved | approved |
 | `chs_allseer` | All-Seer | 2 | structure | hand-made | approved | approved |
@@ -212,7 +288,11 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `chs_wyvern` | Wyvern | 2 | structure | hand-made | approved | approved |
 | `ord_advairfield` | Advanced Airfield | 2 | structure | hand-made | approved | approved |
 | `ord_advbotlab` | Advanced Bot Lab | 2 | structure | hand-made | approved | approved |
+| `ord_advcapacitor` | Grid Reservoir | 2 | structure | hand-made | approved | approved |
+| `ord_advconverter` | Advanced Supply Converter | 2 | structure | hand-made | approved | approved |
+| `ord_advdepot` | Supply Vault | 2 | structure | hand-made | approved | approved |
 | `ord_advextractor` | Advanced Extractor | 2 | structure | hand-made | approved | approved |
+| `ord_advfusion` | Advanced Fusion Reactor | 2 | structure | hand-made | approved | approved |
 | `ord_advshipyard` | Advanced Shipyard | 2 | structure | hand-made | approved | approved |
 | `ord_advvehplant` | Advanced Vehicle Plant | 2 | structure | hand-made | approved | approved |
 | `ord_aegis` | Aegis | 2 | structure | hand-made | approved | approved |
@@ -233,8 +313,12 @@ Every unit def: its blockout, mesh and wreck status in the mesh manifest (`revie
 | `ord_tribunal` | Tribunal | 2 | structure | hand-made | approved | approved |
 | `ord_veilspire` | Veilspire | 2 | structure | hand-made | approved | approved |
 | `ord_witness` | Witness | 2 | structure | hand-made | approved | approved |
+| `chs_korgoth` | Juggernaut | 3 | ground | hand-made | approved | approved |
+| `ord_titan` | Titan | 3 | ground | hand-made | approved | approved |
+| `chs_gantry` | Experimental Gantry | 3 | structure | hand-made | approved | approved |
 | `chs_ragnarok` | Ragnarok | 3 | structure | hand-made | approved | approved |
 | `ord_citadel` | Citadel | 3 | structure | hand-made | approved | approved |
+| `ord_gantry` | Experimental Gantry | 3 | structure | hand-made | approved | approved |
 | `ord_reckoning` | Reckoning | 3 | structure | hand-made | approved | approved |
 <!-- status-table:end -->
 
@@ -788,6 +872,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `145e7b32` (the user approved the 42 older wrecks: every wreck is approved; `ground.lakelands.step = 8` in the manifest for client-B's C-235; manifest, ground.py, docs).
 - Ready to merge: `d0383a51` (the last four meshes with wrecks: ord_pharos, chs_scylla, ord_empyrean, chs_rookery, `review`, so their blockouts draw until approved; every def now has a mesh; `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs).
 - Ready to merge: `2ab88c4d` (the user approved the last four meshes and wrecks: all 182 units draw their approved meshes; manifest, docs; includes the merge of `main` ae6356ad).
+- Ready to merge: `7f5e8ebe` (the playtest-3 and handover summary at the top of this file, for the move to another account; `assets/models/tools/rig_batch.py` and `contact_sheet.py` move in from the session scratchpad; status table refreshed (203 defs, all approved); `_VfxProto.luau` deleted, it was untracked and identical to `place/Vfx.model.json`. Docs and tools only, nothing in game changes).
 
 ## Requests
 
