@@ -56,6 +56,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, re-rendered unit pictures: C-269)
+
+- **Clearer unit pictures (C-269):** C's re-render (no fog, more glow and colour), repacked by E, is uploaded. Build tiles and the unit panel show it.
+- Ready to merge: `4bb5b829` (C-269; carries 2D-E's 2d up to ee9cfd2a. test_client 347 / 347, build passed. Studio, Coastline: the new sheets load in the build tiles and unit panel)
+
 ## Summary (2026-10-30, blast marks: C-268)
 
 - **Blast marks (C-268):** explosions leave models-C's soot mark with a glow that cools in 2 s, instead of a flat dark disc. C's templated explosions leave one too.
