@@ -121,7 +121,7 @@ local function show(r: Renderer, world: World.World, id: number)
 		looks = nil,
 	}
 	local d = r.drawn[id]
-	d.glows, d.heads = Glow.collect(model)
+	d.glows, d.heads = Glow.collect(model, def)
 	PieceAnim.add(r.anim, id, def, PieceScripts.forDef(def))
 end
 

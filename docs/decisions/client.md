@@ -2271,3 +2271,15 @@ The watchdog's WARN / INFO lines (S-140) stay on.
   - The generator is retired (H22), so `Placement.spec` and `Bars.spec` place solars.
   - The D-Gun's range is 80 (H5), so `Dgun.spec` puts the tanks 18, 36 and 54 studs out, aims at 75, and expects a flight from the weapon's range and speed.
   - All pass on main and on m-sim-2.
+
+### C-252 — Rigs for the playtest-3 units (models-C's notes) (2026-10-29)
+
+models-C's rig notes for the 21 units of S-209, approved by the user with their wrecks. The defs are still on m-sim-2 and the models on m-models, so these are keyed by def ID and checked with stand-in defs until both reach main.
+
+- **Mammoth (`chs_mammoth`):** four whole legs, `legFL` / `legFR` / `legBL` / `legBR`, hinged at the hip about X. `Bot.gait` gives it "trunks": diagonal pairs in phase (FL with BR, FR with BL), 22° × its swing scale, an elephant's walk. Hip 5.6, swing 0.6.
+- **Titan (`ord_titan`) and Juggernaut (`chs_korgoth`):** the bot leg kit ×2.1, so the plain Bot biped with hips 9.66 and 9.68 and swing 0.6. Their AMPHIB_WALKER walk is the same on land and on the seafloor (drawing them under water is H18/H19, waiting on sim-A).
+- **Missile pods:** a muzzle that is a piece, not an attachment (`missile_pod`, pivoted at the tube mouth), now gives its joint's position (`Part1.CFrame * C1`), so missiles start there.
+- **Mammoth guns:** `turret` / `barrels` and `muzzle1` / `muzzle2` already work through Default and the muzzle cycle (C-198).
+- **Construction turrets (`ord_nano` / `chs_nano`), `PieceScripts/NanoTurret`:** `Work` now also gets the work's distance. `turret` yaws to the work at 90°/s; `nano` pitches down to a point 3 studs up it from the lens (ord 10.4, chs 8 studs up; at most 60° down). Done, the head lifts level and the turret stays where it last looked. The spray already starts at `nano1`. The work key also buckets the distance (8 studs), so a new target at the same bearing re-aims the head.
+- **Pulse pieces:** rig.md's `pulse` (the advanced fusions' `core`, the advanced converters' `coil` / `crucible`, the advanced capacitor's and accumulator's `cells`) had no driver. Their glow parts (`GlowPiece`) now breathe 0.55–1.45 × their resting strength at 0.5 Hz, dimmed by a stall like the rest; none at the "low" glow level. The scale half of the pulse isn't done (welded MeshParts would have to be resized each frame).
+- **Already handled:** the sea extractors' `drill` (Ambient's powered turn) and the gantries' `buildpad` with `nano1..6` / `nano1..8` (FactoryFrames reads up to 8).

@@ -376,6 +376,13 @@ local function muzzleOf(id: number, slot: number): (number?, number?, number?)
 		local p = att.WorldPosition
 		return p.X, p.Y, p.Z
 	end
+	-- a muzzle that is a piece (the experimentals' `missile_pod`, models-C):
+	-- its joint, pivoted at the tube mouth
+	local joint = att and (if att:IsA("Motor6D") then att else att:FindFirstChildOfClass("Motor6D"))
+	if joint and joint:IsA("Motor6D") and joint.Part1 then
+		local p = (joint.Part1.CFrame * joint.C1).Position
+		return p.X, p.Y, p.Z
+	end
 	return nil, nil, nil
 end
 -- the pre-game (C-218, net.md 9b): spawn boxes and picks on the map; the

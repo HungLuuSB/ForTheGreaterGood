@@ -10,6 +10,10 @@
 --            pulse while producing (PULSE_LOW..PULSE_HIGH at PULSE_HZ; 1.5..3)
 --   weapon   muzzle rings, rails, seekers: flash to FLASH on each shot,
 --            back to resting over FLASH_SECONDS
+-- A `pulse` piece's glow (rig.md section 9: fusion cores, converter coils
+-- and crucibles, capacitor cells; models-C) breathes slowly about its
+-- resting strength (CORE_LOW..CORE_HIGH × rest at CORE_HZ), dimmed by the
+-- stall as its channel is.
 -- A unit still being built is dark (inert until complete, C-99).
 -- The graphics setting's level (C-106): "off" all dark; "low" the resting
 -- glow with the stall dimming (rare writes); "high" also the factory pulse
@@ -24,6 +28,8 @@ Glow.PULSE_HZ = 1
 Glow.FLASH = 6
 Glow.FLASH_SECONDS = 0.3
 Glow.EPSILON = 0.02 -- smaller changes aren't written
+Glow.CORE_LOW, Glow.CORE_HIGH = 0.55, 1.45 -- a pulse piece's breath, × its resting strength
+Glow.CORE_HZ = 0.5
 
 -- Team colors that clash with a faction's glow (docs/contracts/fx.md, C's
 -- check of the 8 lobby colors): there the unit's running and power glow
@@ -60,14 +66,24 @@ function Glow.pulse(now: number, phase: number): number
 	return Glow.PULSE_LOW + (Glow.PULSE_HIGH - Glow.PULSE_LOW) * w
 end
 
--- The strength of a glow part of `channel` resting at `rest`.
-function Glow.strength(channel: string, rest: number, c: Context): number
+-- A pulse piece's breath at `now`: CORE_LOW..CORE_HIGH, a smooth wave.
+function Glow.breath(now: number, phase: number): number
+	local w = 0.5 - 0.5 * math.cos(2 * math.pi * (Glow.CORE_HZ * now + phase))
+	return Glow.CORE_LOW + (Glow.CORE_HIGH - Glow.CORE_LOW) * w
+end
+
+-- The strength of a glow part of `channel` resting at `rest`; `pulsing`
+-- for a part on a `pulse` piece.
+function Glow.strength(channel: string, rest: number, c: Context, pulsing: boolean?): number
 	if not c.built or c.level == "off" then
 		return 0
 	end
 	local full = c.level ~= "low"
 	if c.retracted and (channel == "power" or channel == "weapon") then
 		return if channel == "power" then Glow.POWER_FLOOR else 0
+	end
+	if pulsing and full and channel ~= "weapon" then
+		rest *= Glow.breath(c.now, c.phase)
 	end
 	if channel == "power" then
 		local base = if c.producing and full then Glow.pulse(c.now, c.phase) else rest

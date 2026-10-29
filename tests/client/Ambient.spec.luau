@@ -9,6 +9,7 @@ local PieceMotion = require("../../src/client/Core/PieceMotion")
 local Default = require("../../src/client/Core/PieceScripts/Default")
 local Registry = require("../../src/client/Core/PieceScripts/Registry")
 local Bot = require("../../src/client/Core/PieceScripts/Bot")
+local NanoTurret = require("../../src/client/Core/PieceScripts/NanoTurret")
 local World = require("../../src/client/Core/World")
 local Defs = require("@shared/Defs/Defs")
 
@@ -182,5 +183,70 @@ return function(t: any)
 			t.expect(angle(s, 1, "fanL", 2) ~= 0 and angle(s, 1, "fanR", 2) ~= 0, "both fans turn")
 		end
 		t.expect(Bot.stride(defs.units.ord_fatboy) > Bot.stride(defs.units.ord_glint), "Fatboy's strides are slower than Glint's")
+	end)
+
+	-- the playtest-3 units (S-209), before their defs reach this branch: a
+	-- stand-in def with the real one's ID, pieces and speed
+	local function standIn(like: string, id: string, fields: { [string]: any }): any
+		local def = table.clone(defs.units[like])
+		def.id = id
+		for k, v in fields do
+			def[k] = v
+		end
+		return def
+	end
+
+	t.test("the Mammoth walks its four whole legs in diagonal pairs; the experimentals take long, slow strides (models-C)", function()
+		local MOVING = World.State.MOVING
+		local mammoth = standIn("chs_skitter", "chs_mammoth", {
+			pieces = { "base", "legFL", "legFR", "legBL", "legBR", "turret", "barrels", "muzzle1", "muzzle2" },
+			movement = { maxSpeed = 6, accel = 8, brake = 18, turnRate = 120 },
+		})
+		t.equal(Bot.gait(mammoth), "trunks")
+		t.equal(Registry.forDef(mammoth), Bot)
+		local world = World.new(defs)
+		world.me.team = 1
+		local u = unit(world, 1, "chs_skitter", { state = MOVING })
+		local s = PieceAnim.new(defs.weaponByIndex)
+		PieceAnim.add(s, 1, mammoth, Registry.forDef(mammoth))
+		run(s, world, 0.3)
+		local fl, br, fr, bl = angle(s, 1, "legFL", 1), angle(s, 1, "legBR", 1), angle(s, 1, "legFR", 1), angle(s, 1, "legBL", 1)
+		t.expect(math.abs(fl) > math.rad(1) and math.abs(fl - br) < 1e-6 and math.abs(fr - bl) < 1e-6 and math.abs(fl + fr) < 1e-6, `diagonal pairs ({fl}, {br}, {fr}, {bl})`)
+		t.equal(angle(s, 1, "thighFL", 1), 0, "not the Skitter's thighs")
+		u.state = 0
+		run(s, world, 1.5)
+		t.expect(math.abs(angle(s, 1, "legFL", 1)) < math.rad(0.5), "at rest when stopped")
+		for _, id in { "ord_titan", "chs_korgoth" } do
+			local def = standIn("chs_centurion", id, { movement = { maxSpeed = 10, accel = 8, brake = 18, turnRate = 60 } })
+			t.equal(Registry.forDef(def), Bot, `{id} walks as a bot`)
+			t.equal(Bot.gait(def), "biped")
+			t.expect(Bot.stride(def) >= Bot.stride(defs.units.chs_centurion), `{id}: strides at least as long as the Centurion's`)
+		end
+		t.expect(Bot.SCALE.ord_titan < 1 and Bot.HIP.chs_korgoth > 9, "heavy, high hips")
+	end)
+
+	t.test("a construction turret turns to its work and pitches its emitter down to it (models-C)", function()
+		local nano = standIn("ord_solar", "ord_nano", { pieces = { "base", "turret", "nano" }, weapons = {} })
+		t.equal(Registry.forDef(nano), NanoTurret)
+		local world = World.new(defs)
+		world.me.team = 1
+		unit(world, 1, "ord_solar")
+		local s = PieceAnim.new(defs.weaponByIndex)
+		PieceAnim.add(s, 1, nano, Registry.forDef(nano))
+		local work = { [1] = { 30, 0 } } -- 30 studs east: 90° off a hull facing +Z
+		for _ = 1, 120 do
+			PieceAnim.drive(s, world, {}, work)
+			PieceAnim.step(s, 1 / 60)
+		end
+		local yaw, pitch = math.deg(angle(s, 1, "turret", 2)), math.deg(angle(s, 1, "nano", 1))
+		t.expect(math.abs(math.abs(yaw) - 90) < 1, `the turret faces the work ({yaw}°)`)
+		t.expect(math.abs(pitch - NanoTurret.pitch(nano, 30)) < 0.5 and pitch < -5, `the emitter pitches down to it ({pitch}°)`)
+		t.expect(NanoTurret.pitch(nano, 5) < NanoTurret.pitch(nano, 100), "steeper close by")
+		for _ = 1, 120 do
+			PieceAnim.drive(s, world, {}, {})
+			PieceAnim.step(s, 1 / 60)
+		end
+		t.expect(math.abs(angle(s, 1, "nano", 1)) < math.rad(0.5), "done, the head lifts level")
+		t.expect(math.abs(math.deg(angle(s, 1, "turret", 2)) - yaw) < 0.5, "and the turret stays where it looked")
 	end)
 end
