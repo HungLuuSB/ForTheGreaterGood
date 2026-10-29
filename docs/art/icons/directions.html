@@ -73,7 +73,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <header>
     <div class="eyebrow">For The Greater Good · E-2 · strategic icons · round 2</div>
     <h1>Three icon directions</h1>
-    <p class="lede">The same 12 units drawn three ways. All three keep the grammar players learn: the frame is the unit type, the dots are the tech level, the symbol is the weapon or role. All three share one new set of symbols, built from solid shapes rather than thin lines so they survive at strategic zoom. Round 2 drops the cartoon look of round 1: straight cuts and sharp tips instead of rounded blobs, faceted ship and sub hulls, hairline edges with a soft shadow instead of thick black outlines, and square tier pips. The directions differ in how the frame and symbol are painted. Every icon is still one white image with a dark edge, tinted per team in Roblox.</p>
+    <p class="lede"><b>Picked: B, Line.</b> The Commanders now get their own icon: the head of their own model (Order's Sovereign, Chaos's Warlord) instead of a star in a walker circle. On radar they still show as a plain walker contact, so the icon never gives an enemy Commander away.</p>
+    <p class="lede">The same sample units drawn three ways. All three keep the grammar players learn: the frame is the unit type, the dots are the tech level, the symbol is the weapon or role. All three share one new set of symbols, built from solid shapes rather than thin lines so they survive at strategic zoom. Round 2 drops the cartoon look of round 1: straight cuts and sharp tips instead of rounded blobs, faceted ship and sub hulls, hairline edges with a soft shadow instead of thick black outlines, and square tier pips. The directions differ in how the frame and symbol are painted. Every icon is still one white image with a dark edge, tinted per team in Roblox.</p>
   </header>
 
   <div class="controls" role="group" aria-label="Team colours for the in-game fields">
@@ -128,6 +129,16 @@ const FRAMES = {
   defense: { pts: [[24, 2], [43, 8.5], [43, 23], [24, 45], [5, 23], [5, 8.5]], c: [24, 21.5], k: .9, label: "Defense" },
 };
 
+// Unique silhouettes (the Commanders): the icon's outline is the unit's own head, front view, from our models.
+// The catalogue item keeps its movement frame in `f` (walker), so radar contacts and the placeholder rule still see
+// a walker: an enemy Commander on radar doesn't give itself away. `sil` replaces the frame only on the unit icon.
+const SILS = {
+  // Sovereign (Order): a sensor head under a wide flat brow, one wide visor band, a centre ridge and two cheek vents, two antennas
+  cmdOrder: { pts: [[8, 7], [40, 7], [45.5, 14], [39.5, 14], [39.5, 35], [34, 41.5], [14, 41.5], [8.5, 35], [8.5, 14], [2.5, 14]], c: [0, 0], k: 1, label: "Commander (Order)" },
+  // Warlord (Chaos): a blocky helmet with a box on its side, two slanted eye slits, a slotted jaw, one antenna
+  cmdChaos: { pts: [[12, 5], [36, 5], [41, 10], [41, 15], [46.5, 15], [46.5, 27], [41, 27], [41, 31], [35, 40.5], [13, 40.5], [7, 31], [7, 10]], c: [0, 0], k: 1, label: "Commander (Chaos)" },
+};
+
 // polygon with each corner cut (mode "cut") or left sharp; r = corner size
 function polyPath(pts, mode, r) {
   const n = pts.length;
@@ -162,6 +173,8 @@ const SYMBOLS = {
   torpedo: (P) => P.fill("M-11.5 -3.6 H4.5 L11.5 0 L4.5 3.6 H-11.5 Z") + P.line("M-11.5 -7 V7", 2.6),
   fabVehicle: (P) => P.fill("M0 -12 L9 -3 L0 6 L-9 -3 Z") + P.fill("M-11 9 H11 V12 H-11 Z"),
   extractor: (P) => P.fill("M-9.5 -4 H9.5 L0 11.5 Z") + P.fill("M-2.2 -12 H2.2 V-4 H-2.2 Z") + P.hole("M-5.4 2.2 H5.4 L4.6 3.8 H-4.6 Z"),
+  headOrder: (P) => P.line("M33 6.5 V1", 1.8) + P.line("M15 6.5 V3", 1.8) + P.fill("M12 18.5 H36 V22.8 H12 Z") + P.fill("M22.6 27 H25.4 V37.5 H22.6 Z") + P.fill("M13 27 H16 V33 H13 Z") + P.fill("M32 27 H35 V33 H32 Z"),
+  headChaos: (P) => P.line("M16 4.5 V0.5", 1.8) + P.fill("M10.5 15 L22 19 V23 L10.5 19 Z") + P.fill("M37.5 15 L26 19 V23 L37.5 19 Z") + P.fill("M18 28 H20.4 V35.5 H18 Z") + P.fill("M22.8 28 H25.2 V35.5 H22.8 Z") + P.fill("M27.6 28 H30 V35.5 H27.6 Z") + P.fill("M42.5 18 H44.5 V24 H42.5 Z"),
   unknown: (P) => P.line("M-4.8 -5 V-8.5 H4.8 V-2.5 L0 0.5 V3", 3.6) + P.fill("M-2.1 7 H2.1 V11.2 H-2.1 Z"),
 };
 function star(x, y, r1, r2, n, rot = 0) { let d = ""; for (let i = 0; i < n * 2; i++) { const r = i % 2 ? r2 : r1, a = -Math.PI / 2 + rot + i * Math.PI / n; d += (i ? "L" : "M") + f2(x + r * Math.cos(a)) + " " + f2(y + r * Math.sin(a)) + " "; } return d + "Z"; }
@@ -235,14 +248,15 @@ function dots(n, W) {
 }
 // one icon: it = { f: frame, s: symbol, t: tier }, W = colour, size = width in px, mode = unit | contact | ghost
 function iconSVG(dir, it, W, size, mode = "unit") {
-  const fr = FRAMES[it.f], [cx, cy] = fr.c;
+  const fr = it.sil && mode !== "contact" ? SILS[it.sil] : FRAMES[it.f], [cx, cy] = fr.c;
   const sym = it.s && mode !== "contact" ? (P) => `<g transform="translate(${cx} ${cy}) scale(${fr.k})">${SYMBOLS[it.s](P)}</g>` : null;
   const body = dir.paint(fr, W, sym, mode) + (mode === "contact" ? "" : dots(it.t, W));
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round(size * 56 / 48)}" viewBox="0 0 48 56" role="img" aria-label="${it.n || fr.label}"><defs>${SHADOW_FILTER}</defs><g${mode === "ghost" ? ' opacity=".45"' : ""}>${body}</g></svg>`;
 }
 
 const SAMPLES = [
-  { n: "Commander", u: "Sovereign · Warlord", f: "walker", s: "command", t: 0, big: 1.35 },
+  { n: "Commander (Order)", u: "Sovereign", f: "walker", sil: "cmdOrder", s: "headOrder", t: 0, big: 1.35 },
+  { n: "Commander (Chaos)", u: "Warlord", f: "walker", sil: "cmdChaos", s: "headChaos", t: 0, big: 1.35 },
   { n: "Light Tank", u: "Lancer (T1 tank)", f: "vehicle", s: "cannon", t: 1 },
   { n: "Plasma Bot", u: "Mace (bot)", f: "walker", s: "plasma", t: 1 },
   { n: "Experimental Mech", u: "Titan (T3 mech)", f: "walker", s: "experimental", t: 3, big: 1.4 },
@@ -282,7 +296,7 @@ function battlefield(dir, colors, bg, Wd = 960, H = 340, base = 24) {
     const bx = left ? 70 : Wd - 70;
     at(by("Vehicle Plant"), bx, 70, c); at(by("Supply Extractor"), bx + dirx * 44, 40, c); at(by("Supply Extractor"), bx + dirx * 30, 130, c);
     at(by("IR SAM Site"), bx + dirx * 82, 110, c); at(by("IR SAM Site"), bx + dirx * 20, 190, c);
-    at(by("Commander"), bx + dirx * 110, 175, c);
+    at(by(left ? "Commander (Order)" : "Commander (Chaos)"), bx + dirx * 110, 175, c);
     at(by("Experimental Mech"), bx + dirx * 205, 150, c);
     for (let i = 0; i < 18; i++) at(ground[i % ground.length], (left ? 300 : 520) + rnd() * 140, 50 + rnd() * 180, c);
     for (let i = 0; i < 3; i++) at(by("Attack Helicopter"), (left ? 330 : 480) + rnd() * 150, 30 + rnd() * 70, c);
