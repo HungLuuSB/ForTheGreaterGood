@@ -117,8 +117,9 @@ def quad(name, corners, mat, uv=((0, 0), (1, 0), (1, 1), (0, 1))):
     return mesh_object(name, bm, mat)
 
 
-def haze_mix(N, L, color_socket, haze_rgb, near, far, most=0.85):
-    """Mixes a colour toward the haze with the distance from the camera."""
+def haze_over(N, L, shader, haze_rgb, near, far, most=0.85):
+    """Fades a surface into the haze with the distance from the camera, as
+    light (aerial perspective), so the sun can't push the far ground to white."""
     cam = N("ShaderNodeCameraData")
     rng = N("ShaderNodeMapRange")
     rng.interpolation_type = "SMOOTHSTEP"
@@ -126,12 +127,14 @@ def haze_mix(N, L, color_socket, haze_rgb, near, far, most=0.85):
     rng.inputs["From Max"].default_value = far
     rng.inputs["To Max"].default_value = most
     L(cam.outputs["View Distance"], rng.inputs["Value"])
-    mix = N("ShaderNodeMix")
-    mix.data_type = "RGBA"
+    glow = N("ShaderNodeEmission")
+    glow.inputs["Color"].default_value = rgb(haze_rgb)
+    glow.inputs["Strength"].default_value = 1.0
+    mix = N("ShaderNodeMixShader")
     L(rng.outputs["Result"], mix.inputs[0])
-    L(color_socket, mix.inputs[6])
-    mix.inputs[7].default_value = rgb(haze_rgb)
-    return mix.outputs[2]
+    L(shader, mix.inputs[1])
+    L(glow.outputs[0], mix.inputs[2])
+    return mix.outputs[0]
 
 
 def scaled_coords(N, L, r, space="Object"):
@@ -190,13 +193,13 @@ def ground_material(pal, r, near, far, scorch=False, most=0.85):
         L(color, smix.inputs[6])
         smix.inputs[7].default_value = rgb((26, 24, 23))
         color = smix.outputs[2]
-    L(haze_mix(N, L, color, pal["haze"], near, far, most), b.inputs["Base Color"])
+    L(color, b.inputs["Base Color"])
     b.inputs["Roughness"].default_value = 0.95
     bump = N("ShaderNodeBump")
     bump.inputs["Strength"].default_value = 0.35
     L(grit.outputs["Fac"], bump.inputs["Height"])
     L(bump.outputs["Normal"], b.inputs["Normal"])
-    L(b.outputs[0], out.inputs["Surface"])
+    L(haze_over(N, L, b.outputs[0], pal["haze"], near, far, most), out.inputs["Surface"])
     return m
 
 
@@ -258,9 +261,7 @@ def flat(name, c, rough=0.8, metal=0.0):
 def water_material(pal, r, near, far):
     m, N, L = new_mat("env_water")
     out, b = N("ShaderNodeOutputMaterial"), N("ShaderNodeBsdfPrincipled")
-    L(haze_mix(N, L, N("ShaderNodeRGB").outputs[0], pal["haze"], near, far), b.inputs["Base Color"])
-    rgb_node = [n for n in m.node_tree.nodes if n.bl_idname == "ShaderNodeRGB"][0]
-    rgb_node.outputs[0].default_value = rgb(pal["water"])
+    b.inputs["Base Color"].default_value = rgb(pal["water"])
     b.inputs["Roughness"].default_value = 0.06
     co = scaled_coords(N, L, r)
     waves = N("ShaderNodeTexNoise")
@@ -271,7 +272,7 @@ def water_material(pal, r, near, far):
     bump.inputs["Strength"].default_value = 0.22
     L(waves.outputs["Fac"], bump.inputs["Height"])
     L(bump.outputs["Normal"], b.inputs["Normal"])
-    L(b.outputs[0], out.inputs["Surface"])
+    L(haze_over(N, L, b.outputs[0], pal["haze"], near, far), out.inputs["Surface"])
     return m
 
 
@@ -802,7 +803,9 @@ def bloom(path):
     w, h = img.size
     px = np.array(img.pixels[:]).reshape(h, w, 4)
     rgb_ = px[:, :, :3]
-    bright = np.clip((rgb_.max(axis=2, keepdims=True) - 0.82) / 0.18, 0, 1) * rgb_
+    mx, mn = rgb_.max(axis=2, keepdims=True), rgb_.min(axis=2, keepdims=True)
+    weight = np.clip((mx - 0.8) / 0.15, 0, 1) * np.clip((mx - mn - 0.2) / 0.2, 0, 1) + np.clip((mn - 0.97) / 0.03, 0, 1)
+    bright = np.clip(weight, 0, 1) * rgb_
     halo = blur(bright, 3) * 0.6 + blur(bright, 9) * 0.4
     px[:, :, :3] = np.clip(rgb_ + halo * BLOOM, 0, 1)
     img.pixels[:] = px.ravel()
