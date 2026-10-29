@@ -6,13 +6,20 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-26, pre-game and automatic colours)
 
+- **Nano particles; the Commander faces its work (C-251):** builders and factories spray streams of glowing nano particles instead of light beams. The Commander turns its upper body to what it builds and keeps it there. Specs follow S-203 (generator retired, D-Gun range 80), and the server no longer times out building the lobby's map list.
+- **Shots at the edge of vision (C-250, H37):** a beam or laser from a shooter the client holds at a stale spot no longer stretches across the map; only its hit shows.
+- Ready to merge: `76438248` (C-250; test_client 332 / 332, build passed. Studio, Coastline: 8 FIREs drawn, none stale)
+- **Far selection kept (C-249):** a unit selected far from the camera (the user's nuke silo on Supreme Strait) no longer drops out of the selection when the camera moves away. A lost part of a big strategic snapshot no longer makes units blink out for a moment, which is likely part of H36's jumping blips.
+- Ready to merge: `d8c7303d` (the health number's colours and green cross, on top of ebf84768; test_client 331 / 331, build passed. Studio: 3000 green, 1506 orange, 306 red)
+- Ready to merge: `ebf84768` (C-249; test_client 331 / 331, build passed (822 scripts, 2345 requires). Studio, Supreme Strait: the silo stays selected with the camera at the enemy side)
 - **Playtest feedback 3, part one (C-248):**
   - A builder's number keys work as soon as it's selected.
   - Shift-drag rows only add buildings as they grow; Alt + drag lays a grid.
   - Planned buildings show their build cells, and planned orders draw on top of hills and units.
   - The Commander shows its D-Gun and death-blast rings.
-  - The unit panel shows current health as a deep red number in place of the bar.
+  - The unit panel shows current health as a number with a green cross, in place of the bar: green at full, orange at half, red when low.
   - Beams take their weapon's colour, and hovering a resource-bar marker no longer shifts the bar.
+- Ready to merge: `df9c53ff` (C-248 with the health number in deep red in place of the bar; supersedes ba5d6b76. test_client 329 / 329, build passed (822 scripts, 2345 requires). Studio: 2224 in deep red on a hit Sovereign)
 - Ready to merge: `ba5d6b76` (C-248; test_client 329 / 329, build passed (822 scripts, 2345 requires). Studio, Coastline: digits, grid, footprint cells, highlighted orders, Commander rings, HP, tooltip. H16 not reproduced)
 - Ready to merge: `a8987295` (main 92b9147c merged in; AttackPreview.spec reads the silo's capacity from the def, as S-200 changed it. test_client 326 / 326, build passed)
 - **Trees and rocks textured (C-247):** the approved tree and rock models draw with their textures on Supreme Strait. Two of models-C's textures don't load yet; C is told.

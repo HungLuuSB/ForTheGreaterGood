@@ -136,12 +136,12 @@ return function(t: any)
 		local cv = World.ownIds(world)[1]
 		api.actions.select({ cv })
 		local u = world.units[cv]
-		t.expect(api.actions.beginPlacement("ord_generator"))
+		t.expect(api.actions.beginPlacement("ord_solar"))
 		t.expect(api.actions.place(u.x + 36, u.z - 20, false, false))
 		t.expect(api.actions.beginPlacement("ord_solar"))
 		t.expect(api.actions.placeRow(u.x + 20, u.z + 40, u.x + 44, u.z + 40, true, false))
 		local queued = #api.waypoints.byUnit[cv]
-		t.expect(queued >= 3, `generator + a row of solars queued ({queued})`)
+		t.expect(queued >= 3, `a solar + a row of solars queued ({queued})`)
 		local function serverBuilds(): number
 			local n = 0
 			for _, o in sim.orders.queue[cv] or {} do
@@ -172,7 +172,7 @@ return function(t: any)
 		local frames = 0
 		for _, s in world.units do
 			local d = World.def(world, s)
-			if d and (d.id == "ord_generator" or d.id == "ord_solar") then
+			if d and d.id == "ord_solar" then
 				frames += 1
 			end
 		end
@@ -184,11 +184,11 @@ return function(t: any)
 		run(3)
 		local cv = World.ownIds(world)[1]
 		api.actions.select({ cv })
-		t.expect(api.actions.beginPlacement("ord_generator"))
+		t.expect(api.actions.beginPlacement("ord_solar"))
 		local u = world.units[cv]
 		local x, z = u.x + 80, u.z + 80
 		t.expect(api.actions.place(x, z, true, true), "the first one, queued, placing kept (Shift)")
-		local size = world.defs.units.ord_generator.footprint * 8
+		local size = world.defs.units.ord_solar.footprint * 8
 		local ok, why = api.actions.updatePlacement(x + size / 2, z)
 		t.expect(not ok and why == "occupied", `half over the queued one: {why}`)
 		t.expect(not api.actions.place(x + size / 2, z, true, true), "and it isn't sent")
@@ -204,15 +204,15 @@ return function(t: any)
 		local sim, world, api, run, sentCount = setup("start:48", "standard_start")
 		local cv = World.ownIds(world)[1]
 		t.expect(cv ~= nil, "the Command Vehicle is known")
-		local ok, why = api.actions.beginPlacement("ord_generator")
+		local ok, why = api.actions.beginPlacement("ord_solar")
 		t.expect(not ok and why == "no selected builder can build it", "needs a builder selected")
 		api.actions.select({ cv })
-		t.expect(api.actions.beginPlacement("ord_generator"))
+		t.expect(api.actions.beginPlacement("ord_solar"))
 		local u = world.units[cv]
 		local x, z = u.x + 40, u.z
 		t.expect(api.actions.updatePlacement(x, z), "a free spot is valid")
 		local p = api.state.placement :: any
-		t.equal(p.defId, "ord_generator")
+		t.equal(p.defId, "ord_solar")
 		t.expect(api.actions.rotatePlacement())
 		t.equal(p.facing, 1)
 		local before = sentCount()
@@ -223,11 +223,11 @@ return function(t: any)
 		local frame
 		for _, w in world.units do
 			local d = World.def(world, w)
-			if d and d.id == "ord_generator" then
+			if d and d.id == "ord_solar" then
 				frame = w
 			end
 		end
-		t.expect(frame ~= nil, "the generator frame entered the client world")
+		t.expect(frame ~= nil, "the solar frame entered the client world")
 		t.expect(math.abs(frame.x - p.x) < 0.1 and math.abs(frame.z - p.z) < 0.1, "at the ghost's snapped spot")
 		t.expect((frame.build or 0) > 0, "construction has started")
 	end)

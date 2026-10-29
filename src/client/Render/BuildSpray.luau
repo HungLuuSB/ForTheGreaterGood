@@ -1,15 +1,16 @@
 --!strict
--- Builders' nano spray (C-193): a team-colored stream from a working
--- builder to the structure it builds or repairs (Core/BuildTargets), its far
--- end sweeping over the target's top as the factory's spray does
--- (Core/Nanoframe.sprayPoint); a reclaim stream is violet and flows back.
--- It starts at the builder's `nano` attachment, else its `emitter` part,
--- else just above its model. One Beam per builder, pooled; none at
--- strategic zoom.
+-- Builders' nano spray (C-193): a team-coloured stream of nano particles
+-- (Render/NanoStream, C-251: a light beam before) from a working builder
+-- to the structure it builds or repairs (Core/BuildTargets), aimed over the
+-- target's top as the factory's spray is (Core/Nanoframe.sprayPoint); a
+-- reclaim stream is violet and flows back. It starts at the builder's
+-- `nano` attachment, else its `emitter` part, else just above its model.
+-- One stream per builder, pooled; none at strategic zoom.
 
 local BuildTargets = require("../Core/BuildTargets")
 local Nanoframe = require("../Core/Nanoframe")
 local World = require("../Core/World")
+local NanoStream = require("./NanoStream")
 local TeamColors = require("./TeamColors")
 local UnitRenderer = require("./UnitRenderer")
 
@@ -17,39 +18,19 @@ local BuildSpray = {}
 
 BuildSpray.RECLAIM = Color3.fromRGB(200, 120, 235)
 
-type Stream = { from: Attachment, to: Attachment, beam: Beam }
-export type BuildSpray = { pool: { Stream }, used: number, list: { BuildTargets.Spray } }
+export type BuildSpray = { pool: { NanoStream.Stream }, used: number, list: { BuildTargets.Spray } }
 
 function BuildSpray.new(): BuildSpray
 	return { pool = {}, used = 0, list = {} }
 end
 
-local function stream(b: BuildSpray, i: number): Stream
+local function stream(b: BuildSpray, i: number): NanoStream.Stream
 	local s = b.pool[i]
 	if s == nil then
-		local from = Instance.new("Attachment")
-		from.Name = "SprayFrom"
-		from.Parent = workspace.Terrain
-		local to = Instance.new("Attachment")
-		to.Name = "SprayTo"
-		to.Parent = workspace.Terrain
-		local beam = Instance.new("Beam")
-		beam.Name = "BuildSpray"
-		beam.Attachment0 = from
-		beam.Attachment1 = to
-		beam.LightEmission = 1
-		beam.LightInfluence = 0
-		beam.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.15), NumberSequenceKeypoint.new(1, 0.6) })
-		beam.Width0 = 0.25
-		beam.Width1 = 1.1
-		beam.FaceCamera = true
-		beam.Segments = 1
-		beam.Enabled = false
-		beam.Parent = workspace.Terrain
-		s = { from = from, to = to, beam = beam }
+		s = NanoStream.new(workspace.Terrain)
 		b.pool[i] = s
 	end
-	return s
+	return s :: NanoStream.Stream
 end
 
 -- Where a builder's spray starts.
@@ -109,15 +90,15 @@ function BuildSpray.step(b: BuildSpray, world: World.World, renderer: UnitRender
 			local to = Vector3.new(tx + ox, top, tz + oz)
 			local reclaim = s.kind == "reclaim"
 			-- a reclaim stream flows from the target back to the builder
-			st.from.WorldPosition = if reclaim then to else from
-			st.to.WorldPosition = if reclaim then from else to
-			st.beam.Color = ColorSequence.new(if reclaim then BuildSpray.RECLAIM else TeamColors.of(u.team))
-			st.beam.Width1 = 0.8 + 0.35 * math.sin(now * 17 + s.builder * 2.1)
-			st.beam.Enabled = true
+			if reclaim then
+				NanoStream.aim(st, to, from, BuildSpray.RECLAIM)
+			else
+				NanoStream.aim(st, from, to, TeamColors.of(u.team))
+			end
 		end
 	end
 	for i = n + 1, b.used do
-		b.pool[i].beam.Enabled = false
+		NanoStream.off(b.pool[i])
 	end
 	b.used = n
 end

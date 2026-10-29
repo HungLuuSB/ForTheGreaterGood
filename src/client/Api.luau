@@ -660,7 +660,7 @@ function Api.frame(api: Api, now: number)
 		state.commandMode = nil
 		state.placement = nil
 	end
-	Selection.prune(sel, world)
+	Selection.prune(sel, world, now)
 	Waypoints.update(api.waypoints, world, now)
 	state.player = world.me
 	state.tick = world.latestTick

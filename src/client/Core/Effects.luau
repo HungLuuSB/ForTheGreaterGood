@@ -209,7 +209,7 @@ export type Fx = {
 	tick: number, -- projectiles are stepped up to this sim tick
 	focusX: number,
 	focusZ: number,
-	skipped: { bursts: number, tracers: number },
+	skipped: { bursts: number, tracers: number, stale: number }, -- stale: FIREs drawn without their streak (H37)
 	applied: { [string]: number }, -- events applied per kind name (diagnostics)
 	late: { n: number, sum: number, max: number }, -- render ticks between an event's tick and when it played (diagnostics)
 	launches: { n: number, fromBarrel: number, sumOffset: number }, -- shells started at a drawn barrel tip, and its distance from the server's launch point (diagnostics)
@@ -230,7 +230,7 @@ function Effects.new(): Fx
 		tick = -1,
 		focusX = 0,
 		focusZ = 0,
-		skipped = { bursts = 0, tracers = 0 },
+		skipped = { bursts = 0, tracers = 0, stale = 0 },
 		applied = {},
 		late = { n = 0, sum = 0, max = 0 },
 		launches = { n = 0, fromBarrel = 0, sumOffset = 0 },
@@ -296,6 +296,35 @@ end
 -- A shot's tracer: a BEAM weapon's held ray (its duration, its faction's
 -- colour; stopped by a known dome it glances off and pulses the dome, C-129,
 -- C-139), else a quick streak.
+Effects.STALE_STUDS = 24 -- a drawn shooter this far from its last record draws no streak (H37)
+
+-- Whether a FIRE's start (the shooter as drawn, `x0, z0`) is stale: no live
+-- muzzle (`muzzled`) and the shooter not in the tactical tier, or drawn
+-- more than STALE_STUDS from its record; or the shot reaches farther
+-- than `weapon` could fire from there. Pure (C-7).
+function Effects.staleStart(shooter: World.Unit?, weapon: any, x0: number, z0: number, x1: number, z1: number, muzzled: boolean): boolean
+	if shooter == nil then
+		return true
+	end
+	if not muzzled then
+		if shooter.tier ~= "tactical" then
+			return true -- a strategic record: an 8-stud square, or its spot when it left the camera area
+		end
+		local rx, rz = shooter.rx, shooter.rz
+		if rx and rz and (rx - shooter.x) ^ 2 + (rz - shooter.z) ^ 2 > Effects.STALE_STUDS ^ 2 then
+			return true
+		end
+	end
+	local range = weapon and weapon.range
+	if range and range > 0 and not weapon.fullLength then
+		local reach = range * 1.5 + 40
+		if (x1 - x0) ^ 2 + (z1 - z0) ^ 2 > reach * reach then
+			return true
+		end
+	end
+	return false
+end
+
 local function shotTracer(world: World.World, weapon: any, faction: string?, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, hit: boolean, now: number): Tracer
 	local isBeam = weapon ~= nil and weapon.type == "BEAM"
 	local t: Tracer = { x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.beamSeconds(weapon) else Effects.TRACER_SECONDS, hit = hit, size = if weapon then weaponSize(weapon) else 1, beam = if isBeam then (faction or "order") else nil, weaponId = if weapon then weapon.id else nil }
@@ -972,8 +1001,26 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		if muzzleOf then
 			x0, y0, z0 = muzzleOf(e.unitId, e.slot)
 		end
+		local muzzled = x0 ~= nil -- (its model is drawn: the muzzle is live)
 		if x0 == nil and shooter then
 			x0, y0, z0 = shooter.rx or shooter.x, (shooter.ry or World.groundY(world, shooter.x, shooter.z)) + 2.5, shooter.rz or shooter.z
+		end
+		-- a FIRE carries only the end (sim-A): the start is where we draw the
+		-- shooter. One not drawn (it just left the camera area, a strategic
+		-- record's square), or drawn far from its last record, would stretch
+		-- the streak from a stale spot (H37: near the edge of vision a beam
+		-- ran to somewhere random). Then only the hit shows. A shot longer
+		-- than its weapon could fire is stale too. Ends past the map edge are
+		-- fine (aircraft, S-189).
+		local sdef = shooter and World.def(world, shooter)
+		local sslot = sdef and sdef.weapons[e.slot]
+		local sweapon = sslot and world.defs.weaponByIndex[sslot.weaponIndex or 0]
+		if x0 and Effects.staleStart(shooter, sweapon, x0, z0 :: number, x1, z1, muzzled) then
+			fx.skipped.stale += 1
+			if sweapon and sweapon.type == "BEAM" and e.hit then
+				burst(fx, now, x1, y1, z1, 2.4, "impact", Effects.EXPLOSION_SECONDS)
+			end
+			x0 = nil
 		end
 		-- a hit ends on the hit unit's drawn body, where the line toward its
 		-- middle meets the model's surface: the server aims at its sim
