@@ -10,7 +10,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
   - A builder's number keys work as soon as it's selected.
   - Shift-drag rows only add buildings as they grow; Alt + drag lays a grid.
   - Planned buildings show their build cells, and planned orders draw on top of hills and units.
-  - The Commander shows its D-Gun and death-blast rings, and the unit panel shows health as a number.
+  - The Commander shows its D-Gun and death-blast rings.
+  - The unit panel shows current health as a deep red number in place of the bar.
   - Beams take their weapon's colour, and hovering a resource-bar marker no longer shifts the bar.
 - Ready to merge: `ba5d6b76` (C-248; test_client 329 / 329, build passed (822 scripts, 2345 requires). Studio, Coastline: digits, grid, footprint cells, highlighted orders, Commander rings, HP, tooltip. H16 not reproduced)
 - Ready to merge: `a8987295` (main 92b9147c merged in; AttackPreview.spec reads the silo's capacity from the def, as S-200 changed it. test_client 326 / 326, build passed)

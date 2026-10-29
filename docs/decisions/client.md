@@ -2215,7 +2215,7 @@ The watchdog's WARN / INFO lines (S-140) stay on.
   - A def with a D-Gun, so a Commander, gets a `blast` ring at `deathBlast.aoe`, deep red and wider. Fusion reactors' blasts don't ring.
   - Today the blast (120) sits on the laser ring (120). sim-A's H5 / H6 cuts separate them.
   - Spec in `Ranges.spec`; Studio: the four rings round the Sovereign.
-- **H34, health as a number:** the unit panel shows "current / max" right of the name, in green, wherever the bar shows health. It goes on the name row because the stats already fill the panel.
+- **H34, health as a number:** first "current / max" right of the name. Then the user: "replace the healthbar with the current health only (change color from green to deep red)". So the unit panel's health bar under the portrait is now the current health alone, a deep red number (205, 35, 35). A wreck's or feature's resource bar stays, and the health bars over units in the world are unchanged. Studio: a Sovereign hit for 777 reads 2224.
 - **H38, beam colour:** a BEAM weapon's `fx.color` rides on its tracer (`beamColor`) and tints models-C's beam rig. The glow and filaments take the colour, the core is white lerped 30% toward it, and rigs pool by faction and colour. It takes effect once sim-A gives Radiance its electric blue.
 - **H11:** the scouts' hit-scan laser needs nothing new: `fx.tracer = "laser"` with `fx.color` already draws as Lasers (C-198).
 - **The user's report, "when I hover over these threshold bars, the UI moves to the right":**
