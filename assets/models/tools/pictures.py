@@ -54,10 +54,14 @@ MASKS = False  # the team-mask pass (<id>_mask.png), off since the paint is bake
 WATERLINE = 0.18  # PortraitStage.WATERLINE: the water surface, a share of the hull's height
 VIEW = lib.R(-1.0, 0.75, -1.15).normalized()  # portraits.py's three-quarter view, front-left
 # The user's approval note (2026-10-30, via E): "increase their glow and color".
-UNIT_SATURATION = 1.6  # the unit's colours, through a Hue/Saturation node
+UNIT_SATURATION = 2.1  # the unit's colours, through a Hue/Saturation node (the user: "push the color up too")
 ENV_SATURATION = 1.2  # the setting's palettes: more colour, still under the unit's
-GLOW = 2.5  # the glow parts' emission over a dark base: low enough that the core keeps its hue (the FBX previews use 4)
-BLOOM = 1.4  # the glow's soft halo, added after the render
+# The user, 2026-10-30: "make them glow more"; and the distance haze off ("too blurry because of the fog").
+GLOW = 3.5  # the glow parts' emission over a dark base (the FBX previews use 4)
+BLOOM = 2.2  # the glow's soft halo, added after the render
+FOG = False  # the distance haze (aerial perspective) over the far ground and water
+GRADE_SATURATION = 1.3  # the whole picture's colour, after the render
+GRADE_CONTRAST = 1.12  # and its contrast, about mid grey
 MASK_EXPOSURE = 1.0  # the team mask's lit white, in stops: a stronger tint in game
 
 
@@ -124,7 +128,10 @@ def quad(name, corners, mat, uv=((0, 0), (1, 0), (1, 1), (0, 1))):
 
 def haze_over(N, L, shader, haze_rgb, near, far, most=0.85):
     """Fades a surface into the haze with the distance from the camera, as
-    light (aerial perspective), so the sun can't push the far ground to white."""
+    light (aerial perspective), so the sun can't push the far ground to white.
+    Off while FOG is False: the surface as it is."""
+    if not FOG:
+        return shader
     cam = N("ShaderNodeCameraData")
     rng = N("ShaderNodeMapRange")
     rng.interpolation_type = "SMOOTHSTEP"
@@ -446,7 +453,7 @@ def fit_camera(cam, objs):
     cam.rotation_euler = rot.to_euler()
     cam.data.dof.use_dof = True
     cam.data.dof.focus_distance = dist
-    cam.data.dof.aperture_fstop = 2.6 / dist  # scale-free: the far ground blurs alike for every size
+    cam.data.dof.aperture_fstop = 4.0 / dist  # scale-free: the far ground blurs alike for every size
     return dist, lo, hi
 
 
@@ -700,7 +707,7 @@ def underwater(rng, r, lo, hi, z_bed):
     m, N, L = new_mat("env_murk")
     vol = N("ShaderNodeVolumePrincipled")
     vol.inputs["Color"].default_value = rgb((190, 235, 228))
-    vol.inputs["Density"].default_value = 0.1 / r
+    vol.inputs["Density"].default_value = 0.05 / r
     vol.inputs["Absorption Color"].default_value = rgb((90, 170, 165))
     L(vol.outputs[0], N("ShaderNodeOutputMaterial").inputs["Volume"])
     bm = bmesh.new()
@@ -816,8 +823,12 @@ def bloom(path):
     mx, mn = rgb_.max(axis=2, keepdims=True), rgb_.min(axis=2, keepdims=True)
     weight = np.clip((mx - 0.8) / 0.15, 0, 1) * np.clip((mx - mn - 0.2) / 0.2, 0, 1) + np.clip((mn - 0.97) / 0.03, 0, 1)
     bright = np.clip(weight, 0, 1) * rgb_
-    halo = blur(bright, 3) * 0.6 + blur(bright, 9) * 0.4
-    px[:, :, :3] = np.clip(rgb_ + halo * BLOOM, 0, 1)
+    halo = blur(bright, 3) * 0.55 + blur(bright, 10) * 0.45
+    out = np.clip(rgb_ + halo * BLOOM, 0, 1)
+    grey = out.mean(axis=2, keepdims=True)  # the grade: more colour and a little more contrast
+    out = grey + (out - grey) * GRADE_SATURATION
+    out = 0.5 + (out - 0.5) * GRADE_CONTRAST
+    px[:, :, :3] = np.clip(out, 0, 1)
     img.pixels[:] = px.ravel()
     img.filepath_raw = path
     img.file_format = "PNG"
