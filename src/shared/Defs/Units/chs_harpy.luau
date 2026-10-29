@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "chs_harpy",
 	name = "Harpy",
-	description = "Fighter. Many cheap missiles, less agile.",
+	description = "Fighter. Fires swarms of missiles at aircraft.",
 	faction = "chaos",
 	tier = 1,
 	domain = "air",

@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_inferno",
 	name = "Inferno",
-	description = "Beam tower. A precise, heavy shot for 500 power. Off: retracts into its armor.",
+	description = "Beam tower. A heavy beam for 500 power a shot; retracts into its armor when off.",
 	faction = "chaos",
 	retired = true, -- (S-157) Bulwark (chs_bulwark) took its place as Chaos's beam tower; kept for old replays and scenes
 	tier = 2,

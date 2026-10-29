@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_botlab",
 	name = "Bot Pit",
-	description = "T1 factory: bots. Bots climb steep slopes, are quick and turn on the spot.",
+	description = "T1 bot factory. Builds bots, which climb steep slopes and turn on the spot.",
 	faction = "chaos",
 	cost = { supply = 500, power = 1000, buildTime = 6000 },
 	health = 2600,

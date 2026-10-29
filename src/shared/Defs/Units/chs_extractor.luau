@@ -5,7 +5,7 @@ return Templates.extend(Templates.Structure, {
 	footprint = 2, -- size shows tech level (S-104)
 	id = "chs_extractor",
 	name = "Excavator",
-	description = "Supply Extractor. Must stand on a supply deposit; income scales with its value.",
+	description = "Supply extractor. Stands on a supply deposit; its income follows the deposit's value.",
 	faction = "chaos",
 	cost = { supply = 50, power = 500, buildTime = 1800 },
 	health = 450,

@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_pharos",
 	name = "Pharos",
-	description = "Naval SAM platform. Radar-guided missiles against aircraft, on the water. Own radar; can be jammed.",
+	description = "Naval SAM platform. Missiles against aircraft, guided by its own radar.",
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE" },

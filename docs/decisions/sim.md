@@ -3003,3 +3003,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 - **Other streams:** the client (icons, piece scripts, meshes) and the lobby Codex look units up by id, so B swaps `IconAtlas` and `PieceScripts`, C swaps the Blockouts and Meshes registry keys (`chs_juggernaut` → `chs_goliath`, `chs_korgoth` → `chs_juggernaut`), and D swaps the Codex rows. Main takes it in one merge through the last branch in the chain.
 - **Test:** `Playtest3Units.spec` checks the ids, the retirement, the gantry list and both walkers' longest range.
+
+## S-214 — Unit descriptions are "Role. What it does." (the user) (2026-10-29)
+
+- **Asked (the user):** rewrite every unit's short description like "Mobile SAM. …", keep it that way, and don't mention its pros and cons against its counterpart.
+- **Now:** all 203 unit defs read "Role. One line on what it does." Counterparts share the role (Sentry and Guard are both "Laser tower"), and most share the whole text. The line names the weapon or job, plus numbers a player needs (storage, output, power a shot). There are no comparisons ("than Order's", "shorter range than Gauntlet", "cheaper", "weak to splash", "fragile up close").
+- The unit panel shows the text before the first full stop as the role (`UnitPanel`), so a role has no full stop of its own.
+- **Kept that way by a test:** `Defs.spec` checks each description: a role of at most 40 characters, a full stop, one line ending in a full stop, and none of "than", "Order's", "Chaos's", "cheaper", "fragile".

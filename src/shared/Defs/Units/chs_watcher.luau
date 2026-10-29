@@ -10,7 +10,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	pieces = { "base", "dish" },
 	name = "Watcher",
-	description = "Mobile radar. Wide but imprecise radar coverage; unarmed.",
+	description = "Mobile radar. Spots enemy units beyond sight; unarmed.",
 	faction = "chaos",
 	categories = { "GROUND", "LIGHT", "RADAR_EMITTER" },
 	armorClass = "LIGHT",

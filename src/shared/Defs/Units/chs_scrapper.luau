@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Builder, {
 	id = "chs_scrapper",
 	name = "Scrapper",
-	description = "Ground worker. Builds T1 economy and the Vehicle Foundry; reclaims wrecks.",
+	description = "Ground worker. Builds the T1 economy and the Vehicle Foundry, and reclaims wrecks.",
 	faction = "chaos",
 	cost = { supply = 100, power = 1200, buildTime = 2600 },
 	health = 600, -- faction pass (S-62)

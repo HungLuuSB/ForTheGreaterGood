@@ -8,7 +8,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "ord_tidewatch",
 	name = "Tidewatch",
-	description = "ASW helicopter. Dipping sonar and air-dropped torpedoes against submarines.",
+	description = "ASW helicopter. Hunts submarines with dipping sonar and dropped torpedoes.",
 	faction = "order",
 	tier = 2,
 	domain = "air",

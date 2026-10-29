@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_tribunal",
 	name = "Tribunal",
-	description = "Fire-control radar. Tracks radar contacts precisely for artillery, bombers and radar SAMs; drains power.",
+	description = "Fire-control radar. Tracks radar contacts for artillery, bombers and radar SAMs; drains power.",
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE", "RADAR_EMITTER" },

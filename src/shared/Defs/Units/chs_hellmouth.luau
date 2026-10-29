@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.TankT1, {
 	id = "chs_hellmouth",
 	name = "Hellmouth",
-	description = "Self-propelled mortar. Heavy, inaccurate indirect fire; can shell radar contacts.",
+	description = "Self-propelled mortar. Heavy indirect fire that can shell radar contacts.",
 	faction = "chaos",
 	categories = { "GROUND", "ARMORED", "ARTILLERY" },
 	cost = { supply = 175, power = 1750, buildTime = 4800 },

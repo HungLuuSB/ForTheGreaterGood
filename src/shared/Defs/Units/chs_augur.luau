@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_augur",
 	name = "Augur",
-	description = "Pinpointer. Each one sharpens the team's radar: contacts wobble less and radar missiles hold their lock (full at 7).",
+	description = "Pinpointer. Each one sharpens the team's radar: contacts wobble less and radar missiles hold their lock; full effect at 7.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE" },

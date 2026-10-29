@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_geryon",
 	name = "Geryon",
-	description = "Triple laser tower. A three-barrel drum: hard-hitting green shots, shorter range than Overwatch.",
+	description = "Triple laser tower. A three-barrel drum firing green lasers in turn.",
 	faction = "chaos",
 	tier = 1,
 	categories = { "STRUCTURE" },

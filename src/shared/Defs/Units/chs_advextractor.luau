@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "chs_advextractor",
 	name = "Deep Excavator",
-	description = "Advanced Extractor. ~3.5x extractor output on a deposit.",
+	description = "Advanced supply extractor. Mines a deposit at about 3.5 times an extractor's rate.",
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE" },
