@@ -37,6 +37,7 @@ return function(t: any)
 		end
 		local fx = Effects.new()
 		local tick = 0
+		local bursts: { [any]: string } = {}
 		local function step()
 			tick += 1
 			local acc = sim.eco.accounts[1] -- (a shot costs 500 power)
@@ -45,6 +46,9 @@ return function(t: any)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 			Api.frame(api, tick * DT)
 			Effects.update(fx, world, tick, tick * DT, 0, 0)
+			for _, b in fx.bursts do
+				bursts[b] = b.kind
+			end
 			for _, d in world.died do
 				if burned[d.id] == false then
 					burned[d.id] = true
@@ -97,6 +101,14 @@ return function(t: any)
 		t.expect(worst < 1, `with the server's bolt ({worst})`)
 		t.expect(heightOff < 1e-6, "riding 5 studs over the ground")
 		t.equal(fx.projectiles[bolt :: number], nil, "gone at the end")
+		-- its own effects (models-C's templates, C-266)
+		local kinds: { [string]: number } = {}
+		for _, k in bursts do
+			kinds[k] = (kinds[k] or 0) + 1
+		end
+		t.equal(kinds.dgunMuzzle, 1, "the D-Gun's muzzle flash")
+		t.equal(kinds.dgunEnd, 1, "its end of range")
+		t.equal(kinds.dgunHit, 3, "a hit on each tank it burned")
 	end)
 	t.test("the D-Gun preview's path and hitbox are the bolt's (C-264)", function()
 		local sim = Sim.new({ seed = 4, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64", scenario = "empty" })

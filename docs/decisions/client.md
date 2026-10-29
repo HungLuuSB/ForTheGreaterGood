@@ -2399,3 +2399,73 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - in range: the band ends on the yellow D-Gun ring (`debug_out/screens/2026-10-30-dgun-preview.jpg`);
   - cursor far outside: the band still stops at the ring (`…-dgun-preview-far.jpg`). The click fired from where the Commander stood, with power 1.0k → 513 and the bolt flying along the band (`…-dgun-fired-far.jpg`).
 - The D-Gun's own effects (bolt, muzzle, hits, end) were asked of models-C, as the user requested. They will come as templates `Vfx.DgunBolt` / `DgunMuzzle` / `DgunHit` / `DgunEnd` in `place/Vfx.model.json`, which B wires when they land.
+
+### C-265 — Unit pictures and faction emblems uploaded (2026-10-30)
+
+- The user approved uploading 2D-E's E-11 unit pictures (2d 3b0aedf1) and the faction emblem atlas (2d d9d67900); the `2d` branch is merged in up to a8a12d1d. The ids are in `tools/icons/assets.json` with their pixel hashes:
+  - pictures, sheets 1–4: 122608829388990, 77489597273393, 138922904621520, 97328947914631;
+  - emblems: 136358453510061.
+- `UI/UnitPictures` is regenerated: all 197 defs have a picture on an uploaded sheet. E packs 126-px pictures 2 px apart, 64 to a sheet. `Portrait` reads `TILE` from the module, and `UnitPictures.spec` now checks rects on that 128-px pitch instead of the tile size.
+- New `tools/icons/emblems.mjs` writes `UI/FactionEmblems` from E's `keys.json`, read-only for lobby-D as `UiIcons` is:
+  - the atlas image and size;
+  - each emblem's name, faction, tint and rect at every drawn size (16 to 256 px);
+  - `keyOf(faction)`, `pick(px)` (the smallest drawn size that covers it), and `of(faction, px)` → image, rect, tint.
+  - An id whose atlas changed since its upload is dropped, as for every other sheet. Nothing in the match draws an emblem yet.
+- Spec: `FactionEmblems.spec` (both factions, every rect on the atlas, `pick`).
+- Studio, Coastline: the build tiles and the unit panel show the pictures (Order blue, in their setting), cropped cleanly with no neighbour bleeding in (`debug_out/screens/2026-10-30-unit-pictures.png`).
+
+### C-266 — The D-Gun's effects (2026-10-30, models-C's templates)
+
+- The user asked C for the D-Gun's VFX. C made four templates in `place/Vfx.model.json` (m-models 51db9785, merged in). They're authored at real size, so they play at scale 1, and their colour is fixed (255, 200, 90), not team-tinted.
+- `Render/Vfx`:
+  - `TEMPLATE_NAMES` gains `dgunMuzzle`, `dgunHit`, `dgunEnd` and `dgunBolt`.
+  - While the place has no template, the first three fall back to the built-in muzzle, hit and impact (`Vfx.FALLBACK`).
+  - **Held templates:** a template with the attribute `Continuous` is held by an owner. `Vfx.follow(key, kind, frame)` starts it on the first call and moves it on later ones; `Vfx.release(key)` ends it.
+  - While held, its emitters saved Enabled with no EmitCount run, and its lights with no LightSeconds stay lit. Released, it stops and is reused once its longest particles have faded (the burning path's 3.5 s). A full pool never steals a held copy.
+- `Render/Effects`: a D-Gun bolt is drawn as the held `DgunBolt`, facing its flight on the level. Bolts no longer drawn are released. The plain ball stays as the fallback without the template.
+- `Core/Effects`:
+  - a D-Gun's SPAWN_PROJ flash is `dgunMuzzle`;
+  - its one IMPACT (the end of its range) is `dgunEnd`, played level so its ring lies flat;
+  - the server sends no IMPACT for the units the bolt passes through (S-194). So a DEATH within the bolt's reach of its last 1.5 s of path plays `dgunHit` there too (`Effects.boltThrough`).
+- Spec (`Dgun.spec`): the bolt through three tanks plays one `dgunMuzzle`, one `dgunEnd` and three `dgunHit`.
+- **Studio, Coastline:** the Sovereign fired through a row of its own Lancers. The muzzle, the held bolt, the end and both hits played as templates, with no errors (`debug_out/screens/2026-10-30-dgun-vfx-launch.jpg`, `…-dgun-vfx-path.jpg`). The flight itself is about a second, too short to frame well by tool; the burning path and the end scorch show after it.
+
+### C-267 — The D-Gun fixed; models-C's new explosions and missile booster (2026-10-30)
+
+- **C-266 didn't work as logged. Two faults:**
+  - C's templates shipped with no attributes: Rojo drops a top-level "Attributes" in a .model.json. So DgunBolt had no `Continuous`, and every emitter fell back to the default count of 10. C fixed this in m-models 39aa66e8, merged in.
+  - My release loop for held copies landed in `shellFor` instead of the frame step. It never ran there, and it named an undefined local (`bolts`), so a shell asked for while a bolt was held would have errored. It's moved into the step.
+  - So C-266's Studio note ("the held bolt played") was wrong: the bolt ran as a plain 0.2-s burst.
+- **Re-checked in Studio, Coastline:**
+  - The D-Gun bolt's 8 emitters run for its 1.25-s flight, then stop.
+  - The muzzle, the end and three hits (three Lancers) play as templates.
+- **C's request 12, in `Render/Vfx`:**
+  - New template names: `nuke` → Nuke (scale 1 = a 150-stud blast, as before), `structureDeath` → StructureDeath (falls back to the death look), `missileExhaust` → MissileExhaust.
+  - A template's Attachment positions scale with the burst like sizes and speeds: debris arms, chain blasts and shock diamonds are authored at scale 1. Accelerations scale by its square root.
+  - Emitters with `GroundOnly` play only in a ground burst (within `GROUND_BURST` of the ground, as the built-in dust).
+  - `Vfx.follow` takes a scale.
+- `Core/Effects`: a structure's death is a `structureDeath` burst, sized as a unit's.
+- **Missiles** (`Render/Effects`): MissileExhaust is held on each missile's nozzle (2.2 × its style scale behind the centre) at its style's scale, and released when the missile ends. While it's there, the built-in flame trail and smoke puffs are off; the smoke trail stays.
+- C's Impact and Death templates (already named) now replace every impact and unit death in the game.
+- **Not done yet:** C's blast-mark decals (`assets/fx/scorch`, soot and glow in place of the dark scorch disc). They wait for the user's upload approval and the ids.
+- **Studio, Coastline:**
+  - a nuke from a Reckoning: Launch, then the held MissileExhaust (10 emitters running, its booster flame on the tail; `debug_out/screens/2026-10-30-missile-exhaust.jpg`), then the Nuke template at the impact, with the exhaust released;
+  - the silo killed: StructureDeath, with its smoke column and rubble fires (`…-structure-death.jpg`);
+  - no script errors.
+
+### C-268 — Blast-mark decals (2026-10-30, models-C)
+
+- The user approved C's upload. `Meshes.textures` has `blastMarkA`, `blastMarkB` (soot, greyscale, untinted) and `blastMarkGlow` (m-models 2d0afbe4, merged in).
+- `Render/Vfx`'s scorch mark is now a transparent part holding two decals, in place of the dark disc:
+  - soot, A or B picked by a hash of the spot, at a yaw of its own;
+  - the glow on top, tinted (1, 0.55, 0.18) × 2.2 (overbright, as BeamShots).
+  - The glow cools in `GLOW_SECONDS` (2 s); the soot fades over `SCORCH_SECONDS` (14 s), as the disc did.
+- The part casts no shadow (decals would throw a blob) and sits `MARK_LIFT` (0.6) studs over the ground. At +0.08, Terrain's sand ripples hid it.
+- **Templated bursts get the mark too.** C's Impact and Death templates replace the built-in rig, which used to leave the disc, so they had no lasting mark at all. Any ground burst of a kind with a scorch (its own kind's or its fallback's) now leaves one at that kind's size.
+- **Studio, Coastline:** a D-Gun shot through three Lancers left six marks, both variants, with no shadows. The glow faded and the soot stayed (`debug_out/screens/2026-10-30-blast-marks-glow.jpg`, `…-soot.jpg`).
+
+### C-269 — The re-rendered unit pictures uploaded (2026-10-30)
+
+- The user wanted C's re-render of the unit pictures (no fog, more glow, more colour). E repacked it into the same four sheets and rects (2d 68c390e0, merged in up to ee9cfd2a).
+- The old sheet ids went stale with the new pixels. The user approved the upload; the new ids are 129402755258680, 137517755831073, 118640861030060 and 108902714225981 in `tools/icons/assets.json`, with their hashes. `UI/UnitPictures` is regenerated: 197 of 197 on uploaded sheets.
+- Studio, Coastline: the build tiles and the unit panel load the new sheets (`debug_out/screens/2026-10-30-unit-pictures-rerender.png`).

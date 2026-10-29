@@ -3039,6 +3039,19 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
     11. **Hard: the Experimental Gantry** at 2,500 stored (or 80%). It builds one Titan / Juggernaut at a time, and each joins the army.
   - **Offshore extractors:** on a map with free deposits under the sea, the shipyard builds one naval worker (Tidewright / Wrecker). It builds an offshore extractor on each free sea deposit (`Skirmish.freeSeaDeposit`), then assists the shipyard.
   - **Fix:** the Chaos advanced plant asked for `chs_juggernaut`, the T3 bot since S-213 and not on its list, so the order was refused and the plant built fewer tanks. The Tzar takes the Goliath's place in the mix until the user picks a Chaos T2 main battle tank.
+- **Follow-up, after the first mirror run (nothing past advanced solar in 25 minutes):**
+  - **Cause, older than S-216:** in a real match the AI spends supply as it comes in, so it stores 0 all game and power sits full and wasted. The tech steps wait for stored supply (900 for the advanced plant, 600 for the T2 builder), so they never came.
+  - **Tech by size:** the advanced plant also comes at `TECH_EXTRACTORS` (8) extractors with an 8-unit army. It also comes after `TECH_TICKS` (10 minutes) with 6 extractors, since Hard's safe deposits on a 1v1 map are 8 or 9. The T2 builder uses the same bars.
+  - **T1 converters**, up to `CONVERTERS` (3), while power sits 90% full, isn't stalling, and supply ran short.
+  - **The generator rule plans for the extractors' upkeep** (S-198). Each advanced extractor costs 15 a second, and each upgrade had stalled power.
+  - **While power stalls**, the T2 builder starts a fusion before more extractor upgrades.
+  - **Advanced fusion** comes once two fusions stand and power still stalls, or when rich.
+  - **Hard's gantry** also comes after `GANTRY_TICKS` (15 minutes) with `GANTRY_EXTRACTORS` (8) extractors.
+  - **A shipyard comes early** on a map with free offshore deposits; it no longer waits for "established", which needs 200 supply stored.
+  - **Hard's gantry comes right after the first shield,** ahead of the T2 defence list. In a match the T2 builder never reached the end of that list. While a gantry frame stands, the T1 builders help it before they help an advanced plant.
+  - **`AI.spec`'s T2-extras test runs 40 minutes** (it ran 30). Hard now builds fusion while power stalls and its gantry before the silo, so the nuke comes later: it launched at 32.2 minutes.
+  - **Still open:** in a 35-minute mirror match, the AI stalls on power and supply from about minute 8 (it builds at 27–48% speed). Advanced fusion, advanced converters, advanced storage and the gantry wait behind that stall.
+  - Coastline has no deposits deep enough for an offshore extractor (0 of 18). Supreme Strait has 6.
 - **Mirror results:** `lune run mirror_units` (report only, `debug_out/mirror_units.md`): one AI a side, both faction mirrors, Normal and Hard, on Supreme Strait (each AI on its side's front pick) and Coastline. It reports the wins and what each AI built.
 - **Tests:**
   - `AI.spec`'s Normal economy test counts the whole army: bots and helicopters are in it now.
