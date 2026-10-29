@@ -2283,6 +2283,9 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - **Construction turrets (`ord_nano` / `chs_nano`), `PieceScripts/NanoTurret`:** `Work` now also gets the work's distance. `turret` yaws to the work at 90°/s; `nano` pitches down to a point 3 studs up it from the lens (ord 10.4, chs 8 studs up; at most 60° down). Done, the head lifts level and the turret stays where it last looked. The spray already starts at `nano1`. The work key also buckets the distance (8 studs), so a new target at the same bearing re-aims the head.
 - **Pulse pieces:** rig.md's `pulse` (the advanced fusions' `core`, the advanced converters' `coil` / `crucible`, the advanced capacitor's and accumulator's `cells`) had no driver. Their glow parts (`GlowPiece`) now breathe 0.55–1.45 × their resting strength at 0.5 Hz, dimmed by a stall like the rest; none at the "low" glow level. The scale half of the pulse isn't done (welded MeshParts would have to be resized each frame).
 - **Already handled:** the sea extractors' `drill` (Ambient's powered turn) and the gantries' `buildpad` with `nano1..6` / `nano1..8` (FactoryFrames reads up to 8).
+- **Studio, after main d8611b86 (Coastline):**
+  - Walking, the Mammoth's FL and BR legs swing together (±13°), opposite FR and BL; the Titan's and Juggernaut's thighs swing +14 / −11° in turn.
+  - The construction turret turned to −53° for a solar at bearing −50°, and to the airfield's bearing for an airfield. Its head tipped 7–10° down (the lens dropped) and lifted level when the build was done. The particle stream left the lens toward the plant.
 
 ### C-253 — Strategic snapshots in parts (H36, S-212); icons for the playtest-3 units (2026-10-29)
 
