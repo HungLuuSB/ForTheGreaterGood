@@ -493,6 +493,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 - **B-4. Kit additions** (I use the kit read-only): a text input (`Kit.input`, the lobby has its own in `src/lobby/client/Ui.luau`), and a `fill` option on `Kit.button` for green / red action buttons.
 - **B-5. (later) Replays from the lobby:** a `kind = "replay"` match config for a reserved server that plays a saved replay (contract "reserved for a later version").
 
+- **B-9. The UI icons' asset IDs (with E's D-E1).** Once E's resource and stat icons are uploaded, put their asset IDs and atlas rects in a client module next to `IconAtlas` (key → image and rect per size, E's `keys.json` keys). The lobby requires it read-only, like `IconAtlas`.
 - **B-6. Done (C-184, ddc588f).** **Key-art viewer stutter (2026-10-24, the user approved):** UDim2 offsets are whole pixels, so `UI/KeyArt` moved its layers in 1 px jumps. Move them by scale instead (fractional), give tiles a 1 px overlap and a 0.001° rotation (sub-pixel drawing). Tested live: smooth, 60 fps.
 
 ### For models-C (models session)
@@ -508,7 +509,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 
 Since 2026-10-29 (the user), session E owns the 2D assets: the icon sheet's source, unit pictures, command and resource icons, thumbnails. client-B keeps `render.mjs`, `IconAtlas` and the UI wiring. The lobby reads the icons only through B's `IconAtlas` (the Units list, read-only), so an icon request goes to E here, and its wiring to B.
 
-- None open.
+- **D-E1. The Codex's stat icons (E-7 done on branch `2d`, ccd4bde1; E-8 next).** E-7: supply (crate), power (bolt), time (hourglass), wind, tidal, at 16 / 24 / 32 px, white for tinting, with an atlas and `keys.json`. They're not uploaded yet: the upload waits for your approval. E-8 keeps StatBars' `GLYPH` keys (health, dps, range, speed, sight, radar, build) and adds armor, value and airSight. Once they're uploaded, the lobby swaps `StatBars`' text glyphs for these images (the glyph stays as a fallback). It needs B-9 below first.
 
 ## Plan and status
 
