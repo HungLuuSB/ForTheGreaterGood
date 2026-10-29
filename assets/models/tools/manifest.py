@@ -186,6 +186,10 @@ APPROVED = {
     "ord_pharos", "chs_scylla", "ord_empyrean", "chs_rookery",
     # 2026-10-27: the S-197 map features, every variant
     "feature_tree", "feature_rock",
+    # 2026-10-29: the playtest-3 units (S-209)
+    "ord_advsolar", "chs_advsolar", "ord_capacitor", "chs_accumulator", "ord_nano", "chs_nano", "ord_seaextractor", "chs_seaextractor",
+    "ord_advconverter", "chs_advconverter", "ord_advdepot", "chs_advdepot", "ord_advcapacitor", "chs_advaccumulator", "ord_advfusion", "chs_advfusion",
+    "ord_gantry", "chs_gantry", "ord_titan", "chs_korgoth", "chs_mammoth",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -234,6 +238,10 @@ APPROVED_WRECKS = {
     "ord_citadel", "ord_reckoning",
     # 2026-10-26: the S-166 naval SAM platforms and advanced rearm pads
     "ord_pharos", "chs_scylla", "ord_empyrean", "chs_rookery",
+    # 2026-10-29: the playtest-3 units (S-209), with wrecks
+    "ord_advsolar", "chs_advsolar", "ord_capacitor", "chs_accumulator", "ord_nano", "chs_nano", "ord_seaextractor", "chs_seaextractor",
+    "ord_advconverter", "chs_advconverter", "ord_advdepot", "chs_advdepot", "ord_advcapacitor", "chs_advaccumulator", "ord_advfusion", "chs_advfusion",
+    "ord_gantry", "chs_gantry", "ord_titan", "chs_korgoth", "chs_mammoth",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
