@@ -182,15 +182,18 @@ UnitFlow.NONE = "#8C929C" -- neither
 -- One resource's line as RichText: `mark` (its coloured sign), then "+made"
 -- green and "−used" red, each only when there is some; a dim "0" for none.
 function UnitFlow.rich(mark: string, made: number, used: number): string
-	local parts = { mark }
+	local parts = {}
 	if math.abs(made) >= 0.05 then
 		table.insert(parts, `<font color="{UnitFlow.GAIN}">{UnitFlow.text(made)}</font>`)
 	end
 	if math.abs(used) >= 0.05 then
 		table.insert(parts, `<font color="{UnitFlow.COST}">{UnitFlow.text(-used)}</font>`)
 	end
-	if #parts == 1 then
+	if #parts == 0 then
 		table.insert(parts, `<font color="{UnitFlow.NONE}">0</font>`)
+	end
+	if mark ~= "" then -- "": the mark is an icon beside the line (C-263)
+		table.insert(parts, 1, mark)
 	end
 	return table.concat(parts, " ")
 end

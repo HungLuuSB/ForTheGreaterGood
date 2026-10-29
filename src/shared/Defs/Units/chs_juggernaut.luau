@@ -5,13 +5,15 @@
 -- unit: an immensely powerful single-target heat ray, two double-barrelled
 -- shotgun cannons, long-range vertical-launch missiles. Short-ranged for its
 -- size: focused long-range fire takes it down. Walks under water.
--- Self-destructed, it goes up almost like a nuke.
+-- Self-destructed or killed, it goes up in a
+-- blast a third of a nuke's that can't kill a Commander (S-217, the user;
+-- it was almost a nuke, 220 studs, H40).
 local Templates = require("../Templates")
 
 return Templates.extend(Templates.Unit, {
 	id = "chs_juggernaut",
 	name = "Juggernaut",
-	description = "Experimental assault bot. A heat ray, two shotgun cannons and missiles; walks under water, and self-destructs almost like a nuke.",
+	description = "Experimental assault bot. A heat ray, two shotgun cannons and missiles; walks under water.",
 	faction = "chaos",
 	tier = 3,
 	domain = "ground",
@@ -30,7 +32,8 @@ return Templates.extend(Templates.Unit, {
 		{ def = "chs_juggernaut_missiles", turretPiece = "torso", muzzle = "missile_pod" },
 	},
 	pieces = { "base", "thighL", "shinL", "footL", "thighR", "shinR", "footR", "torso", "ray_arm", "ray_muzzle", "gunL", "gunL_muzzle1", "gunL_muzzle2", "gunR", "gunR_muzzle1", "gunR_muzzle2", "missile_pod" },
-	selfDestructBlast = { damage = 12000, aoe = 220, edge = 0.25 }, -- almost a nuke (H40)
+	selfDestructBlast = { damage = 480, aoe = 52, edge = 0.25 }, -- (S-217, the user) 35% of a nuke's 150 studs; about 15% of a Commander's health
+	deathBlast = { damage = 480, aoe = 52, edge = 0.25 }, -- killed, the same: no larger than its self-destruct (S-217)
 	icon = "experimental",
 	model = "chs_juggernaut",
 })

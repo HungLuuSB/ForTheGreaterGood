@@ -83,6 +83,7 @@ return function(t: any)
 		t.expect(string.find(line, UnitFlow.GAIN .. '">+1.0', 1, true) ~= nil, "made in green")
 		t.expect(string.find(line, UnitFlow.COST .. '">−3.2', 1, true) ~= nil or string.find(line, UnitFlow.COST .. '">−3.3', 1, true) ~= nil, "used in red")
 		t.expect(string.find(UnitFlow.rich("S", 0, 0), UnitFlow.NONE .. '">0', 1, true) ~= nil, "neither: a dim 0")
+		t.equal(string.sub(UnitFlow.rich("", 1, 0), 1, 5), "<font", "no mark (an icon beside it): no leading space (C-263)")
 	end)
 
 	t.test("a builder next to an own frame drains for it; wind follows the team's wind", function()

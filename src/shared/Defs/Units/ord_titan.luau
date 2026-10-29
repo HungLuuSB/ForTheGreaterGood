@@ -29,6 +29,8 @@ return Templates.extend(Templates.Unit, {
 		{ def = "ord_titan_blaster", turretPiece = "torso", pitchPiece = "blaster_arm", muzzle = "blaster_muzzle1", muzzles = { "blaster_muzzle1", "blaster_muzzle2" } },
 	},
 	pieces = { "base", "thighL", "shinL", "footL", "thighR", "shinR", "footR", "torso", "beam_arm", "beam_muzzle", "missile_pod", "blaster_arm", "blaster_muzzle1", "blaster_muzzle2" },
+	selfDestructBlast = { damage = 480, aoe = 52, edge = 0.25 }, -- (S-217, the user) 35% of a nuke's 150 studs; about 15% of a Commander's health
+	deathBlast = { damage = 480, aoe = 52, edge = 0.25 }, -- killed, the same: no larger than its self-destruct (S-217)
 	icon = "experimental",
 	model = "ord_titan",
 })

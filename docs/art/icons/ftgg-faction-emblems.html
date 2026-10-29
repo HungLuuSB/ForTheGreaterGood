@@ -1,0 +1,169 @@
+<title>FTGG Faction Emblems</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the field manual sheet of the unit and UI icons. Two directions, each a pair; every emblem from 16 px to 160 px, then in place. */
+:root {
+  --bg: #eceee4;
+  --surface: #f7f8f1;
+  --ink: #1c231d;
+  --muted: #5b655c;
+  --line: #cdd3c3;
+  --accent: #a86a12;
+  --pad: #1b201c;
+  --font-display: "Saira Condensed", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121713; --surface: #1a201b; --ink: #e2e7da; --muted: #96a092;
+    --line: #2d362d; --accent: #e3a646; --pad: #0e110f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121713; --surface: #1a201b; --ink: #e2e7da; --muted: #96a092;
+  --line: #2d362d; --accent: #e3a646; --pad: #0e110f; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+  display: grid; gap: 28px;
+}
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(34px, 6vw, 54px); line-height: 1; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 26px; margin: 0; letter-spacing: .02em; text-transform: uppercase; }
+.lede { max-width: 70ch; color: var(--muted); margin: 0; }
+.section { display: grid; gap: 14px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.section-head p { margin: 0; color: var(--muted); font-size: 13px; }
+.scene { border-radius: 6px; overflow-x: auto; background: var(--pad); }
+.scene > svg { display: block; }
+.note { font-size: 13px; color: var(--muted); margin: 0; max-width: 78ch; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">For The Greater Good · faction emblems · E-12</div>
+    <h1>Order and Chaos emblems</h1>
+    <p class="lede"><b>Picked: direction A, Bastion and Maw</b> (the user, 2026-10-30); direction B stays here as the record. Two directions, each a matched pair, in the unit icons' style B: a white shape with a hairline dark edge and a soft shadow, tinted in the faction colour (Order Blue, Chaos Red). Order stands for discipline, precision and control, heraldry and law, the fortress side; Chaos for freedom, force and disruption, beasts and ruin, mass assault. Neither copies a known mark: no eight-pointed star, no eagle, no claw marks, nothing from BAR.</p>
+  </header>
+
+  <section class="section">
+    <div class="section-head"><h2>The two directions</h2><p>Each emblem at 16, 24, 32 and 64 px, then 160 px; faction colour on dark, white source, and on light</p></div>
+    <div class="scene" id="sizes"></div>
+    <p class="note"><b>A, heraldic.</b> Order's <i>Bastion</i>: a fortress crest with battlements, a rising chevron and a sighting aperture (control, precision, defence). Chaos's <i>Maw</i>: a horned beast's head, jagged brow and slit eyes, coming to a point (predator, force). <b>B, abstract.</b> Order's <i>Lodestar</i>: a four-pointed star held whole in a ring (a fixed point, discipline). Chaos's <i>Fracture</i>: a downward wedge shattered by a jagged crack, its shards forced apart (disruption, ruin).</p>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>In place</h2><p>Lobby faction picker at 64 px, team panel and scoreboard rows at 16 px, a loading screen corner at 32 px</p></div>
+    <div class="scene" id="inplace"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const DARK = "#101411";
+  const f2 = (n) => (+n).toFixed(2);
+
+  // ---- pen (W = tint colour, D = dark edge). Emblems live in a 64 x 64 box. ----
+  let W = "#fff", D = DARK;
+  const J = `stroke-linejoin="miter" stroke-miterlimit="8"`;
+  const EW = 2.2; // the hairline dark edge (at 64; 1.1 at 32)
+  const F = (d) => `<path d="${d}" fill="${W}" stroke="${D}" stroke-width="${EW}" ${J} paint-order="stroke" fill-rule="evenodd"/>`;
+  const L = (d, w) => `<path d="${d}" fill="none" stroke="${D}" stroke-width="${w + EW}" stroke-linecap="butt" ${J}/><path d="${d}" fill="none" stroke="${W}" stroke-width="${w}" stroke-linecap="butt" ${J}/>`;
+  const H = (d) => `<path d="${d}" fill="${D}"/>`;
+  const HC = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${D}"/>`;
+  const G = (t, body) => `<g transform="${t}">${body}</g>`;
+  const poly = (pts) => "M" + pts.map((p) => p.map(f2).join(" ")).join(" L") + " Z";
+  const star = (cx, cy, n, ro, ri, rot = -Math.PI / 2) => poly([...Array(2 * n)].map((_, i) => { const r = i % 2 ? ri : ro, a = rot + i * Math.PI / n; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }));
+  // a ring as one even-odd path between two circles
+  const ring = (cx, cy, ro, ri) => `M${cx - ro} ${cy} A${ro} ${ro} 0 1 0 ${cx + ro} ${cy} A${ro} ${ro} 0 1 0 ${cx - ro} ${cy} Z M${cx - ri} ${cy} A${ri} ${ri} 0 1 1 ${cx + ri} ${cy} A${ri} ${ri} 0 1 1 ${cx - ri} ${cy} Z`;
+
+  const EMBLEM = {
+    // Order A, Bastion: a fortress crest, battlements on top, coming to a point; a rising chevron cut through it and a sighting aperture under it (a plain keystone read as a bucket)
+    order_bastion: () => F("M5 15 H14 V5 H25 V15 H39 V5 H50 V15 H59 V35 L32 61 L5 35 Z") + H("M32 20 L50 33 V41 L32 28 L14 41 V33 Z") + HC(32, 46, 4.6) + `<circle cx="32" cy="46" r="1.9" fill="${W}"/>`,
+    // Chaos A, Maw: a horned beast's head, jagged brow, slit eyes, coming to a point
+    chaos_maw: () => F("M3 2 L19 17 L25 12 L32 19 L39 12 L45 17 L61 2 L55 26 L48 34 L32 62 L16 34 L9 26 Z") + H("M15 27 L28 31 L26 36 L17 33 Z M49 27 L36 31 L38 36 L47 33 Z") + H("M29 44 L32 52 L35 44 Z"),
+    // Order B, Lodestar: a four-pointed star held in a ring
+    order_lodestar: () => F(ring(32, 32, 24, 18.5)) + F(star(32, 32, 4, 30.5, 7.2)) + HC(32, 32, 3.2),
+    // Chaos B, Fracture: a downward wedge shattered by a jagged Y crack, its three shards forced apart (a split ring read as a reload arrow)
+    chaos_fracture: () =>
+      G("translate(-2.6 -2)", F("M4 8 H31 L34 15 L28 20 L32 27 L26 31 L21 30 L18 34 Z")) +
+      G("translate(2.6 -2)", F("M31 8 H60 L46 34 L42 30 L37 32 L32 27 L28 20 L34 15 Z")) +
+      G("translate(0 3.2)", F("M18 34 L21 30 L26 31 L32 27 L37 32 L42 30 L46 34 L32 60 Z")),
+  };
+
+  // ---- catalogue: the user picked direction A (2026-10-30); assets/2d/tools/emblems.mjs exports the PICK pair ----
+  const PICK = "A";
+  const SIZES = [16, 24, 32, 64, 128, 256];
+  const EMB = [
+    { key: "order_bastion", n: "Bastion", faction: "Order", dir: "A", tint: "#4084E6", use: "Order's emblem: lobby faction picker, team panel and scoreboard, loading screen, Codex faction pages." },
+    { key: "chaos_maw", n: "Maw", faction: "Chaos", dir: "A", tint: "#DE463E", use: "Chaos's emblem: the same places as Order's." },
+    { key: "order_lodestar", n: "Lodestar", faction: "Order", dir: "B", tint: "#4084E6" },
+    { key: "chaos_fracture", n: "Fracture", faction: "Chaos", dir: "B", tint: "#DE463E" },
+  ];
+
+  // ---- one emblem: a dark blurred copy under the tinted shape ----
+  let uid = 0;
+  function emblemSVG(it, color, size) {
+    const id = `emb-sh-${uid++}`;
+    D = DARK;
+    W = DARK; const shade = EMBLEM[it.key]();
+    W = color; const body = EMBLEM[it.key]();
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="-2 -2 68 68" role="img" aria-label="${it.faction} emblem, ${it.n}"><defs><filter id="${id}" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="1.4"/></filter></defs><g opacity=".6" filter="url(#${id})">${shade}</g>${body}</svg>`;
+  }
+
+  // ---- page ----
+  const place = (svg, x, y, s) => svg.replace(/^<svg /, `<svg x="${f2(x)}" y="${f2(y)}" `).replace(/width="\d+" height="\d+"/, `width="${s}" height="${s}"`);
+  const byKey = (k) => EMB.find((e) => e.key === k);
+  const txt = (x, y, s, size, color, anchor = "start", weight = 500) => `<text x="${x}" y="${y}" font-family="IBM Plex Mono, monospace" font-size="${size}" font-weight="${weight}" fill="${color}" text-anchor="${anchor}">${s}</text>`;
+
+  function renderSizes() {
+    const cellW = 290, H = 250;
+    let s = "";
+    EMB.forEach((it, i) => {
+      const x = (i % 2) * cellW + Math.floor(i / 2) * (2 * cellW + 20), bg = i % 2 ? "#181c19" : "#1d221e";
+      s += `<rect x="${x}" y="0" width="${cellW}" height="${H}" fill="${bg}"/><rect x="${x}" y="${H}" width="${cellW}" height="70" fill="#dfe2d8"/>`;
+      let cx = x + 12;
+      [16, 24, 32, 64].forEach((sz) => { s += place(emblemSVG(it, it.tint, sz), cx, 20 + (64 - sz) / 2, sz); s += place(emblemSVG(it, "#ffffff", sz), cx, 96 + (64 - sz) / 2, sz); s += place(emblemSVG(it, it.tint, sz), cx, H + 3 + (64 - sz) / 2, sz); cx += sz + 10; });
+      s += place(emblemSVG(it, it.tint, 110), x + 172, 20, 110);
+      s += txt(x + 12, 196, `${it.dir} · ${it.faction}`, 12, "#9aa0aa") + txt(x + 12, 218, it.n, 16, "#e9ebef", "start", 600) + txt(x + 12, 238, it.key, 10, "#8d93a0");
+    });
+    s += txt(2 * cellW + 10, 140, "", 10, "#000");
+    const w = 4 * cellW + 20;
+    document.getElementById("sizes").innerHTML = `<svg width="${w}" height="${H + 70}" viewBox="0 0 ${w} ${H + 70}" role="img" aria-label="Both emblem directions at every size">${s}</svg>`;
+  }
+
+  function renderInPlace() {
+    // per direction: lobby faction picker cards (64 px), team panel rows (16 px), a loading corner (32 px)
+    const Dc = { bg: "#14161b", card: "#1d2026", line: "#2c2f37", text: "#e9ebef", dim: "#8d93a0", sel: "#EEBA5C" };
+    let s = `<rect width="1180" height="300" fill="${Dc.bg}"/>`;
+    ["A", "B"].forEach((dir, d) => {
+      const x0 = d * 590, [o, c] = EMB.filter((e) => e.dir === dir);
+      s += txt(x0 + 16, 24, `DIRECTION ${dir}`, 11, Dc.dim, "start", 600);
+      [[o, "ORDER", "Discipline · precision · control", true], [c, "CHAOS", "Freedom · force · disruption", false]].forEach(([it, name, line, sel], j) => {
+        const x = x0 + 16 + j * 186;
+        s += `<rect x="${x}" y="36" width="176" height="150" rx="4" fill="${Dc.card}" stroke="${sel ? Dc.sel : Dc.line}" stroke-width="${sel ? 2 : 1}"/>` + place(emblemSVG(it, it.tint, 64), x + 56, 50, 64);
+        s += txt(x + 88, 140, name, 15, Dc.text, "middle", 700) + txt(x + 88, 160, line, 8.5, Dc.dim, "middle");
+      });
+      // team panel rows
+      [["Commander Vex", o, "#4084e6"], ["Raider_Kor", c, "#de463e"]].forEach(([who, it, col], j) => {
+        const y = 202 + j * 26;
+        s += `<rect x="${x0 + 16}" y="${y}" width="290" height="22" rx="3" fill="${Dc.card}"/><rect x="${x0 + 22}" y="${y + 6}" width="10" height="10" fill="${col}"/>` + place(emblemSVG(it, it.tint, 16), x0 + 38, y + 3, 16) + txt(x0 + 60, y + 15, who, 11, Dc.text);
+      });
+      // loading corner
+      s += `<rect x="${x0 + 390}" y="36" width="180" height="250" rx="4" fill="#20262c"/>` + txt(x0 + 480, 60, "LOADING", 10, Dc.dim, "middle", 600);
+      s += place(emblemSVG(o, o.tint, 32), x0 + 410, 236, 32) + txt(x0 + 480, 256, "vs", 12, Dc.dim, "middle") + place(emblemSVG(c, c.tint, 32), x0 + 518, 236, 32);
+    });
+    document.getElementById("inplace").innerHTML = `<svg width="1180" height="300" viewBox="0 0 1180 300" role="img" aria-label="Emblems in the lobby, the team panel and a loading screen">${s}</svg>`;
+  }
+  renderSizes(); renderInPlace();
+})();
+</script>

@@ -13,7 +13,62 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 - Also updated: the `manifest.py` approval lists, `animate.py`, and the key-art tank lists.
 - Regenerated: the Meshes registry and `MeshMaterials`.
 - Unchanged: the asset IDs. The review rigs in FTGG Art keep their old names, as `modelPath` records.
-- B's part (the icon and the piece-script swap) is still open, so `test_client` fails 3 tests here (IconAtlas, Icons, PieceAnim Juggernaut) until B's tip.
+- B's part (the icon and the piece-script swap) went in with it: on `main` as `b3992f45`, all suites passing.
+
+**E-11 build-menu unit pictures (2026-10-30, for 2D session E):**
+- **The look:** the user approved it, relayed by E, with one change: "increase their glow and color". It's built in.
+- **The picture:** each unit stands in a small opaque scene of its own setting:
+  - ground vehicles and walkers on terrain, with track marks or footprints;
+  - structures on a gravel apron with props;
+  - ships in water with a wake;
+  - sea structures in water with foam;
+  - subs and seafloor structures under water;
+  - amphibious and hover units on a shoreline;
+  - aircraft banked over clouds.
+  Order's ground is green, Chaos's is ash.
+- **Team paint:** baked in the faction colour, Order blue #4084E6 and Chaos red #DE463E (the user, 2026-10-30, via E). There is no mask pass now; `--masks` still renders `<id>_mask.png` (lit white team paint) if it's ever needed.
+- **Tools:**
+  - `assets/models/tools/pictures_defs.luau` writes `debug_out/pictures/defs.json`: the non-retired defs and each one's setting.
+  - `assets/models/tools/pictures.py` (Blender) renders `debug_out/pictures/<id>.png` at 256×256, about 10 s per unit. Its docstring has the commands.
+- **Output:** the PNGs are regenerable and not committed. E reads them from `debug_out/pictures/` and commits only the packed sheets, in `assets/2d/pictures/`.
+- **When to re-render:** whenever a mesh changes or a unit is added.
+- **Fix in passing:** `portraits.py` now strips the `_bar` suffix from glow-part names. Before, every glow rendered in the fallback grey instead of its channel colour.
+- **Full re-render done (2026-10-30):** all 197 pictures are in `debug_out/pictures/` with the look below, and no masks. Contact sheet: `debug_out/screens/pictures_all_v3.png`. 2D session E repacks from them (request 13).
+- **Later notes from the user (2026-10-30), all built in:** "too blurry because of the fog. Remove it" (the haze is off, the sub's murk halved, the depth of field eased); "Make them glow more" (glow 3.5, a stronger bloom); "push the color up too" (unit saturation 2.1, plus a whole-picture grade).
+
+**D-Gun effects (2026-10-30, the user via clients-B: "make the VFX for D-gun too"):** four templates in `place/Vfx.model.json`, from `assets/fx/vfx/build_vfx.py`, next to F27's `Death`. The colour is fixed (255, 200, 90) for both factions. They're authored at real size: the bolt is about 7 studs across, for the 14-stud-wide path.
+- **`DgunBolt`:** a Folder of two Attachments.
+  - `Bolt` holds the core, plasma, halo, a world-space heat trail, sparks and a light that stays on.
+  - `Ground`, 5 studs below, leaves fire, a burnt strip and smoke along the path.
+  - Its emitters are saved Enabled with a `Rate`, and the Folder's `Continuous` attribute says they run while the client moves the bolt.
+- **`DgunMuzzle`, `DgunHit`, `DgunEnd`:** emit-once bursts, facing `-Z`.
+- **Review:** `Workspace.DgunReview` in FTGG Art, the Order Commander firing past three targets. Studio's edit mode doesn't run `Rate` emitters, so the review loop emits Rate × dt by hand.
+- **B's part:** wiring the four names into `Render/Vfx` and Effects.
+- **The user approved the D-Gun (2026-10-30).** A fix landed after: see "Two template bugs" below. Until it's merged, the shipped templates have no attributes.
+
+**Explosions, missiles, ground marks (2026-10-30).** The user asked for explosions "more appealing to today's standards", "for unit death, structure, nuke", and gave references in `assets/reference/unit_explosion`. Then: "make some effect marker for ground when explosion happens instead of a black circle like in game" and "Missiles deserve enhancement too. They lack some key aspect (fire booster,...)". The work is `39aa66e8`, from `assets/fx/vfx/build_vfx.py` and `assets/fx/scorch/build.py`. Everything is our own; nothing is copied from the references.
+- **`Death`** (a Folder): a `Blast` attachment and five `Arm` attachments.
+  - The blast: pre-flash and rays, a soft glow halo, a shock sphere, hot blobs, and a fireball that cools into dark grey smoke. Along the ground, a shock ring and dust and fire rings. Also shrapnel, sparks, debris, secondary pops, flames left on the wreck, embers, and a one-second ground glow.
+  - The arms: burning chunks flung out on tilted attachments, each leaving a line of smoke.
+- **`StructureDeath`:** heavier. It adds a low dust cloud as the building collapses, three chain explosions at their own spots (`Chain1..3`), fires spread over the rubble, a smoke column and seven arms.
+- **`Impact`:** stays cheap: flash and rays, halo, a fireball thrown upward, sparks, dirt and smoke.
+- **`Nuke`** (scale 1 = a 150-stud blast): a flash with spikes, a condensation shell, a ground shockwave out to ~3× the blast, and a fireball that burns for 3–4 s, rising into a fire-lit stem and mushroom cap. Then dust, a glowing crater with burning spots, debris and embers.
+- **`MissileExhaust`** (Continuous, like `DgunBolt`), on the nozzle while the missile flies:
+  - a white-hot core, a long flame plume with a hotter inner cone, and four shock diamonds (`Diamond1..4`);
+  - a wide glow that reads from the RTS camera, sparks, and a thick rocket-smoke trail lit orange at the nozzle;
+  - a light.
+- **`Launch`:** the booster lighting: a flash, a backblast of fire, sparks, and a launch-smoke cloud with billows.
+- **Blast marks** (`assets/fx/scorch/`):
+  - `blast_mark_a` / `blast_mark_b`: soot decals with a charred centre, fine blast streaks, a ragged edge, an ash ring and thrown flecks.
+  - `blast_mark_glow`: molten centre, a network of glowing cracks and embers. White, so the client tints it hot orange and overbright (as BeamShots does), fading over the first seconds.
+  - Previews: `debug_out/scorchfx/`.
+  - Uploaded 2026-10-30 with the user's approval: `Meshes.textures.blastMarkA` / `blastMarkB` / `blastMarkGlow`. The Decal ids are in `assets/fx/scorch/opencloud.json`.
+  - These replace Render/Vfx's flat dark disc. The particle scorch is now only a one-second ground glow.
+- **Two template bugs, found in review, fixed here:**
+  - The `ParticleOrientation` values were off by one (1 is `FacingCameraWorldUp`). "Flat" scorches stood upright like domes, and streaks weren't velocity-aligned. The D-Gun's too.
+  - Rojo 7.7 silently drops a top-level `"Attributes"` in a `.model.json`. Every template, the D-Gun's included, reached Studio with no `EmitCount`, `EmitDelay` or `Continuous`. They're now written typed under `Properties.Attributes`. `tests/client/VfxTemplates.spec.luau` guards this.
+- **Review** (FTGG Art, the desert at Y=18): a harness that plays a template like the client does, then slows time to near zero for a capture. `TimeScale = 0` renders particles wrongly. Pictures are in `debug_out/screens/vfx_*.jpg`.
+- **B's part:** request 12.
 
 **Where it stands:** `m-models` is at `main` `d8611b86`. Every piece of models work is integrated; the last merges were `34cbaf59` and `82bedb2a`. Checks there: `lune run test` 615/615, `lune run test_client` 335/335, `lune run build` (879 scripts, 2457 requires resolve). Nothing is in review: all 203 defs have an approved mesh and an approved wreck (status table below), and all nine named maps have an approved baked ground (`GROUND_APPROVED` in `assets/models/tools/manifest.py`).
 
@@ -918,3 +973,24 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `fc1383d0` (playtest-3 units, S-209: 21 hand-made blockouts registered and BAR-style meshes with wrecks, all `review` in the manifest, so the game draws the blockouts until approved; contains `20b58b9b` and the m-sim-2 `94380002` / `8a111001` merges. `assets/models/`, `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json`, tools, docs).
 - Ready to merge: `3f450b39` (the user approved the 21 playtest-3 meshes with their wrecks (`a54a4bdd`): they draw in game; the Mammoth's muzzles renamed `muzzle1` / `muzzle2` as attachments in its blockout and mesh, for sim-A's `2ef1569d` (merged here, so integrate after it); manifest, docs).
 - Ready to merge: `a1030665` (S-213 id swap, for sim-A's `748ddf25` (merged here): `chs_korgoth` becomes `chs_juggernaut`, the old tank `chs_juggernaut` becomes `chs_goliath` in the Blockouts and Meshes registries, asset folders, manifest and MeshMaterials; asset IDs unchanged. `test_client` fails 3 tests until B adds the icon and piece-script swap, so integrate through B's tip).
+- Ready to merge: `2174e58f` (E-11 build-menu unit pictures, contains `60527a80` and `e3e353bb`; team paint baked in the faction colour: `assets/models/tools/pictures.py` and `pictures_defs.luau` render each unit's picture and team mask into `debug_out/pictures/` for 2D session E; `portraits.py` importable, and its glow-colour lookup fixed. Tools and docs only, nothing under `src/`).
+12. **Models → client session (explosions, missiles, ground marks, 2026-10-30; `39aa66e8`):**
+   - **Re-check the D-Gun first.** Until now its templates reached the place with no `EmitCount` / `EmitDelay` / `Continuous` (a Rojo quirk, fixed here). Your `Vfx.follow` keyed on `Continuous` never saw it.
+   - **New names:**
+     - add `nuke = "Nuke"` to `Vfx.TEMPLATE_NAMES`, played at `b.radius / 150` as now;
+     - play `StructureDeath` instead of `Death` for a structure's death;
+     - hold `MissileExhaust` on the missile's exhaust with `Vfx.follow` / `Vfx.release`, at the style's scale (1 / 2.3 / 4.5). When it's there, hide the built-in `Flame` trail and `Puffs`; the `Smoke` trail can stay. `Launch` is already a name.
+   - **Template handling:**
+     - honour `GroundOnly` on template emitters (skip them for a burst in the air, like the built-in `ground` specs);
+     - scale template Attachment positions by the burst's scale. The missile's shock diamonds, the structure's chain blasts and the debris arms are authored at scale 1.
+     - Optional: scale template `Acceleration` by sqrt(s), like the built-in effects.
+   - **Blast marks:** replace the dark `Scorch` disc with two Decals on its top face, the way BeamShots does: a soot decal (`blast_mark_a` or `blast_mark_b` at random, at a random yaw) and the glow decal on top (`Color3` about (1, 0.55, 0.18) × 2.2, fading over ~2 s).
+     - The soot stays `SCORCH_SECONDS` as now. The size can stay 5.6 × scale, or a little more.
+     - A nuke can lay one big mark over its crater too.
+     - **Uploaded with the user's approval (2026-10-30):** `Meshes.textures.blastMarkA` / `blastMarkB` (soot) and `blastMarkGlow`.
+     - Checked in FTGG Art (`debug_out/screens/vfx_blast_marks_studio.jpg`):
+       - set the part's `CastShadow = false`, or the decals throw blob shadows;
+       - lift the part about 0.6 stud over the ground height. At +0.08, Terrain's sand ripples hid it.
+13. **Models → 2D session E (E-11 pictures, 2026-10-30):** the full set is re-rendered with the user's notes: no fog, more glow, more colour, and team paint in the faction colour. That's all 197 in `debug_out/pictures/` (contact sheet `debug_out/screens/pictures_all_v3.png`). Please repack the sheets from them. Uploading the repacked sheets needs the user's approval.
+- Ready to merge: `39aa66e8` (explosions, missiles, blast marks: new `Death` / `StructureDeath` / `Impact` / `Nuke` / `MissileExhaust` / `Launch` templates in `place/Vfx.model.json`. It also fixes two template bugs: the orientation values, and attributes now typed so Rojo keeps them, which also fixes the D-Gun templates. Also the `assets/fx/scorch` blast-mark decals (not uploaded) and `tests/client/VfxTemplates.spec.luau`. `place/`, `assets/`, `tests/client/` and docs only; B wires the new names, request 12).
+- Ready to merge: `51db9785` (D-Gun VFX templates `DgunBolt` / `DgunMuzzle` / `DgunHit` / `DgunEnd` in `place/Vfx.model.json`, built by `assets/fx/vfx/build_vfx.py`; contains `e958c1c8`, the E-11 pictures with no fog and more glow and colour. `place/`, `assets/` and docs only; B wires the names into Render/Vfx).

@@ -15,6 +15,7 @@ local Waypoints = require("./Core/Waypoints")
 local Upgrades = require("./Core/Upgrades")
 local World = require("./Core/World")
 local CommandSet = require("./Core/CommandSet")
+local AttackPreview = require("./Core/AttackPreview")
 
 local Api = {}
 
@@ -328,8 +329,24 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			end
 			ok, why = actions.order("repair", unitId, queue)
 		elseif kind == "dgun" then
-			-- the D-Gun at the point (S-194, G5): Commanders walk into range first
-			ok, why = issue({ cmdType = CT.DGUN, queue = queue == true, x = x, z = z })
+			-- the D-Gun at the point (S-194, G5), pulled into each Commander's
+			-- range so it fires from where it stands (C-264, the user: the path
+			-- always stays inside its range); at an enemy unit as it stands:
+			-- out of range, the Commander walks to it first (the server's walk)
+			local target = AttackPreview.boltTarget(world, unitId)
+			ok, why = false, "no selected unit can do that"
+			for _, id in sel.ids do
+				local cu = world.units[id]
+				local weapon = cu and AttackPreview.boltWeapon(world, cu)
+				if cu and weapon then
+					local px, pz = if target then target.x else x, if target then target.z else z
+					if target == nil then
+						px, pz = AttackPreview.boltPoint(cu, weapon, x, z)
+					end
+					local ok1, why1 = issue({ cmdType = CT.DGUN, queue = queue == true, x = px, z = pz }, { id })
+					ok, why = ok or ok1, if ok or ok1 then nil else why1
+				end
+			end
 		elseif kind == "reclaim" or kind == "resurrect" then
 			-- the known wreck nearest the click (wrecks aren't pickable models), C-109;
 			-- RESURRECT the same way (S-168, C-216: workers with canResurrect)

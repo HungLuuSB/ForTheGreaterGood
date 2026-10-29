@@ -17,6 +17,9 @@ local Render = {}
 local ARC = Color3.fromRGB(255, 170, 60)
 local BLAST = Color3.fromRGB(255, 60, 40)
 local OUT_OF_RANGE = Color3.fromRGB(150, 150, 150)
+local BOLT = Color3.fromRGB(255, 170, 60) -- the D-Gun's ring colour (RangeOverlay)
+local DOOMED = Color3.fromRGB(255, 60, 40)
+local BOLT_STEP = 4 -- studs per drawn segment along the ground
 local RING_SEGMENTS = 48
 
 export type State = {
@@ -84,9 +87,55 @@ local function ring(s: State, world: World.World, x: number, z: number, r: numbe
 	end
 end
 
--- `aim`: the ground point under the cursor while attack mode is on, else nil.
-function Render.step(s: State, world: World.World, selection: { number }, aim: Vector3?, cam: Camera)
+-- A path on the ground from (x0, z0) to (x1, z1), offset `side` studs to its
+-- left, following the terrain; every other segment when `dashed`.
+local function groundPath(s: State, world: World.World, x0: number, z0: number, x1: number, z1: number, side: number, color: Color3, thickness: number, dashed: boolean)
+	local dx, dz = x1 - x0, z1 - z0
+	local len = math.sqrt(dx * dx + dz * dz)
+	if len < 1e-3 then
+		return
+	end
+	local nx, nz = -dz / len * side, dx / len * side
+	local n = math.max(1, math.ceil(len / BOLT_STEP))
+	local prev: Vector3? = nil
+	for i = 0, n do
+		local px, pz = x0 + dx * i / n + nx, z0 + dz * i / n + nz
+		local p = Vector3.new(px, World.groundY(world, px, pz) + 1, pz)
+		if prev and (not dashed or i % 2 == 0) then
+			line(s, prev, p, color, thickness, 0.15)
+		end
+		prev = p
+	end
+end
+
+-- D-Gun mode's preview (C-264): each Commander's bolt as a band its width
+-- (the hitbox) over its whole range from the Commander, and a red ring on
+-- every unit in its way.
+local function bolts(s: State, world: World.World, selection: { number }, aim: Vector3, targetId: number?)
+	for _, b in AttackPreview.bolts(world, selection, aim.X, aim.Z, targetId) do
+		groundPath(s, world, b.x0, b.z0, b.x1, b.z1, b.reach, BOLT, 3, false)
+		groundPath(s, world, b.x0, b.z0, b.x1, b.z1, -b.reach, BOLT, 3, false)
+		groundPath(s, world, b.x0, b.z0, b.x1, b.z1, 0, BOLT, 2, true)
+		local dx, dz = b.x1 - b.x0, b.z1 - b.z0
+		local len = math.sqrt(dx * dx + dz * dz)
+		local nx, nz = -dz / len * b.reach, dx / len * b.reach
+		groundPath(s, world, b.x0 + nx, b.z0 + nz, b.x0 - nx, b.z0 - nz, 0, BOLT, 3, false) -- the ends
+		groundPath(s, world, b.x1 + nx, b.z1 + nz, b.x1 - nx, b.z1 - nz, 0, BOLT, 3, false)
+		for _, id in b.hits do
+			local o = world.units[id]
+			local def = World.def(world, o)
+			ring(s, world, o.x, o.z, (if def then def.footprint else 1) * 4, DOOMED)
+		end
+	end
+end
+
+-- `aim`: the ground point under the cursor while attack mode is on, else nil;
+-- `boltAim`: the same while D-Gun mode is on, and `boltUnit` the unit under it.
+function Render.step(s: State, world: World.World, selection: { number }, aim: Vector3?, cam: Camera, boltAim: Vector3?, boltUnit: number?)
 	s.used = 0
+	if boltAim then
+		bolts(s, world, selection, boltAim, boltUnit)
+	end
 	local arcs = if aim then AttackPreview.arcs(world, selection, aim.X, aim.Z) else {}
 	for _, arc in arcs do
 		local color = if arc.inRange then ARC else OUT_OF_RANGE

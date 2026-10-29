@@ -1,0 +1,119 @@
+{
+	"sheet": "ftgg-faction-emblems.png",
+	"sizes": [
+		16,
+		24,
+		32,
+		64,
+		128,
+		256
+	],
+	"tiles": {
+		"order_bastion": {
+			"name": "Bastion",
+			"faction": "Order",
+			"tint": "#4084E6",
+			"files": {
+				"16": "order_bastion_16.png",
+				"24": "order_bastion_24.png",
+				"32": "order_bastion_32.png",
+				"64": "order_bastion_64.png",
+				"128": "order_bastion_128.png",
+				"256": "order_bastion_256.png"
+			},
+			"rect": {
+				"16": [
+					0,
+					0,
+					16,
+					16
+				],
+				"24": [
+					18,
+					0,
+					24,
+					24
+				],
+				"32": [
+					44,
+					0,
+					32,
+					32
+				],
+				"64": [
+					78,
+					0,
+					64,
+					64
+				],
+				"128": [
+					144,
+					0,
+					128,
+					128
+				],
+				"256": [
+					274,
+					0,
+					256,
+					256
+				]
+			}
+		},
+		"chaos_maw": {
+			"name": "Maw",
+			"faction": "Chaos",
+			"tint": "#DE463E",
+			"files": {
+				"16": "chaos_maw_16.png",
+				"24": "chaos_maw_24.png",
+				"32": "chaos_maw_32.png",
+				"64": "chaos_maw_64.png",
+				"128": "chaos_maw_128.png",
+				"256": "chaos_maw_256.png"
+			},
+			"rect": {
+				"16": [
+					0,
+					258,
+					16,
+					16
+				],
+				"24": [
+					18,
+					258,
+					24,
+					24
+				],
+				"32": [
+					44,
+					258,
+					32,
+					32
+				],
+				"64": [
+					78,
+					258,
+					64,
+					64
+				],
+				"128": [
+					144,
+					258,
+					128,
+					128
+				],
+				"256": [
+					274,
+					258,
+					256,
+					256
+				]
+			}
+		}
+	},
+	"atlasSize": [
+		1024,
+		514
+	]
+}
