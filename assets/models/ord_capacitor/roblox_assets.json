@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 2392 triangles, glow share 4.9%",
+  "bar": {
+    "model": "rbxassetid://92412720625701",
+    "meshes": {
+      "base": "rbxassetid://139717631488853",
+      "base_glow_power": "rbxassetid://103836028284623",
+      "base_glow_running": "rbxassetid://90153293502698"
+    },
+    "decals": {
+      "ALB": "rbxassetid://80026768969398",
+      "RGH": "rbxassetid://140024146626910",
+      "NOR": "rbxassetid://132639946064100",
+      "MTL": "rbxassetid://97743231883308",
+      "EMI": "rbxassetid://98820934738591"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://126471933182551",
+      "NOR": "rbxassetid://122430954998923",
+      "RGH": "rbxassetid://99472337306170",
+      "MTL": "rbxassetid://117099829599497",
+      "EMI": "rbxassetid://111077726243281"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_capacitor_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://78191726610679",
+    "meshes": {
+      "base": "rbxassetid://92806297026380"
+    },
+    "decals": {
+      "ALB": "rbxassetid://116831050729263",
+      "RGH": "rbxassetid://81494042337621",
+      "NOR": "rbxassetid://92748359765726",
+      "MTL": "rbxassetid://134893818829216",
+      "EMI": "rbxassetid://77828066505871"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://128354135596943",
+      "NOR": "rbxassetid://103517999817721",
+      "RGH": "rbxassetid://133991571830447",
+      "MTL": "rbxassetid://121255235018056",
+      "EMI": "rbxassetid://105031264472725"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_capacitor_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 2356 triangles"
+  }
+}

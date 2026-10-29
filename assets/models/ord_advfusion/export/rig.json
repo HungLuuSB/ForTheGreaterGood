@@ -1,0 +1,171 @@
+{
+  "id": "ord_advfusion",
+  "footprintStuds": 48,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        13.9752,
+        0.0
+      ],
+      "size": [
+        47.5222,
+        27.9504,
+        47.5222
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        0.0,
+        12.983,
+        0.0
+      ],
+      "size": [
+        7.6,
+        1.262,
+        7.4846
+      ],
+      "pivot": [
+        0.0,
+        20.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "core"
+  ],
+  "visualPieces": [
+    "core"
+  ],
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        13.132,
+        0.0
+      ],
+      "size": [
+        40.89,
+        23.824,
+        40.89
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        14.5611,
+        -3.2935
+      ],
+      "size": [
+        28.53,
+        21.4966,
+        35.117
+      ]
+    },
+    {
+      "name": "core_glow_running",
+      "piece": "core",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        20.0,
+        0.0
+      ],
+      "size": [
+        15.2,
+        15.2,
+        15.2
+      ]
+    },
+    {
+      "name": "core_glow_head",
+      "piece": "core",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        -0.0629,
+        20.4187,
+        -0.1619
+      ],
+      "size": [
+        14.9828,
+        9.6439,
+        14.9994
+      ]
+    }
+  ],
+  "glowShare": 0.0493,
+  "triangles": {
+    "base": 4632,
+    "core": 1248,
+    "total": 5880
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

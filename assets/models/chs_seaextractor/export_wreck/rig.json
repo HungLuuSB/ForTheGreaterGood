@@ -1,0 +1,84 @@
+{
+  "id": "chs_seaextractor_wreck",
+  "wreckOf": "chs_seaextractor",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.1287,
+        2.2272,
+        0.0142
+      ],
+      "size": [
+        15.53,
+        4.6672,
+        15.2452
+      ]
+    },
+    "drill": {
+      "parent": "base",
+      "center": [
+        -0.0096,
+        5.2382,
+        0.9401
+      ],
+      "size": [
+        10.2106,
+        1.7506,
+        9.0849
+      ],
+      "pivot": [
+        0.0,
+        4.4,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "drill"
+  ],
+  "anim": {
+    "drill": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1424,
+    "drill": 912,
+    "total": 2336
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

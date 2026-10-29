@@ -1,0 +1,54 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR mesh after the playtest-3 refs (S-209): 2556 triangles, glow share 1.0%",
+  "bar": {
+    "model": "rbxassetid://79095715305633",
+    "meshes": {
+      "base": "rbxassetid://131764534996649",
+      "base_glow_head": "rbxassetid://98386595183371",
+      "base_glow_power": "rbxassetid://79520347977300",
+      "base_glow_running": "rbxassetid://113986526558771",
+      "drill": "rbxassetid://113361565587078",
+      "drill_glow_power": "rbxassetid://119874593194872",
+      "drill_glow_running": "rbxassetid://125634096909720"
+    },
+    "decals": {
+      "ALB": "rbxassetid://87152644928511",
+      "RGH": "rbxassetid://137501889032415",
+      "NOR": "rbxassetid://107687609048874",
+      "MTL": "rbxassetid://89938007083129",
+      "EMI": "rbxassetid://132988782630985"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://89839464460034",
+      "NOR": "rbxassetid://120129478494424",
+      "RGH": "rbxassetid://120112970554225",
+      "MTL": "rbxassetid://134102345289402",
+      "EMI": "rbxassetid://125064013896008"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_seaextractor_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://107019382011568",
+    "meshes": {
+      "base": "rbxassetid://81105927221398",
+      "drill": "rbxassetid://84274828574438"
+    },
+    "decals": {
+      "ALB": "rbxassetid://128524861548172",
+      "RGH": "rbxassetid://95737607780995",
+      "NOR": "rbxassetid://133562145782960",
+      "MTL": "rbxassetid://119605708333768",
+      "EMI": "rbxassetid://129289965742221"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://135285385936526",
+      "NOR": "rbxassetid://94722520328726",
+      "RGH": "rbxassetid://76356815845026",
+      "MTL": "rbxassetid://111175854834431",
+      "EMI": "rbxassetid://76885770760221"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_seaextractor_wreck_bar in FTGG Art",
+    "revision": "BAR mesh after the playtest-3 refs (S-209): 2336 triangles"
+  }
+}

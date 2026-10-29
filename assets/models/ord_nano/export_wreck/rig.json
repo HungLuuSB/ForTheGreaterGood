@@ -1,0 +1,101 @@
+{
+  "id": "ord_nano_wreck",
+  "wreckOf": "ord_nano",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.019,
+        3.0122,
+        -0.0261
+      ],
+      "size": [
+        16.2668,
+        6.2021,
+        16.2365
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.0745,
+        7.8457,
+        0.2867
+      ],
+      "size": [
+        4.1572,
+        3.5161,
+        4.7747
+      ],
+      "pivot": [
+        0.0,
+        6.0,
+        0.0
+      ]
+    },
+    "nano": {
+      "parent": "turret",
+      "center": [
+        -0.0661,
+        9.2725,
+        -1.6329
+      ],
+      "size": [
+        3.7316,
+        4.5932,
+        6.7228
+      ],
+      "pivot": [
+        0.0,
+        8.3,
+        0.5
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.0,
+        10.398,
+        -4.692
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1900,
+    "turret": 500,
+    "nano": 416,
+    "total": 2816
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
