@@ -168,7 +168,7 @@ def build_mesh(entry, col):
             bpy.data.objects.remove(o, do_unlink=True)
             continue
         if "_glow_" in o.name:
-            channel = o.name.split("_glow_")[1].split(".")[0]
+            channel = o.name.split("_glow_")[1].split(".")[0].removesuffix("_bar")  # base_glow_running_bar -> running
             lib.assign_single_material([o], lib.textured_material(f"p_{uid}_{channel}", imgs, None, glow.get(channel, (220, 220, 220))))
         else:
             lib.assign_single_material([o], base_mat)
@@ -278,4 +278,5 @@ def main():
     json.dump(meta, open(os.path.join(OUT, f"portraits_{first}.json"), "w", encoding="utf-8"), indent=1)
 
 
-main()
+if __name__ == "__main__":  # pictures.py imports the helpers
+    main()

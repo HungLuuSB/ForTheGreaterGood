@@ -131,7 +131,8 @@
             "ZOffset": 1,
             "Brightness": 1.4,
             "Rate": 0,
-            "Enabled": false
+            "Enabled": false,
+            "LockedToPart": false
           },
           "Attributes": {
             "EmitCount": 3,
@@ -272,7 +273,8 @@
             "ZOffset": 0.0,
             "Brightness": 1.1,
             "Rate": 0,
-            "Enabled": false
+            "Enabled": false,
+            "LockedToPart": false
           },
           "Attributes": {
             "EmitCount": 22,
@@ -405,7 +407,8 @@
             "ZOffset": 0.0,
             "Brightness": 1.2,
             "Rate": 0,
-            "Enabled": false
+            "Enabled": false,
+            "LockedToPart": false
           },
           "Attributes": {
             "EmitCount": 64,
@@ -538,7 +541,8 @@
             "ZOffset": 0.0,
             "Brightness": 1.0,
             "Rate": 0,
-            "Enabled": false
+            "Enabled": false,
+            "LockedToPart": false
           },
           "Attributes": {
             "EmitCount": 14,
@@ -667,6 +671,7 @@
             "Brightness": 1.4,
             "Rate": 0,
             "Enabled": false,
+            "LockedToPart": false,
             "Squash": {
               "NumberSequence": {
                 "keypoints": [
@@ -802,7 +807,8 @@
             "ZOffset": 0.0,
             "Brightness": 1.0,
             "Rate": 0,
-            "Enabled": false
+            "Enabled": false,
+            "LockedToPart": false
           },
           "Attributes": {
             "EmitCount": 14,
@@ -940,7 +946,8 @@
             "ZOffset": 0.0,
             "Brightness": 1.0,
             "Rate": 0,
-            "Enabled": false
+            "Enabled": false,
+            "LockedToPart": false
           },
           "Attributes": {
             "EmitCount": 18,
@@ -1060,7 +1067,8 @@
             "ZOffset": 0.0,
             "Brightness": 1.5,
             "Rate": 0,
-            "Enabled": false
+            "Enabled": false,
+            "LockedToPart": false
           },
           "Attributes": {
             "EmitCount": 26,
@@ -1193,7 +1201,8 @@
             "ZOffset": -1,
             "Brightness": 1.0,
             "Rate": 0,
-            "Enabled": false
+            "Enabled": false,
+            "LockedToPart": false
           },
           "Attributes": {
             "EmitCount": 2,
@@ -1218,6 +1227,3221 @@
           },
           "Attributes": {
             "LightSeconds": 0.55
+          }
+        }
+      ]
+    },
+    {
+      "Name": "DgunBolt",
+      "ClassName": "Folder",
+      "Attributes": {
+        "Continuous": true
+      },
+      "Children": [
+        {
+          "Name": "Bolt",
+          "ClassName": "Attachment",
+          "Children": [
+            {
+              "Name": "Core",
+              "ClassName": "ParticleEmitter",
+              "Properties": {
+                "Texture": "rbxasset://textures/particles/explosion01_core_main.dds",
+                "Lifetime": {
+                  "NumberRange": [
+                    0.12,
+                    0.18
+                  ]
+                },
+                "Speed": {
+                  "NumberRange": [
+                    0,
+                    0
+                  ]
+                },
+                "Size": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 6.0,
+                        "envelope": 0.4
+                      },
+                      {
+                        "time": 0.5,
+                        "value": 7.5,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 6.5,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "Color": {
+                  "ColorSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "color": [
+                          1.0,
+                          0.9725490196078431,
+                          0.8862745098039215
+                        ]
+                      },
+                      {
+                        "time": 0.25,
+                        "color": [
+                          1.0,
+                          0.7843137254901961,
+                          0.35294117647058826
+                        ]
+                      },
+                      {
+                        "time": 1,
+                        "color": [
+                          1.0,
+                          0.7843137254901961,
+                          0.35294117647058826
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "Transparency": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 0,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 0.7,
+                        "value": 0.1,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 1,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "EmissionDirection": {
+                  "Enum": 1
+                },
+                "SpreadAngle": {
+                  "Vector2": [
+                    180,
+                    180
+                  ]
+                },
+                "Acceleration": {
+                  "Vector3": [
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                "Drag": 0.0,
+                "LightEmission": 1,
+                "LightInfluence": 0.0,
+                "Orientation": {
+                  "Enum": 0
+                },
+                "Rotation": {
+                  "NumberRange": [
+                    0,
+                    360
+                  ]
+                },
+                "RotSpeed": {
+                  "NumberRange": [
+                    -60,
+                    60
+                  ]
+                },
+                "ZOffset": 2,
+                "Brightness": 2.6,
+                "Rate": 60,
+                "Enabled": true,
+                "LockedToPart": true
+              },
+              "Attributes": {}
+            },
+            {
+              "Name": "Plasma",
+              "ClassName": "ParticleEmitter",
+              "Properties": {
+                "Texture": "rbxasset://textures/particles/fire_main.dds",
+                "Lifetime": {
+                  "NumberRange": [
+                    0.16,
+                    0.26
+                  ]
+                },
+                "Speed": {
+                  "NumberRange": [
+                    0.5,
+                    2
+                  ]
+                },
+                "Size": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 4.5,
+                        "envelope": 0.8
+                      },
+                      {
+                        "time": 0.5,
+                        "value": 6.0,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 2.4,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "Color": {
+                  "ColorSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "color": [
+                          1.0,
+                          0.9725490196078431,
+                          0.8862745098039215
+                        ]
+                      },
+                      {
+                        "time": 0.3,
+                        "color": [
+                          1.0,
+                          0.7843137254901961,
+                          0.35294117647058826
+                        ]
+                      },
+                      {
+                        "time": 1,
+                        "color": [
+                          1.0,
+                          0.47058823529411764,
+                          0.11764705882352941
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "Transparency": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 0,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 0.6,
+                        "value": 0.15,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 1,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "EmissionDirection": {
+                  "Enum": 1
+                },
+                "SpreadAngle": {
+                  "Vector2": [
+                    180,
+                    180
+                  ]
+                },
+                "Acceleration": {
+                  "Vector3": [
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                "Drag": 0.0,
+                "LightEmission": 1,
+                "LightInfluence": 0.0,
+                "Orientation": {
+                  "Enum": 0
+                },
+                "Rotation": {
+                  "NumberRange": [
+                    0,
+                    360
+                  ]
+                },
+                "RotSpeed": {
+                  "NumberRange": [
+                    -300,
+                    300
+                  ]
+                },
+                "ZOffset": 1,
+                "Brightness": 3,
+                "Rate": 90,
+                "Enabled": true,
+                "LockedToPart": true
+              },
+              "Attributes": {}
+            },
+            {
+              "Name": "Halo",
+              "ClassName": "ParticleEmitter",
+              "Properties": {
+                "Texture": "rbxasset://textures/particles/explosion01_shockwave_main.dds",
+                "Lifetime": {
+                  "NumberRange": [
+                    0.12,
+                    0.18
+                  ]
+                },
+                "Speed": {
+                  "NumberRange": [
+                    0,
+                    0
+                  ]
+                },
+                "Size": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 8.0,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 9.5,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "Color": {
+                  "ColorSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "color": [
+                          1.0,
+                          0.7843137254901961,
+                          0.35294117647058826
+                        ]
+                      },
+                      {
+                        "time": 1,
+                        "color": [
+                          1.0,
+                          0.47058823529411764,
+                          0.11764705882352941
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "Transparency": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 0.35,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 1,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "EmissionDirection": {
+                  "Enum": 1
+                },
+                "SpreadAngle": {
+                  "Vector2": [
+                    180,
+                    180
+                  ]
+                },
+                "Acceleration": {
+                  "Vector3": [
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                "Drag": 0.0,
+                "LightEmission": 1,
+                "LightInfluence": 0.0,
+                "Orientation": {
+                  "Enum": 0
+                },
+                "Rotation": {
+                  "NumberRange": [
+                    0,
+                    360
+                  ]
+                },
+                "RotSpeed": {
+                  "NumberRange": [
+                    -90,
+                    90
+                  ]
+                },
+                "ZOffset": 0.0,
+                "Brightness": 2,
+                "Rate": 24,
+                "Enabled": true,
+                "LockedToPart": true
+              },
+              "Attributes": {}
+            },
+            {
+              "Name": "Trail",
+              "ClassName": "ParticleEmitter",
+              "Properties": {
+                "Texture": "rbxasset://textures/particles/fire_main.dds",
+                "Lifetime": {
+                  "NumberRange": [
+                    0.4,
+                    0.6
+                  ]
+                },
+                "Speed": {
+                  "NumberRange": [
+                    0,
+                    1
+                  ]
+                },
+                "Size": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 5.0,
+                        "envelope": 0.6
+                      },
+                      {
+                        "time": 0.4,
+                        "value": 3.6,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 0.8,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "Color": {
+                  "ColorSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "color": [
+                          1.0,
+                          0.9725490196078431,
+                          0.8862745098039215
+                        ]
+                      },
+                      {
+                        "time": 0.2,
+                        "color": [
+                          1.0,
+                          0.7843137254901961,
+                          0.35294117647058826
+                        ]
+                      },
+                      {
+                        "time": 0.5,
+                        "color": [
+                          1.0,
+                          0.47058823529411764,
+                          0.11764705882352941
+                        ]
+                      },
+                      {
+                        "time": 0.85,
+                        "color": [
+                          0.5882352941176471,
+                          0.1568627450980392,
+                          0.047058823529411764
+                        ]
+                      },
+                      {
+                        "time": 1,
+                        "color": [
+                          0.27450980392156865,
+                          0.09411764705882353,
+                          0.0392156862745098
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "Transparency": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 0.05,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 0.6,
+                        "value": 0.3,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 1,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "EmissionDirection": {
+                  "Enum": 1
+                },
+                "SpreadAngle": {
+                  "Vector2": [
+                    180,
+                    180
+                  ]
+                },
+                "Acceleration": {
+                  "Vector3": [
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                "Drag": 0.0,
+                "LightEmission": 1,
+                "LightInfluence": 0.0,
+                "Orientation": {
+                  "Enum": 0
+                },
+                "Rotation": {
+                  "NumberRange": [
+                    0,
+                    360
+                  ]
+                },
+                "RotSpeed": {
+                  "NumberRange": [
+                    -120,
+                    120
+                  ]
+                },
+                "ZOffset": 0.0,
+                "Brightness": 2.2,
+                "Rate": 130,
+                "Enabled": true,
+                "LockedToPart": false
+              },
+              "Attributes": {}
+            },
+            {
+              "Name": "Sparks",
+              "ClassName": "ParticleEmitter",
+              "Properties": {
+                "Texture": "rbxasset://textures/particles/SquareParticle.png",
+                "Lifetime": {
+                  "NumberRange": [
+                    0.3,
+                    0.6
+                  ]
+                },
+                "Speed": {
+                  "NumberRange": [
+                    8,
+                    16
+                  ]
+                },
+                "Size": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 0.14,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 0.04,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "Color": {
+                  "ColorSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "color": [
+                          1.0,
+                          0.9725490196078431,
+                          0.8862745098039215
+                        ]
+                      },
+                      {
+                        "time": 0.4,
+                        "color": [
+                          1.0,
+                          0.7843137254901961,
+                          0.35294117647058826
+                        ]
+                      },
+                      {
+                        "time": 1,
+                        "color": [
+                          1.0,
+                          0.47058823529411764,
+                          0.11764705882352941
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "Transparency": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 0,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 0.8,
+                        "value": 0.3,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 1,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "EmissionDirection": {
+                  "Enum": 1
+                },
+                "SpreadAngle": {
+                  "Vector2": [
+                    80,
+                    80
+                  ]
+                },
+                "Acceleration": {
+                  "Vector3": [
+                    0,
+                    -24,
+                    0
+                  ]
+                },
+                "Drag": 1.5,
+                "LightEmission": 1,
+                "LightInfluence": 0.0,
+                "Orientation": {
+                  "Enum": 1
+                },
+                "Rotation": {
+                  "NumberRange": [
+                    0,
+                    0
+                  ]
+                },
+                "RotSpeed": {
+                  "NumberRange": [
+                    0,
+                    0
+                  ]
+                },
+                "ZOffset": 0.0,
+                "Brightness": 2.5,
+                "Rate": 60,
+                "Enabled": true,
+                "LockedToPart": false,
+                "Squash": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": -2.0,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": -1.0,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                }
+              },
+              "Attributes": {}
+            },
+            {
+              "Name": "Light",
+              "ClassName": "PointLight",
+              "Properties": {
+                "Color": {
+                  "Color3": [
+                    1.0,
+                    0.7843137254901961,
+                    0.35294117647058826
+                  ]
+                },
+                "Range": 18,
+                "Brightness": 4,
+                "Shadows": false,
+                "Enabled": true
+              }
+            }
+          ],
+          "Properties": {
+            "CFrame": {
+              "CFrame": {
+                "position": [
+                  0,
+                  0,
+                  0
+                ],
+                "orientation": [
+                  [
+                    1,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    1
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        {
+          "Name": "Ground",
+          "ClassName": "Attachment",
+          "Children": [
+            {
+              "Name": "GroundFire",
+              "ClassName": "ParticleEmitter",
+              "Properties": {
+                "Texture": "rbxasset://textures/particles/fire_main.dds",
+                "Lifetime": {
+                  "NumberRange": [
+                    1.2,
+                    2.0
+                  ]
+                },
+                "Speed": {
+                  "NumberRange": [
+                    1,
+                    5
+                  ]
+                },
+                "Size": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 2.2,
+                        "envelope": 0.6
+                      },
+                      {
+                        "time": 0.3,
+                        "value": 3.4,
+                        "envelope": 0.6
+                      },
+                      {
+                        "time": 1,
+                        "value": 0.8,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "Color": {
+                  "ColorSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "color": [
+                          1.0,
+                          0.7843137254901961,
+                          0.35294117647058826
+                        ]
+                      },
+                      {
+                        "time": 0.3,
+                        "color": [
+                          1.0,
+                          0.47058823529411764,
+                          0.11764705882352941
+                        ]
+                      },
+                      {
+                        "time": 0.8,
+                        "color": [
+                          0.5882352941176471,
+                          0.1568627450980392,
+                          0.047058823529411764
+                        ]
+                      },
+                      {
+                        "time": 1,
+                        "color": [
+                          0.23529411764705882,
+                          0.0784313725490196,
+                          0.03137254901960784
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "Transparency": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 0.05,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 0.6,
+                        "value": 0.25,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 1,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "EmissionDirection": {
+                  "Enum": 1
+                },
+                "SpreadAngle": {
+                  "Vector2": [
+                    85,
+                    85
+                  ]
+                },
+                "Acceleration": {
+                  "Vector3": [
+                    0,
+                    4,
+                    0
+                  ]
+                },
+                "Drag": 2.5,
+                "LightEmission": 1,
+                "LightInfluence": 0.0,
+                "Orientation": {
+                  "Enum": 0
+                },
+                "Rotation": {
+                  "NumberRange": [
+                    0,
+                    360
+                  ]
+                },
+                "RotSpeed": {
+                  "NumberRange": [
+                    -80,
+                    80
+                  ]
+                },
+                "ZOffset": 0.0,
+                "Brightness": 2,
+                "Rate": 70,
+                "Enabled": true,
+                "LockedToPart": false
+              },
+              "Attributes": {}
+            },
+            {
+              "Name": "Scorch",
+              "ClassName": "ParticleEmitter",
+              "Properties": {
+                "Texture": "rbxasset://textures/particles/explosion01_core_main.dds",
+                "Lifetime": {
+                  "NumberRange": [
+                    2.5,
+                    3.5
+                  ]
+                },
+                "Speed": {
+                  "NumberRange": [
+                    0.01,
+                    0.01
+                  ]
+                },
+                "Size": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 6.0,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 0.15,
+                        "value": 7.5,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 8.0,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "Color": {
+                  "ColorSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "color": [
+                          1.0,
+                          0.47058823529411764,
+                          0.11764705882352941
+                        ]
+                      },
+                      {
+                        "time": 0.2,
+                        "color": [
+                          0.5882352941176471,
+                          0.1568627450980392,
+                          0.047058823529411764
+                        ]
+                      },
+                      {
+                        "time": 0.5,
+                        "color": [
+                          0.1568627450980392,
+                          0.0784313725490196,
+                          0.047058823529411764
+                        ]
+                      },
+                      {
+                        "time": 1,
+                        "color": [
+                          0.09411764705882353,
+                          0.06274509803921569,
+                          0.047058823529411764
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "Transparency": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 0.05,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 0.6,
+                        "value": 0.3,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 1,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "EmissionDirection": {
+                  "Enum": 1
+                },
+                "SpreadAngle": {
+                  "Vector2": [
+                    0,
+                    0
+                  ]
+                },
+                "Acceleration": {
+                  "Vector3": [
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                "Drag": 0.0,
+                "LightEmission": 0.3,
+                "LightInfluence": 0.0,
+                "Orientation": {
+                  "Enum": 2
+                },
+                "Rotation": {
+                  "NumberRange": [
+                    0,
+                    360
+                  ]
+                },
+                "RotSpeed": {
+                  "NumberRange": [
+                    0,
+                    0
+                  ]
+                },
+                "ZOffset": -1,
+                "Brightness": 1.0,
+                "Rate": 18,
+                "Enabled": true,
+                "LockedToPart": false
+              },
+              "Attributes": {}
+            },
+            {
+              "Name": "Smoke",
+              "ClassName": "ParticleEmitter",
+              "Properties": {
+                "Texture": "rbxasset://textures/particles/smoke_main.dds",
+                "Lifetime": {
+                  "NumberRange": [
+                    1.4,
+                    2.2
+                  ]
+                },
+                "Speed": {
+                  "NumberRange": [
+                    2,
+                    4
+                  ]
+                },
+                "Size": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 2.0,
+                        "envelope": 0.4
+                      },
+                      {
+                        "time": 1,
+                        "value": 5.0,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "Color": {
+                  "ColorSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "color": [
+                          0.3137254901960784,
+                          0.23529411764705882,
+                          0.1803921568627451
+                        ]
+                      },
+                      {
+                        "time": 1,
+                        "color": [
+                          0.17254901960784313,
+                          0.1568627450980392,
+                          0.14901960784313725
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "Transparency": {
+                  "NumberSequence": {
+                    "keypoints": [
+                      {
+                        "time": 0,
+                        "value": 0.55,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 0.3,
+                        "value": 0.45,
+                        "envelope": 0
+                      },
+                      {
+                        "time": 1,
+                        "value": 1,
+                        "envelope": 0
+                      }
+                    ]
+                  }
+                },
+                "EmissionDirection": {
+                  "Enum": 1
+                },
+                "SpreadAngle": {
+                  "Vector2": [
+                    30,
+                    30
+                  ]
+                },
+                "Acceleration": {
+                  "Vector3": [
+                    0,
+                    3,
+                    0
+                  ]
+                },
+                "Drag": 1.0,
+                "LightEmission": 0.0,
+                "LightInfluence": 1,
+                "Orientation": {
+                  "Enum": 0
+                },
+                "Rotation": {
+                  "NumberRange": [
+                    0,
+                    360
+                  ]
+                },
+                "RotSpeed": {
+                  "NumberRange": [
+                    -30,
+                    30
+                  ]
+                },
+                "ZOffset": 0.0,
+                "Brightness": 1.0,
+                "Rate": 10,
+                "Enabled": true,
+                "LockedToPart": false
+              },
+              "Attributes": {}
+            }
+          ],
+          "Properties": {
+            "CFrame": {
+              "CFrame": {
+                "position": [
+                  0,
+                  -5,
+                  0
+                ],
+                "orientation": [
+                  [
+                    1,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    1
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "DgunMuzzle",
+      "ClassName": "Attachment",
+      "Children": [
+        {
+          "Name": "Flash",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/explosion01_core_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                0.1,
+                0.14
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 2.5,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.4,
+                    "value": 7.0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 8.0,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 0.5,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.5,
+                    "value": 0.2,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                180,
+                180
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                0,
+                0
+              ]
+            },
+            "Drag": 0.0,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -60,
+                60
+              ]
+            },
+            "ZOffset": 1,
+            "Brightness": 4,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 3,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Jet",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/fire_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                0.18,
+                0.32
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                22,
+                38
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 2.2,
+                    "envelope": 0.5
+                  },
+                  {
+                    "time": 0.4,
+                    "value": 2.8,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 0.6,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 0.3,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.6,
+                    "value": 0.25,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 5
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                22,
+                22
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                0,
+                0
+              ]
+            },
+            "Drag": 5,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -200,
+                200
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 3,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 22,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Ring",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/explosion01_shockwave_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                0.18,
+                0.22
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                0.01,
+                0.01
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 2.0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 9.0,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0.1,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 5
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                0,
+                0
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                0,
+                0
+              ]
+            },
+            "Drag": 0.0,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 2
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 1.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 1,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Sparks",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/SquareParticle.png",
+            "Lifetime": {
+              "NumberRange": [
+                0.25,
+                0.45
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                30,
+                50
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0.14,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 0.04,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.8,
+                    "value": 0.3,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 5
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                28,
+                28
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                -20,
+                0
+              ]
+            },
+            "Drag": 2,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 1
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 1.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false,
+            "Squash": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": -2.5,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": -1.2,
+                    "envelope": 0
+                  }
+                ]
+              }
+            }
+          },
+          "Attributes": {
+            "EmitCount": 18,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Smoke",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/explosion01_smoke_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                0.8,
+                1.2
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                3,
+                7
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 1.5,
+                    "envelope": 0.3
+                  },
+                  {
+                    "time": 1,
+                    "value": 4.5,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      0.43137254901960786,
+                      0.35294117647058826,
+                      0.27450980392156865
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      0.23529411764705882,
+                      0.2196078431372549,
+                      0.20392156862745098
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0.4,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.4,
+                    "value": 0.55,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 5
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                40,
+                40
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                3,
+                0
+              ]
+            },
+            "Drag": 2,
+            "LightEmission": 0.0,
+            "LightInfluence": 1,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -40,
+                40
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 1.0,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 6,
+            "EmitDelay": 0.05
+          }
+        },
+        {
+          "Name": "Light",
+          "ClassName": "PointLight",
+          "Properties": {
+            "Color": {
+              "Color3": [
+                1.0,
+                0.7843137254901961,
+                0.35294117647058826
+              ]
+            },
+            "Range": 16,
+            "Brightness": 5,
+            "Shadows": false,
+            "Enabled": false
+          },
+          "Attributes": {
+            "LightSeconds": 0.22
+          }
+        }
+      ]
+    },
+    {
+      "Name": "DgunHit",
+      "ClassName": "Attachment",
+      "Children": [
+        {
+          "Name": "Flash",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/explosion01_core_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                0.1,
+                0.14
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 2.0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.4,
+                    "value": 5.0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 5.5,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.5,
+                    "value": 0.2,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                180,
+                180
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                0,
+                0
+              ]
+            },
+            "Drag": 0.0,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -60,
+                60
+              ]
+            },
+            "ZOffset": 1,
+            "Brightness": 3.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 2,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Burst",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/fire_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                0.2,
+                0.32
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                8,
+                14
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 1.8,
+                    "envelope": 0.4
+                  },
+                  {
+                    "time": 0.4,
+                    "value": 2.4,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 0.5,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 0.3,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      0.5882352941176471,
+                      0.1568627450980392,
+                      0.047058823529411764
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.6,
+                    "value": 0.3,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                180,
+                180
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                0,
+                0
+              ]
+            },
+            "Drag": 4,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -200,
+                200
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 2.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 10,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Sparks",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/SquareParticle.png",
+            "Lifetime": {
+              "NumberRange": [
+                0.25,
+                0.5
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                16,
+                28
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0.12,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 0.04,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.8,
+                    "value": 0.3,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                70,
+                70
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                -30,
+                0
+              ]
+            },
+            "Drag": 1.5,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 1
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 1.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false,
+            "Squash": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": -2.2,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": -1.0,
+                    "envelope": 0
+                  }
+                ]
+              }
+            }
+          },
+          "Attributes": {
+            "EmitCount": 12,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Light",
+          "ClassName": "PointLight",
+          "Properties": {
+            "Color": {
+              "Color3": [
+                1.0,
+                0.7843137254901961,
+                0.35294117647058826
+              ]
+            },
+            "Range": 12,
+            "Brightness": 4,
+            "Shadows": false,
+            "Enabled": false
+          },
+          "Attributes": {
+            "LightSeconds": 0.15
+          }
+        }
+      ]
+    },
+    {
+      "Name": "DgunEnd",
+      "ClassName": "Attachment",
+      "Children": [
+        {
+          "Name": "Flash",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/explosion01_core_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                0.16,
+                0.22
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 2.0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.3,
+                    "value": 7.0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 8.0,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 0.4,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.5,
+                    "value": 0.2,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                180,
+                180
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                0,
+                0
+              ]
+            },
+            "Drag": 0.0,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -60,
+                60
+              ]
+            },
+            "ZOffset": 1,
+            "Brightness": 3.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 3,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Fireball",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/fire_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                0.4,
+                0.7
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                3,
+                7
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 2.0,
+                    "envelope": 0.5
+                  },
+                  {
+                    "time": 0.35,
+                    "value": 3.2,
+                    "envelope": 0.6
+                  },
+                  {
+                    "time": 1,
+                    "value": 1.0,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 0.25,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  },
+                  {
+                    "time": 0.7,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      0.5882352941176471,
+                      0.1568627450980392,
+                      0.047058823529411764
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.6,
+                    "value": 0.2,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                180,
+                180
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                6,
+                0
+              ]
+            },
+            "Drag": 3,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -140,
+                140
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 2.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 16,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Ring",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/fire_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                0.35,
+                0.55
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                14,
+                18
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 1.2,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.3,
+                    "value": 2.2,
+                    "envelope": 0.4
+                  },
+                  {
+                    "time": 1,
+                    "value": 0.5,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  },
+                  {
+                    "time": 0.4,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      0.5882352941176471,
+                      0.1568627450980392,
+                      0.047058823529411764
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0.1,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.7,
+                    "value": 0.3,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 5
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                0,
+                180
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                2,
+                0
+              ]
+            },
+            "Drag": 3.5,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -60,
+                60
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 2.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 40,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Sparks",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/SquareParticle.png",
+            "Lifetime": {
+              "NumberRange": [
+                0.4,
+                0.8
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                14,
+                24
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0.14,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 0.05,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.9725490196078431,
+                      0.8862745098039215
+                    ]
+                  },
+                  {
+                    "time": 0.4,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.8,
+                    "value": 0.2,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                50,
+                50
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                -32,
+                0
+              ]
+            },
+            "Drag": 1,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 1
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 1.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false,
+            "Squash": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": -2.5,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": -1.2,
+                    "envelope": 0
+                  }
+                ]
+              }
+            }
+          },
+          "Attributes": {
+            "EmitCount": 24,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Smoke",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/smoke_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                1.4,
+                2.2
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                2,
+                5
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 2.0,
+                    "envelope": 0.4
+                  },
+                  {
+                    "time": 0.4,
+                    "value": 4.0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 5.5,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      0.35294117647058826,
+                      0.26666666666666666,
+                      0.19607843137254902
+                    ]
+                  },
+                  {
+                    "time": 0.3,
+                    "color": [
+                      0.20392156862745098,
+                      0.1803921568627451,
+                      0.16470588235294117
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      0.1568627450980392,
+                      0.14901960784313725,
+                      0.1411764705882353
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0.5,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.3,
+                    "value": 0.35,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                50,
+                50
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                4,
+                0
+              ]
+            },
+            "Drag": 1.2,
+            "LightEmission": 0.0,
+            "LightInfluence": 1,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -40,
+                40
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 1.0,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 8,
+            "EmitDelay": 0.1
+          }
+        },
+        {
+          "Name": "Embers",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/sparkles_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                1.2,
+                2.2
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                2,
+                5
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0.3,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 0.08,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.7843137254901961,
+                      0.35294117647058826
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.7,
+                    "value": 0.3,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                80,
+                80
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                2,
+                0
+              ]
+            },
+            "Drag": 1.5,
+            "LightEmission": 1,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 0
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                -60,
+                60
+              ]
+            },
+            "ZOffset": 0.0,
+            "Brightness": 1.5,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 14,
+            "EmitDelay": 0.12
+          }
+        },
+        {
+          "Name": "Scorch",
+          "ClassName": "ParticleEmitter",
+          "Properties": {
+            "Texture": "rbxasset://textures/particles/explosion01_shockwave_main.dds",
+            "Lifetime": {
+              "NumberRange": [
+                1.6,
+                2.2
+              ]
+            },
+            "Speed": {
+              "NumberRange": [
+                0.01,
+                0.01
+              ]
+            },
+            "Size": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 3.5,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.2,
+                    "value": 6.0,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 6.5,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "Color": {
+              "ColorSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "color": [
+                      1.0,
+                      0.47058823529411764,
+                      0.11764705882352941
+                    ]
+                  },
+                  {
+                    "time": 0.4,
+                    "color": [
+                      0.5882352941176471,
+                      0.1568627450980392,
+                      0.047058823529411764
+                    ]
+                  },
+                  {
+                    "time": 1,
+                    "color": [
+                      0.11764705882352941,
+                      0.06274509803921569,
+                      0.0392156862745098
+                    ]
+                  }
+                ]
+              }
+            },
+            "Transparency": {
+              "NumberSequence": {
+                "keypoints": [
+                  {
+                    "time": 0,
+                    "value": 0.1,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 0.5,
+                    "value": 0.4,
+                    "envelope": 0
+                  },
+                  {
+                    "time": 1,
+                    "value": 1,
+                    "envelope": 0
+                  }
+                ]
+              }
+            },
+            "EmissionDirection": {
+              "Enum": 1
+            },
+            "SpreadAngle": {
+              "Vector2": [
+                0,
+                0
+              ]
+            },
+            "Acceleration": {
+              "Vector3": [
+                0,
+                0,
+                0
+              ]
+            },
+            "Drag": 0.0,
+            "LightEmission": 0.7,
+            "LightInfluence": 0.0,
+            "Orientation": {
+              "Enum": 2
+            },
+            "Rotation": {
+              "NumberRange": [
+                0,
+                360
+              ]
+            },
+            "RotSpeed": {
+              "NumberRange": [
+                0,
+                0
+              ]
+            },
+            "ZOffset": -1,
+            "Brightness": 1.0,
+            "Rate": 0,
+            "Enabled": false,
+            "LockedToPart": false
+          },
+          "Attributes": {
+            "EmitCount": 1,
+            "EmitDelay": 0.0
+          }
+        },
+        {
+          "Name": "Light",
+          "ClassName": "PointLight",
+          "Properties": {
+            "Color": {
+              "Color3": [
+                1.0,
+                0.7843137254901961,
+                0.35294117647058826
+              ]
+            },
+            "Range": 18,
+            "Brightness": 5,
+            "Shadows": false,
+            "Enabled": false
+          },
+          "Attributes": {
+            "LightSeconds": 0.45
           }
         }
       ]
