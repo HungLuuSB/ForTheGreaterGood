@@ -63,6 +63,8 @@ Written for a new session (the project is moving to another Claude account). Eve
 
 ## Summary (2026-10-29, playtest 3: C-248..C-253)
 
+- **Handover notes:** a section at the top of this file says where the stream stands, what's open and how to continue; summaries split by date.
+- Ready to merge: `c67ee9fd` (the handover notes, on top of f2a949e5, C-252's Studio note and main d8611b86; docs only. test_client 335 / 335, build passed)
 
 - **Snapshot parts and new icons (C-253, H36):** with sim-A's protocol 41, a far unit goes only when a whole strategic snapshot leaves it out, so a lost part no longer makes blips vanish or drops a far selection. The 21 new units show icons, borrowed from existing tiles until the sheet gets a second page.
 - Ready to merge: `ebb30463` (C-253, carries m-sim-2 f65a3b23 (protocol 41) and C-252; test_client 334 / 335, the 1 left is C's chs_gantry blockout; build passed. Studio, Coastline: 2-part snapshots, 212 far units held, none dropped)
