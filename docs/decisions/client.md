@@ -2469,3 +2469,9 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - The user wanted C's re-render of the unit pictures (no fog, more glow, more colour). E repacked it into the same four sheets and rects (2d 68c390e0, merged in up to ee9cfd2a).
 - The old sheet ids went stale with the new pixels. The user approved the upload; the new ids are 129402755258680, 137517755831073, 118640861030060 and 108902714225981 in `tools/icons/assets.json`, with their hashes. `UI/UnitPictures` is regenerated: 197 of 197 on uploaded sheets.
 - Studio, Coastline: the build tiles and the unit panel load the new sheets (`debug_out/screens/2026-10-30-unit-pictures-rerender.png`).
+
+### C-270 — T3 walkers' death blasts play the heavier StructureDeath (2026-10-30)
+
+- S-217 cut the Titan's and Juggernaut's death blasts to 52 studs (480 damage), below `Effects.HUGE_BLAST` (90), so they fell back to the ordinary "impact" burst. models-C flagged it through sim-A.
+- A middle tier, `Effects.HEAVY_BLAST = 50`: a death blast from 50 studs up to HUGE_BLAST plays models-C's StructureDeath template, at the same shown radius as before (aoe × `BLAST_SHOWN`) and for twice the death burst's life. It is not the nuke's look and leaves no crater. Huge blasts (Commanders, fusion) are unchanged; so are the Construction Turrets' (40).
+- Studio, Coastline: a Titan's and a Juggernaut's deaths each play StructureDeath plus their own death burst, with no nuke (`debug_out/screens/2026-10-30-t3-death-blast.jpg`). A new Splash spec checks the Titan's blast.

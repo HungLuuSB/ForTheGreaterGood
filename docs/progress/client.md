@@ -56,6 +56,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, T3 death blasts: C-270)
+
+- **Heavier T3 walker deaths (C-270):** the Titan's and Juggernaut's 52-stud death blasts (S-217) play models-C's StructureDeath instead of a plain impact; not a nuke.
+- Ready to merge: `8372da98` (C-270; carries main 40368ba8. test_client 348 / 348, build passed (883 scripts, 2472 requires). Studio, Coastline: Titan and Juggernaut deaths play StructureDeath, no nuke)
+
 ## Summary (2026-10-30, re-rendered unit pictures: C-269)
 
 - **Clearer unit pictures (C-269):** C's re-render (no fog, more glow and colour), repacked by E, is uploaded. Build tiles and the unit panel show it.
