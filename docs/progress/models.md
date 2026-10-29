@@ -13,7 +13,26 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 - Also updated: the `manifest.py` approval lists, `animate.py`, and the key-art tank lists.
 - Regenerated: the Meshes registry and `MeshMaterials`.
 - Unchanged: the asset IDs. The review rigs in FTGG Art keep their old names, as `modelPath` records.
-- B's part (the icon and the piece-script swap) is still open, so `test_client` fails 3 tests here (IconAtlas, Icons, PieceAnim Juggernaut) until B's tip.
+- B's part (the icon and the piece-script swap) went in with it: on `main` as `b3992f45`, all suites passing.
+
+**E-11 build-menu unit pictures (2026-10-30, for 2D session E):**
+- **The look:** the user approved it, relayed by E, with one change: "increase their glow and color". It's built in.
+- **The picture:** each unit stands in a small opaque scene of its own setting:
+  - ground vehicles and walkers on terrain, with track marks or footprints;
+  - structures on a gravel apron with props;
+  - ships in water with a wake;
+  - sea structures in water with foam;
+  - subs and seafloor structures under water;
+  - amphibious and hover units on a shoreline;
+  - aircraft banked over clouds.
+  Order's ground is green, Chaos's is ash.
+- **Team paint:** baked in the faction colour, Order blue #4084E6 and Chaos red #DE463E (the user, 2026-10-30, via E). There is no mask pass now; `--masks` still renders `<id>_mask.png` (lit white team paint) if it's ever needed.
+- **Tools:**
+  - `assets/models/tools/pictures_defs.luau` writes `debug_out/pictures/defs.json`: the non-retired defs and each one's setting.
+  - `assets/models/tools/pictures.py` (Blender) renders `debug_out/pictures/<id>.png` at 256×256, about 10 s per unit. Its docstring has the commands.
+- **Output:** the PNGs are regenerable and not committed. E reads them from `debug_out/pictures/` and commits only the packed sheets, in `assets/2d/pictures/`.
+- **When to re-render:** whenever a mesh changes or a unit is added.
+- **Fix in passing:** `portraits.py` now strips the `_bar` suffix from glow-part names. Before, every glow rendered in the fallback grey instead of its channel colour.
 
 **Where it stands:** `m-models` is at `main` `d8611b86`. Every piece of models work is integrated; the last merges were `34cbaf59` and `82bedb2a`. Checks there: `lune run test` 615/615, `lune run test_client` 335/335, `lune run build` (879 scripts, 2457 requires resolve). Nothing is in review: all 203 defs have an approved mesh and an approved wreck (status table below), and all nine named maps have an approved baked ground (`GROUND_APPROVED` in `assets/models/tools/manifest.py`).
 
@@ -918,3 +937,4 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `fc1383d0` (playtest-3 units, S-209: 21 hand-made blockouts registered and BAR-style meshes with wrecks, all `review` in the manifest, so the game draws the blockouts until approved; contains `20b58b9b` and the m-sim-2 `94380002` / `8a111001` merges. `assets/models/`, `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json`, tools, docs).
 - Ready to merge: `3f450b39` (the user approved the 21 playtest-3 meshes with their wrecks (`a54a4bdd`): they draw in game; the Mammoth's muzzles renamed `muzzle1` / `muzzle2` as attachments in its blockout and mesh, for sim-A's `2ef1569d` (merged here, so integrate after it); manifest, docs).
 - Ready to merge: `a1030665` (S-213 id swap, for sim-A's `748ddf25` (merged here): `chs_korgoth` becomes `chs_juggernaut`, the old tank `chs_juggernaut` becomes `chs_goliath` in the Blockouts and Meshes registries, asset folders, manifest and MeshMaterials; asset IDs unchanged. `test_client` fails 3 tests until B adds the icon and piece-script swap, so integrate through B's tip).
+- Ready to merge: `2174e58f` (E-11 build-menu unit pictures, contains `60527a80` and `e3e353bb`; team paint baked in the faction colour: `assets/models/tools/pictures.py` and `pictures_defs.luau` render each unit's picture and team mask into `debug_out/pictures/` for 2D session E; `portraits.py` importable, and its glow-colour lookup fixed. Tools and docs only, nothing under `src/`).
