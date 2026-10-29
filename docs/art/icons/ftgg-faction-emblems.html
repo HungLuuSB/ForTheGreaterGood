@@ -50,9 +50,9 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 26px; margin
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">For The Greater Good · faction emblems · proposal</div>
+    <div class="eyebrow">For The Greater Good · faction emblems · E-12</div>
     <h1>Order and Chaos emblems</h1>
-    <p class="lede">Two directions, each a matched pair, in the unit icons' style B: a white shape with a hairline dark edge and a soft shadow, tinted in the faction colour (Order Blue, Chaos Red). Order stands for discipline, precision and control, heraldry and law, the fortress side; Chaos for freedom, force and disruption, beasts and ruin, mass assault. Neither copies a known mark: no eight-pointed star, no eagle, no claw marks, nothing from BAR.</p>
+    <p class="lede"><b>Picked: direction A, Bastion and Maw</b> (the user, 2026-10-30); direction B stays here as the record. Two directions, each a matched pair, in the unit icons' style B: a white shape with a hairline dark edge and a soft shadow, tinted in the faction colour (Order Blue, Chaos Red). Order stands for discipline, precision and control, heraldry and law, the fortress side; Chaos for freedom, force and disruption, beasts and ruin, mass assault. Neither copies a known mark: no eight-pointed star, no eagle, no claw marks, nothing from BAR.</p>
   </header>
 
   <section class="section">
@@ -100,10 +100,12 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 26px; margin
       G("translate(0 3.2)", F("M18 34 L21 30 L26 31 L32 27 L37 32 L42 30 L46 34 L32 60 Z")),
   };
 
-  // ---- catalogue ----
+  // ---- catalogue: the user picked direction A (2026-10-30); assets/2d/tools/emblems.mjs exports the PICK pair ----
+  const PICK = "A";
+  const SIZES = [16, 24, 32, 64, 128, 256];
   const EMB = [
-    { key: "order_bastion", n: "Bastion", faction: "Order", dir: "A", tint: "#4084E6" },
-    { key: "chaos_maw", n: "Maw", faction: "Chaos", dir: "A", tint: "#DE463E" },
+    { key: "order_bastion", n: "Bastion", faction: "Order", dir: "A", tint: "#4084E6", use: "Order's emblem: lobby faction picker, team panel and scoreboard, loading screen, Codex faction pages." },
+    { key: "chaos_maw", n: "Maw", faction: "Chaos", dir: "A", tint: "#DE463E", use: "Chaos's emblem: the same places as Order's." },
     { key: "order_lodestar", n: "Lodestar", faction: "Order", dir: "B", tint: "#4084E6" },
     { key: "chaos_fracture", n: "Fracture", faction: "Chaos", dir: "B", tint: "#DE463E" },
   ];
