@@ -2,6 +2,15 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-26: map facts in the panel, Supreme Strait)
+
+- Merged main `c829d2a7` (S-193 `MapRegistry.details`, the new map Supreme Strait).
+- **The map panel's facts (G12):** the server reads `MapRegistry.details` for each map and sends wind, tides and features with the map list. The panel shows "Wind 3 to 27 power/s per turbine", "Tidal 25 power/s per generator" (or "None (no water)") and "Features Cliffs, Hills, Water".
+- **Supreme Strait** lists by itself under Medium maps: 320 × 320 cells, 16 starts, up to 8 teams.
+- **Studio:** Coastline and Supreme Strait show their facts in the panel.
+- Lobby specs 67 / 67; the build check passes.
+- Ready to merge: `1e454e82` (map facts through GetMaps; includes the merge of main `c829d2a7`; touches only `src/lobby` and the lobby progress)
+
 ## Summary (2026-10-26: playtest 2, G11 and G12)
 
 - **G11 (L-25):** the create dialog's players/spectators slider is gone. Every room holds 16 people, AIs included: `Rooms.headcount` (members plus AI seats) caps join and Add AI, and the browser's Full status counts the AIs. Only someone with authority sees and sends another cap: the owner, a group rank of 254 and up, `Config.ADMINS`, or Studio (`server/Authority`). The skirmish room now uses the same cap; it was 2, which an AI would now fill.
