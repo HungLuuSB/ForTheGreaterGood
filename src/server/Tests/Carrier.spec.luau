@@ -26,7 +26,7 @@ end
 local function scene(): (Sim.Sim, number, number, number)
 	local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "sea:128" })
 	Spawn.unit(sim, "ord_sovereign", 1, -450, -300) -- an account and power for rearming
-	Spawn.unit(sim, "ord_generator", 1, -470, -260)
+	Spawn.unit(sim, "ord_solar", 1, -470, -260)
 	local carrier = Spawn.unit(sim, "ord_sanctuary", 1, 150, 0, 0)
 	local airfield = Spawn.unit(sim, "ord_airfield", 1, -350, 100, 0)
 	local jet = Spawn.unit(sim, "ord_falcon", 1, -100, 0, math.pi / 2)

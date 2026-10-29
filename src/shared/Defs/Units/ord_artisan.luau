@@ -18,7 +18,7 @@ return Templates.extend(Templates.Builder, {
 	buildPower = 80,
 	buildRange = 40,
 	canResurrect = true,
-	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_botlab", "ord_advbotlab", "ord_sentry_tower", "ord_beamer", "ord_overwatch", "ord_gauntlet", "ord_vigil", "ord_watchtower", "ord_curtain", "ord_barrier" },
+	buildOptions = { "ord_extractor", "ord_solar", "ord_advsolar", "ord_capacitor", "ord_windmill", "ord_converter", "ord_depot", "ord_botlab", "ord_advbotlab", "ord_sentry_tower", "ord_beamer", "ord_overwatch", "ord_gauntlet", "ord_vigil", "ord_watchtower", "ord_curtain", "ord_barrier", "ord_nano" },
 	icon = "worker",
 	model = "ord_artisan",
 })

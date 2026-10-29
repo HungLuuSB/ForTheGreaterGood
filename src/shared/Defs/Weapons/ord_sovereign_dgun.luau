@@ -8,7 +8,7 @@ return {
 	type = "BALLISTIC",
 	manualFire = true,
 	bolt = 7, -- studs either side of its path: the D-Gun's bolt (S-194)
-	range = 160,
+	range = 80, -- halved: a last-resort weapon (S-203, the user's H5; was 160)
 	reload = 2,
 	shotCost = { power = 500 },
 	projectileSpeed = 70,

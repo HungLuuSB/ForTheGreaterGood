@@ -169,12 +169,12 @@ return function(t: RunAll.Context)
 		local com = Spawn.unit(sim, "ord_sovereign", 1, -100, 0, math.pi / 2)
 		local tanks = {}
 		for i = 1, 3 do
-			local id = Spawn.unit(sim, "chs_juggernaut", 2, -60 + i * 25, (i - 2) * 3)
+			local id = Spawn.unit(sim, "chs_juggernaut", 2, -100 + i * 18, (i - 2) * 3) -- inside the bolt's 80 studs (S-203)
 			World.setFireState(w, id, World.FireState.HOLD_FIRE)
 			table.insert(tanks, id)
 		end
-		local enemyCom = Spawn.unit(sim, "chs_warlord", 2, 30, 0)
-		local beside = Spawn.unit(sim, "chs_juggernaut", 2, -10, 60) -- off the bolt's path
+		local enemyCom = Spawn.unit(sim, "chs_warlord", 2, -30, 0)
+		local beside = Spawn.unit(sim, "chs_juggernaut", 2, -50, 60) -- off the bolt's path
 		World.setFireState(w, enemyCom, World.FireState.HOLD_FIRE)
 		World.setFireState(w, beside, World.FireState.HOLD_FIRE)
 		World.setFireState(w, com, World.FireState.HOLD_FIRE) -- (the laser holds; the D-Gun is ordered)
@@ -188,7 +188,7 @@ return function(t: RunAll.Context)
 		for p = 1, 2 do
 			submit(sim, p, { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 95, maxZ = 95 })
 		end
-		local cell, ox, oz = g:encode(40, 0)
+		local cell, ox, oz = g:encode(-25, 0)
 		submit(sim, 1, { cmdType = CT.DGUN, flags = 0, unitIds = { com }, cell = cell, offX = ox, offZ = oz })
 		local comHealth = w.health[enemyCom]
 		steps(sim, 15 * 5)

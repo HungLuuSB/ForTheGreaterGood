@@ -608,6 +608,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - Altitude bands (above ground): helicopters 30–40, jets 90–120, bombers 120–140. Altitude follows terrain smoothly (S-167): a flying aircraft keeps an absolute height that climbs at 40 studs/s and descends at 25 toward its band over the highest ground on its path in the next 2 s, so it rises before a hill instead of snapping to it, and it never flies lower than 8 studs over the ground. The wire's altitude stays height above the ground under it.
 - Implementation (`Sim/Air.luau`, DECISIONS D73–D74):
   - Jets circle their goal at 220 studs when idle and chase or orbit their target when attacking.
+  - A player's move order comes first (S-204, the user): a jet on a plain MOVE flies to its goal, with no chase or bomb run on the way, though its weapons still fire at what passes in front. A bomber with an attack order keeps that target at any distance and bombs nothing else.
   - Helicopters hover at 35, jets cruise at 100, bombers at 130; they climb at 40 studs/s.
   - Bombers fly runs: line up, release when the bomb's predicted impact meets the target's predicted position, egress straight for 3 s, go round, and rearm when empty (D91).
   - Projectiles test collisions in each target's frame, so fast jets can't tunnel.
@@ -891,9 +892,9 @@ Optionally store values as integers in thousandths so rounding never drifts over
 |---|---|---|
 | Supply Extractor | T1 | Supply income on a deposit (scales with deposit value) |
 | Advanced Extractor | T2 | ~3–4× extractor output, same deposit (upgrade replaces T1) |
-| Power Generator (fuel) | T1 | Steady power |
-| Solar Array | T1 | Low steady power, cheap |
-| Wind Turbine | T1 | Variable power (global wind value changes every ~30 s) |
+| Power Generator (fuel) | T1 | Retired (S-203, the user): the solar array took its place |
+| Solar Array | T1 | Steady power, cheap: +20 power, +50 power storage (S-203) |
+| Wind Turbine | T1 | Variable power (global wind value changes every ~30 s); 40 supply + 175 power (S-203) |
 | Tidal Generator | T1 naval | Steady power, water only |
 | Fusion Reactor | T2 | Large power; big explosion on death |
 | Supply Converter | T1/T2 | Converts power → supply at a fixed rate (toggleable) |
@@ -1419,7 +1420,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Artillery emplacement | T2 | **Edict** | **Cataclysm** | Adv. Ground |
 | Radar tower / long-range radar | T1 / T2 | **Watchtower / Beacon** | **Eye / All-Seer** | All workers |
 | Jammer tower | T1 / T2 | **Curtain / Veilspire** | **Smog / Blackout** | Ground / Adv. Ground |
-| Beam tower (S-96, BAR's Pulsar) | T2 | **Radiance** (650, 3,000 over 3 s every 9 s, 700 power a shot) | **Bulwark** (`chs_bulwark`, S-157: 480, 1,700 over 1.5 s every 7 s, 500 power a shot, plus Geryon's green laser; Inferno retired) | Adv. Ground |
+| Beam tower (S-96, BAR's Pulsar) | T2 | **Radiance** (488 since S-203, 3,000 over 3 s every 9 s, 700 power a shot) | **Bulwark** (`chs_bulwark`, S-157: 384 since S-203, 1,700 over 1.5 s every 7 s, 500 power a shot, plus Geryon's green laser; Inferno retired) | Adv. Ground |
 | Flak tower (S-96) | T2 | **Lumen** (2 flak guns) | **Hailstorm** (3, cheaper) | Adv. Ground |
 | Fire-control radar | T2 | **Tribunal** | **Seeker Spire** (cheaper, weaker) | Adv. Ground |
 | Pinpointer (radar precision, S-59) | T2 | **Witness** | **Augur** | Adv. Ground |
@@ -1431,7 +1432,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Rearm pad / advanced rearm pad (S-166) | T1 / T2 | **Aerie / Empyrean** | **Roost / Rookery** | Air / Adv. Air |
 | Nuclear missile silo (S-48) | T3 | **Reckoning** | **Ragnarok** | Adv. Ground (Architect / Forgemaster) |
 
-Beam towers (S-96, client request 43): a precise BEAM, one very heavy hit on a long reload, each shot paid in power from the team's stores (`shotCost`; no shot without it). Like any beam, terrain is the only thing in the way: they fire over walls and other defenses. They fire only at targets the team sees, not radar contacts. Switched off (TOGGLE), a beam tower retracts into its armored shell: it can't fire, and damage to it is divided by 4 (`retract.armor`); it starts switched on.
+Beam towers (S-96, client request 43): a precise BEAM, one very heavy hit on a long reload, each shot paid in power from the team's stores (`shotCost`). Since S-205 a shot costing 100 or more charges while the weapon reloads, as a priority consumer like a missile refill, so a stalled economy slows the beam instead of silencing it. Like any beam, terrain is the only thing in the way: they fire over walls and other defenses. They fire only at targets the team sees, not radar contacts. Switched off (TOGGLE), a beam tower retracts into its armored shell: it can't fire, and damage to it is divided by 4 (`retract.armor`); it starts switched on.
 
 ---
 

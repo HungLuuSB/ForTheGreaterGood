@@ -657,8 +657,12 @@ return function(sim: Types.Sim)
 				if canFire and not Deploy.canFire(w, id) then
 					canFire = false -- packed or (un)packing (S-64)
 				end
-				if canFire and weapon.shotCost and not affordable(sim, w.team[id], weapon.shotCost) then
-					canFire = false -- the team's stores can't pay for the shot (S-96)
+				if canFire and weapon.shotCost then
+					if Stockpile.charges(weapon) then
+						canFire = Stockpile.charged(w, key) -- paid while it reloaded (S-205)
+					elseif not affordable(sim, w.team[id], weapon.shotCost) then
+						canFire = false -- the team's stores can't pay for the shot (S-96)
+					end
 				end
 			elseif projTarget ~= 0 then
 				-- interceptors launch vertically: in range and in stock is enough (S-48)
@@ -783,7 +787,9 @@ return function(sim: Types.Sim)
 					-- carry while firing continuously, never bank more than one tick.
 					w.wReload[key] = weapon.reload + max(reload, -DT)
 					Stockpile.take(w, key)
-					if weapon.shotCost then
+					if weapon.shotCost and Stockpile.charges(weapon) then
+						Stockpile.discharge(w, key) -- the next shot charges from now (S-205)
+					elseif weapon.shotCost then
 						pay(sim, w.team[id], weapon.shotCost) -- (S-96)
 					end
 					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch, projTarget, scale)

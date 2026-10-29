@@ -2878,3 +2878,49 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Sensors keeps `radarGhosts[team]`: the live structures it remembers that its radar covers this sensor tick. Targeting treats those like radar contacts, aimed at the remembered spot (structures don't move). A ghost off radar still needs an attack order.
   - Blips are aimed at their hidden aim point (S-131), so radar shots miss by the radar's error, less with tracking radar and Pinpointers. IR missiles still can't lock a blip (EW).
 - **Tests:** RadarTargets.spec: a Talos, whose def doesn't ask for it, shells a radar blip beyond its sight and holds fire with no radar; a structure seen once is shelled while radar covers it and left alone when only remembered.
+
+## S-203 — Playtest 3 balance and economy: Commanders, beam towers, radars, solar, wind, Fatboy / Tzar; the Generator retired; scouts fire lasers (the user) (2026-10-29)
+
+- **Asked** (FTGG-FEEDBACK-3, `docs/progress/playtest-2026-10-28.md`): H5 D-Gun range −50%; H6 Commander laser range −25%; H7 Radiance range −25%, Bulwark −20%; H8 Watchtower radar +25%; H9 advanced radar tower sight +50%; H11 both factions' scouts fire a hot-yellow hit-scan laser; H22 remove the Generator from both factions; H23 the solar array makes 20 energy and stores 50; H24 the windmill costs 40 orb and 175 energy; H42 / H43 lower the Fatboy's and Tzar's damage and range.
+- **Changed:**
+  - D-Gun 160 → 80 (both Commanders); Commander laser 120 → 90 (both).
+  - Radiance's beam 650 → 488. Bulwark (Chaos's beam tower) 480 → 384, its green laser 215 → 172 with it.
+  - Watchtower radar 350 → 438, and Chaos's Eye 280 → 350 to match (the user named Order's tower). Beacon and All-Seer sight 180 → 270.
+  - Scouts (`ord_herald`, `chs_jackal`): their weapons (ids `ord_mg`, `chs_mg` kept) are HITSCAN lasers, hot yellow (255, 214, 40), `tracer = "laser"`, 1 power a shot and ×1.5 up close like every laser. Range, reload and damage as before.
+  - Radiance's beam carries `fx.color` electric blue (60, 150, 255) for the client (H38).
+  - Solar arrays (both) +20 power (was 8), +50 power storage. Windmills (both) 40 supply + 175 power (was 35 + 0).
+  - Fatboy and Tzar (no number given): damage −20%, range −15% (Fatboy 300 → 255, Tzar 270 → 230).
+  - The Generator (`ord_generator`, `chs_generator`) is `retired` (S-157 style): off every build list, kept for old replays. The solar array now makes the same 20 power, so the AI's generator rule builds solar arrays instead (`Skirmish` asks for `solar`; its rules and the block behind the base are unchanged).
+  - The T2 tank `chs_juggernaut` is renamed Goliath: the name Juggernaut goes to the Chaos T3 bot (`chs_korgoth`, H40). Id and model unchanged.
+- **Tests:** specs that built Generators build solar arrays (build time 45 ticks, storage +50, overflow numbers). The beam mechanism's tests (Defenses, Shield) run on `Tests/Support/BeamDefs` (the beams at their old ranges), since they test the beam, not its reach. The D-Gun's line of tanks moved inside 80 studs. Shield.spec's shell weights drop the scout's gun (a laser now).
+
+## S-204 — Aircraft put the player's orders first (the user) (2026-10-29)
+
+- **Asked:** H12 "Air unit still not priority manual command (I ordered a Fighter to move back to home be it keep insisted on chasing another plane)"; H13 "Bomber plane ignored manual targeting".
+- **Was:** `Air.steerJet` chased whatever slot 1 had targeted, whatever the order: a move order lost to any plane in missile range. A bomber's attack order on a target beyond its bomb bay's 800-stud reach failed Targeting's range check, so the search took the nearest target instead and the bomber bombed that.
+- **Now:**
+  - A jet whose head order is a player's MOVE (not an automatic one) flies to the goal: no chase and no bomb run on the way. Its weapons still fire at what comes in front of them. FIGHT, PATROL, ATTACK and idle aircraft chase as before.
+  - A BOMB weapon with an attack order's target keeps that target at any distance while the team knows it, and takes nothing else (Targeting). The runs go at it from wherever the bomber is.
+- **Tests:** AirOrders.spec: a Falcon ordered home 10 s after meeting a Harpy flies home; a bomber ordered onto a depot beyond 800 studs never picks the nearer extractor and bombs the depot. Air.spec's bomb-run tests give the bomber an attack-move (FIGHT) instead of a plain move.
+
+## S-205 — Heavy shots charge while the weapon reloads (the user) (2026-10-29)
+
+- **Asked:** H32 "Bulwark only shoot its primary turret for once and never used it again".
+- **Was:** a weapon with a shot cost (S-96) fired only when the team's stores held the whole cost: Bulwark 500, Radiance 700, Centurion 150. In a match, construction keeps stored power near zero (the economy spends what comes in), so after the first shot the stores never held 500 again and the beam never fired. In a test with full stores it fired every 7 s.
+- **Now** (`Stockpile.chargeStep`, run by Build.step after the missile refills): a weapon whose shot costs `Stockpile.CHARGE_MIN` (100) or more pays the next shot while it reloads, cost / reload per second, as a priority consumer like a missile refill (a low-priority unit's last, S-156). It fires once reloaded and charged (`World.wCharge`, nil = charged; hashed only while charging). Spawned charged. A stall slows the charge, so the beam fires less often instead of never. Small laser costs (1–2 power) and the D-Gun (ordered by hand) still pay at once.
+- **Tests:** Defenses.spec's Radiance test: 700 a shot, charged while reloading; with empty stores the charge stops and no shot fires.
+
+## S-206 — Air builders build what ground builders build (the user) (2026-10-29)
+
+- **Asked:** H35 "T1 Air should be able to build other things same as other T1 builder. T2 Air too."
+- **Now:** a builder def may name `buildsLike`, builders of its faction whose lists it adds after its own (`Defs.build` merges them, without repeats, so a structure added to a ground builder later reaches the air builder too). Skywright: Mason and Artisan; Vulture: Scrapper and Tinker; Zenith: Architect; Condor: Forgemaster. Each keeps its own air structures (airfields, pads, its SAMs and radars) first.
+- **Validation:** `buildsLike` only on builders, naming builders of the same faction.
+
+## S-207 — AI: roles by spot, the free starts first, the enemy's starts only, long-range radar (the user) (2026-10-29)
+
+- **Asked** (playtest 3): H10 "Normal AI on the frontline spot in Supreme Strait still build a vehicle factory + an air factory"; H14 "There's 1 available spot but the AI doesn't take it but spawn beside another one" (8v8 Supreme Strait); H15 "AI tend to ignore to take up empty orb deposit spots"; H33 "Radiance of AI still does not target radar blips?".
+- **H10:** a side's AIs drew roles (S-187) in player order, so the front spot could draw "air", which builds an airfield right after the first plant. The side still gets the same roles, but `Skirmish.roleOf` hands them out by spot: the AIs nearest an enemy Commander get balanced and spam, then defence, and the farthest back tech and air (`ROLE_DEPTH`). Ties, or no Commanders yet, keep player order.
+- **H14:** an AI took its side's k-th start (k = its place on the side). If a human had picked that start, it scanned its box for the best spot, which could be right beside another player while a start stood empty. Now `Pregame.bestSpot` tries its own start, then the side's first free start, then the scan.
+- **H15:** the AI took every map start but its own as an "enemy start": allies' and empty ones too. So a Hard AI (safe expansion) never took a deposit nearer any other start, and a Chaos AI waited for an escort for those. Now its enemy starts are the enemy side's Commanders when it starts (the map's other starts only if none stands yet). The scout loop uses them too.
+- **H33:** the AI's beam tower already takes blips (S-202), but its only radar was one T1 tower near home, short of the beam's range. Its T2 builders now build a long-range radar (Beacon / All-Seer) right after the beam tower.
+- **Tests:** AIRoles.spec: roles by spot on Supreme Strait (front balanced, back air on each side); an AI's enemy starts are the two enemy Commanders' spots in a 2v2. Pregame.spec: 8v8 on Supreme Strait, player 1 takes the 4th start, and every start of the side ends up taken.

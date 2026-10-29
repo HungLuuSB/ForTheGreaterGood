@@ -127,7 +127,7 @@ return function(t: RunAll.Context)
 		local p1 = { starts[1][1] + 30, starts[1][2] + 40 }
 		pick(sim, 1, p1[1], p1[2])
 		-- player 1 queues two generators for its Commander
-		local gen = sim.defs.units.ord_generator.index
+		local gen = sim.defs.units.ord_solar.index
 		for k, off in { 60, 90 } do
 			local cell, ox, oz = g:encode(p1[1] + off, p1[2])
 			submit(sim, 1, { cmdType = CT.BUILD, flags = if k > 1 then Schema.CmdFlag.QUEUE else 0, unitIds = {}, defIndex = gen, cell = cell, offX = ox, offZ = oz, facing = 0 })
@@ -229,7 +229,7 @@ return function(t: RunAll.Context)
 		local starts = (sim.map :: any).layers.starts
 		pick(sim, 1, starts[1][1], starts[1][2])
 		local cell, ox, oz = g:encode(starts[1][1] + 60, starts[1][2])
-		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = {}, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = {}, defIndex = sim.defs.units.ord_solar.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
 		faction(sim, 1, true)
 		Sim.step(sim)
 		t.equal(sim.players[1].faction, "chaos")
@@ -341,6 +341,37 @@ return function(t: RunAll.Context)
 		t.expect(sim.pregame.ready[2] and sim.pregame.ready[3] and sim.pregame.ready[4], "the AI is ready")
 	end)
 
+	t.test("8v8 on Supreme Strait: a human takes another's start; the AIs fill every start left (S-207, H14)", function()
+		local ai = {}
+		for pid = 2, 16 do
+			ai[pid] = "normal"
+		end
+		local sim = newMatch(16, "map:supreme_strait", ai)
+		local brains = Skirmish.forMatch(sim)
+		local pg = sim.pregame
+		local starts = (sim.map :: any).layers.starts
+		local hints = pg.sides.startsOf[1]
+		t.equal(#hints, 8, "side 1 has 8 starts")
+		local h = hints[4]
+		pick(sim, 1, starts[h][1], starts[h][2]) -- player 1 takes the 4th start, an AI's
+		for _ = 1, 3 do
+			for _, b in brains do
+				Skirmish.tick(b)
+			end
+			Sim.step(sim)
+		end
+		for _, hint in hints do
+			local on = false
+			for pid = 1, 8 do
+				local p = pg.picks[pid]
+				if p and (p[1] - starts[hint][1]) ^ 2 + (p[2] - starts[hint][2]) ^ 2 < 1 then
+					on = true
+				end
+			end
+			t.expect(on, `start {hint} taken`)
+		end
+	end)
+
 	t.test("16 players on a two-start map: 8v8, every Commander spaced and in its side's area", function()
 		local ai = {}
 		for i = 1, 16 do
@@ -419,7 +450,7 @@ return function(t: RunAll.Context)
 		local starts = (sim.map :: any).layers.starts
 		pick(sim, 1, starts[1][1], starts[1][2])
 		local cell, ox, oz = g:encode(starts[1][1] + 60, starts[1][2])
-		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = {}, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 1 })
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = {}, defIndex = sim.defs.units.ord_solar.index, cell = cell, offX = ox, offZ = oz, facing = 1 })
 		step()
 		t.expect(views[3].pregame[1] ~= nil and bit32.band(views[3].pregame[1].flags, Schema.PregameFlag.PICKED) ~= 0, "an enemy sees player 1's pick")
 		t.expect(math.abs((views[3].pregame[1].x :: number) - starts[1][1]) < 0.1, "where it is")
