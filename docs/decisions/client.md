@@ -2318,3 +2318,10 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - Client: the arms script `PieceScripts/chs_juggernaut` is renamed `chs_goliath`; the Bot gait's hip and scale tables, `PieceScripts/Registry` and `UI/IconAtlas` take the new ids (the T3 bot still borrows the Main Battle Tank tile until 2D-E's icons, request E1). The Deaths, PieceAnim, Ambient and PortraitStage specs follow.
 - The test scenes in `src/roblox/MatchConfig.luau` that spawned the T2 tank now spawn `chs_goliath` (committed from the file's committed version only; the user's local edits stay out).
 - Studio, Coastline: `chs_juggernaut` draws as the meshed T3 bot and walks on the Bot gait, `chs_goliath` as the meshed tank; no piece-script errors (`debug_out/screens/c256-juggernaut-t3.jpg`).
+
+### C-257 — Pulse pieces swell with their breath (2026-10-29)
+
+- rig.md's `pulse` is "scale and emissive pulse about the pivot"; C-252 did the glow. Now the piece also changes size: `Core/Glow.scale` gives 1 ± `CORE_SCALE` (0.04) in step with the glow's breath (0.5 Hz), the swing times the stall ratio (still with no power), 1 while being built, retracted, or below the "high" glow level. `Glow.spec` covers it.
+- `Render/Glow.collectPulses` finds each pulse piece and every part welded to it, with their resting sizes and joint offsets. `Glow.step` resizes them about the piece's pivot: sizes, the piece's Motor6D `C1`, the welds' `C0` and attachment positions times the scale. That's only within `PULSE_NEAR` (450 studs) of the camera, and only on a change of `PULSE_STEP` (0.3%) or more. A model going back to the pool is put back at rest.
+- For that, glow parts in `MeshModels` and welded parts in `BlockoutBuilder` are joined with a `Weld` (C0 offset) instead of a `WeldConstraint`, whose offset can't be scaled. Nothing in the client treats the two differently.
+- Studio, Coastline: both advanced fusions' cores, the advanced converter's coil and the advanced capacitor's cells swing 4% each way over 2 s, their glow shells scaling with them and staying on (`debug_out/screens/c257-pulse-pieces.jpg`).

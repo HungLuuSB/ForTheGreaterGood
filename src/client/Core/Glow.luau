@@ -13,7 +13,9 @@
 -- A `pulse` piece's glow (rig.md section 9: fusion cores, converter coils
 -- and crucibles, capacitor cells; models-C) breathes slowly about its
 -- resting strength (CORE_LOW..CORE_HIGH × rest at CORE_HZ), dimmed by the
--- stall as its channel is.
+-- stall as its channel is, and swells and shrinks with it by CORE_SCALE
+-- (rig.md's "scale and emissive pulse"; less on a stall, none out of
+-- power; C-257).
 -- A unit still being built is dark (inert until complete, C-99).
 -- The graphics setting's level (C-106): "off" all dark; "low" the resting
 -- glow with the stall dimming (rare writes); "high" also the factory pulse
@@ -30,6 +32,7 @@ Glow.FLASH_SECONDS = 0.3
 Glow.EPSILON = 0.02 -- smaller changes aren't written
 Glow.CORE_LOW, Glow.CORE_HIGH = 0.55, 1.45 -- a pulse piece's breath, × its resting strength
 Glow.CORE_HZ = 0.5
+Glow.CORE_SCALE = 0.04 -- a pulse piece's size, ± this share at the breath's ends
 
 -- Team colors that clash with a faction's glow (docs/contracts/fx.md, C's
 -- check of the 8 lobby colors): there the unit's running and power glow
@@ -70,6 +73,17 @@ end
 function Glow.breath(now: number, phase: number): number
 	local w = 0.5 - 0.5 * math.cos(2 * math.pi * (Glow.CORE_HZ * now + phase))
 	return Glow.CORE_LOW + (Glow.CORE_HIGH - Glow.CORE_LOW) * w
+end
+
+-- A pulse piece's size, × its rest: 1 ± CORE_SCALE in step with its glow's
+-- breath, the swing scaled by the stall ratio. 1 while being built,
+-- retracted, or at a glow level below "high".
+function Glow.scale(c: Context): number
+	if not c.built or c.retracted or (c.level ~= nil and c.level ~= "high") then
+		return 1
+	end
+	local swing = (Glow.breath(c.now, c.phase) - 1) / ((Glow.CORE_HIGH - Glow.CORE_LOW) / 2)
+	return 1 + Glow.CORE_SCALE * swing * math.clamp(c.ratio, 0, 1)
 end
 
 -- The strength of a glow part of `channel` resting at `rest`; `pulsing`

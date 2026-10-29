@@ -42,6 +42,7 @@ type Drawn = {
 	looks: { [BasePart]: number }?, -- each part's own transparency, while building
 	glows: { Glow.Part }?, -- its glow parts (C-103; BAR meshes only)
 	heads: { BasePart }?, -- its headlight glow parts
+	pulses: { Glow.Pulse }?, -- its `pulse` pieces, which swell with their breath (C-257)
 }
 
 -- A unit under construction: see-through; complete: as modelled.
@@ -122,13 +123,14 @@ local function show(r: Renderer, world: World.World, id: number)
 	}
 	local d = r.drawn[id]
 	d.glows, d.heads = Glow.collect(model, def)
+	d.pulses = Glow.collectPulses(model, def)
 	PieceAnim.add(r.anim, id, def, PieceScripts.forDef(def))
 end
 
 -- Back to the pool with every joint at rest (the next unit starts clean).
 local function release(d: Drawn)
 	setBuilding(d, false)
-	Glow.reset(d.glows, d.root)
+	Glow.reset(d.glows, d.root, d.pulses)
 	for _, motor in d.motors do
 		motor.Transform = CFrame.identity
 	end
