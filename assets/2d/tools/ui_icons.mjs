@@ -27,7 +27,8 @@ const { UI, SIZES, GLYPH, uiSVG } = new Function(`${html.slice(from, to)}; retur
 const problems = [];
 const seen = new Set();
 for (const it of UI) {
-	if (!/^[a-z][a-z0-9_]*$/.test(it.key)) problems.push(`key "${it.key}" is not lower_snake_case`);
+	// lower case first, then letters, digits or _ (camel case like the Codex's airSight is allowed)
+	if (!/^[a-z][a-zA-Z0-9_]*$/.test(it.key)) problems.push(`key "${it.key}" must start lower case and hold only letters, digits and _`);
 	if (seen.has(it.key)) problems.push(`key "${it.key}" is used twice`);
 	seen.add(it.key);
 	if (!GLYPH[it.key]) problems.push(`key "${it.key}" has no glyph`);
