@@ -56,6 +56,12 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, transport lift from the server: C-274)
+
+- **Every viewer sees the lift (C-274):** the transport's descent, grab and rise now follow the server's TRANSPORT and CARRY events (S-220, protocol 44, merged in; transports carry one unit). The slung unit shows for other players too.
+- **No more frozen clients on a skipped tick:** Entry stops recording that viewer's replay instead (sim-A fixed the cause, the order hash, in 02a4a84e).
+- Ready to merge: `cec6badd` (C-274; carries m-sim-2 5c1ba421 with 02a4a84e. test_client 352 / 352, build passed (893 scripts, 2520 requires). Studio, Coastline: pick-up and drop, past tick 900 with no errors)
+
 ## Summary (2026-10-30, transport pick-up and drop look: C-273)
 
 - **Transports come down and grab (C-273):** the carried unit hangs under the transport. Picking up and setting down, the transport comes down until that unit touches the ground (sliding over the one it picks up), then rises.
