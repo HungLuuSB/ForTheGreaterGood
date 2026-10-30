@@ -1,0 +1,53 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-30: transports (S-219), uploaded with the user's approval: 1856 triangles, glow share 1.3%",
+  "bar": {
+    "model": "rbxassetid://140267948777951",
+    "meshes": {
+      "base": "rbxassetid://102580156122068",
+      "base_glow_head": "rbxassetid://88367913361433",
+      "base_glow_running": "rbxassetid://115791286907929",
+      "rotor": "rbxassetid://132238380015663",
+      "tailRotor": "rbxassetid://70983139829916"
+    },
+    "decals": {
+      "ALB": "rbxassetid://129146781668718",
+      "RGH": "rbxassetid://80347573923685",
+      "NOR": "rbxassetid://103486915735131",
+      "MTL": "rbxassetid://126872632535004",
+      "EMI": "rbxassetid://82039378921594"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://122955050270898",
+      "NOR": "rbxassetid://74702602815911",
+      "RGH": "rbxassetid://91734944562695",
+      "MTL": "rbxassetid://122303582346372",
+      "EMI": "rbxassetid://115991939422305"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_ark_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://76186295539336",
+    "meshes": {
+      "base": "rbxassetid://85494441126919",
+      "rotor": "rbxassetid://136473743160953",
+      "tailRotor": "rbxassetid://96180643455770"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73766611526975",
+      "RGH": "rbxassetid://91537572715408",
+      "NOR": "rbxassetid://129459439662728",
+      "MTL": "rbxassetid://100571612448167",
+      "EMI": "rbxassetid://88496450513704"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://123125542571561",
+      "NOR": "rbxassetid://75592356518487",
+      "RGH": "rbxassetid://77669440835094",
+      "MTL": "rbxassetid://112502313756486",
+      "EMI": "rbxassetid://136734447058643"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_ark_wreck_bar in FTGG Art",
+    "revision": "2026-10-30: transports (S-219), uploaded with the user's approval: 1328 triangles"
+  }
+}

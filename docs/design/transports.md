@@ -7,11 +7,11 @@ Air transports on BAR's model. The user's answers: Commanders and units can be c
 | Tier | Order | Chaos | Carries | Built at |
 |---|---|---|---|---|
 | T1 | Courier (`ord_courier`) | Buzzard (`chs_buzzard`) | One light unit: tier 1 or a Commander, footprint up to 2 | Airfield |
-| T2 | Ark (`ord_ark`) | Charon (`chs_charon`) | Up to 4 units of tier up to 2 and footprint up to 3, by slots: footprint 1 = 1 slot, 2 = 2, 3 = 4 (4 slots) | Advanced Airfield |
+| T2 | Ark (`ord_ark`) | Charon (`chs_charon`) | One unit of tier up to 2 and footprint up to 3 (S-220, the user: "they only carry 1 cargo, both for T1 and T2") | Advanced Airfield |
 
 - Helicopters (`HELI`), unarmed. Names are placeholders the user can change.
 - The def field is `transport = { slots, maxUnits, maxTier, maxFootprint }` (`Shared/Defs/Defs`). Commanders are tier 0.
-- **Speed:** a loaded transport flies at `1 − 0.1 × slots used` of its top speed (an Ark full: 60%).
+- **Speed:** a loaded transport flies at `1 − 0.1 × slots used` of its top speed (slots by the unit's footprint: 1, 2 or 4; an Ark with a footprint-3 tank: 60%).
 
 ## Who fits (`Transport.canCarry`)
 
@@ -36,11 +36,18 @@ Air transports on BAR's model. The user's answers: Commanders and units can be c
 - Every unit on board dies with it, with no wrecks and no death blasts (the user's choice: as in BAR). A carried Commander dies too, which ends its player under Command Ends.
 - The same when the transport self-destructs.
 
-## Network (protocol 43)
+## What players see (S-220, the user via client request 40)
+
+- The transport descends, grabs the unit under its belly and rises again; the same to set it down. The client times it from TRANSPORT events, sent as each pick-up or set-down starts.
+- Everyone who sees the transport sees what hangs under it (CARRY), not only its owner.
+- The set-down spot is chosen when the set-down starts, so the DROP event can say where. If something stands there by the end, the nearest open spot is used; with none, it cancels (CANCEL) and tries again.
+
+## Network (protocols 43, 44)
 
 - Commands: `LOAD` 32 (`targetId`) and `UNLOAD` 33 (`pos`).
 - Owner field `CARGO` 128 on the transport's own-status record: `count u8`, then a `u16` unit ID per unit on board, in loading order. It is sent when the cargo changes, and with the ENTER when not empty.
 - A carried unit leaves every player's view, its owner's too: a `LEAVE`. Setting it down brings an `ENTER`.
+- Protocol 44 (S-220): event TRANSPORT 34 (`unitId` transport, `targetId` unit, `defIndex`, `action` PICKUP 1 / DROP 2 / CANCEL 3, `ticks`, then the pick-up point or set-down spot) as each starts or stops; event CARRY 35 (`unitId`, `defIndex` 0 = empty, `team`) with the transport's ENTER and when it changes. Both to every player with the transport on its tactical tier.
 
 ## AI
 

@@ -8,6 +8,7 @@ local Packer = require("@shared/Net/Packer")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local CommandSet = require("./CommandSet")
+local Transports = require("./Transports")
 local World = require("./World")
 
 local Orders = {}
@@ -60,6 +61,7 @@ local NEEDS: { [number]: string } = {
 	[Schema.CmdType.REPAIR] = "repair",
 	[Schema.CmdType.RECLAIM] = "reclaim",
 	[Schema.CmdType.DGUN] = "dgun",
+	[Schema.CmdType.UNLOAD] = "unload",
 	[Schema.CmdType.SET_RETREAT] = "retreat",
 	[Schema.CmdType.SELF_DESTRUCT] = "selfdestruct",
 }
@@ -112,7 +114,7 @@ end
 -- the factory's production, heal it) and the rest GUARD it; on an own
 -- builder everyone GUARDs, which makes builders assist whatever it builds
 -- (S-128, BAR's assist). Otherwise one order for all (Orders.smart).
-function Orders.smartFor(world: World.World, x: number, z: number, unitId: number?, queue: boolean?, ids: { number }, group: boolean?): { { intent: Intent, ids: { number } } }
+local function smartRest(world: World.World, x: number, z: number, unitId: number?, queue: boolean?, ids: { number }, group: boolean?): { { intent: Intent, ids: { number } } }
 	local intent = Orders.smart(world, x, z, unitId, queue, group)
 	local t = if unitId then world.units[unitId] else nil
 	if t == nil or World.relation(world, t) ~= "own" then
@@ -143,6 +145,41 @@ function Orders.smartFor(world: World.World, x: number, z: number, unitId: numbe
 		table.insert(out, { intent = { cmdType = CT.GUARD, queue = queue == true, targetId = t.id }, ids = others })
 	end
 	return out
+end
+
+-- Who boards or picks up on a right click on unit `t` (S-219, C-272): on an
+-- own transport, the selected units that fit board it (LOAD it); on an own
+-- or allied unit that fits a selected transport, those transports pick it
+-- up (LOAD it). The rest get the usual smart order. Nil when neither.
+local function transportParts(world: World.World, t: World.Unit, x: number, z: number, queue: boolean?, ids: { number }, group: boolean?): { { intent: Intent, ids: { number } } }?
+	local load, rest = {}, {}
+	if Transports.spec(World.def(world, t)) and World.relation(world, t) == "own" then
+		for _, id in ids do
+			local u = world.units[id]
+			table.insert(if u and Transports.fits(world, t, u) then load else rest, id)
+		end
+	else
+		for _, id in ids do
+			local u = world.units[id]
+			table.insert(if u and u.team == world.me.team and Transports.fits(world, u, t) then load else rest, id)
+		end
+	end
+	if #load == 0 then
+		return nil
+	end
+	local out = { { intent = { cmdType = CT.LOAD, queue = queue == true, targetId = t.id } :: Intent, ids = load } }
+	if #rest > 0 then
+		for _, part in smartRest(world, x, z, t.id, queue, rest, group) do
+			table.insert(out, part)
+		end
+	end
+	return out
+end
+
+function Orders.smartFor(world: World.World, x: number, z: number, unitId: number?, queue: boolean?, ids: { number }, group: boolean?): { { intent: Intent, ids: { number } } }
+	local t = if unitId then world.units[unitId] else nil
+	local parts = if t then transportParts(world, t, x, z, queue, ids, group) else nil
+	return parts or smartRest(world, x, z, unitId, queue, ids, group)
 end
 
 -- Payloads for `intent` given to `ids` (own units; the server ignores others).

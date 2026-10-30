@@ -56,6 +56,36 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, transport pictures: C-276)
+
+- **Transport pictures (C-276):** E's build-menu pictures for the Courier, Buzzard, Ark and Charon. Picture sheet 4 was re-uploaded with the user's approval (111703066289053); all 201 units have a picture.
+- Ready to merge: `f78f2ad8` (C-276; carries 2d 77e8433a. test_client 352 / 352, build passed (893 scripts, 2520 requires). Studio, Coastline: the Airfield's Courier tile shows its picture)
+
+## Summary (2026-10-30, unit panel without states: C-275)
+
+- **No unit states in the unit panel (C-275):** no more "Fire at will · Maneuver · Retreat at 30%", On / Off or Repeat; the command card shows them.
+- Ready to merge: `d4949e87` (C-275. test_client 352 / 352, build passed (893 scripts, 2520 requires). Studio, Coastline: a Lancer's panel without the state line)
+
+## Summary (2026-10-30, transport lift from the server: C-274)
+
+- **Every viewer sees the lift (C-274):** the transport's descent, grab and rise now follow the server's TRANSPORT and CARRY events (S-220, protocol 44, merged in; transports carry one unit). The slung unit shows for other players too.
+- **No more frozen clients on a skipped tick:** Entry stops recording that viewer's replay instead (sim-A fixed the cause, the order hash, in 02a4a84e).
+- Ready to merge: `cec6badd` (C-274; carries m-sim-2 5c1ba421 with 02a4a84e. test_client 352 / 352, build passed (893 scripts, 2520 requires). Studio, Coastline: pick-up and drop, past tick 900 with no errors)
+
+## Summary (2026-10-30, transport pick-up and drop look: C-273)
+
+- **Transports come down and grab (C-273):** the carried unit hangs under the transport. Picking up and setting down, the transport comes down until that unit touches the ground (sliding over the one it picks up), then rises.
+  - For now the client infers the lift from own transports' orders; client request 40 asks the sim for the timing and the carried def for every viewer.
+- Ready to merge: `1f9c592e` (C-273. test_client 352 / 352, build passed (893 scripts, 2519 requires). Studio, Coastline: Courier pick-up and drop of a Lancer)
+
+## Summary (2026-10-30, transports on the client: C-272)
+
+- **Transports (C-272):**
+  - Load and Unload buttons, right-click pick-up and boarding, and L / U with only transports selected.
+  - The cargo is listed in the unit panel; carried units leave the view and come back when set down.
+  - A construction turret reclaiming a live enemy draws a reclaim spray (S-218).
+- Ready to merge: `b7ff3c48` (C-272. test_client 351 / 351, build passed (891 scripts, 2512 requires). Studio, Coastline: a Courier loaded and unloaded a Lancer)
+
 ## Summary (2026-10-30, transport icons: C-271)
 
 - **Transports come through the client (C-271):** sim-A's S-218 and S-219 (m-sim-2 e7765af2) and 2D-E's E-13 icons (2d 485edc70) are merged. Unit icon sheet 2 and the UI atlas are re-rendered and uploaded with the user's approval (100470717468643, 89353396855864).

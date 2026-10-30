@@ -1,0 +1,166 @@
+{
+  "id": "ord_ark",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.7,
+        -0.4775
+      ],
+      "size": [
+        7.2,
+        7.4,
+        20.245
+      ]
+    },
+    "tailRotor": {
+      "parent": "base",
+      "center": [
+        0.0,
+        7.4,
+        5.7374
+      ],
+      "size": [
+        14.4046,
+        0.35,
+        12.4748
+      ],
+      "pivot": [
+        0.0,
+        7.4,
+        7.6
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        1.8626,
+        6.3,
+        -7.0
+      ],
+      "size": [
+        12.4748,
+        0.35,
+        14.4046
+      ],
+      "pivot": [
+        0.0,
+        6.3,
+        -7.0
+      ]
+    }
+  },
+  "attachments": {
+    "cargo": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.4,
+        0.0
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "rotor",
+    "tailRotor"
+  ],
+  "visualPieces": [
+    "tailRotor"
+  ],
+  "anim": {
+    "tailRotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        -1,
+        0
+      ]
+    },
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.425,
+        1.77
+      ],
+      "size": [
+        7.27,
+        5.09,
+        15.79
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.28,
+        -8.8
+      ],
+      "size": [
+        2.3,
+        0.06,
+        0.4
+      ]
+    }
+  ],
+  "glowShare": 0.0126,
+  "triangles": {
+    "base": 1640,
+    "tailRotor": 108,
+    "rotor": 108,
+    "total": 1856
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

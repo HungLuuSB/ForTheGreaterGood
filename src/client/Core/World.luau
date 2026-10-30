@@ -73,6 +73,8 @@ export type Unit = {
 	selfDestructAt: number?, -- the render tick that count was set at (the countdown runs on between records)
 	workKind: number?, -- builders (protocol 39, S-194): Schema.WorkKind of what it works on now; nil until sent
 	workTarget: number?, -- its unit (BUILD, REPAIR, ASSIST) or wreck (RECLAIM, RESURRECT)
+	cargo: { number }?, -- transports (protocol 43, S-219): the units on board, in loading order; nil until sent
+	cargoDefs: { number }?, -- each one's def index as last seen (0: never seen), for the unit panel (C-272)
 	flares: number?, -- countermeasure charges left (protocol 21, S-63); nil until sent
 	chaff: number?,
 	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn
@@ -157,6 +159,11 @@ function World.newPregame(): Pregame
 	return { active = false, started = false, picks = {}, countdown = nil, builds = {}, clock = nil, boxes = nil, startedTick = nil, version = 0 }
 end
 
+-- A transport's pick-up or set-down starting or stopping (TRANSPORT,
+-- protocol 44, S-220: `action` Schema.TransportAction), or what it carries
+-- changing (CARRY: action 0, `defIndex` 0 = empty), at sim tick `tick`.
+export type TransportFx = { tick: number, transport: number, unit: number, defIndex: number, action: number, ticks: number, x: number, z: number }
+
 export type World = {
 	shownTick: number?, -- the render tick World.settle last ran for (C-49)
 	grid: Grid.Grid,
@@ -194,6 +201,9 @@ export type World = {
 	cheatResults: { any }, -- CHEAT_RESULT events (protocol 27, S-102) the cheat command line drains (C-119)
 	lastShot: { [number]: { [number]: number } }, -- unit → weapon slot → sim tick of its last shot seen (FIRE, a launch; the reload bar, C-170)
 	idle: { [number]: boolean }, -- the player's idle builders and factories, on camera or not (IDLE, protocol 31, S-136; C-158)
+	carry: { [number]: number }, -- what each transport carries, slung under it (CARRY, protocol 44, S-220): def index by transport, for every viewer
+	transportFx: { TransportFx }, -- TRANSPORT and CARRY events with their ticks, for Core/TransportLift to take (C-274)
+	carriedDefs: { [number]: number }, -- own units that left the view: their def index, till they come back or die (a transport's cargo, C-272)
 	ownStatus: { [number]: OwnStatus }, -- own units off camera: the latest OWN_STATUS by unit (protocol 34, S-158; C-205), kept until the unit ENTERs or dies
 	remoteDomes: { [number]: { x: number, y: number, z: number, radius: number, charge: number, flags: number } }, -- domes of generators not in the tactical tier (DOME, protocol 29, S-122): drawn without vision, as in BAR (C-145)
 	shields: { [number]: { charge: number, flags: number } }, -- shield generators' domes by unit id (SHIELD, protocol 24, S-79): charge 0..1 of capacity, Schema.ShieldFlag bits
@@ -241,6 +251,9 @@ function World.new(defs: Defs.DefSet): World
 		remoteDomes = {},
 		idle = {},
 		ownStatus = {},
+		carriedDefs = {},
+		carry = {},
+		transportFx = {},
 		lastShot = {},
 		deathWrecks = {},
 		pregame = World.newPregame(),

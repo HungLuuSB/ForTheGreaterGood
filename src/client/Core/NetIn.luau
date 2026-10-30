@@ -88,9 +88,14 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			}
 			table.insert(world.entered, id)
 			world.ownStatus[id] = nil -- ENTER and State carry it now (S-158)
+			world.carriedDefs[id] = nil
 		elseif kind == EK.LEAVE then
 			world.shields[e.unitId :: number] = nil -- its dome is sent again on the next ENTER
+			world.carry[e.unitId :: number] = nil -- sent again with the next ENTER (S-220)
 			local u = world.units[e.unitId :: number]
+			if u and u.team == world.me.team then
+				world.carriedDefs[u.id] = u.defIndex -- maybe boarding a transport: its CARGO names it (C-272)
+			end
 			if u and u.tier == "tactical" then
 				u.tier = "strategic" -- refreshed or dropped by the next strategic snapshot
 				table.clear(u.snaps)
@@ -102,6 +107,8 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			world.shields[id] = nil
 			world.idle[id] = nil
 			world.ownStatus[id] = nil
+			world.carriedDefs[id] = nil
+			world.carry[id] = nil -- (its cargo dies with it, S-219)
 			world.lastShot[id] = nil
 			local u = world.units[id]
 			if u then
@@ -247,6 +254,15 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			end
 			world.pregame.boxes = boxes
 			world.pregame.version += 1
+		elseif EK.TRANSPORT ~= nil and kind == EK.TRANSPORT then
+			-- a pick-up or set-down starts or stops (protocol 44, S-220; C-274)
+			local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+			table.insert(world.transportFx, { tick = tick, transport = e.unitId :: number, unit = e.targetId :: number, defIndex = e.defIndex :: number, action = e.action :: number, ticks = e.actionTicks or 15, x = x, z = z })
+		elseif EK.CARRY ~= nil and kind == EK.CARRY then
+			-- what a transport carries now, for every viewer (protocol 44)
+			local id, index = e.unitId :: number, e.defIndex :: number
+			world.carry[id] = if index ~= 0 then index else nil
+			table.insert(world.transportFx, { tick = tick, transport = id, unit = 0, defIndex = index, action = 0, ticks = 0, x = 0, z = 0 })
 		elseif EK.SHARE ~= nil and kind == EK.SHARE then
 			-- a gift or a request for help in the ally team (protocol 37, S-176)
 			table.insert(world.shares, e)
@@ -363,6 +379,21 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 		if r.workKind ~= nil then
 			u.workKind, u.workTarget = r.workKind, r.workTarget
 		end
+		if r.cargo ~= nil then
+			-- a transport's units on board (protocol 43, S-219; C-272): each
+			-- one's def as last seen; they're out of the world (a LEAVE each),
+			-- so drop them now rather than at the next strategic snapshot
+			local defs = table.create(#r.cargo, 0)
+			for i, id in r.cargo do
+				local c = world.units[id]
+				defs[i] = if c then c.defIndex else world.carriedDefs[id] or 0
+				if c and c.team == world.me.team and c.id ~= u.id then
+					world.carriedDefs[id] = c.defIndex
+					world.units[id] = nil
+				end
+			end
+			u.cargo, u.cargoDefs = r.cargo, defs
+		end
 		if r.flares ~= nil or r.chaff ~= nil then
 			u.flares, u.chaff = r.flares, r.chaff -- countermeasure charges left (protocol 21, S-63)
 		end
@@ -448,6 +479,8 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			selfDestructAt = if keep then keep.selfDestructAt else nil,
 			workKind = if keep then keep.workKind else nil,
 			workTarget = if keep then keep.workTarget else nil,
+			cargo = if keep then keep.cargo else nil,
+			cargoDefs = if keep then keep.cargoDefs else nil,
 			stock = if keep then keep.stock else nil,
 		}
 		local status = world.ownStatus[r.unitId]

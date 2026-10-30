@@ -102,13 +102,10 @@ return function(t: RunAll.T)
 		Transport.pickUp(sim, courier, lancer)
 		t.expect(not Transport.canCarry(sim, courier, com), "the light one is full with one")
 		Transport.pickUp(sim, ark, paladin)
-		Transport.pickUp(sim, ark, com)
-		t.equal(Transport.used(sim, ark), 4)
-		local lancer2 = Spawn.unit(sim, "ord_lancer", 1, 40, 40)
-		t.expect(not Transport.canCarry(sim, ark, lancer2), "4 slots: two footprint-2 units fill it")
+		t.expect(not Transport.canCarry(sim, ark, com), "the heavy one is full with one too (S-220)")
 	end)
 
-	t.test("units told to LOAD a transport board it; a carried unit takes no orders (S-219)", function()
+	t.test("units told to LOAD a transport board it, one at a time; a carried unit takes no orders (S-219, S-220)", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
 		local w = sim.world
 		local ark = Spawn.unit(sim, "ord_ark", 1, 0, 0)
@@ -116,9 +113,15 @@ return function(t: RunAll.T)
 		local b = Spawn.unit(sim, "ord_lancer", 1, -40, 0)
 		load(sim, 1, { a, b }, ark)
 		t.expect(runUntil(sim, 30, function()
-			return World.isParked(w, a) and World.isParked(w, b)
-		end), "both boarded")
-		t.equal(#(sim.transport.cargo[ark] :: { number }), 2)
+			return World.isParked(w, a) or World.isParked(w, b)
+		end), "one boarded")
+		for _ = 1, 15 * 5 do
+			Sim.step(sim)
+		end
+		t.equal(#(sim.transport.cargo[ark] :: { number }), 1, "one unit only (S-220)")
+		if not World.isParked(w, a) then
+			a, b = b, a
+		end
 		local g = (sim.map :: any).grid
 		local cell, ox, oz = g:encode(200, 200)
 		submit(sim, 1, { cmdType = CT.MOVE, flags = 0, unitIds = { a }, cell = cell, offX = ox, offZ = oz })
@@ -170,6 +173,21 @@ return function(t: RunAll.T)
 		end
 		local a1, a2 = run()
 		local b1, b2 = run()
+		-- (S-219 follow-up, client-B: the hash threw on a load / unload order
+		-- under way; every tick of a load and an unload hashes)
+		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:96" })
+		local courier = Spawn.unit(sim, "ord_courier", 1, 0, 0)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 60, 20)
+		load(sim, 1, { courier }, tank)
+		for _ = 1, 15 * 6 do
+			Sim.step(sim)
+			Sim.hash(sim)
+		end
+		unload(sim, 1, { courier }, -150, 100)
+		for _ = 1, 15 * 20 do
+			Sim.step(sim)
+			Sim.hash(sim)
+		end
 		t.equal(a1, b1, "same hash while loaded")
 		t.equal(a2, b2, "same hash after")
 	end)
@@ -215,5 +233,59 @@ return function(t: RunAll.T)
 		step(2)
 		t.equal(view.units[tank] and view.units[tank].tier, "tactical", "back on unload")
 		t.equal(#((view.units[courier] :: any).cargo :: { number }), 0, "nothing on board")
+	end)
+
+	t.test("every player who sees the transport hears of the pick-up and set-down as they start, and what it carries (S-220)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local all = { math.min(g.cellsX - 1, 255), math.min(g.cellsZ - 1, 255) }
+		NetOut.setCamera(sim, 2, 0, 0, all[1], all[2])
+		local enemyView = Client.new(g)
+		local courier = Spawn.unit(sim, "ord_courier", 1, 0, 0)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 60, 20)
+		Spawn.unit(sim, "chs_ravager", 2, 30, 30) -- so player 2 sees the transport
+		local function step(n: number)
+			for _ = 1, n do
+				Sim.step(sim)
+				Client.receive(enemyView, sim.net.players[2].outbox)
+			end
+		end
+		step(2)
+		load(sim, 1, { courier }, tank)
+		step(15 * 10)
+		t.expect(World.isParked(w, tank), "picked up")
+		local first = enemyView.transportActions[1]
+		t.expect(first ~= nil and first.action == Schema.TransportAction.PICKUP and first.transport == courier and first.unit == tank, "the enemy heard the PICKUP")
+		t.equal(first and first.defIndex, sim.defs.units.ord_lancer.index, "with the unit's def")
+		local carry = enemyView.carry[courier]
+		t.equal(carry and carry.defIndex, sim.defs.units.ord_lancer.index, "and sees what hangs under it")
+		unload(sim, 1, { courier }, 120, 60)
+		local dropAt = nil
+		for _ = 1, 15 * 20 do
+			step(1)
+			local last = enemyView.transportActions[#enemyView.transportActions]
+			if dropAt == nil and last.action == Schema.TransportAction.DROP then
+				dropAt = { last.x :: number, last.z :: number }
+			end
+			if not World.isParked(w, tank) then
+				break
+			end
+		end
+		t.expect(dropAt ~= nil, "a DROP before the unit comes down")
+		if dropAt then
+			t.expect(math.abs(w.posX[tank] - dropAt[1]) < 1 and math.abs(w.posZ[tank] - dropAt[2]) < 1, "set down where the DROP said")
+		end
+		step(2)
+		t.equal(enemyView.carry[courier], nil, "empty again")
+	end)
+
+	t.test("both transport tiers carry one unit (S-220, the user)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		local ark = Spawn.unit(sim, "ord_ark", 1, 0, 0)
+		local a = Spawn.unit(sim, "ord_lancer", 1, 40, 0)
+		local b = Spawn.unit(sim, "ord_lancer", 1, -40, 0)
+		Transport.pickUp(sim, ark, a)
+		t.expect(not Transport.canCarry(sim, ark, b), "the Ark is full with one")
 	end)
 end
