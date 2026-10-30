@@ -8,6 +8,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **`Codex.ANNOUNCED`** (new) lists units the sim stream announced before their defs reach this branch. `Codex.spec` allows a role to name them, and checks that each is named by a role and stays hidden until its def lands. **Remove the four S-219 ids from it once their defs are on main.**
 - Checked against sim-A's uncommitted S-219 defs (a scratch copy of the lobby with the sim's `src/shared/Defs`): the Codex spec passes there too (the four units are buildable, of the right faction and have their roles).
 - Lobby specs 68 / 68; the build check passes (652 scripts, 1085 requires).
+- Ready to merge: `bf5998b1` (Codex roles for S-219's transports; can merge before or after S-219; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-30: unit pictures in the Units tab)
 
