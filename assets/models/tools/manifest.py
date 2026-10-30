@@ -143,7 +143,8 @@ APPROVED = {
     # 2026-10-23: the BAR queue, pairs 1-26, and the missiles
     "chs_carapace", "chs_cyclops",  # chs_barracuda: back to review with the v2 hull (2026-10-24)
     "chs_forgemaster", "chs_gorgon", "chs_hailstorm", "chs_harpy", "chs_hydra", "chs_inferno",
-    "chs_ir_sam", "chs_goliath", "chs_lamprey", "chs_locust", "chs_minotaur", "chs_nuke",
+    "chs_ir_sam", "chs_lamprey",  # chs_goliath: re-modelled for S-224 (2026-10-30), review
+    "chs_locust", "chs_minotaur", "chs_nuke",
     "chs_plague", "chs_radar_sam", "chs_ragnarok", "chs_shroud", "chs_stalker",
     "chs_vulture", "chs_wasp", "ord_absolution",  # chs_wrecker: v2 hull, review
     "ord_arbiter", "ord_architect", "ord_barrier", "ord_citadel",
@@ -234,7 +235,7 @@ APPROVED_WRECKS = {
     # 2026-10-26: the 42 older wrecks (meshes approved in earlier rounds)
     "chs_warlord", "ord_sovereign", "chs_locust", "chs_harpy", "chs_plague", "chs_vulture", "chs_wasp", "ord_absolution",
     "ord_falcon", "ord_guardian", "ord_skywright", "chs_lamprey", "ord_silence", "ord_barrier", "chs_cyclops", "chs_forgemaster",
-    "chs_gorgon", "chs_hydra", "chs_goliath", "chs_minotaur", "chs_shroud", "chs_stalker", "ord_arbiter", "ord_architect",
+    "chs_gorgon", "chs_hydra", "chs_minotaur", "chs_shroud", "chs_stalker", "ord_arbiter", "ord_architect",
     "ord_judgement", "ord_paladin", "ord_seraph", "ord_veil", "ord_warden", "chs_condor", "chs_leech", "ord_tidewatch",
     "ord_zenith", "chs_carapace", "chs_hailstorm", "chs_inferno", "ord_lumen", "ord_phalanx", "ord_radiance", "chs_ragnarok",
     "ord_citadel", "ord_reckoning",
