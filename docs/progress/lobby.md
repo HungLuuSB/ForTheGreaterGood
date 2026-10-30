@@ -8,6 +8,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **`Codex.ANNOUNCED`** is empty: the Courier, Buzzard, Ark and Charon have their defs, so they show in the Units tab with their roles. `Codex.spec` checks that the Courier and Buzzard, and the Ark and Charon, are each other's counterparts.
 - Their pictures come with B's C-276 / C-277 (`UI/UnitPictures`, read-only); until then the rows show their icons.
 - Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+- Ready to merge: `e575532d` (S-219's ids out of `Codex.ANNOUNCED`; includes a merge of main; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-30: forced start keeps the pick time)
 
