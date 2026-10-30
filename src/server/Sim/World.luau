@@ -42,8 +42,9 @@ World.MoveState = table.freeze({ HOLD_POSITION = 0, MANEUVER = 1, ROAM = 2 })
 
 export type World = {
 	-- live units
-	ids: { number }, -- dense list of live IDs
-	slot: { [number]: number }, -- id → position in ids
+	ids: { number }, -- dense list of live IDs, parked ones left out
+	slot: { [number]: number }, -- id → position in ids; 0 = parked (alive, out of `ids`)
+	parked: { [number]: boolean }, -- live units out of `ids`: carried in a transport (S-219)
 
 	-- per-unit fields, indexed by ID
 	defIndex: { [number]: number },
@@ -109,6 +110,7 @@ function World.new(): World
 	return {
 		ids = {},
 		slot = {},
+		parked = {},
 		defIndex = {},
 		team = {},
 		ally = {},
@@ -317,6 +319,38 @@ function World.unpin(w: World, id: number)
 	w.pins[id] = if n > 0 then n else nil
 end
 
+-- Takes unit `id` out of `ids` (swap-remove), alive: every system that
+-- walks `ids` (movement, sensors, targeting, weapons, building, the wire)
+-- skips it until World.unpark. A unit carried in a transport (S-219).
+function World.park(w: World, id: number)
+	local s = w.slot[id]
+	if s == nil or s == 0 then
+		error(`World.park: unit {id} is not in ids`, 2)
+	end
+	local ids = w.ids
+	local last = ids[#ids]
+	ids[s] = last
+	w.slot[last] = s
+	ids[#ids] = nil
+	w.slot[id] = 0
+	w.parked[id] = true
+end
+
+-- Puts a parked unit back at the end of `ids`.
+function World.unpark(w: World, id: number)
+	if w.slot[id] ~= 0 then
+		error(`World.unpark: unit {id} is not parked`, 2)
+	end
+	table.insert(w.ids, id)
+	w.slot[id] = #w.ids
+	w.parked[id] = nil
+end
+
+-- Is unit `id` alive and parked (carried, S-219)?
+function World.isParked(w: World, id: number): boolean
+	return w.slot[id] == 0
+end
+
 -- Removes a unit; its ID becomes reusable after REUSE_DELAY_TICKS.
 -- Swap-remove keeps `ids` dense; the order change is deterministic.
 function World.despawn(w: World, tick: number, id: number)
@@ -324,11 +358,15 @@ function World.despawn(w: World, tick: number, id: number)
 	if s == nil then
 		error(`World.despawn: unit {id} is not alive`, 2)
 	end
-	local ids = w.ids
-	local last = ids[#ids]
-	ids[s] = last
-	w.slot[last] = s
-	ids[#ids] = nil
+	if s == 0 then
+		w.parked[id] = nil -- a parked unit isn't in `ids`
+	else
+		local ids = w.ids
+		local last = ids[#ids]
+		ids[s] = last
+		w.slot[last] = s
+		ids[#ids] = nil
+	end
 	w.slot[id] = nil
 
 	w.defIndex[id] = nil
@@ -444,6 +482,9 @@ end
 function World.hash(w: World, h: number?): number
 	local hv = h or Hash.OFFSET_BASIS
 	local sorted = table.clone(w.ids)
+	for id in w.parked do
+		table.insert(sorted, id) -- parked units too (S-219)
+	end
 	table.sort(sorted)
 	hv = Hash.u32(hv, #sorted)
 	for _, id in sorted do

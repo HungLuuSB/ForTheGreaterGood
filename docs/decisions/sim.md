@@ -3066,3 +3066,41 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - The Juggernaut's was 12,000 over 220 studs ("almost a nuke", H40); the Titan's self-destruct was its default × 1.75 (9,975 over 119).
   - Solar Array: 30 → 100 supply (both factions).
 - **Test:** `Playtest3Units.spec`: each walker self-destructs beside a Sovereign, which keeps over 80% health, and a tank 90 studs off is untouched.
+
+## S-218 — The Construction Turret reclaims live enemy units in its reach (the user) (2026-10-30)
+
+- **Asked (the user):** "The Construction Turret reclaims live enemy units in its reach, as BAR's does. Propose where it fits in its idle priority before you build it." Proposed "enemy units first"; the user: "Agree".
+- **Idle priority** (`Build.nanoPick`, nearest first within each): an enemy unit in reach, then its team's unfinished frames, then factories' production, then damaged units, then wrecks and features.
+- **An enemy in reach takes over** from a job the turret picked itself: every `NANO_SCAN` ticks a busy turret looks for an enemy, and `BuildState.auto` marks a self-picked job. A job the player ordered is never taken over.
+- **What it reclaims:** an enemy unit its allies see (VISIBLE), finished or a frame. Never a Commander, an aircraft in flight, or an ally's unit.
+- **How:** it takes the unit apart at the rate it was built: build power against the unit's build time, with the unit's health going down in step. Its team gets the supply of what it took (of a frame, in proportion to its progress). The last bit kills the unit with no wreck (through god mode and deploy / retract armor, like a D-Gun bolt). The owner gets the usual "under attack" alert.
+- **Wire (protocol 42):** the WORK owner field's kind `RECLAIM_UNIT` 6, with the enemy unit's ID, so the client can draw the spray as a reclaim. A client that doesn't know it yet draws it as a build spray.
+- **Test:** `Playtest3Units.spec`: a turret with a damaged tank of its own and an enemy tank and Commander in reach reclaims the tank first (no wreck), never touches the Commander, then repairs its own tank.
+
+## S-219 — Air transports (the user) (2026-10-30)
+
+- **Asked (the user):** "Transports: write a short design ... and wait for my OK", then: "Yes Commanders and Units can be transported (but some differences: light transport carry light units (including commanders), most of heavier units can use the T2 transport). If the transport die, the unit its carry die with it".
+- **Design:** `docs/design/transports.md` (rewritten with the answers).
+- **Units:**
+  - Courier (`ord_courier`) and Buzzard (`chs_buzzard`): T1, at the Airfield, one light unit (tier 1 or a Commander, footprint up to 2).
+  - Ark (`ord_ark`) and Charon (`chs_charon`): T2, at the Advanced Airfield, 4 slots (footprint 1 = 1, 2 = 2, 3 = 4), tier up to 2, never T3.
+  - Def field `transport = { slots, maxUnits, maxTier, maxFootprint }`. Names are placeholders.
+- **How a carried unit leaves the game: `World.park`.** It stays alive (its ID, health, ammo, Match counts) but leaves `world.ids`. Every system that walks `ids` (movement, sensors, targeting, weapons, construction, orders, the AI, NetOut) skips it without a change of its own. `World.hash` still covers it.
+  - On pick-up its orders, work, jammer state and sight stamps go (`Transport.pickUp`). NetOut sends a LEAVE (the parked check next to "removed without a DEATH"), and an ENTER when it is set down.
+  - The transport's position is copied to its cargo each tick (`Transport.step`, after Movement), for whoever reads it.
+- **Orders:** `load` (fly over the unit, hover, 1 s) and `unload` (fly to the point, set one unit down a second, nearest open ground in rings). A loaded transport's top speed is `1 − 0.1 × slots used` (Movement).
+- **Death on board:** the transport's removal hook queues lethal damage on its cargo (through god mode). Damage gives a unit that died on board (`transport.carrier`) no wreck and no death blast. A carried Commander dies too.
+- **Wire, protocol 43:** commands LOAD 32 and UNLOAD 33; owner field CARGO 128 (`docs/contracts/net.md`).
+- **AI:** doesn't use transports yet.
+- **Tests:** `Transport.spec` covers:
+  - load and unload round trip;
+  - who fits;
+  - boarding, and a carried unit taking no orders;
+  - death on board;
+  - determinism;
+  - the wire (LEAVE, CARGO, ENTER).
+- **Streams:**
+  - B: icon entries, Load / Unload commands, cargo on the transport.
+  - C: models.
+  - D: Codex roles (done, aa71a107).
+  - E: icons and pictures.

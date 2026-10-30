@@ -114,6 +114,10 @@ export type UnitDef = {
 	rearmTime: number?, -- seconds per round at full economy
 	rearmPads: number?, -- structures: aircraft rearmed at once
 	rearmSpeed: number?, -- structures / carriers with rearmPads: how much faster than rearmTime they rearm (default 1; S-166)
+	-- air transports (S-219): `slots` of room (a unit takes 1 for footprint 1,
+	-- 2 for 2, 4 for 3), at most `maxUnits` units, each of tier <= maxTier
+	-- (Commanders are tier 0) and footprint <= maxFootprint
+	transport: { slots: number, maxUnits: number, maxTier: number, maxFootprint: number }?,
 	model: string,
 	pieces: { string },
 	script: string?,
@@ -384,6 +388,7 @@ local UNIT_SPEC: Spec = {
 		rearmTime = opt(POSITIVE), -- seconds per round at full economy
 		rearmPads = { kind = "integer", optional = true, min = 1 }, -- aircraft rearmed at once
 		rearmSpeed = opt(POSITIVE), -- rearm rate multiplier (S-166)
+		transport = { kind = "record", optional = true, fields = { slots = { kind = "integer", min = 1 }, maxUnits = { kind = "integer", min = 1, max = 8 }, maxTier = { kind = "integer", min = 0 }, maxFootprint = { kind = "integer", min = 1, max = 3 } } }, -- (S-219)
 	},
 }
 
