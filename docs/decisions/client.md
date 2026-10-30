@@ -2553,3 +2553,9 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - `UnitStats.lines` drops the fire state, move state and retreat line. `UnitPanel` drops the On / Off and Repeat flags. Those settings show on the command card's state buttons.
 - Kept, as facts rather than settings: the self-destruct countdown (a warning), countermeasure charges, a factory's queue, the next missile's progress, radar accuracy, and a transport's cargo.
 - Studio, Coastline: a selected Lancer's panel reads name, role, DPS / range / reload, speed / line of sight and cost, with nothing else (`debug_out/screens/2026-10-30-panel-no-states.jpg`).
+
+### C-276 — Build-menu pictures for the transports (2026-10-30)
+
+- 2D-E packed pictures for the four S-219 transports (2d 0a44851f, merged through 77e8433a). Existing pictures keep their slots, so only sheet 4 changed (now 1024 × 254, two rows); sheets 1–3 keep their ids.
+- The user approved the upload: sheet 4 is 111703066289053 (sha256 d6ddec2a…) in `tools/icons/assets.json`. `UI/UnitPictures` is regenerated: 201 of 201 units on uploaded sheets.
+- Studio, Coastline: an Airfield's build menu shows the Courier's picture from the new sheet, and the image loads (`debug_out/screens/2026-10-30-transport-pictures.jpg`).
