@@ -5,6 +5,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 ## Summary (2026-10-30: forced start keeps the pick time)
 
 - **Forced start:** your answer "No": the lobby's forced start doesn't skip the match's pick time. That is the current behaviour, so no code changes; L-27 and "Needs my review" item 4 record it, and nothing is open there now.
+- Ready to merge: `77bdef61` (docs only: the forced-start answer; touches only the lobby decisions and progress)
 
 ## Summary (2026-10-30: the Goliath back in the Codex, S-224)
 
