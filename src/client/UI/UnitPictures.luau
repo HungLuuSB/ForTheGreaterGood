@@ -13,7 +13,7 @@ UnitPictures.sheets = {
 	"rbxassetid://129402755258680",
 	"rbxassetid://137517755831073",
 	"rbxassetid://118640861030060",
-	"rbxassetid://111703066289053",
+	"rbxassetid://120576950340042",
 } :: { string }
 
 -- def id → { sheet, x, y }: its picture's sheet and top-left pixel
@@ -62,6 +62,7 @@ UnitPictures.units = {
 	chs_fusion = { 1, 896, 512 },
 	chs_gantry = { 1, 0, 640 },
 	chs_geryon = { 1, 128, 640 },
+	chs_goliath = { 4, 128, 128 },
 	chs_gorgon = { 1, 256, 640 },
 	chs_graverobber = { 1, 384, 640 },
 	chs_griffin = { 1, 512, 640 },
