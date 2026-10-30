@@ -1,6 +1,6 @@
 # Skirmish AI guideline
 
-How the skirmish AI thinks, what it reacts to, and how each level plays. The code is `src/server/Sim/AI/Skirmish.luau` (D90); the decisions behind it are S-17, S-31, S-57, S-76, S-92, S-97, S-101, S-105, S-110, S-187, S-216, S-221, S-222 in `docs/decisions/sim.md`. This guide describes the code as of S-191 (2026-10-26), with S-221 (2.2a) and S-222 (2.3a) since. When the AI changes, update it in the same change.
+How the skirmish AI thinks, what it reacts to, and how each level plays. The code is `src/server/Sim/AI/Skirmish.luau` (D90); the decisions behind it are S-17, S-31, S-57, S-76, S-92, S-97, S-101, S-105, S-110, S-187, S-216, S-221, S-222, S-223 in `docs/decisions/sim.md`. This guide describes the code as of S-191 (2026-10-26), with S-221 (2.2a), S-222 (2.3a) and S-223 (2.2b) since. When the AI changes, update it in the same change.
 
 ## 1. Ground rules: it plays fair
 
@@ -43,7 +43,7 @@ Each factory keeps a few items queued (1 on easy, 2 on normal and hard):
   - a mobile anti-nuke if it knows of an enemy silo;
   - one fire-control radar;
   - a mobile jammer (Chaos);
-  - then MLRS and main battle tanks half and half.
+  - then MLRS and main battle tanks half and half (normal and hard: by the enemy's mix, section 2.2b).
 - **Bot lab:**
   - anti-air bots when more than 2 enemy aircraft are known;
   - two helper bots (Lazarus / Graverobber);
@@ -59,6 +59,26 @@ After BAR's CircuitAI: the AI never runs more build power than its income pays f
 - New Construction Turrets only while theirs stays under 60% of what it can afford.
 - When **power** is what limits it: more generators, and the T2 builder's fusions, then advanced fusion. When power is plentiful (it pays for 1.5 times what supply does): converters.
 - **More T2 builders** as supply income grows: one more per 20 supply/s, at most 3. The first upgrades extractors; the others work down the tech list.
+
+### 2.2b Counters by the enemy's spending (normal and hard; S-223)
+
+After BAR's CircuitAI. The table is data, in `src/server/Sim/AI/Counters.luau`.
+
+- **The enemy's mix:** every armed enemy unit and structure its team has identified counts by value in one class: light, armored, artillery, defence, air or naval. Each class is remembered, halving every 3 minutes once out of sight.
+- **The table:** each class's share of that value asks for a share of production in the roles that answer it, each role capped:
+
+  | Enemy class | Asks for (per unit of its share) | Role cap |
+  |---|---|---|
+  | light | heavy 0.6 | heavy 0.7 |
+  | armored | artillery 0.3, heavy 0.3 | artillery 0.5 |
+  | artillery | raiders 0.6 | raiders 0.4 |
+  | defence | artillery 0.8 | |
+  | air | anti-air 0.5 | anti-air 0.35 |
+
+- **Vehicle plant:** artillery at the larger of its level's share and the ask; raiders (scouts) among its tanks at the ask.
+- **Advanced plant:** MLRS at 0.5 + the artillery ask − the heavy ask (0.2 to 0.8), else main battle tanks. Chaos's Tzar at 0.15 + 0.4 × the artillery ask.
+- **Bot lab:** anti-air bots at the anti-air ask (at least 0.3 while 3+ enemy aircraft are known, since radar shows aircraft without their type); scout bots at least a quarter.
+- Easy keeps S-187's thresholds: 3+ known turrets, 3+ known artillery.
 
 ### 2.3 Army: waves
 
@@ -110,8 +130,8 @@ Once the advanced plant stands and 600 supply is stored, its T2 builder:
 | An enemy wave (3+ ground units) within ~570 studs of home | **recalls the whole army home**; no new wave for 20 s | normal; Order on every level above easy |
 | One of its ground units below half health, a Construction Turret standing | pulls it back to the turret for repair (two per repairing turret at most); it rejoins at 90% (or after 90 s) | normal, hard |
 | Its wave out in the field meets enemy forces worth 1.3× its own | **falls back** to the rally point; the next wave waits until the army is worth 1.2× what it fled, and none leaves for 20 s | normal, hard |
-| 3+ known enemy turrets | more artillery (+20%); Chaos builds the Tzar more often | all |
-| 3+ known enemy artillery pieces | fast raiders and scout bots among its tanks | all |
+| 3+ known enemy turrets | more artillery (+20%); Chaos builds the Tzar more often | easy (normal and hard: by the enemy's mix, 2.2b) |
+| 3+ known enemy artillery pieces | fast raiders and scout bots among its tanks | easy (normal and hard: by the enemy's mix, 2.2b) |
 | A known enemy nuke silo | a mobile anti-nuke for the army, a second anti-nuke over the base | normal, hard |
 | A deposit with known armed enemies within 300 studs (contested) | its worker waits for an escort of 2+ army units | Chaos above easy |
 | A far deposit (over 160 studs from home) | escorts the worker with 3 army units, and guards the far extractors with turrets | hard |

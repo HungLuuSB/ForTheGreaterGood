@@ -118,6 +118,7 @@ local Packer = require("@shared/Net/Packer")
 local Passability = require("@shared/Grid/Passability")
 local Prng = require("@shared/Util/Prng")
 local Schema = require("@shared/Net/Schema")
+local Counters = require("./Counters")
 local Economy = require("../Economy")
 local Nav = require("../Nav")
 local Placement = require("../Placement")
@@ -293,6 +294,7 @@ export type Level = {
 	governor: boolean?, -- (S-221) spending follows income: factories and turrets past it go low priority
 	threat: boolean?, -- (S-222) waves pick targets they outweigh and gather to the strongest enemy group
 	repair: boolean?, -- (S-222) damaged units pull back to a Construction Turret for repair
+	counters: boolean?, -- (S-223) production answers the enemy's spending by class (AI/Counters)
 	advEco: boolean?, -- advanced solar; the T2 builder's fusion, storages, converters, advanced fusion
 	offshore: boolean?, -- the shipyard's naval worker takes offshore deposits
 	experimental: boolean?, -- an Experimental Gantry when rich, building Titans / Juggernauts
@@ -366,6 +368,7 @@ Skirmish.LEVELS = table.freeze({
 		governor = true, -- (S-221)
 		threat = true, -- (S-222)
 		repair = true,
+		counters = true, -- (S-223)
 	},
 	hard = {
 		think = 10,
@@ -407,6 +410,7 @@ Skirmish.LEVELS = table.freeze({
 		governor = true, -- (S-221)
 		threat = true, -- (S-222)
 		repair = true,
+		counters = true, -- (S-223)
 	},
 } :: { [string]: Level })
 
@@ -657,6 +661,8 @@ export type Brain = {
 	repairing: { [number]: number }, -- (S-222) units pulled back for repair → tick they left
 	repairs: number, -- units it pulled back so far
 	skipped: number, -- thinks a wave's best target was too strong and it went for another
+	enemyMix: { [string]: number }, -- (S-223) the enemy's armed value per Counters class it remembers
+	enemyMixAt: number, -- tick it last updated it
 	airNearAt: number, -- last tick enemy aircraft were known near home (S-57)
 	lastWaveAt: number, -- tick the last wave left (S-57)
 	raidAt: number, -- tick the last raid left (S-187)
@@ -823,6 +829,8 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		repairing = {},
 		repairs = 0,
 		skipped = 0,
+		enemyMix = {}, -- (S-223)
+		enemyMixAt = 0,
 		airNearAt = -math.huge,
 		lastWaveAt = -math.huge,
 		raidAt = -math.huge, -- (S-187)
@@ -1326,6 +1334,7 @@ type Census = {
 	enemyArty: number, -- known enemy artillery (counters: fast raiders)
 	enemyLight: number, -- known enemy light ground units (counters: heavy, beams)
 	enemyExtractors: { { number } }, -- known enemy extractors' { x, z } (raids)
+	enemyMix: { [string]: number }, -- (S-223) known enemy armed value per Counters class
 	-- S-216
 	nanos: { { number } }, -- Construction Turrets' { x, z }: standing, framed or ordered
 	nanoIds: { number }, -- (S-221) finished Construction Turrets
@@ -1391,6 +1400,7 @@ local function census(brain: Brain): Census
 		enemyArty = 0,
 		enemyLight = 0,
 		enemyExtractors = {},
+		enemyMix = {},
 		nanos = {}, -- (S-216) { x, z } of Construction Turrets, standing, framed or ordered
 		nanoIds = {},
 		advSolars = 0,
@@ -1414,7 +1424,11 @@ local function census(brain: Brain): Census
 					if ed.id == "ord_reckoning" or ed.id == "chs_ragnarok" then
 						c.enemySilo = true -- (S-110) a second umbrella site
 					end
-					-- what the enemy fields (S-187: counters)
+					-- what the enemy fields (S-187: counters; S-223 by value)
+					local cls = Counters.classOf(ed)
+					if cls then
+						c.enemyMix[cls] = (c.enemyMix[cls] or 0) + Skirmish.value(ed)
+					end
 					if ed.domain == "structure" then
 						if #ed.weapons > 0 then
 							c.enemyTurrets += 1
@@ -1713,6 +1727,16 @@ local function think(brain: Brain)
 	local acc = sim.eco.accounts[brain.team]
 	if c.enemyAirNearHome > 0 then
 		brain.airNearAt = sim.tick
+	end
+	-- (S-223) the enemy's mix by value, remembered; the production shares it asks for
+	local demand: { [string]: number }? = nil
+	if brain.cfg.counters then
+		local fade = 0.5 ^ ((sim.tick - brain.enemyMixAt) / Counters.HALF_LIFE)
+		for _, k in Counters.CLASSES do
+			brain.enemyMix[k] = math.max(c.enemyMix[k] or 0, (brain.enemyMix[k] or 0) * fade)
+		end
+		brain.enemyMixAt = sim.tick
+		demand = Counters.demand(brain.enemyMix)
 	end
 	local plant = faction(brain, "vehplant", "vehplant")
 
@@ -2273,10 +2297,15 @@ local function think(brain: Brain)
 				break -- (S-187, air role) the airfield takes this share of the power
 			else
 				-- counters (S-187): artillery against known turrets, fast units
-				-- against known artillery
+				-- against known artillery; by the enemy's spending (S-223)
 				local artyChance = cfg.artyChance + (if c.enemyTurrets >= 3 then 0.2 else 0)
+				local raiderChance = if c.enemyArty >= 3 then 0.3 else 0
+				if demand then
+					artyChance = math.max(cfg.artyChance, demand.artillery)
+					raiderChance = demand.raider
+				end
 				item = if brain.rng:chance(artyChance) then arty else tank
-				if item == tank and c.enemyArty >= 3 and brain.rng:chance(0.3) then
+				if item == tank and raiderChance > 0 and brain.rng:chance(raiderChance) then
 					item = scoutUnit -- raiders against artillery
 				end
 				if item == tank and cfg.locustShare and brain.rng:chance(cfg.locustShare) then
@@ -2315,8 +2344,11 @@ local function think(brain: Brain)
 				item = "chs_shroud" -- a jammer to cover the waves (S-76)
 				jammerPlanned += 1
 			else
-				item = if brain.rng:chance(0.5) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "tzar") -- (S-216: chs_juggernaut is the T3 bot since S-213, and the Goliath is retired; the Tzar takes its place)
-				if brain.prefix == "chs_" and brain.rng:chance(if c.enemyTurrets >= 3 then 0.35 else 0.15) then
+				-- (S-223) artillery against defences and armour, heavy against light
+				local artyShare = if demand then math.clamp(0.5 + demand.artillery - demand.heavy, 0.2, 0.8) else 0.5
+				local tzarChance = if demand then 0.15 + 0.4 * demand.artillery elseif c.enemyTurrets >= 3 then 0.35 else 0.15
+				item = if brain.rng:chance(artyShare) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "tzar") -- (S-216: chs_juggernaut is the T3 bot since S-213, and the Goliath is retired; the Tzar takes its place)
+				if brain.prefix == "chs_" and brain.rng:chance(tzarChance) then
 					item = "chs_tzar" -- (S-187) heavy plasma, more against defences
 				elseif cfg.wardenShare and brain.rng:chance(cfg.wardenShare) then
 					item = "ord_warden" -- Order's deployable guns (S-76)
@@ -2344,15 +2376,19 @@ local function think(brain: Brain)
 				break
 			end
 			local item
-			if c.enemyAir > 2 and brain.rng:chance(0.3) then
+			-- (S-223) anti-air and scouts by the enemy's spending
+			local aaChance = if c.enemyAir > 2 then 0.3 else 0 -- (radar shows aircraft without their type: kept)
+			if demand then
+				aaChance = math.max(aaChance, demand.antiair)
+			end
+			local scoutChance = if cfg.role == "spam" then 0.5 elseif demand then math.max(0.25, demand.raider) elseif c.enemyArty >= 3 then 0.5 else 0.25
+			if aaChance > 0 and brain.rng:chance(aaChance) then
 				item = botAA
 			elseif helpers < 2 then
 				item = botHelp
 				helpers += 1
-			elseif cfg.role == "spam" or c.enemyArty >= 3 then
-				item = if brain.rng:chance(0.5) then botScout else botLine
 			else
-				item = if brain.rng:chance(0.25) then botScout else botLine
+				item = if brain.rng:chance(scoutChance) then botScout else botLine
 			end
 			queueItem(f, item)
 		end

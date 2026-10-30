@@ -3160,3 +3160,28 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - a wave gathers against a remembered group three times its size;
   - a damaged Lancer pulls back, is repaired and rejoins.
 - **Next (phase 3):** counters by cost share, and data-driven config.
+
+## S-223 — The AI's counters by the enemy's spending, from a data table (the user: "Proceed", phase 3 after BAR's CircuitAI) (2026-10-30)
+
+- **Why:** S-187's counters were count thresholds in code (3+ known turrets: +20% artillery; 3+ known artillery: 30% raiders). The light-unit count was gathered and never used, and nothing weighed what the enemy spends. CircuitAI answers the enemy's army by spending share, with a cap per role (GPL-2: ideas only).
+- **`AI/Counters` (data):**
+  - `classOf`: every armed unit or structure the team has identified (D107) falls in one class: light, armored, artillery, defence, air or naval. Commanders and unarmed units have none.
+  - `RESPONSE`: each class's share of the enemy's known armed value asks for production shares by role:
+    - light: heavy 0.6;
+    - armored: artillery 0.3, heavy 0.3;
+    - artillery: raider 0.6;
+    - defence: artillery 0.8;
+    - air: anti-air 0.5.
+  - `CAPS`: heavy 0.7, artillery 0.5, raider 0.4, anti-air 0.35.
+  - `HALF_LIFE`: the brain remembers each class's value, halving every 3 minutes once out of sight (watched every think, S-31).
+- **Production** (`counters = true`: Normal and Hard; Easy keeps S-187's thresholds):
+  - vehicle plant: artillery at max(level share, ask); raiders at the raider ask;
+  - advanced plant: MLRS at 0.5 + artillery − heavy (0.2 to 0.8); Chaos's Tzar at 0.15 + 0.4 × artillery;
+  - bot lab: anti-air bots at the ask, but at least 0.3 while 3+ enemy aircraft are known (radar shows aircraft without their type); scout bots at least a quarter.
+  - AA trucks and fighters still go by the aircraft count (S-7, S-57).
+- **Result** (seed 1): the 192×192 Normal match ends at 26.3 minutes (Order; 17.1 with S-222 alone). Coastline Hard: Chaos wins at 27.7 (34.9). Ridgeline Normal mirrors: west 22 / east 14 (seeds 1–18), 20 / 16 (19–36).
+- **Tests:** `Counters.spec` (fast):
+  - the classes;
+  - the table's shares and caps;
+  - Normal Order with remembered enemy artillery makes 5 Heralds in 6 minutes (1 without); with remembered defences, 16 Verdicts (10).
+  - `AIUnits.spec`'s Normal check now records what each side had at any point in its 14 minutes: Order's attack took Chaos's only Construction Turret at minute 13.
