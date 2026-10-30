@@ -381,4 +381,33 @@ return function(t: RunAll.Context)
 		t.expect(brains[1].nukes > 0, "Order hard launched a nuke")
 		print(string.format("    T2 extras by tick %d (%.1f min); nukes %d", sim.tick, sim.tick / 900, brains[1].nukes))
 	end)
+
+	t.slow("the economy governor keeps hard's supply flowing on Supreme Strait (S-221)", function()
+		-- Without it, from minute 7 its factories and turrets drew three
+		-- times its supply income and everything built at ~3% speed.
+		local sim = Sim.new({
+			seed = 1,
+			players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 3, allyTeam = 2 } },
+			mapId = "map:supreme_strait",
+			scenario = "standard_start",
+			match = { mode = "FFA", win = "COMMAND_ENDS", startMode = "choose", ai = { [1] = "hard", [2] = "hard" } } :: any,
+		})
+		local brains = Skirmish.forMatch(sim)
+		local sum, n, lowSeen = 0, 0, false
+		for tick = 1, 14 * 900 do
+			for _, b in brains do
+				Skirmish.tick(b)
+			end
+			Sim.step(sim)
+			if tick > 8 * 900 and tick % 5 == 0 then
+				sum += sim.eco.accounts[1].supply.ratio
+				n += 1
+			end
+			lowSeen = lowSeen or next(brains[1].lowPriority or {}) ~= nil -- (a stand-in brain until the pre-game ends)
+		end
+		local avg = sum / n
+		print(string.format("    supply ratio, minutes 8-14: %.2f; incomes %.1f supply, %.0f power", avg, brains[1].incS or 0, brains[1].incP or 0))
+		t.expect(avg >= 0.3, "supply ratio held at " .. string.format("%.2f", avg)) -- (0.55 with it, about 0.03 without)
+		t.expect(lowSeen, "the governor set something to low priority")
+	end)
 end
