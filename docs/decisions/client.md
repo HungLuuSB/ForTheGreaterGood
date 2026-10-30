@@ -2559,3 +2559,10 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - 2D-E packed pictures for the four S-219 transports (2d 0a44851f, merged through 77e8433a). Existing pictures keep their slots, so only sheet 4 changed (now 1024 × 254, two rows); sheets 1–3 keep their ids.
 - The user approved the upload: sheet 4 is 111703066289053 (sha256 d6ddec2a…) in `tools/icons/assets.json`. `UI/UnitPictures` is regenerated: 201 of 201 units on uploaded sheets.
 - Studio, Coastline: an Airfield's build menu shows the Courier's picture from the new sheet, and the image loads (`debug_out/screens/2026-10-30-transport-pictures.jpg`).
+
+### C-277 — Build-menu picture for the returning Goliath (2026-10-30)
+
+- S-224 brings back the Goliath (`chs_goliath`) as Chaos's T2 main battle tank, second on `chs_advvehplant`'s list. Its icon and piece script were never removed. It had no picture because it was retired when the pictures were made, so B asked 2D-E for one (E2).
+- 2D-E added it to sheet 4 at (128, 128), from models-C's render of the new model (2d b11a39ae, merged through c83c4477). No other slot moved; only sheet 4 changed.
+- The user approved the upload: sheet 4 is 120576950340042 (sha256 84c984c4…) in `tools/icons/assets.json`. `UI/UnitPictures` is regenerated: 202 of 202 units on uploaded sheets.
+- Studio: an Advanced Foundry's build menu shows the Goliath's picture as its second tile, and the image loads (`debug_out/screens/c277_goliath_menu.jpg`).
