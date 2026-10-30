@@ -1,0 +1,54 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-30: transports (S-219), uploaded with the user's approval: 1668 triangles, glow share 2.7%",
+  "bar": {
+    "model": "rbxassetid://87267552981995",
+    "meshes": {
+      "base": "rbxassetid://122117184772046",
+      "base_glow_head": "rbxassetid://106778774460648",
+      "base_glow_running": "rbxassetid://131220779049789",
+      "base_glow_weapon": "rbxassetid://129836534058728",
+      "rotor": "rbxassetid://72765207007982",
+      "tailRotor": "rbxassetid://94798995563752"
+    },
+    "decals": {
+      "ALB": "rbxassetid://116740013861741",
+      "RGH": "rbxassetid://115658360822292",
+      "NOR": "rbxassetid://101189018511255",
+      "MTL": "rbxassetid://124562299777815",
+      "EMI": "rbxassetid://137016791597701"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://77094696978317",
+      "NOR": "rbxassetid://78150492044153",
+      "RGH": "rbxassetid://125972982005486",
+      "MTL": "rbxassetid://124963028634128",
+      "EMI": "rbxassetid://95893084666795"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_charon_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://87593739324905",
+    "meshes": {
+      "base": "rbxassetid://70976464256790",
+      "rotor": "rbxassetid://99510179356973",
+      "tailRotor": "rbxassetid://138043878929179"
+    },
+    "decals": {
+      "ALB": "rbxassetid://100292580803386",
+      "RGH": "rbxassetid://94409720450274",
+      "NOR": "rbxassetid://116011212532822",
+      "MTL": "rbxassetid://97619634047293",
+      "EMI": "rbxassetid://137363231118311"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://114391288978819",
+      "NOR": "rbxassetid://90645829231869",
+      "RGH": "rbxassetid://119582311209385",
+      "MTL": "rbxassetid://103419889229085",
+      "EMI": "rbxassetid://73485963631854"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_charon_wreck_bar in FTGG Art",
+    "revision": "2026-10-30: transports (S-219), uploaded with the user's approval: 1300 triangles"
+  }
+}
