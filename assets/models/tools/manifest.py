@@ -143,7 +143,7 @@ APPROVED = {
     # 2026-10-23: the BAR queue, pairs 1-26, and the missiles
     "chs_carapace", "chs_cyclops",  # chs_barracuda: back to review with the v2 hull (2026-10-24)
     "chs_forgemaster", "chs_gorgon", "chs_hailstorm", "chs_harpy", "chs_hydra", "chs_inferno",
-    "chs_ir_sam", "chs_lamprey",  # chs_goliath: re-modelled for S-224 (2026-10-30), review
+    "chs_ir_sam", "chs_lamprey",  # chs_goliath: re-modelled for S-224, approved again below
     "chs_locust", "chs_minotaur", "chs_nuke",
     "chs_plague", "chs_radar_sam", "chs_ragnarok", "chs_shroud", "chs_stalker",
     "chs_vulture", "chs_wasp", "ord_absolution",  # chs_wrecker: v2 hull, review
@@ -193,6 +193,7 @@ APPROVED = {
     "ord_gantry", "chs_gantry", "ord_titan", "chs_juggernaut", "chs_mammoth",
     # 2026-10-30: the transports (S-219)
     "ord_courier", "chs_buzzard", "ord_ark", "chs_charon",
+    "chs_goliath",  # 2026-10-30: re-modelled for S-224, approved by the user
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -247,6 +248,7 @@ APPROVED_WRECKS = {
     "ord_gantry", "chs_gantry", "ord_titan", "chs_juggernaut", "chs_mammoth",
     # 2026-10-30: the transports (S-219), with wrecks
     "ord_courier", "chs_buzzard", "ord_ark", "chs_charon",
+    "chs_goliath",  # 2026-10-30: the re-modelled wreck (S-224), approved by the user
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
