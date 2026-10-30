@@ -100,6 +100,7 @@ local Pinpoint = require("@shared/Combat/Pinpoint")
 local Pregame = require("./Pregame")
 local Sensors = require("./Sensors")
 local Shield = require("./Shield")
+local Transport = require("./Transport")
 local Types = require("./Types")
 local World = require("./World")
 
@@ -1040,6 +1041,39 @@ function NetOut.step(sim: Types.Sim)
 				entered[id] = true
 				table.insert(events, enterEvent(sim, g, id))
 			end
+		end
+
+		-- transports on the tactical tier (S-220, client request 40): each
+		-- pick-up / set-down as it starts (or stops), and what each carries,
+		-- slung under it, with the ENTER and when it changes
+		for _, e in sim.combat.events do
+			if e.kind == "TRANSPORT" and pn.tactical[e.unit] then
+				local ev: Schema.Event = {
+					kind = Schema.EventKind.TRANSPORT,
+					unitId = e.unit,
+					targetId = e.other,
+					defIndex = w.defIndex[e.other] or 0,
+					action = e.action,
+					actionTicks = Transport.LOAD_TICKS,
+				}
+				if e.action ~= Schema.TransportAction.CANCEL then
+					ev.cell, ev.offX, ev.offZ = g:encode(e.x :: number, e.z :: number)
+				end
+				table.insert(events, ev)
+			end
+		end
+		local sentCarry = pn.sentCarry
+		for _, id in pn.tacticalList do
+			if sim.defs.unitByIndex[w.defIndex[id]].transport == nil then
+				continue
+			end
+			local cargo = sim.transport.cargo[id]
+			local u = cargo and cargo[1]
+			local sig = if u then w.defIndex[u] * 256 + w.team[u] else 0
+			if (entered[id] and sig ~= 0) or (not entered[id] and (sentCarry[id] or 0) ~= sig) then
+				table.insert(events, { kind = Schema.EventKind.CARRY, unitId = id, defIndex = if u then w.defIndex[u] else 0, team = if u then w.team[u] else 0 })
+			end
+			sentCarry[id] = sig
 		end
 
 		-- shield domes (S-79): after their ENTER, and when they changed

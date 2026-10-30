@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "chs_charon",
 	name = "Charon",
-	description = "Heavy air transport. Carries up to four units, heavy ones included.",
+	description = "Heavy air transport. Carries one unit, heavy ones included.",
 	faction = "chaos",
 	tier = 2,
 	domain = "air",
@@ -17,7 +17,7 @@ return Templates.extend(Templates.Unit, {
 	health = 2200,
 	movement = { maxSpeed = 42, accel = 26, brake = 34, turnRate = 160 },
 	sensors = { sight = 140 },
-	transport = { slots = 4, maxUnits = 4, maxTier = 2, maxFootprint = 3 }, -- footprint 1 takes 1 slot, 2 takes 2, 3 takes 4
+	transport = { slots = 4, maxUnits = 1, maxTier = 2, maxFootprint = 3 }, -- one unit, up to T2 and footprint 3 (S-220, the user: one unit for T1 and T2)
 	pieces = { "base" },
 	icon = "transport",
 	model = "chs_charon",
