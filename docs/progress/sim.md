@@ -682,6 +682,8 @@ Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E
 
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
 
+- **2026-10-30, S-224 (the Goliath back):** the first try of sim 8f60b2a6 failed only the lobby suite (66/68): main's `Codex.spec` still expected the Goliath retired. Lobby 35f61044, which checks both states, went in next as e1e51407. Then the S-224 retry, models 997cfa7a (the new Goliath), 2d c83c4477 (its picture) and client 1d5dfab4 (C-277), in that order.
+
 - **2026-10-29, after the handover (all pushed, one integrate.sh each, in order):** sim 9ddcd870 (sync launcher) → 8e96e9b8; lobby eb326446 (L-27) → c3860618; client 95ad71d6 (C-254, C-255) → 5dec7e28; client 240444b3 (S-213 across streams: sim 748ddf25, models bfded620, lobby 5b2a078d, client C-256) → b3992f45; sim 27224945 → 7ac4df3f. Last checks: test 616/616, slow 11/11, client 335/335, lobby 67/67, build 877 scripts / 2,457 requires. S-213 renames ids every stream keys on, so C and D worked on the sim commit, B merged both with its own swap, and main took B's tip once.
 
 - **2026-10-29, playtest 3 (all pushed, one integrate.sh each, in this order):**
