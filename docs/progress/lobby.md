@@ -2,6 +2,10 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-30: forced start keeps the pick time)
+
+- **Forced start:** your answer "No": the lobby's forced start doesn't skip the match's pick time. That is the current behaviour, so no code changes; L-27 and "Needs my review" item 4 record it, and nothing is open there now.
+
 ## Summary (2026-10-30: the Goliath back in the Codex, S-224)
 
 - Merged main `4dd01cee` (fast-forward: the S-219 roles' merge).
@@ -506,7 +510,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 1. **Done (2026-10-24): rooms across lobby servers** (L-15). Needs the live test (Part A above).
 2. **Guide 16.3 says "map vote".** Your design has the host pick the map (BAR). I followed your design; the guide is the sim stream's file, so I asked sim-A to update it (request A-3).
 3. **Decided (2026-10-29, "Agreed"): cheats** (L-27). The host can turn them on in any room; such matches are listed on the profile but don't count; the match server enforces the allow-list (C-119).
-4. **Decided (2026-10-29): forced start** (L-27). In the lobby it skips only the ready check. In the match, the host's force start goes straight to the 3 s countdown, and whoever hasn't picked a spot gets the best free one at the start. The match's pre-game already does this (`Pregame`, S-174). Open: should the lobby's forced start also skip the match's pick time? (Below.)
+4. **Decided (2026-10-29): forced start** (L-27). In the lobby it skips only the ready check. In the match, the host's force start goes straight to the 3 s countdown, and whoever hasn't picked a spot gets the best free one at the start. The match's pre-game already does this (`Pregame`, S-174). The lobby's forced start doesn't skip the match's pick time (your answer, 2026-10-30).
 5. **Decided (2026-10-29): spectators only join and watch** (L-27). The match place supports it (C-79: no seat, every unit, no fog).
 6. **Outdated:** starts are picked in the match's pre-game since S-171 / S-174, in spawn boxes the host may draw in the room (L-20).
 7. **Outdated:** a room holds 16 people, AIs included (L-25).
