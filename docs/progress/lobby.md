@@ -2,6 +2,13 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-30: S-219's transports on main)
+
+- Merged main `e1e51407` (S-219's transport defs, the Goliath's Codex role as `e1e51407`; S-224 itself isn't on main yet, so the Goliath stays hidden here).
+- **`Codex.ANNOUNCED`** is empty: the Courier, Buzzard, Ark and Charon have their defs, so they show in the Units tab with their roles. `Codex.spec` checks that the Courier and Buzzard, and the Ark and Charon, are each other's counterparts.
+- Their pictures come with B's C-276 / C-277 (`UI/UnitPictures`, read-only); until then the rows show their icons.
+- Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+
 ## Summary (2026-10-30: forced start keeps the pick time)
 
 - **Forced start:** your answer "No": the lobby's forced start doesn't skip the match's pick time. That is the current behaviour, so no code changes; L-27 and "Needs my review" item 4 record it, and nothing is open there now.

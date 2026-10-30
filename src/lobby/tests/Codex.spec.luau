@@ -83,6 +83,9 @@ return function(t: RunAll.Context)
 			t.deepEqual(codex.entries.ord_paladin.counterparts, { "chs_goliath" })
 			t.deepEqual(codex.entries.chs_goliath.counterparts, { "ord_paladin" })
 		end
+		-- S-219's transports
+		t.deepEqual(codex.entries.ord_courier.counterparts, { "chs_buzzard" })
+		t.deepEqual(codex.entries.chs_charon.counterparts, { "ord_ark" })
 		t.deepEqual(codex.entries.ord_overwatch.counterparts, { "chs_twin_guard", "chs_geryon" })
 		t.deepEqual(codex.entries.chs_geryon.counterparts, { "ord_overwatch" })
 		t.equal(#codex.entries.ord_warden.counterparts, 0, "faction-only")

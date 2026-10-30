@@ -50,12 +50,8 @@ end
 -- Units the sim stream announced ahead of their defs (the decision that
 -- adds them): the roles may name them before the defs reach this branch.
 -- Remove each once its def is on main.
-Codex.ANNOUNCED = table.freeze({
-	ord_courier = "S-219",
-	chs_buzzard = "S-219",
-	ord_ark = "S-219",
-	chs_charon = "S-219",
-})
+-- Empty now: S-219's four transports are on main.
+Codex.ANNOUNCED = table.freeze({} :: { [string]: string })
 
 -- Guide 13.1-13.5 plus the economy, factories and the units added since.
 Codex.ROLES = {
