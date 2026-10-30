@@ -2347,7 +2347,7 @@ local function think(brain: Brain)
 				-- (S-223) artillery against defences and armour, heavy against light
 				local artyShare = if demand then math.clamp(0.5 + demand.artillery - demand.heavy, 0.2, 0.8) else 0.5
 				local tzarChance = if demand then 0.15 + 0.4 * demand.artillery elseif c.enemyTurrets >= 3 then 0.35 else 0.15
-				item = if brain.rng:chance(artyShare) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "tzar") -- (S-216: chs_juggernaut is the T3 bot since S-213, and the Goliath is retired; the Tzar takes its place)
+				item = if brain.rng:chance(artyShare) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "goliath") -- (S-224: the Goliath is back; the Tzar stood in for it from S-216)
 				if brain.prefix == "chs_" and brain.rng:chance(tzarChance) then
 					item = "chs_tzar" -- (S-187) heavy plasma, more against defences
 				elseif cfg.wardenShare and brain.rng:chance(cfg.wardenShare) then
