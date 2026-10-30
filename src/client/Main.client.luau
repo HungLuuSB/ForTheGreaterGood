@@ -94,6 +94,7 @@ local Pregame = require("./Core/Pregame")
 local PregameMarks = require("./Render/PregameMarks")
 local PregamePanel = require("./UI/PregamePanel")
 local Landing = require("./Render/Landing")
+local TransportsRender = require("./Render/Transports")
 local CommanderNames = require("./Render/CommanderNames")
 local TeamPanel = require("./UI/TeamPanel")
 local TeamColors = require("./Render/TeamColors")
@@ -410,6 +411,8 @@ local commanderNames = CommanderNames.new() -- each Commander's player name over
 local teamPanel = TeamPanel.new(api) -- players by team, sharing with allies (F23)
 local landing = Landing.new() -- the Commanders drop in with a star flare as the match starts (S-174)
 UnitRenderer.lift = Landing.lift(world)
+local transports = TransportsRender.new() -- carried units under their transport; down to pick up and set down (C-273)
+UnitRenderer.adjust = TransportsRender.adjust(transports, world)
 Controls.pregameClick = function(ground: Vector3?): boolean
 	local pg = world.pregame
 	if not pg.active or world.me.player == 0 then
@@ -1075,6 +1078,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		pregameSeen.active, pregameSeen.started, pregameSeen.homed = false, false, false
 		FactoryFrames.clear(factoryFrames)
 		UnitRenderer.clear(renderer)
+		TransportsRender.clear(transports)
 		Effects.clear(fx)
 		Crater.clear() -- the last match's nuke craters (C-82)
 		clock = Interp.newClock()
@@ -1105,6 +1109,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	World.smoothStrategic(world, dt, now) -- radar blips glide, not jump, and circle their spot (C-151, C-154)
 	local t0 = os.clock()
 	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
+	TransportsRender.step(transports, world, api.waypoints.byUnit, t)
 	Landing.step(landing, world, t, now)
 	if strategic then
 		FactoryFrames.clear(factoryFrames)

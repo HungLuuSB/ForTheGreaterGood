@@ -2504,3 +2504,27 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - `tests/client/Transports.spec` covers who fits, the right click (pick up, board, the rest guards), the Load / CARGO / Unload round trip against the real sim, and the RECLAIM_UNIT spray.
 - **Studio, Coastline:** a Courier, ordered with Load, picked up a Lancer. The Lancer left the view and the panel read "Cargo 1 / 2: Lancer". Unload set it down nearby and the panel went back to "Cargo 0 / 2: empty". The console showed no errors. Screens: `debug_out/screens/2026-10-30-transport-loaded.jpg` and `-unloaded.jpg`.
 - **Not yet:** a cargo badge on the map, and a wired-up Load button press in the playtest (the API was driven directly; the button calls the same `setCommandMode`).
+
+### C-273 — Transports come down to pick up and set down; the carried unit hangs under the belly (2026-10-30)
+
+- **The user:** "The transport must descend from the air, grab the unit model under its belly and rise up again, same for dropping them".
+- **Hanging model:** while a transport carries a unit, a pooled model of that unit hangs under the drawn transport (`Render/Transports`).
+  - It sits `GAP` (0.4 studs) under the belly, measured from both templates.
+  - It isn't clickable: a click goes to the transport.
+- **Pick-up and set-down (`Core/TransportLift`):**
+  - The drawn transport comes down over the server's 1 s, until the hanging (or picked) unit stands on the ground.
+  - Picking up, it also slides over the unit.
+  - It holds low until the grab or release lands (the CARGO count changes, with the LEAVE or ENTER), then rises over 12 ticks.
+  - It gives up on another order, or 2 s past the 1 s.
+  - Visual only (guide 14): the server's transport just hovers. Drawn through a new `UnitRenderer.adjust` hook.
+- **Inferred start:** the server doesn't say when a lift starts yet, so the client infers it from own transports' orders. A pick-up starts in reach of the Load target (10 studs plus the unit's radius, plus 4 slack). A drop starts within 12 + 4 of the Unload point, with cargo on board.
+  - The server starts its timer on reach while the transport is still gliding in. A helicopter always reports MOVING, so "stopped" can't be the cue.
+  - Client request 40 asks sim-A for a start event and for the carried def for every viewer: today only the owner sees CARGO, so other players see no lift and no hanging unit.
+- **Unload order lines** now last until the cargo is down, rather than ending on arrival.
+- **Studio, Coastline:**
+  - Pick-up: the Courier came down from 54 to 23 studs, centred on the Lancer, and climbed back with it hanging at 50.6 (`debug_out/screens/2026-10-30-transport-slung.jpg`).
+  - Drop: it came down at the Unload point (`-drop.jpg`), set the Lancer on the ground 2 studs from the click, and flew off.
+- **Also seen in Studio, not from this change:** twice, after `Sim.step` missed a tick (tick 300 just after a pick-up; tick 900, the Watchdog's summary tick), Entry's `PlayerReplay.record` threw "expected tick N" every frame before `send()`. The client then froze.
+  - The first error had already rolled out of the log, and a third run with a log listener didn't reproduce it.
+  - Reported to sim-A.
+- `tests/client/Transports.spec` adds the lift against the real sim: down before the grab, over the Lancer, risen after; a set-down that ends on the release.
