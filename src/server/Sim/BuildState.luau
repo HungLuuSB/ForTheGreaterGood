@@ -16,6 +16,8 @@ export type BuildState = {
 	repair: { [number]: boolean }, -- builder's target is a finished, damaged unit to heal (S-4)
 	reclaim: { [number]: number }, -- builder → wreck it is reclaiming (0 = none)
 	resurrect: { [number]: number }, -- builder → wreck it is resurrecting (0 = none; S-168)
+	drain: { [number]: boolean }, -- builder's target is a live enemy unit it reclaims (S-218)
+	auto: { [number]: boolean }, -- a construction turret picked its job itself (S-218: an enemy in reach comes first)
 	queue: { [number]: { number } }, -- factory → def indices waiting (head is in production)
 	progress: { [number]: number }, -- factory → progress of the head item, 0..1
 	upgrading: { [number]: number }, -- frame → the structure it upgrades in place (S-108)
@@ -30,7 +32,7 @@ export type BuildState = {
 BuildState.MAX_QUEUE = 50
 
 function BuildState.new(): BuildState
-	return { order = {}, target = {}, targetGen = {}, assist = {}, repair = {}, reclaim = {}, resurrect = {}, queue = {}, progress = {}, upgrading = {}, upgradingGen = {}, exiting = {}, braking = {} }
+	return { order = {}, target = {}, targetGen = {}, assist = {}, repair = {}, reclaim = {}, resurrect = {}, drain = {}, auto = {}, queue = {}, progress = {}, upgrading = {}, upgradingGen = {}, exiting = {}, braking = {} }
 end
 
 -- Forgets everything about one unit (it was removed from the world).
@@ -42,6 +44,8 @@ function BuildState.clearUnit(b: BuildState, id: number)
 	b.repair[id] = nil
 	b.reclaim[id] = nil
 	b.resurrect[id] = nil
+	b.drain[id] = nil
+	b.auto[id] = nil
 	b.queue[id] = nil
 	b.progress[id] = nil
 	b.upgrading[id] = nil
@@ -59,6 +63,8 @@ function BuildState.idle(b: BuildState, id: number)
 	b.repair[id] = nil
 	b.reclaim[id] = nil
 	b.resurrect[id] = nil
+	b.drain[id] = nil
+	b.auto[id] = nil
 end
 
 -- Hash over units in `ids` (ascending), so it's independent of table order.
@@ -73,6 +79,7 @@ function BuildState.hash(b: BuildState, ids: { number }, h: number): number
 		h = Hash.u32(h, b.reclaim[id] or 0)
 		h = Hash.u32(h, b.resurrect[id] or 0)
 		h = Hash.u32(h, if b.repair[id] then 1 else 0)
+		h = Hash.u32(h, (if b.drain[id] then 1 else 0) + (if b.auto[id] then 2 else 0))
 		local q = b.queue[id]
 		if q then
 			h = Hash.u32(h, #q)

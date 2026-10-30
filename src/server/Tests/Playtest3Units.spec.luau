@@ -129,6 +129,44 @@ return function(t: RunAll.Context)
 		t.equal(w.posZ[id], z)
 	end)
 
+	t.test("a construction turret reclaims an enemy unit in its reach before its own work, no wreck, never a Commander (S-218)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		local w = sim.world
+		local nano = Spawn.unit(sim, "ord_nano", 1, 0, 0)
+		local hurt = Spawn.unit(sim, "ord_lancer", 1, 0, 60) -- its own work: a damaged tank
+		World.setHealth(w, hurt, w.health[hurt] / 2)
+		local enemy = Spawn.unit(sim, "chs_ravager", 2, 60, 0)
+		local com = Spawn.unit(sim, "chs_warlord", 2, -60, 0)
+		for _, u in { hurt, enemy, com } do
+			World.setFireState(w, u, World.FireState.HOLD_FIRE)
+		end
+		local acc = sim.eco.accounts[1]
+		local before = acc.supply.reclaimed
+		steps(sim, 15)
+		t.equal(sim.build.target[nano], enemy, "the enemy tank comes first")
+		t.expect(acc.supply.reclaimed > before or acc.supply.stored > 0, "its supply comes back")
+		local deaths, wrecks = 0, 0
+		for _ = 1, 15 * 60 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "DEATH" and e.unit == enemy then
+					deaths += 1
+					wrecks += if (e.other or 0) ~= 0 then 1 else 0
+				end
+			end
+			if w.slot[enemy] == nil then
+				break
+			end
+		end
+		t.equal(w.slot[enemy], nil, "reclaimed away")
+		t.equal(deaths, 1)
+		t.equal(wrecks, 0, "no wreck")
+		steps(sim, 15 * 5)
+		t.expect((sim.build.target[nano] or 0) ~= com, "never the Commander")
+		t.equal(w.health[com], sim.defs.units.chs_warlord.health, "untouched")
+		t.expect(w.health[hurt] > sim.defs.units.ord_lancer.health / 2, "then its own work: the tank is repaired")
+	end)
+
 	t.test("an offshore extractor goes only under the sea, like a ship's yard (H20)", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "wall:64" })
 		local g = (sim.map :: any).grid

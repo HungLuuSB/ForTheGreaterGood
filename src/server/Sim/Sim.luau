@@ -20,6 +20,7 @@ local Profiler = require("@shared/Util/Profiler")
 local Schema = require("@shared/Net/Schema")
 local AirState = require("./AirState")
 local OrdersState = require("./OrdersState")
+local TransportState = require("./TransportState")
 local EWState = require("./EWState")
 local Match = require("./Match")
 local MatchState = require("./MatchState")
@@ -196,6 +197,7 @@ function Sim.new(config: Config): Sim
 		build = BuildState.new(),
 		air = AirState.new(),
 		orders = OrdersState.new(),
+		transport = TransportState.new(),
 		ew = EWState.new(),
 		-- AI levels stay out of the replay header: the AI's commands are recorded (S-17)
 		match = MatchState.new(if matchInfo and config.match then { mode = matchInfo.mode, win = matchInfo.win, unitCap = unitCap, ai = config.match.ai } else nil, unitCap),
@@ -284,6 +286,7 @@ function Sim.hash(sim: Sim): number
 	h = AirState.hash(sim.air, ids, h)
 	h = OrdersState.hash(sim.orders, ids, h)
 	h = EWState.hash(sim.ew, ids, h)
+	h = TransportState.hash(sim.transport, ids, h)
 	h = MatchState.hash(sim.match, sim.playerOrder, h)
 	h = CheatsState.hash(sim.cheats, sim.playerOrder, sim.allyTeams, h)
 	return SensorsState.hash(sim.sensors, h)

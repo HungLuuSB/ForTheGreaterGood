@@ -15,6 +15,6 @@ return Templates.extend(Templates.Structure, {
 	icon = "factory_air",
 	buildPower = 200,
 	rearmPads = 2,
-	buildOptions = { "chs_condor", "chs_manticore", "chs_behemoth", "chs_dragon", "chs_leech", "chs_banshee", "chs_wraith" },
+	buildOptions = { "chs_condor", "chs_manticore", "chs_behemoth", "chs_dragon", "chs_leech", "chs_banshee", "chs_wraith", "chs_charon" },
 	model = "chs_advairfield",
 })

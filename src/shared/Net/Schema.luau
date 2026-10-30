@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 41 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174); SHARE_UNITS, SHARE_RESOURCE and REQUEST commands, SHARE events (S-176); AREA command: Smart Reclaim / repair / resurrect (S-183); 38: positions on a fixed wire grid (Grid: 64-stud wire cells, quarter-stud offsets, ±8,192 studs whatever the map), strategic records carry 3-bit offsets (8 studs), ALERT a full position, SIGHT_CELLS u24 entries, SIGHT_ROWS firstRow u16, CAMERA u16 cells: maps up to 1,024 cells, aircraft past the edge (S-189); 39: SET_RETREAT, SELF_DESTRUCT and DGUN commands, the STATES byte's retreat bits, the owner fields SELF_DESTRUCT and WORK (kind and target) (S-194); 40: WRECK carries featureKind (map trees and rocks, S-197); ECO_LEVEL command and the Eco record's share / convert levels (S-198); command flag FRONT (S-199); 41: Strategic messages' header carries part u8 and parts u8 after the tick (S-212)
+Schema.PROTOCOL_VERSION = 43 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174); SHARE_UNITS, SHARE_RESOURCE and REQUEST commands, SHARE events (S-176); AREA command: Smart Reclaim / repair / resurrect (S-183); 38: positions on a fixed wire grid (Grid: 64-stud wire cells, quarter-stud offsets, ±8,192 studs whatever the map), strategic records carry 3-bit offsets (8 studs), ALERT a full position, SIGHT_CELLS u24 entries, SIGHT_ROWS firstRow u16, CAMERA u16 cells: maps up to 1,024 cells, aircraft past the edge (S-189); 39: SET_RETREAT, SELF_DESTRUCT and DGUN commands, the STATES byte's retreat bits, the owner fields SELF_DESTRUCT and WORK (kind and target) (S-194); 40: WRECK carries featureKind (map trees and rocks, S-197); ECO_LEVEL command and the Eco record's share / convert levels (S-198); command flag FRONT (S-199); 41: Strategic messages' header carries part u8 and parts u8 after the tick (S-212); 42: WORK kind RECLAIM_UNIT, a live enemy unit (S-218); 43: LOAD and UNLOAD commands, the owner field CARGO (transports, S-219)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -114,6 +114,8 @@ Schema.CmdType = table.freeze({
 	SELF_DESTRUCT = 29, -- value 1 starts the unit's countdown (SELF_DESTRUCT_SECONDS), 0 stops it (S-194)
 	DGUN = 30, -- pos: Commanders fire their D-Gun at the point (manual fire, S-194)
 	ECO_LEVEL = 31, -- level params, no unit IDs: one of the sender's team's resource-bar sliders (Schema.EcoLevel) to `value` percent (S-198; protocol 40)
+	LOAD = 32, -- targetId: transports pick up that allied unit; ground units told to LOAD a transport board it (S-219; protocol 43)
+	UNLOAD = 33, -- pos: transports set their cargo down around the point, one unit after another (S-219)
 })
 -- ECO_LEVEL's sliders (S-198): the share levels (stored above them goes to
 -- the allies, fairly) and the converters' level (power stored above it may
@@ -124,8 +126,9 @@ Schema.RetreatAt = table.freeze({ NEVER = 0, AT_30 = 1, AT_40 = 2, AT_50 = 3 })
 Schema.RETREAT_SHARE = table.freeze({ [0] = 0, 0.3, 0.4, 0.5 }) -- RetreatAt → share of max health
 Schema.SELF_DESTRUCT_SECONDS = 6 -- the self-destruct countdown (S-194)
 -- the WORK owner field's kind (S-194): what a builder's target is to it;
--- RECLAIM and RESURRECT targets are wreck IDs, the others unit IDs
-Schema.WorkKind = table.freeze({ NONE = 0, BUILD = 1, REPAIR = 2, ASSIST = 3, RECLAIM = 4, RESURRECT = 5 })
+-- RECLAIM and RESURRECT targets are wreck IDs, the others unit IDs;
+-- RECLAIM_UNIT: a live enemy unit taken apart (S-218; protocol 42)
+Schema.WorkKind = table.freeze({ NONE = 0, BUILD = 1, REPAIR = 2, ASSIST = 3, RECLAIM = 4, RESURRECT = 5, RECLAIM_UNIT = 6 })
 Schema.AreaOp = table.freeze({ RECLAIM = 1, REPAIR = 2, RESURRECT = 3 }) -- AREA op (S-183)
 
 -- CHEAT commands (S-102, net.md "Cheat commands"): what to do.
@@ -212,6 +215,8 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.SELF_DESTRUCT] = "value",
 	[CT.DGUN] = "pos",
 	[CT.ECO_LEVEL] = "level",
+	[CT.LOAD] = "target",
+	[CT.UNLOAD] = "pos",
 }
 Schema.AREA_MAX_RADIUS = 1024 -- studs
 -- commands that may carry no unit IDs besides CAMERA and CHEAT (S-169): the
@@ -601,8 +606,9 @@ Schema.StateField = table.freeze({
 	OWNER = 128, -- own units only: factory queue, fire / move state, ammo (protocol 20, S-61)
 })
 local STATE_MASK_ALL = 255
-Schema.OwnerField = table.freeze({ QUEUE = 1, STATES = 2, AMMO = 4, CHARGES = 8, PRODUCING = 16, SELF_DESTRUCT = 32, WORK = 64 })
-local OWNER_MASK_ALL = 127
+Schema.OwnerField = table.freeze({ QUEUE = 1, STATES = 2, AMMO = 4, CHARGES = 8, PRODUCING = 16, SELF_DESTRUCT = 32, WORK = 64, CARGO = 128 })
+local OWNER_MASK_ALL = 255
+Schema.MAX_CARGO = 8 -- units a transport's CARGO field can list (S-219)
 Schema.MAX_QUEUE = 50 -- items a factory queue can hold (BuildState.MAX_QUEUE)
 local SF = Schema.StateField
 
@@ -633,6 +639,7 @@ export type State = {
 	-- ASSIST) or wreck (RECLAIM, RESURRECT) ID; NONE with 0 when idle
 	workKind: number?,
 	workTarget: number?,
+	cargo: { number }?, -- transports (the CARGO field, protocol 43, S-219): the units on board, in loading order; empty when none
 	ammo: number?, -- rounds left (with `maxAmmo`: the AMMO field)
 	maxAmmo: number?,
 	flares: number?, -- countermeasure charges left (with `chaff`: the CHARGES field, protocol 21)
@@ -701,6 +708,9 @@ function Schema.encodeState(w: Writer, rec: State)
 	end
 	if rec.workKind ~= nil then
 		owner += Schema.OwnerField.WORK
+	end
+	if rec.cargo ~= nil then
+		owner += Schema.OwnerField.CARGO
 	end
 	if owner ~= 0 then
 		mask += SF.OWNER
@@ -820,11 +830,21 @@ function Schema.encodeState(w: Writer, rec: State)
 			w:writeU8(sd)
 		end
 		if rec.workKind ~= nil then
-			if rec.workKind < 0 or rec.workKind > 5 then
-				error(`Schema: work kind {rec.workKind} outside 0..5`, 2)
+			if rec.workKind < 0 or rec.workKind > 6 then
+				error(`Schema: work kind {rec.workKind} outside 0..6`, 2)
 			end
 			w:writeU8(rec.workKind)
 			w:writeU16(rec.workTarget or 0)
+		end
+		if rec.cargo ~= nil then
+			local cargo = rec.cargo
+			if #cargo > Schema.MAX_CARGO then
+				error(`Schema: cargo of {#cargo} units over {Schema.MAX_CARGO}`, 2)
+			end
+			w:writeU8(#cargo)
+			for _, id in cargo do
+				w:writeU16(id)
+			end
 		end
 	end
 end
@@ -938,10 +958,21 @@ function Schema.decodeState(r: Reader): State
 		end
 		if band(owner, Schema.OwnerField.WORK) ~= 0 then
 			rec.workKind = r:readU8()
-			if rec.workKind > 5 then
+			if rec.workKind > 6 then
 				fail(r, `work kind {rec.workKind}`)
 			end
 			rec.workTarget = r:readU16()
+		end
+		if band(owner, Schema.OwnerField.CARGO) ~= 0 then
+			local n = r:readU8()
+			if n > Schema.MAX_CARGO then
+				fail(r, `cargo of {n} units`)
+			end
+			local cargo = table.create(n)
+			for i = 1, n do
+				cargo[i] = r:readU16()
+			end
+			rec.cargo = cargo
 		end
 	end
 	return rec

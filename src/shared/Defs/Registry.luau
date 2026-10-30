@@ -148,6 +148,10 @@ return {
 		ord_empyrean = require("./Units/ord_empyrean"),
 		ord_extractor = require("./Units/ord_extractor"),
 		ord_falcon = require("./Units/ord_falcon"),
+		ord_courier = require("./Units/ord_courier"), -- (S-219)
+		ord_ark = require("./Units/ord_ark"), -- (S-219)
+		chs_buzzard = require("./Units/chs_buzzard"), -- (S-219)
+		chs_charon = require("./Units/chs_charon"), -- (S-219)
 		ord_fatboy = require("./Units/ord_fatboy"),
 		ord_fusion = require("./Units/ord_fusion"),
 		ord_gantry = require("./Units/ord_gantry"),
