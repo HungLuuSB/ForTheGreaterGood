@@ -2,14 +2,14 @@
 local Templates = require("../Templates")
 
 -- Placeholder (guide 13.2 "Main battle tank", T2); stats to balance in M8.
--- Retired, and its id went from chs_juggernaut to chs_goliath, when the
--- Chaos T3 bot took the id chs_juggernaut (S-213, the user).
+-- Its id went from chs_juggernaut to chs_goliath when the Chaos T3 bot took
+-- the id chs_juggernaut (S-213, the user); retired then, back on the Chaos
+-- advanced vehicle plant since S-224 (the user), with a new model to come.
 return Templates.extend(Templates.TankT1, {
 	id = "chs_goliath",
 	name = "Goliath", -- (S-203) was Juggernaut: the name went to the Chaos T3 bot (chs_korgoth, the user's H40)
 	description = "Main battle tank. A heavy gun on armored arms that raise to fire.",
 	faction = "chaos",
-	retired = true, -- (S-213, the user)
 	tier = 2,
 	domain = "ground",
 	categories = { "GROUND", "ARMORED" },

@@ -3185,3 +3185,11 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - the table's shares and caps;
   - Normal Order with remembered enemy artillery makes 5 Heralds in 6 minutes (1 without); with remembered defences, 16 Verdicts (10).
   - `AIUnits.spec`'s Normal check now records what each side had at any point in its 14 minutes: Order's attack took Chaos's only Construction Turret at minute 13.
+
+## S-224 — The Goliath is back as Chaos's T2 main battle tank (the user) (2026-10-30)
+
+- **Asked (the user):** "Okay, Goliath add it, but tell C to re-model it". This answers the question S-213 left open (Chaos's T2 plant had no main battle tank, the Paladin's counterpart row empty).
+- `chs_goliath` is no longer `retired`. It is back on the Chaos advanced vehicle plant's list, second after the Forgemaster (the Paladin's place on Order's list); its stats are unchanged.
+- **The AI:** the advanced plant's main battle tank is the Goliath again. The Tzar keeps its own chance on top (S-223: 0.15 + 0.4 × the artillery ask), as before S-216 made it the stand-in.
+- **Other streams:** models-C re-models it (the user). Lobby-D puts it back in the Codex (the main battle tank row, now Paladin / Goliath). B and E check the build menu entry, icon and picture.
+- **Tests:** `Playtest3Units.spec`: not retired, and on the Chaos advanced plant's list.
