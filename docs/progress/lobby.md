@@ -2,6 +2,14 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-30: S-219's transports in the Codex)
+
+- **Codex:** two new Air roles for sim-A's S-219 transports (the user approved): "Air transport" (T1) Courier `ord_courier` / Buzzard `chs_buzzard`, and "Heavy air transport" (T2) Ark `ord_ark` / Charon `chs_charon`. The articles read their descriptions and numbers from the defs.
+- **`Codex.ANNOUNCED`** (new) lists units the sim stream announced before their defs reach this branch. `Codex.spec` allows a role to name them, and checks that each is named by a role and stays hidden until its def lands. **Remove the four S-219 ids from it once their defs are on main.**
+- Checked against sim-A's uncommitted S-219 defs (a scratch copy of the lobby with the sim's `src/shared/Defs`): the Codex spec passes there too (the four units are buildable, of the right faction and have their roles).
+- Lobby specs 68 / 68; the build check passes (652 scripts, 1085 requires).
+- Ready to merge: `bf5998b1` (Codex roles for S-219's transports; can merge before or after S-219; touches only `src/lobby` and the lobby progress)
+
 ## Summary (2026-10-30: unit pictures in the Units tab)
 
 - Merged main `98c29349` (fast-forward: the emblems' merge).
