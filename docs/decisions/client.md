@@ -2528,3 +2528,21 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - The first error had already rolled out of the log, and a third run with a log listener didn't reproduce it.
   - Reported to sim-A.
 - `tests/client/Transports.spec` adds the lift against the real sim: down before the grab, over the Lancer, risen after; a set-down that ends on the release.
+
+### C-274 — The transport lift from the server's TRANSPORT and CARRY events (protocol 44); a skipped tick no longer freezes clients (2026-10-30)
+
+- **Merged:** sim-A's S-220 (m-sim-2 5c1ba421, protocol 44, client request 40), on top of their order-hash fix 02a4a84e. S-220:
+  - every transport carries one unit (the user: "they only carry 1 cargo, both for T1 and T2");
+  - adds TRANSPORT 34 (a pick-up or set-down starts, with its ticks and the unit's spot or the set-down spot; or CANCEL);
+  - adds CARRY 35 (what a transport carries, for everyone who sees it).
+- **NetIn:** keeps `world.carry` (cleared on the transport's LEAVE and DEATH) and queues both events with their sim tick in `world.transportFx`.
+- **`Core/TransportLift`** now runs from those events on the sim's tick clock, in step with the render. It replaces C-273's guess from own orders:
+  - it comes down over the event's ticks and slides over its spot (the unit picked up, or where it will be set down);
+  - it rises at the CARRY that marks the grab or release, or at a CANCEL; HOLD_TICKS stays as a backstop for a lost event.
+  - The hanging model comes from CARRY, so other players see the lift and the slung unit too.
+- **Entry:** a viewer whose replay misses a tick (a step that threw) now stops being recorded, with one warning. Before, `PlayerReplay.record` threw every frame before `send()` and froze every client. That froze Studio twice: the sim's order hash had no code for load and unload, so `Sim.hash` threw on checkpoint ticks 300 and 900; sim-A fixed it in 02a4a84e.
+- `tests/client/Transports.spec`: the lift from the events, CARRY set after the pick-up and cleared after the drop, the Lancer set down on the DROP's spot.
+- **Studio, Coastline:**
+  - Pick-up: the Courier came down from 54 to 25 studs over the Lancer, the hanging copy took over at the grab, and it climbed back with it.
+  - Drop: it came down with the Lancer, which appeared on the drop spot as the copy went, and climbed away.
+  - It ran past tick 900 with a Load order under way: no errors, and the client stayed current (tick 940).

@@ -91,6 +91,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			world.carriedDefs[id] = nil
 		elseif kind == EK.LEAVE then
 			world.shields[e.unitId :: number] = nil -- its dome is sent again on the next ENTER
+			world.carry[e.unitId :: number] = nil -- sent again with the next ENTER (S-220)
 			local u = world.units[e.unitId :: number]
 			if u and u.team == world.me.team then
 				world.carriedDefs[u.id] = u.defIndex -- maybe boarding a transport: its CARGO names it (C-272)
@@ -107,6 +108,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			world.idle[id] = nil
 			world.ownStatus[id] = nil
 			world.carriedDefs[id] = nil
+			world.carry[id] = nil -- (its cargo dies with it, S-219)
 			world.lastShot[id] = nil
 			local u = world.units[id]
 			if u then
@@ -252,6 +254,15 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			end
 			world.pregame.boxes = boxes
 			world.pregame.version += 1
+		elseif EK.TRANSPORT ~= nil and kind == EK.TRANSPORT then
+			-- a pick-up or set-down starts or stops (protocol 44, S-220; C-274)
+			local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+			table.insert(world.transportFx, { tick = tick, transport = e.unitId :: number, unit = e.targetId :: number, defIndex = e.defIndex :: number, action = e.action :: number, ticks = e.actionTicks or 15, x = x, z = z })
+		elseif EK.CARRY ~= nil and kind == EK.CARRY then
+			-- what a transport carries now, for every viewer (protocol 44)
+			local id, index = e.unitId :: number, e.defIndex :: number
+			world.carry[id] = if index ~= 0 then index else nil
+			table.insert(world.transportFx, { tick = tick, transport = id, unit = 0, defIndex = index, action = 0, ticks = 0, x = 0, z = 0 })
 		elseif EK.SHARE ~= nil and kind == EK.SHARE then
 			-- a gift or a request for help in the ally team (protocol 37, S-176)
 			table.insert(world.shares, e)

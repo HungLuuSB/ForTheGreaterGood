@@ -1109,7 +1109,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	World.smoothStrategic(world, dt, now) -- radar blips glide, not jump, and circle their spot (C-151, C-154)
 	local t0 = os.clock()
 	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
-	TransportsRender.step(transports, world, api.waypoints.byUnit, t)
+	TransportsRender.step(transports, world, t)
 	Landing.step(landing, world, t, now)
 	if strategic then
 		FactoryFrames.clear(factoryFrames)

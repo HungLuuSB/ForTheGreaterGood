@@ -138,7 +138,7 @@ return function(t: any)
 		t.expect(not out[1].wreck, "a unit, not a wreck")
 	end)
 
-	t.test("the drawn lift: down to the unit while the server picks it up, up after; the same for setting it down (C-273)", function()
+	t.test("the drawn lift from TRANSPORT and CARRY: down to the unit while the server picks it up, up after; the same for setting it down (C-273, C-274)", function()
 		local sim, world, api, step = setup()
 		local courier = Spawn.unit(sim, "ord_courier", 1, 0, 0, 0)
 		local lancer = Spawn.unit(sim, "ord_lancer", 1, 40, 0, 0)
@@ -148,7 +148,7 @@ return function(t: any)
 			for _ = 1, n do
 				step(1)
 				tick += 1
-				TransportLift.step(lift, world, api.waypoints.byUnit, tick)
+				TransportLift.step(lift, world, tick)
 			end
 		end
 		frame(3)
@@ -179,12 +179,17 @@ return function(t: any)
 		t.expect(lowBeforeGrab > 0.9, `all the way down before the grab ({lowBeforeGrab})`)
 		t.expect(overX and math.abs(overX - 40) < 2, `over the Lancer ({overX})`)
 		t.equal(lift.lifts[courier], nil, "risen and done")
+		t.equal(world.carry[courier], sim.defs.units.ord_lancer.index, "CARRY: the Lancer hangs under it, for every viewer")
 		api.actions.setCommandMode("unload")
 		api.actions.commandAt(-40, 30, nil, false, false)
 		local drop, released = false, false
+		local dropX, dropZ = 0, 0
 		for _ = 1, 15 * 25 do
 			frame(1)
 			local l = lift.lifts[courier]
+			if l and l.kind == "drop" and not drop then
+				dropX, dropZ = l.x, l.z
+			end
 			drop = drop or (l ~= nil and l.kind == "drop")
 			released = released or (l ~= nil and l.kind == "drop" and l.grabbed)
 			if released and l == nil then
@@ -194,5 +199,8 @@ return function(t: any)
 		t.expect(drop, "a set-down lift started")
 		t.expect(released, "it ended on the release")
 		t.expect(world.units[lancer] ~= nil, "the Lancer is back")
+		t.equal(world.carry[courier], nil, "CARRY: nothing hangs under it")
+		local l = world.units[lancer]
+		t.expect((l.x - dropX) ^ 2 + (l.z - dropZ) ^ 2 < 1, `set down on the DROP's spot ({l.x}, {l.z} vs {dropX}, {dropZ})`)
 	end)
 end

@@ -4,8 +4,10 @@
 -- for dropping them"). While it carries a unit, that unit's model hangs
 -- under its belly. Picking up or setting down (Core/TransportLift), the
 -- drawn transport comes down until the hanging model would stand on the
--- ground, sliding over the unit it picks up, then rises again. The server's
--- transport only hovers; this is the look (guide 14: visual only).
+-- ground, sliding over the unit it picks up (or the spot it sets one down
+-- on), then rises again. The server's transport only hovers; this is the
+-- look (guide 14: visual only), timed by its TRANSPORT and CARRY events
+-- (protocol 44, S-220), which every viewer gets.
 
 local TransportLift = require("../Core/TransportLift")
 local World = require("../Core/World")
@@ -47,20 +49,18 @@ local function measure(s: State, def: any): Measure
 	return m
 end
 
--- The def of the unit transport `u` carries now (the first on board), or nil.
+-- The def of the unit transport `u` carries now (CARRY, every viewer,
+-- S-220), or nil.
 local function carried(world: World.World, u: World.Unit): any?
-	local index = u.cargoDefs and u.cargoDefs[1]
-	return if index and index ~= 0 then world.defs.unitByIndex[index] else nil
+	local index = world.carry[u.id]
+	return if index then world.defs.unitByIndex[index] else nil
 end
 
--- The def a lift is about: the unit picked up (still on the ground), or the one on board.
+-- The def a lift is about (the unit picked up or set down, from its TRANSPORT event).
 local function liftDef(s: State, world: World.World, u: World.Unit): any?
 	local l = s.lift.lifts[u.id]
-	if l and l.kind == "pickup" then
-		local target = world.units[l.unitId]
-		if target then
-			return World.def(world, target)
-		end
+	if l and l.defIndex ~= 0 then
+		return world.defs.unitByIndex[l.defIndex]
 	end
 	return carried(world, u)
 end
@@ -99,10 +99,10 @@ local function release(sl: Slung)
 end
 
 -- Each frame after UnitRenderer.step (`t`: the render tick): steps the
--- lifts from own transports' orders (`byUnit`: Waypoints' lists) and hangs
--- each carried unit's model under its transport as drawn.
-function Transports.step(s: State, world: World.World, byUnit: { [number]: { any } }, t: number)
-	TransportLift.step(s.lift, world, byUnit, t)
+-- lifts from the server's TRANSPORT and CARRY events and hangs each
+-- carried unit's model under its transport as drawn.
+function Transports.step(s: State, world: World.World, t: number)
+	TransportLift.step(s.lift, world, t)
 	for id, sl in s.slung do
 		local u = world.units[id]
 		local cdef = u and u.rx and carried(world, u)
