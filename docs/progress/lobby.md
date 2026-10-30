@@ -8,6 +8,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Codex:** the "Main battle tank" role's Chaos side is the Goliath `chs_goliath` again (sim-A's S-224, the user: Chaos's T2 main battle tank, second on the Advanced Vehicle Plant's list). The Codex still hides retired defs, so on this branch, where the def is still retired (S-213), the Goliath stays hidden. It shows, with the Paladin as its counterpart, once S-224's def is on main.
 - **`Codex.spec`:** while the Goliath's def is retired, it is hidden and the Paladin has no counterpart. Once the def is back, the Paladin and Goliath point at each other. Either order of the merges passes. Only the retired case is tested so far (S-224 isn't committed on sim-A's branch yet); I'll check the other case after merging main.
 - Lobby specs 68 / 68; the build check passes (652 scripts, 1085 requires).
+- Ready to merge: `1b222657` (the Goliath's Codex role; can merge before or after S-224; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-30: S-219's transports in the Codex)
 
