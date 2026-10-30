@@ -56,6 +56,12 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, transport pick-up and drop look: C-273)
+
+- **Transports come down and grab (C-273):** the carried unit hangs under the transport. Picking up and setting down, the transport comes down until that unit touches the ground (sliding over the one it picks up), then rises.
+  - For now the client infers the lift from own transports' orders; client request 40 asks the sim for the timing and the carried def for every viewer.
+- Ready to merge: `1f9c592e` (C-273. test_client 352 / 352, build passed (893 scripts, 2519 requires). Studio, Coastline: Courier pick-up and drop of a Lancer)
+
 ## Summary (2026-10-30, transports on the client: C-272)
 
 - **Transports (C-272):**
