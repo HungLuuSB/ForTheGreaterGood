@@ -190,6 +190,8 @@ APPROVED = {
     "ord_advsolar", "chs_advsolar", "ord_capacitor", "chs_accumulator", "ord_nano", "chs_nano", "ord_seaextractor", "chs_seaextractor",
     "ord_advconverter", "chs_advconverter", "ord_advdepot", "chs_advdepot", "ord_advcapacitor", "chs_advaccumulator", "ord_advfusion", "chs_advfusion",
     "ord_gantry", "chs_gantry", "ord_titan", "chs_juggernaut", "chs_mammoth",
+    # 2026-10-30: the transports (S-219)
+    "ord_courier", "chs_buzzard", "ord_ark", "chs_charon",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -242,6 +244,8 @@ APPROVED_WRECKS = {
     "ord_advsolar", "chs_advsolar", "ord_capacitor", "chs_accumulator", "ord_nano", "chs_nano", "ord_seaextractor", "chs_seaextractor",
     "ord_advconverter", "chs_advconverter", "ord_advdepot", "chs_advdepot", "ord_advcapacitor", "chs_advaccumulator", "ord_advfusion", "chs_advfusion",
     "ord_gantry", "chs_gantry", "ord_titan", "chs_juggernaut", "chs_mammoth",
+    # 2026-10-30: the transports (S-219), with wrecks
+    "ord_courier", "chs_buzzard", "ord_ark", "chs_charon",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
