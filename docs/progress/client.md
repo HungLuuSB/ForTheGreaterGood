@@ -56,6 +56,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, unit panel without states: C-275)
+
+- **No unit states in the unit panel (C-275):** no more "Fire at will · Maneuver · Retreat at 30%", On / Off or Repeat; the command card shows them.
+- Ready to merge: `d4949e87` (C-275. test_client 352 / 352, build passed (893 scripts, 2520 requires). Studio, Coastline: a Lancer's panel without the state line)
+
 ## Summary (2026-10-30, transport lift from the server: C-274)
 
 - **Every viewer sees the lift (C-274):** the transport's descent, grab and rise now follow the server's TRANSPORT and CARRY events (S-220, protocol 44, merged in; transports carry one unit). The slung unit shows for other players too.
