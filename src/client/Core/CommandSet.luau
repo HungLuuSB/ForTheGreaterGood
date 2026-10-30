@@ -20,6 +20,8 @@
 --                only nuke silos (strategic weapons)
 --   interceptors fire state only (hold fire keeps the stock): anti-nukes and
 --                point defence never take a manual target
+--   transports   load (pick a unit up), unload (set the cargo down at a
+--                point); S-219, C-272
 --   priority     high / low resource priority (S-156, C-196) on what uses
 --                resources: builders and factories, stockpiling launchers,
 --                aircraft (rearm), shields, radars, jammers, DIRCM
@@ -29,7 +31,7 @@ local Upgrades = require("./Upgrades")
 
 local CommandSet = {}
 
-CommandSet.ORDER = { "fire", "movestate", "retreat", "repeat", "toggle", "priority", "cancel", "stop", "attack", "dgun", "move", "patrol", "fight", "guard", "repair", "reclaim", "resurrect", "upgrade", "selfdestruct", "alert" }
+CommandSet.ORDER = { "fire", "movestate", "retreat", "repeat", "toggle", "priority", "cancel", "stop", "attack", "dgun", "move", "patrol", "fight", "guard", "repair", "reclaim", "resurrect", "load", "unload", "upgrade", "selfdestruct", "alert" }
 
 -- Whether `def` is a nuke silo: armed with strategic weapons only (they
 -- launch on a manual attack at a point, ATTACK_GROUND; never at a unit).
@@ -147,6 +149,9 @@ function CommandSet.forDef(def: any, all: any?): { [string]: boolean }
 	end
 	if CommandSet.hasDgun(def, all) then
 		set.dgun = true
+	end
+	if def.transport ~= nil then
+		set.load, set.unload = true, true -- air transports (S-219, C-272)
 	end
 	return set
 end

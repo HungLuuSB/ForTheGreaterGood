@@ -88,9 +88,13 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			}
 			table.insert(world.entered, id)
 			world.ownStatus[id] = nil -- ENTER and State carry it now (S-158)
+			world.carriedDefs[id] = nil
 		elseif kind == EK.LEAVE then
 			world.shields[e.unitId :: number] = nil -- its dome is sent again on the next ENTER
 			local u = world.units[e.unitId :: number]
+			if u and u.team == world.me.team then
+				world.carriedDefs[u.id] = u.defIndex -- maybe boarding a transport: its CARGO names it (C-272)
+			end
 			if u and u.tier == "tactical" then
 				u.tier = "strategic" -- refreshed or dropped by the next strategic snapshot
 				table.clear(u.snaps)
@@ -102,6 +106,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			world.shields[id] = nil
 			world.idle[id] = nil
 			world.ownStatus[id] = nil
+			world.carriedDefs[id] = nil
 			world.lastShot[id] = nil
 			local u = world.units[id]
 			if u then
@@ -363,6 +368,21 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 		if r.workKind ~= nil then
 			u.workKind, u.workTarget = r.workKind, r.workTarget
 		end
+		if r.cargo ~= nil then
+			-- a transport's units on board (protocol 43, S-219; C-272): each
+			-- one's def as last seen; they're out of the world (a LEAVE each),
+			-- so drop them now rather than at the next strategic snapshot
+			local defs = table.create(#r.cargo, 0)
+			for i, id in r.cargo do
+				local c = world.units[id]
+				defs[i] = if c then c.defIndex else world.carriedDefs[id] or 0
+				if c and c.team == world.me.team and c.id ~= u.id then
+					world.carriedDefs[id] = c.defIndex
+					world.units[id] = nil
+				end
+			end
+			u.cargo, u.cargoDefs = r.cargo, defs
+		end
 		if r.flares ~= nil or r.chaff ~= nil then
 			u.flares, u.chaff = r.flares, r.chaff -- countermeasure charges left (protocol 21, S-63)
 		end
@@ -448,6 +468,8 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			selfDestructAt = if keep then keep.selfDestructAt else nil,
 			workKind = if keep then keep.workKind else nil,
 			workTarget = if keep then keep.workTarget else nil,
+			cargo = if keep then keep.cargo else nil,
+			cargoDefs = if keep then keep.cargoDefs else nil,
 			stock = if keep then keep.stock else nil,
 		}
 		local status = world.ownStatus[r.unitId]

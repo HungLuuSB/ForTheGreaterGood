@@ -79,6 +79,9 @@ local function served(world: World.World, u: World.Unit, depth: number): (number
 		-- assisting a builder: what that builder works on
 		return served(world, t, depth - 1)
 	end
+	if kind == WK.RECLAIM_UNIT then
+		return target, "reclaim", false -- a construction turret taking a live enemy apart (protocol 42, S-218)
+	end
 	return target, "build", false
 end
 

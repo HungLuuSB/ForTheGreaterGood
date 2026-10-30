@@ -2483,3 +2483,24 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - The user approved both uploads in this session: sheet 2 is 100470717468643 and the UI atlas is 89353396855864, with their pixel hashes in `tools/icons/assets.json`.
 - Studio, Coastline: both images load. The four transports draw the air frame at a distance, with two tier dots on the T2s (`debug_out/screens/2026-10-30-transport-icons.jpg`).
 - The client work for S-218 and S-219 follows separately: the RECLAIM_UNIT spray, Load and Unload orders, cargo on the transport.
+
+### C-272 — Transports on the client: Load, Unload, cargo; the turret's reclaim spray on enemies (2026-10-30)
+
+- **RECLAIM_UNIT (protocol 42, S-218):** `BuildTargets.served` draws a construction turret's work on a live enemy unit as a reclaim spray. Before, it was the "build" spray that any unknown kind falls back to.
+- **Who fits:** new `Core/Transports` mirrors the server's `Transport.canCarry` from the defs' `transport` spec. That means:
+  - an allied, finished ground unit;
+  - not a transport or a shield carrier, and not deployed, deploying or submerged;
+  - within the transport's tier and footprint limits;
+  - room in slots (footprint 1 takes 1 slot, 2 takes 2, 3 takes 4) and in unit count.
+  - The server still decides; this only picks who an order goes to.
+- **Orders:** transports get Load and Unload on the command card (2D-E's icons serve as the cursors). Each command is also an order line, tinted with the icon's colour.
+  - Load: click a unit that fits and the selected transports pick it up. Click an own transport and the selected units that fit board it.
+  - Unload: click the ground (UNLOAD).
+  - A right click does Load as well: transports selected and a unit that fits clicked, or units that fit and an own transport clicked. The rest of the selection gets the usual smart order.
+  - With only transports selected, L and U mean Load and Unload: BAR's keys, which transports would otherwise spend on a fire state and a switch they don't have.
+- **Cargo:** the CARGO owner field is kept on the transport. Each carried unit's def is noted as last seen: on its LEAVE (`world.carriedDefs`) or when CARGO names it.
+  - Carried units leave the client's world at once, rather than at the next strategic snapshot. They come back with their ENTER.
+  - The unit panel lists the cargo, e.g. "Cargo 1 / 2: Lancer".
+- `tests/client/Transports.spec` covers who fits, the right click (pick up, board, the rest guards), the Load / CARGO / Unload round trip against the real sim, and the RECLAIM_UNIT spray.
+- **Studio, Coastline:** a Courier, ordered with Load, picked up a Lancer. The Lancer left the view and the panel read "Cargo 1 / 2: Lancer". Unload set it down nearby and the panel went back to "Cargo 0 / 2: empty". The console showed no errors. Screens: `debug_out/screens/2026-10-30-transport-loaded.jpg` and `-unloaded.jpg`.
+- **Not yet:** a cargo badge on the map, and a wired-up Load button press in the playtest (the API was driven directly; the button calls the same `setCommandMode`).

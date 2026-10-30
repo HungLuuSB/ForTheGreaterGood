@@ -27,6 +27,7 @@ local Kit = require("./Kit")
 local UiIcon = require("./UiIcon")
 local Icons = require("../Core/Icons")
 local Precision = require("../Core/Precision")
+local Transports = require("../Core/Transports")
 local Selection = require("../Core/Selection")
 local UnitStats = require("../Core/UnitStats")
 local Features = require("@shared/Defs/Features")
@@ -293,6 +294,10 @@ local function one(ui: UI, api: Api.Api, id: number)
 			end
 			break
 		end
+	end
+	local cargo = Transports.line(world, u) -- a transport's units on board (S-219, C-272)
+	if cargo then
+		table.insert(lines, cargo)
 	end
 	if Precision.relevant(def) then
 		-- the team's radar precision from its Pinpointers (S-59, C-72)
