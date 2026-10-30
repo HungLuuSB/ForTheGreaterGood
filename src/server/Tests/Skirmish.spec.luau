@@ -5,7 +5,7 @@ local Sim = require("../Sim/Sim")
 local Skirmish = require("../Sim/AI/Skirmish")
 local RunAll = require("./RunAll")
 
-local MAX_TICKS = 40500 -- 45 minutes (30 before S-193 made every unit 40% slower)
+local MAX_TICKS = 54000 -- 60 minutes (30 before S-193 made every unit 40% slower; 45 before S-221: governed economies last longer, seed 1 ended at 44 min; 17 since S-222)
 
 type Result = {
 	sim: Sim.Sim,

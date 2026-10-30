@@ -18,6 +18,10 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 - **S-217:** Titan and Juggernaut blasts are 480 over 52 studs (35% of a nuke's; a Commander survives); the Solar Array costs 100 supply.
 - **S-218:** the Construction Turret reclaims live enemy units in its reach first (never a Commander), no wreck; protocol 42 WORK kind RECLAIM_UNIT.
 - **S-219: air transports** (Courier / Buzzard T1, Ark / Charon T2): LOAD / UNLOAD, cargo parked out of the world, dies with its transport; protocol 43. Design: `docs/design/transports.md`.
+- **S-221: the AI's economy governor** (after BAR's CircuitAI): build power follows income; factories and turrets past it go low priority, more T2 builders as income grows, fusion and advanced fusion when power is what limits. Supreme Strait Hard reached the gantry in 13 of 16 mirror AIs (none before).
+- **S-222: the AI's military, after CircuitAI:** a threat map of known enemy firepower; waves go for targets they outweigh and skip stronger ones, wait to outweigh the strongest enemy group seen, and damaged units are repaired at a Construction Turret. Normal and Hard.
+- **S-223: the AI's counters by the enemy's spending** (after CircuitAI): a data table (`AI/Counters`) turns the enemy's known armed value per class into capped production shares (artillery against defences, raiders against artillery, heavy against light). Normal and Hard.
+- **S-224:** the Goliath (`chs_goliath`) is back on the Chaos advanced vehicle plant and in the AI's T2 mix (the user); C re-models it, D restores its Codex entry.
 - **S-220:** both transport tiers carry one unit; TRANSPORT and CARRY events (protocol 44) let every viewer see the pick-up, the set-down and what hangs under the transport.
 - **S-215 (client-B):** the power bar's demand now counts extractor upkeep and converters' burn.
 - **S-214: unit descriptions** are "Role. What it does." for all 203 units, with no comparison to the counterpart; `Defs.spec` keeps them that way.
