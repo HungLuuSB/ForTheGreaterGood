@@ -105,7 +105,7 @@ function OrdersState.clearUnit(o: OrdersState, id: number)
 	o.anchorZ[id] = nil
 end
 
-local KIND_CODE: { [string]: number } = { move = 1, fight = 2, patrol = 3, attack = 4, guard = 5, repair = 6, reclaim = 7, build = 8, attackGround = 9, resurrect = 10, area = 11 }
+local KIND_CODE: { [string]: number } = { move = 1, fight = 2, patrol = 3, attack = 4, guard = 5, repair = 6, reclaim = 7, build = 8, attackGround = 9, resurrect = 10, area = 11, load = 12, unload = 13 } -- (load / unload: S-219)
 
 -- Hash over units in `ids` (ascending).
 function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
