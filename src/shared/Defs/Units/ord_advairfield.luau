@@ -15,6 +15,6 @@ return Templates.extend(Templates.Structure, {
 	icon = "factory_air",
 	buildPower = 200,
 	rearmPads = 2,
-	buildOptions = { "ord_zenith", "ord_archon", "ord_phantom", "ord_liche", "ord_tidewatch", "ord_archangel" },
+	buildOptions = { "ord_zenith", "ord_archon", "ord_phantom", "ord_liche", "ord_tidewatch", "ord_archangel", "ord_ark" },
 	model = "ord_advairfield",
 })

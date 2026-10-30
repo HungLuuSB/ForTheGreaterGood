@@ -40,6 +40,7 @@ Baseline: playtest 3 on `main` d06f303b (2026-10-29). Build: `lune run build` on
   - D-Gun effects (C-266, C-267);
   - the nuke, structure deaths and missile boosters (C-267);
   - soot and glow blast marks on the ground (C-268).
+- The Titan's and Juggernaut's death plays a structure-death explosion sized to their 52-stud blast, not a nuke (C-270).
 - The D-Gun's aim preview pulls the aim point into range; new command cursor; icon fixes (C-263, C-264).
 
 ## Models and effects (C)
@@ -61,6 +62,7 @@ Baseline: playtest 3 on `main` d06f303b (2026-10-29). Build: `lune run build` on
 
 - The key art is picked at random (L-27).
 - The Codex uses E's stat icons and the S-213 ids.
+- Faction emblems in the lobby (D-E2).
 
 ## Not in this build
 
