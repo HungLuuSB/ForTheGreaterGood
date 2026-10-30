@@ -89,6 +89,7 @@ local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
 local Icons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
+local EMPTY_CARGO: { number } = table.freeze({})
 local WK = Schema.WorkKind
 local Combat = require("./Combat/Combat")
 local SelfDestruct = require("./SelfDestruct")
@@ -294,7 +295,7 @@ local function ecoRecord(sim: Types.Sim, team: number): Schema.Eco?
 			stored = u32(r.stored),
 			storage = u32(r.storage),
 			income = u32((r.income + (r.reclaimRate or 0)) * 10 + 0.5), -- reclaim counts as income (S-183, the user)
-			demand = u32(r.demand * 10 + 0.5),
+			demand = u32((r.demand + (r.fixedRate or 0)) * 10 + 0.5), -- everything spent per second: construction, extractor upkeep, converters (S-215, client-B)
 			ratio = math.clamp(math.floor(r.ratio * 255), 0, 255),
 		}
 	end
@@ -1004,11 +1005,12 @@ function NetOut.step(sim: Types.Sim)
 			end
 		end
 
-		-- tactical units removed without a DEATH (reclaimed, cancelled frames)
+		-- tactical units removed without a DEATH (reclaimed, cancelled frames),
+		-- or picked up by a transport (S-219: it enters again when set down)
 		local i = 1
 		while i <= #pn.tacticalList do
 			local id = pn.tacticalList[i]
-			if not World.isRef(w, id, pn.tactical[id]) then -- gone (or its ID reused, D109)
+			if not World.isRef(w, id, pn.tactical[id]) or World.isParked(w, id) then -- gone (or its ID reused, D109)
 				pn.tactical[id] = nil
 				table.remove(pn.tacticalList, i)
 				table.insert(events, { kind = Schema.EventKind.LEAVE, unitId = id })
@@ -1239,7 +1241,7 @@ function NetOut.step(sim: Types.Sim)
 				local unit = b.target[id] or 0
 				if unit ~= 0 and w.slot[unit] ~= nil then
 					workTarget = unit
-					workKind = if b.assist[id] then WK.ASSIST elseif b.repair[id] then WK.REPAIR else WK.BUILD
+					workKind = if b.drain[id] then WK.RECLAIM_UNIT elseif b.assist[id] then WK.ASSIST elseif b.repair[id] then WK.REPAIR else WK.BUILD
 				elseif (b.reclaim[id] or 0) ~= 0 then
 					workKind, workTarget = WK.RECLAIM, b.reclaim[id]
 				elseif (b.resurrect[id] or 0) ~= 0 then
@@ -1247,7 +1249,10 @@ function NetOut.step(sim: Types.Sim)
 				end
 				wSig = workKind .. ":" .. workTarget
 			end
-			local now = { qSig, sSig, aSig, cSig, dSig, wSig }
+			-- a transport's cargo (S-219): the units on board, in loading order
+			local cargo = if d.transport then sim.transport.cargo[id] or EMPTY_CARGO else nil
+			local gSig = if cargo then table.concat(cargo, ",") else ""
+			local now = { qSig, sSig, aSig, cSig, dSig, wSig, gSig }
 			ownerNow[id] = now
 			local before = if entered[id] then nil else sentOwner[id]
 			local rec: Schema.State? = nil
@@ -1278,6 +1283,9 @@ function NetOut.step(sim: Types.Sim)
 			if d.buildPower and (before == nil or before[6] ~= wSig) and (before ~= nil or workKind ~= WK.NONE) then
 				local r = record()
 				r.workKind, r.workTarget = workKind, workTarget
+			end
+			if cargo and (before == nil or before[7] ~= gSig) and (before ~= nil or #cargo > 0) then
+				record().cargo = table.clone(cargo)
 			end
 			if ammo ~= nil and (before == nil or before[3] ~= aSig) then
 				local r = record()

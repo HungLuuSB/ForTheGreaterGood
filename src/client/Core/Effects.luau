@@ -278,8 +278,33 @@ end
 Effects.LARGE_IMPACT = 1.8
 Effects.FLAME_SECONDS = 0.35 -- a flame stream's life (S-181)
 Effects.HUGE_BLAST = 90 -- studs: a death blast this wide plays the nuke's look scaled to it (F15)
+Effects.HEAVY_BLAST = 50 -- studs: a death blast this wide (T3 walkers, S-217) plays models-C's heavier StructureDeath (C-270)
 Effects.BLAST_SHOWN = 0.6 -- an ordinary death blast's burst, as a share of its damage radius
 Effects.BOLT_HEIGHT = 5 -- studs a D-Gun bolt rides over the ground (the server's Combat.BOLT_HEIGHT, S-194)
+Effects.BOLT_BEHIND = 1.5 -- seconds of a D-Gun bolt's path behind it where a death counts as its burn
+
+-- The D-Gun bolt that a unit of `def` dying at (x, z) was burned by, or nil:
+-- one whose last BOLT_BEHIND seconds of path pass within its reach and the
+-- unit's radius (C-266: the server sends no IMPACT for a pass-through, S-194).
+function Effects.boltThrough(fx: Fx, x: number, z: number, def: any): Proj?
+	local radius = (if def then def.footprint else 1) * 3.6
+	for _, p in fx.projectiles do
+		local reach = p.weapon.bolt
+		if reach == nil then
+			continue
+		end
+		local x1, z1 = p.x + p.vx * 0.2, p.z + p.vz * 0.2 -- (a tick or so ahead: deaths lag the burn)
+		local x0, z0 = p.x - p.vx * Effects.BOLT_BEHIND, p.z - p.vz * Effects.BOLT_BEHIND
+		local dx, dz = x1 - x0, z1 - z0
+		local len2 = dx * dx + dz * dz
+		local t = if len2 > 0 then math.clamp(((x - x0) * dx + (z - z0) * dz) / len2, 0, 1) else 0
+		local ex, ez = x0 + dx * t - x, z0 + dz * t - z
+		if ex * ex + ez * ez <= (reach + radius + 2) ^ 2 then
+			return p
+		end
+	end
+	return nil
+end
 -- A shot with no blast whose impact is "explosion_small" (the Thug's and
 -- Mace's plasma, S-190) bursts like a tank shell's small hit: the Lancer's
 -- (aoe 3), not the smallest burst its missing blast radius would give.
@@ -896,10 +921,11 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			launch = launch,
 			goal = goal,
 		}
-		-- a missile leaves its launcher in a cloud (C-47); a gun just flashes
+		-- a missile leaves its launcher in a cloud (C-47); a gun just flashes;
+		-- a D-Gun has its own (models-C's DgunMuzzle, C-266)
 		local b = if weapon.type == "HOMING" or weapon.strategic
 			then burst(fx, now, x + ox, y + oy, z + oz, weaponSize(weapon), "launch", Effects.LAUNCH_SECONDS)
-			else burst(fx, now, x + ox, y + oy, z + oz, 0.8, "muzzle", 0.12)
+			else burst(fx, now, x + ox, y + oy, z + oz, 0.8, if weapon.bolt then "dgunMuzzle" else "muzzle", 0.12)
 		b.ground = World.groundY(world, x + ox, z + oz)
 		facing(b, vx, vy, vz)
 		-- a strategic missile warns even without its LAUNCH_WARNING, which
@@ -921,9 +947,13 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local r = if p then Effects.impactSize(p.weapon) else 2
 		-- a strategic missile's IMPACT is its detonation (S-48, C-57)
 		local nuke = p ~= nil and p.weapon.strategic == true
+		local bolt = p ~= nil and p.weapon.bolt ~= nil -- a D-Gun's end of range (C-266)
 		local b = if nuke
 			then burst(fx, now, x, y, z, (p :: Proj).weapon.aoe or 150, "nuke", Effects.NUKE_SECONDS)
-			else burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
+			else burst(fx, now, x, y, z, r, if bolt then "dgunEnd" else "impact", Effects.EXPLOSION_SECONDS)
+		if bolt then
+			facing(b, (p :: Proj).vx, 0, (p :: Proj).vz) -- level: its ring lies flat
+		end
 		b.ground = World.groundY(world, x, z)
 		-- a shell, bomb or torpedo ending at the water surface splashes (C-82),
 		-- unless it hit a ship there (IMPACT doesn't say: a unit under the point)
@@ -1301,17 +1331,29 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 				table.insert(fx.crashes, { at = renderTick + crash.duration * 15, x = crash.ex, y = crash.ey, z = crash.ez, radius = r * 1.3 })
 			else
 				local ground = World.groundY(world, d.x, d.z)
-				local b = burst(fx, now, d.x, ground + 1.5, d.z, r, "death", Effects.DEATH_SECONDS)
+				-- a structure's is heavier (models-C's StructureDeath, C-267)
+				local b = burst(fx, now, d.x, ground + 1.5, d.z, r, if def and def.domain == "structure" then "structureDeath" else "death", Effects.DEATH_SECONDS)
 				b.ground = ground
+				local bolt = Effects.boltThrough(fx, d.x, d.z, def)
+				if bolt then
+					-- burned by a D-Gun bolt passing: its hit there too (the server
+					-- sends no IMPACT for a pass-through, S-194; C-266)
+					local h = burst(fx, now, d.x, ground + Effects.BOLT_HEIGHT, d.z, 1, "dgunHit", Effects.EXPLOSION_SECONDS)
+					h.ground = ground
+					facing(h, bolt.vx, 0, bolt.vz)
+				end
 				local blast = def and (def :: any).deathBlast
 				if blast then
 					-- every unit explodes when killed (S-70, S-178, F15), its blast's
 					-- size from its def: a huge one (a Commander, a fusion reactor) as
-					-- the nuke's look scaled to its radius, smaller than a nuke's;
-					-- others a burst of part of the blast's reach
+					-- the nuke's look scaled to its radius, smaller than a nuke's; a
+					-- heavy one (a T3 walker's, S-217) the heavier StructureDeath; others
+					-- a burst of part of the blast's reach
 					local huge = blast.aoe >= Effects.HUGE_BLAST
+					local heavy = not huge and blast.aoe >= Effects.HEAVY_BLAST
 					local radius = if huge then blast.aoe else blast.aoe * Effects.BLAST_SHOWN
-					local big = burst(fx, now, d.x, ground + 2, d.z, radius, if huge then "nuke" else "impact", if huge then Effects.DEATH_SECONDS * 2 else Effects.EXPLOSION_SECONDS)
+					local kind = if huge then "nuke" elseif heavy then "structureDeath" else "impact"
+					local big = burst(fx, now, d.x, ground + 2, d.z, radius, kind, if huge or heavy then Effects.DEATH_SECONDS * 2 else Effects.EXPLOSION_SECONDS)
 					big.ground = ground
 					big.noCrater = huge or nil -- a nuke's look without its crater
 				end

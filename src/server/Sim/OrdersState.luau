@@ -6,7 +6,7 @@ local Hash = require("@shared/Util/Hash")
 
 local OrdersState = {}
 
-export type Kind = "move" | "fight" | "patrol" | "attack" | "guard" | "repair" | "reclaim" | "resurrect" | "build" | "attackGround" | "area"
+export type Kind = "move" | "fight" | "patrol" | "attack" | "guard" | "repair" | "reclaim" | "resurrect" | "build" | "attackGround" | "area" | "load" | "unload"
 
 export type Order = {
 	kind: Kind,
@@ -17,7 +17,7 @@ export type Order = {
 	lz: number?,
 	ox: number?, -- patrol: the other end (where the unit was when it started)
 	oz: number?,
-	target: number?, -- attack / guard / repair: unit ID; reclaim / resurrect: wreck ID
+	target: number?, -- attack / guard / repair / load: unit ID; reclaim / resurrect: wreck ID
 	gen: number?, -- the target unit's generation (D109); for attack, a ghost's if remembered dead
 	defIndex: number?, -- build
 	facing: number?,

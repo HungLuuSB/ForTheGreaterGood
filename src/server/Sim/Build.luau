@@ -280,42 +280,77 @@ end
 
 Build.NANO_SCAN = 8 -- ticks between an idle construction turret's looks for work (S-211)
 
+local drainStep: (sim: Types.Sim, id: number, t: number, bp: number) -> ()
+
+-- Can builder `id` reclaim live unit `o` (S-218, the user: BAR's nano
+-- reclaims enemy units in its reach)? An enemy its allies see, not a
+-- Commander, not an aircraft in flight.
+local function drainable(sim: Types.Sim, id: number, o: number): boolean
+	local w = sim.world
+	if w.ally[o] == w.ally[id] or w.team[o] == 0 then
+		return false
+	end
+	local od = def(sim, o)
+	if bit32.band(od.categoryMask, Combat.COMMANDER_BIT) ~= 0 then
+		return false
+	end
+	if od.domain == "air" and bit32.band(w.state[o], World.State.LANDED) == 0 then
+		return false
+	end
+	return Sensors.level(sim, w.ally[id], o) == Sensors.Level.VISIBLE
+end
+
 -- An idle construction turret's next job in its reach (S-211, the user's
--- playtest 3 H31: BAR's nano left on FIGHT): its team's unfinished frames
--- first, then factories' production, then damaged units, then the wrecks
--- and features to reclaim; nearest first within each.
-local function nanoPick(sim: Types.Sim, id: number, d: Defs.UnitDef)
+-- playtest 3 H31: BAR's nano left on FIGHT): enemy units to reclaim first
+-- (S-218, the user), then its team's unfinished frames, then factories'
+-- production, then damaged units, then the wrecks and features to reclaim;
+-- nearest first within each. With `enemiesOnly`, a turret busy with a job
+-- it picked itself looks only for an enemy to take over from it.
+local function nanoPick(sim: Types.Sim, id: number, d: Defs.UnitDef, enemiesOnly: boolean?)
 	local w = sim.world
 	local b = sim.build
 	local team = w.team[id]
 	local reach = d.buildRange or 0
 	local x, z = w.posX[id], w.posZ[id]
-	local best, bestRank, bestDist = 0, 4, math.huge
+	local best, bestRank, bestDist = 0, if enemiesOnly then 1 else 5, math.huge
 	for _, o in w.ids do
-		if o == id or w.team[o] ~= team then
+		if o == id then
 			continue
 		end
 		local od = def(sim, o)
-		local q = b.queue[o]
-		local rank = if w.buildProgress[o] < 1
-			then 1
-			elseif od.domain == "structure" and od.buildOptions ~= nil and q ~= nil and #q > 0 then 2
-			elseif w.health[o] < od.health then 3
-			else 0
-		if rank == 0 or rank > bestRank then
-			continue
-		end
 		local dx, dz = w.posX[o] - x, w.posZ[o] - z
 		local dist = sqrt(dx * dx + dz * dz)
-		if dist <= reach + halfSize(od) and (rank < bestRank or dist < bestDist) then
+		if dist > reach + halfSize(od) then
+			continue
+		end
+		local rank = 0
+		if w.team[o] ~= team then
+			if drainable(sim, id, o) then
+				rank = 1
+			end
+		elseif not enemiesOnly then
+			local q = b.queue[o]
+			rank = if w.buildProgress[o] < 1
+				then 2
+				elseif od.domain == "structure" and od.buildOptions ~= nil and q ~= nil and #q > 0 then 3
+				elseif w.health[o] < od.health then 4
+				else 0
+		end
+		if rank ~= 0 and (rank < bestRank or (rank == bestRank and dist < bestDist)) then
 			best, bestRank, bestDist = o, rank, dist
 		end
 	end
 	if best ~= 0 then
+		BuildState.idle(b, id)
 		b.target[id] = best
 		b.targetGen[id] = w.gen[best]
-		b.assist[id] = bestRank == 2
-		b.repair[id] = bestRank == 3 or nil
+		b.assist[id] = bestRank == 3
+		b.repair[id] = bestRank == 4 or nil
+		b.drain[id] = bestRank == 1 or nil
+		b.auto[id] = true
+		return
+	end
+	if enemiesOnly then
 		return
 	end
 	local c = sim.combat
@@ -329,6 +364,34 @@ local function nanoPick(sim: Types.Sim, id: number, d: Defs.UnitDef)
 	end
 	if wreck ~= 0 then
 		b.reclaim[id] = wreck
+		b.auto[id] = true
+	end
+end
+
+-- One tick of builder `id` reclaiming live enemy unit `t` (S-218): it
+-- takes the unit apart at the rate it was built (build power against the
+-- build time), its health going down in step, and its team gets the
+-- supply of what it took (of a frame, in proportion to its progress).
+-- What is left at the end goes with no wreck.
+function drainStep(sim: Types.Sim, id: number, t: number, bp: number)
+	local w = sim.world
+	local td = def(sim, t)
+	local share = math.min(bp / td.cost.buildTime * Build.DT, w.health[t] / td.health)
+	local acc = sim.eco.accounts[w.team[id]]
+	if acc then
+		acc.supply.reclaimed += td.cost.supply * share * math.min(1, w.buildProgress[t])
+	end
+	local left = w.health[t] - td.health * share
+	Alerts.attacked(sim, t)
+	if left <= 1e-6 then
+		local c = sim.combat
+		c.noWreck[t] = true
+		sim.cheats.killing[t] = true -- (through god mode, as a D-Gun bolt)
+		Combat.queueDamage(c, t, w.health[t] * 100 + 1, id, w.owner[id]) -- (as a bolt: through deploy and retract armor)
+		sim.build.target[id] = 0
+		sim.build.drain[id] = nil
+	else
+		World.setHealth(w, t, left)
 	end
 end
 
@@ -625,8 +688,12 @@ function Build.step(sim: Types.Sim)
 				continue
 			end
 			-- a construction turret: the jobs below, its own or found in reach (S-211)
-			if (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0 and (sim.tick + id) % Build.NANO_SCAN == 0 then
-				nanoPick(sim, id, d)
+			if (sim.tick + id) % Build.NANO_SCAN == 0 then
+				if (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0 then
+					nanoPick(sim, id, d)
+				elseif b.auto[id] and not b.drain[id] then
+					nanoPick(sim, id, d, true) -- (S-218) an enemy in reach comes before its own pick
+				end
 			end
 		end
 
@@ -723,9 +790,11 @@ function Build.step(sim: Types.Sim)
 
 		local t = b.target[id] or 0
 		if t ~= 0 then
-			local valid = World.isRef(w, t, b.targetGen[id]) and w.team[t] == w.team[id] -- D109
+			local valid = World.isRef(w, t, b.targetGen[id]) and (w.team[t] == w.team[id] or b.drain[id] == true) -- D109
 			if valid then
-				if b.assist[id] then
+				if b.drain[id] then
+					valid = drainable(sim, id, t)
+				elseif b.assist[id] then
 					local q = b.queue[t]
 					valid = w.buildProgress[t] >= 1 and q ~= nil and #q > 0
 				elseif b.repair[id] then
@@ -737,9 +806,12 @@ function Build.step(sim: Types.Sim)
 			if not valid then
 				b.target[id] = 0
 				b.repair[id] = nil
+				b.drain[id] = nil
 			elseif inRange(sim, id, w.posX[t], w.posZ[t], halfSize(def(sim, t))) then
 				halt(sim, id)
-				if b.repair[id] then
+				if b.drain[id] then
+					drainStep(sim, id, t, bp)
+				elseif b.repair[id] then
 					-- heal at the rate it was built, for free (S-4)
 					local td = def(sim, t)
 					World.setHealth(w, t, math.min(td.health, w.health[t] + td.health * bp / td.cost.buildTime * DT))

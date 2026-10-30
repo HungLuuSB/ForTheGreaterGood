@@ -54,6 +54,7 @@ local Nav = require("./Nav")
 local OrdersState = require("./OrdersState")
 local Schema = require("@shared/Net/Schema")
 local Sensors = require("./Sensors")
+local Transport = require("./Transport")
 local Types = require("./Types")
 local World = require("./World")
 
@@ -118,6 +119,7 @@ local function cancelCurrent(sim: Types.Sim, id: number)
 	o.forcedGen[id] = nil
 	Air.clearGround(sim, id)
 	Build.commandIdle(sim, { id })
+	Transport.idle(sim, id)
 end
 
 -- Halts a unit where it stands.
@@ -533,6 +535,37 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		return true
 	elseif kind == "area" then
 		return areaStep(sim, id, h)
+	elseif kind == "load" then
+		-- (S-219) fly over the unit, hover, pick it up
+		local u = h.target :: number
+		if not World.isRef(w, u, h.gen) or not Transport.canCarry(sim, id, u) then
+			return false
+		end
+		local reach = Transport.LOAD_REACH + sim.combat.profiles[w.defIndex[u]].radius
+		local dx, dz = w.posX[u] - w.posX[id], w.posZ[u] - w.posZ[id]
+		if dx * dx + dz * dz > reach * reach then
+			Transport.idle(sim, id)
+			chase(sim, id, h, w.posX[u], w.posZ[u])
+			return true
+		end
+		halt(sim, id)
+		if (sim.transport.loading[id] or 0) == 0 then
+			Orders.stop(sim, u) -- it waits to be picked up
+		end
+		return Transport.loadTick(sim, id, u)
+	elseif kind == "unload" then
+		-- (S-219) fly to the point, hover, set the cargo down
+		if sim.transport.cargo[id] == nil then
+			return false
+		end
+		local dx, dz = (h.x :: number) - w.posX[id], (h.z :: number) - w.posZ[id]
+		if dx * dx + dz * dz > Transport.UNLOAD_REACH ^ 2 then
+			Transport.idle(sim, id)
+			chase(sim, id, h, h.x :: number, h.z :: number)
+			return true
+		end
+		halt(sim, id)
+		return Transport.unloadTick(sim, id)
 	elseif kind == "attackGround" then
 		-- bombers: until replaced; a silo: until it launched (S-48)
 		local d = def(sim, id)

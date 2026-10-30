@@ -15,6 +15,6 @@ return Templates.extend(Templates.Structure, {
 	icon = "factory_air",
 	buildPower = 200, -- doubled: T1 units in about half the time (S-94, client request 42b)
 	rearmPads = 1,
-	buildOptions = { "chs_vulture", "chs_harpy", "chs_wasp", "chs_plague" },
+	buildOptions = { "chs_vulture", "chs_harpy", "chs_wasp", "chs_plague", "chs_buzzard" },
 	model = "chs_airfield",
 })

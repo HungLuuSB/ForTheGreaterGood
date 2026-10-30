@@ -11,7 +11,7 @@ export type Entry = { tile: string, scale: number, frame: string, name: string }
 -- one image per sheet; a tile's third number is its sheet
 IconAtlas.images = {
 	"rbxassetid://73786884026732",
-	"rbxassetid://126240026480583",
+	"rbxassetid://100470717468643",
 } :: { string }
 IconAtlas.TILE_W = 96 -- pixels per icon on the sheet
 IconAtlas.TILE_H = 112
@@ -42,10 +42,12 @@ IconAtlas.tiles = {
 	bot_lab_t1 = { 576, 0, 2 },
 	coastal_battery_t2 = { 288, 112, 1 },
 	beam_tower_t2 = { 672, 336, 1 },
+	light_transport_t1 = { 864, 336, 2 },
 	shield_generator_t2 = { 384, 112, 1 },
 	artillery_emplacement_t2 = { 480, 112, 1 },
 	heavy_laser_bot_t2 = { 672, 0, 2 },
 	anti_nuke_t2 = { 576, 112, 1 },
+	heavy_transport_t2 = { 0, 448, 2 },
 	mobile_anti_nuke_t2 = { 672, 112, 1 },
 	adv_air_worker_t2 = { 768, 112, 1 },
 	supply_converter_t1 = { 864, 112, 1 },
@@ -175,10 +177,12 @@ IconAtlas.byDef = {
 	chs_botlab = { tile = "bot_lab_t1", scale = 1, frame = "struct", name = "Bot Lab" },
 	chs_breaker = { tile = "coastal_battery_t2", scale = 1.15, frame = "defense", name = "Coastal Battery" },
 	chs_bulwark = { tile = "beam_tower_t2", scale = 1.15, frame = "defense", name = "Beam Tower" },
+	chs_buzzard = { tile = "light_transport_t1", scale = 1, frame = "vtol", name = "Light Transport" },
 	chs_carapace = { tile = "shield_generator_t2", scale = 1.15, frame = "defense", name = "Shield Generator" },
 	chs_cataclysm = { tile = "artillery_emplacement_t2", scale = 1.15, frame = "defense", name = "Artillery Emplacement" },
 	chs_centurion = { tile = "heavy_laser_bot_t2", scale = 1.15, frame = "walker", name = "Heavy Laser Bot" },
 	chs_cerberus = { tile = "anti_nuke_t2", scale = 1.15, frame = "defense", name = "Anti-Nuke" },
+	chs_charon = { tile = "heavy_transport_t2", scale = 1.15, frame = "vtol", name = "Heavy Transport" },
 	chs_chimera = { tile = "mobile_anti_nuke_t2", scale = 1.15, frame = "vehicle", name = "Mobile Anti-Nuke" },
 	chs_condor = { tile = "adv_air_worker_t2", scale = 1.15, frame = "vtol", name = "Adv. Air Worker" },
 	chs_converter = { tile = "supply_converter_t1", scale = 1, frame = "struct", name = "Supply Converter" },
@@ -274,6 +278,7 @@ IconAtlas.byDef = {
 	ord_archangel = { tile = "awacs_t2", scale = 1.15, frame = "air", name = "AWACS" },
 	ord_architect = { tile = "adv_ground_worker_t2", scale = 1.15, frame = "vehicle", name = "Adv. Ground Worker" },
 	ord_archon = { tile = "air_superiority_t2", scale = 1.15, frame = "air", name = "Air Superiority" },
+	ord_ark = { tile = "heavy_transport_t2", scale = 1.15, frame = "vtol", name = "Heavy Transport" },
 	ord_artisan = { tile = "bot_constructor_t1", scale = 1, frame = "walker", name = "Bot Constructor" },
 	ord_barrier = { tile = "wall_t1", scale = 1, frame = "struct", name = "Wall" },
 	ord_bastion = { tile = "heavy_turret_t2", scale = 1.15, frame = "defense", name = "Heavy Turret" },
@@ -285,6 +290,7 @@ IconAtlas.byDef = {
 	ord_choir = { tile = "adv_sonar_station_t2", scale = 1.15, frame = "struct", name = "Adv. Sonar Station" },
 	ord_citadel = { tile = "fortress_t3", scale = 1.25, frame = "defense", name = "Fortress" },
 	ord_converter = { tile = "supply_converter_t1", scale = 1, frame = "struct", name = "Supply Converter" },
+	ord_courier = { tile = "light_transport_t1", scale = 1, frame = "vtol", name = "Light Transport" },
 	ord_crusader = { tile = "destroyer_t2", scale = 1.15, frame = "ship", name = "Destroyer" },
 	ord_curtain = { tile = "jammer_tower_t1", scale = 1, frame = "struct", name = "Jammer Tower" },
 	ord_custodian = { tile = "mobile_anti_nuke_t2", scale = 1.15, frame = "vehicle", name = "Mobile Anti-Nuke" },

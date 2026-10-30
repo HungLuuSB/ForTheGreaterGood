@@ -594,6 +594,9 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			if r.queue then
 				u.queue, u.queueProgress = r.queue, r.queueProgress
 			end
+			if r.cargo then
+				u.cargo = r.cargo -- a transport's units on board (S-219)
+			end
 			if r.fireState then
 				u.fireState, u.moveState = r.fireState, r.moveState
 			end

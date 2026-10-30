@@ -2360,3 +2360,126 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - Bug found: the button's UIPadding also moved the icon, onto the label. The icon now sits at -(ICON + 2) inside the padding, 3 px from the edge.
   - All three images fetch; the resource bar, build tile costs, health cross and every command button show their icons (`debug_out/screens/c260-ui-icons.jpg`).
 - Studio check at strategic zoom: the new unit icons show in team colours, with the Commanders' heads, on the map and the minimap (`debug_out/screens/c258-strategic-icons.jpg`).
+
+### C-262 — Unit pictures in portraits, live model until uploaded (2026-10-30)
+
+- 2D-E's E-11 (the user's pick): pre-rendered 128-px pictures of each unit in its setting, in its faction's own colour (untinted; the user dropped the team mask). They're packed by E into `assets/2d/pictures/pictures.json`: `{ tile, sheets: [{ file, size }], units: { defId: { sheet, rect } }, missing }`.
+- `tools/icons/pictures.mjs` writes `UI/UnitPictures.luau`. Each sheet's id comes from `tools/icons/assets.json` `pictures`, a list of `{ image, sha256 }` by sheet; an id whose sheet changed is dropped. It also holds each unit's sheet and top-left pixel, and `UnitPictures.of(defId)` returns nil without an uploaded picture.
+- `UI/Portrait.set` shows the picture (one cropped ImageLabel beside the ViewportFrame) when the def has one, else the live model as before. `Portrait.setVisible` hides or shows whichever it chose; the unit panel uses it in place of setting the frame's visibility.
+- The build menu, the unit panel and the pre-game tiles all go through `Portrait`, so they all take the pictures.
+- Today there are no pictures yet: C is rendering, and E packs them. Every def keeps its live model.
+- Studio: build tiles and the unit panel show their models as before, with no errors. The pictures themselves are checked after their upload.
+
+### C-263 — Icon fixes from the user's feedback (2026-10-30)
+
+- **Build tile costs** (the user: "they does not look aligned", twice): 2D-E's supply and power icons at their drawn 16 px. Scaled down to 11 px they blurred and sat off the number's line. Each resource gets one row centred 22 and 8 px from the tile's bottom, with the icon at the right and the number beside it. GothamBold's digits sit about 2 px below the centre of their line box (room for descenders), so the icon is 1 px lower and the number 1 px higher. Checked in an enlarged crop (`debug_out/screens/2026-10-30-cost-rows.png`).
+- **Unit panel** (the user: its icon wasn't the new one): E's health icon replaces the drawn cross, and the supply and power flow lines get E's 16-px icons at their left in place of the ■ / ϟ text marks. `UnitFlow.rich` takes "" as its mark when the icon stands beside the line, with no leading space.
+- **Command card** (the user: "the command button does not need the icon. The icon may be replaced the cursor if applicable when choosing a command"): C-260's button icons are removed; the buttons are plain labels again.
+- **Command cursor**, new `UI/CommandCursor`: while a command with an E-10 icon is chosen, that icon (24 px, its tint) is the mouse cursor, centred on the point a click orders at. Roblox's MouseIcon takes a whole image, not a rect of the atlas, so the system cursor is hidden (`MouseIconEnabled`) and the icon is drawn at the mouse every frame. With no command, or no icon for it, the system cursor stays.
+- **Weapon line** (the user: "Just DPS: number"): `UnitStats` writes `DPS: 66.7`, with no "vs <armour class>".
+- **Resource bar threshold tooltip** (the user: under the box, not above): the tip ScreenGui ignores the GUI inset but marker positions are below it, so the tip now adds `GuiService:GetGuiInset()`. Not hovered in Studio yet; the user is checking the threshold markers.
+- **Studio, Coastline:** the Move cursor with the system cursor hidden; "DPS: 66.7"; plain command buttons; the unit panel's health, supply and power icons; build tile cost rows level.
+
+### C-264 — D-Gun aim preview; the path stays inside the Commander's range (2026-10-30)
+
+- The user: "D-gun still show no hitbox or the path of the projectile?"
+  - With the D-Gun armed, `Core/AttackPreview.bolts` gives each selected Commander's bolt by the server's rules (Commands DGUN, Projectiles' bolt). The bolt is fired from where the Commander stands and flies level for its whole range (80). It destroys every unit whose centre is within `bolt` (7) plus its collision radius of the path, own units included. Aircraft in flight pass over it.
+  - `Render/AttackPreview` draws it on the ground as a band its full width (the hitbox) with a dashed centre line. Every unit in its way gets a red ring.
+- The user: "always make the path stay inside the commander range", then "unless the commander target a unit from outside the range, the commander will walk to that target until D-gun in range and fire it", then "when outside, show no path":
+  - **Ground point out of range:** the order's point is pulled in along the same line to 0.85 of the range (`AttackPreview.boltPoint`). The server walks only past 0.9, so the Commander fires from where it stands. The preview starts at the Commander and ends on its range ring.
+  - **Enemy unit clicked:** the DGUN goes to the unit's position as it is. Out of range, the Commander walks there, as the server does, and fires once in range. The preview shows no path for that case.
+  - Api sends one DGUN per Commander, each with its own pulled-in point.
+- The DGUN order carries a point, not a unit, so a target that moves away after the click isn't followed. If the user wants that, it's a sim request (DGUN with a target ID).
+- Specs (`Dgun.spec`):
+  - the units the preview marks are the ones the bolt burns, own included; one off to the side and one past the end are spared;
+  - a far point fires from where the Commander stood;
+  - a far enemy is walked to and burned;
+  - an enemy out of range gets no path.
+- **Studio, Coastline:**
+  - in range: the band ends on the yellow D-Gun ring (`debug_out/screens/2026-10-30-dgun-preview.jpg`);
+  - cursor far outside: the band still stops at the ring (`…-dgun-preview-far.jpg`). The click fired from where the Commander stood, with power 1.0k → 513 and the bolt flying along the band (`…-dgun-fired-far.jpg`).
+- The D-Gun's own effects (bolt, muzzle, hits, end) were asked of models-C, as the user requested. They will come as templates `Vfx.DgunBolt` / `DgunMuzzle` / `DgunHit` / `DgunEnd` in `place/Vfx.model.json`, which B wires when they land.
+
+### C-265 — Unit pictures and faction emblems uploaded (2026-10-30)
+
+- The user approved uploading 2D-E's E-11 unit pictures (2d 3b0aedf1) and the faction emblem atlas (2d d9d67900); the `2d` branch is merged in up to a8a12d1d. The ids are in `tools/icons/assets.json` with their pixel hashes:
+  - pictures, sheets 1–4: 122608829388990, 77489597273393, 138922904621520, 97328947914631;
+  - emblems: 136358453510061.
+- `UI/UnitPictures` is regenerated: all 197 defs have a picture on an uploaded sheet. E packs 126-px pictures 2 px apart, 64 to a sheet. `Portrait` reads `TILE` from the module, and `UnitPictures.spec` now checks rects on that 128-px pitch instead of the tile size.
+- New `tools/icons/emblems.mjs` writes `UI/FactionEmblems` from E's `keys.json`, read-only for lobby-D as `UiIcons` is:
+  - the atlas image and size;
+  - each emblem's name, faction, tint and rect at every drawn size (16 to 256 px);
+  - `keyOf(faction)`, `pick(px)` (the smallest drawn size that covers it), and `of(faction, px)` → image, rect, tint.
+  - An id whose atlas changed since its upload is dropped, as for every other sheet. Nothing in the match draws an emblem yet.
+- Spec: `FactionEmblems.spec` (both factions, every rect on the atlas, `pick`).
+- Studio, Coastline: the build tiles and the unit panel show the pictures (Order blue, in their setting), cropped cleanly with no neighbour bleeding in (`debug_out/screens/2026-10-30-unit-pictures.png`).
+
+### C-266 — The D-Gun's effects (2026-10-30, models-C's templates)
+
+- The user asked C for the D-Gun's VFX. C made four templates in `place/Vfx.model.json` (m-models 51db9785, merged in). They're authored at real size, so they play at scale 1, and their colour is fixed (255, 200, 90), not team-tinted.
+- `Render/Vfx`:
+  - `TEMPLATE_NAMES` gains `dgunMuzzle`, `dgunHit`, `dgunEnd` and `dgunBolt`.
+  - While the place has no template, the first three fall back to the built-in muzzle, hit and impact (`Vfx.FALLBACK`).
+  - **Held templates:** a template with the attribute `Continuous` is held by an owner. `Vfx.follow(key, kind, frame)` starts it on the first call and moves it on later ones; `Vfx.release(key)` ends it.
+  - While held, its emitters saved Enabled with no EmitCount run, and its lights with no LightSeconds stay lit. Released, it stops and is reused once its longest particles have faded (the burning path's 3.5 s). A full pool never steals a held copy.
+- `Render/Effects`: a D-Gun bolt is drawn as the held `DgunBolt`, facing its flight on the level. Bolts no longer drawn are released. The plain ball stays as the fallback without the template.
+- `Core/Effects`:
+  - a D-Gun's SPAWN_PROJ flash is `dgunMuzzle`;
+  - its one IMPACT (the end of its range) is `dgunEnd`, played level so its ring lies flat;
+  - the server sends no IMPACT for the units the bolt passes through (S-194). So a DEATH within the bolt's reach of its last 1.5 s of path plays `dgunHit` there too (`Effects.boltThrough`).
+- Spec (`Dgun.spec`): the bolt through three tanks plays one `dgunMuzzle`, one `dgunEnd` and three `dgunHit`.
+- **Studio, Coastline:** the Sovereign fired through a row of its own Lancers. The muzzle, the held bolt, the end and both hits played as templates, with no errors (`debug_out/screens/2026-10-30-dgun-vfx-launch.jpg`, `…-dgun-vfx-path.jpg`). The flight itself is about a second, too short to frame well by tool; the burning path and the end scorch show after it.
+
+### C-267 — The D-Gun fixed; models-C's new explosions and missile booster (2026-10-30)
+
+- **C-266 didn't work as logged. Two faults:**
+  - C's templates shipped with no attributes: Rojo drops a top-level "Attributes" in a .model.json. So DgunBolt had no `Continuous`, and every emitter fell back to the default count of 10. C fixed this in m-models 39aa66e8, merged in.
+  - My release loop for held copies landed in `shellFor` instead of the frame step. It never ran there, and it named an undefined local (`bolts`), so a shell asked for while a bolt was held would have errored. It's moved into the step.
+  - So C-266's Studio note ("the held bolt played") was wrong: the bolt ran as a plain 0.2-s burst.
+- **Re-checked in Studio, Coastline:**
+  - The D-Gun bolt's 8 emitters run for its 1.25-s flight, then stop.
+  - The muzzle, the end and three hits (three Lancers) play as templates.
+- **C's request 12, in `Render/Vfx`:**
+  - New template names: `nuke` → Nuke (scale 1 = a 150-stud blast, as before), `structureDeath` → StructureDeath (falls back to the death look), `missileExhaust` → MissileExhaust.
+  - A template's Attachment positions scale with the burst like sizes and speeds: debris arms, chain blasts and shock diamonds are authored at scale 1. Accelerations scale by its square root.
+  - Emitters with `GroundOnly` play only in a ground burst (within `GROUND_BURST` of the ground, as the built-in dust).
+  - `Vfx.follow` takes a scale.
+- `Core/Effects`: a structure's death is a `structureDeath` burst, sized as a unit's.
+- **Missiles** (`Render/Effects`): MissileExhaust is held on each missile's nozzle (2.2 × its style scale behind the centre) at its style's scale, and released when the missile ends. While it's there, the built-in flame trail and smoke puffs are off; the smoke trail stays.
+- C's Impact and Death templates (already named) now replace every impact and unit death in the game.
+- **Not done yet:** C's blast-mark decals (`assets/fx/scorch`, soot and glow in place of the dark scorch disc). They wait for the user's upload approval and the ids.
+- **Studio, Coastline:**
+  - a nuke from a Reckoning: Launch, then the held MissileExhaust (10 emitters running, its booster flame on the tail; `debug_out/screens/2026-10-30-missile-exhaust.jpg`), then the Nuke template at the impact, with the exhaust released;
+  - the silo killed: StructureDeath, with its smoke column and rubble fires (`…-structure-death.jpg`);
+  - no script errors.
+
+### C-268 — Blast-mark decals (2026-10-30, models-C)
+
+- The user approved C's upload. `Meshes.textures` has `blastMarkA`, `blastMarkB` (soot, greyscale, untinted) and `blastMarkGlow` (m-models 2d0afbe4, merged in).
+- `Render/Vfx`'s scorch mark is now a transparent part holding two decals, in place of the dark disc:
+  - soot, A or B picked by a hash of the spot, at a yaw of its own;
+  - the glow on top, tinted (1, 0.55, 0.18) × 2.2 (overbright, as BeamShots).
+  - The glow cools in `GLOW_SECONDS` (2 s); the soot fades over `SCORCH_SECONDS` (14 s), as the disc did.
+- The part casts no shadow (decals would throw a blob) and sits `MARK_LIFT` (0.6) studs over the ground. At +0.08, Terrain's sand ripples hid it.
+- **Templated bursts get the mark too.** C's Impact and Death templates replace the built-in rig, which used to leave the disc, so they had no lasting mark at all. Any ground burst of a kind with a scorch (its own kind's or its fallback's) now leaves one at that kind's size.
+- **Studio, Coastline:** a D-Gun shot through three Lancers left six marks, both variants, with no shadows. The glow faded and the soot stayed (`debug_out/screens/2026-10-30-blast-marks-glow.jpg`, `…-soot.jpg`).
+
+### C-269 — The re-rendered unit pictures uploaded (2026-10-30)
+
+- The user wanted C's re-render of the unit pictures (no fog, more glow, more colour). E repacked it into the same four sheets and rects (2d 68c390e0, merged in up to ee9cfd2a).
+- The old sheet ids went stale with the new pixels. The user approved the upload; the new ids are 129402755258680, 137517755831073, 118640861030060 and 108902714225981 in `tools/icons/assets.json`, with their hashes. `UI/UnitPictures` is regenerated: 197 of 197 on uploaded sheets.
+- Studio, Coastline: the build tiles and the unit panel load the new sheets (`debug_out/screens/2026-10-30-unit-pictures-rerender.png`).
+
+### C-270 — T3 walkers' death blasts play the heavier StructureDeath (2026-10-30)
+
+- S-217 cut the Titan's and Juggernaut's death blasts to 52 studs (480 damage), below `Effects.HUGE_BLAST` (90), so they fell back to the ordinary "impact" burst. models-C flagged it through sim-A.
+- A middle tier, `Effects.HEAVY_BLAST = 50`: a death blast from 50 studs up to HUGE_BLAST plays models-C's StructureDeath template, at the same shown radius as before (aoe × `BLAST_SHOWN`) and for twice the death burst's life. It is not the nuke's look and leaves no crater. Huge blasts (Commanders, fusion) are unchanged; so are the Construction Turrets' (40).
+- Studio, Coastline: a Titan's and a Juggernaut's deaths each play StructureDeath plus their own death burst, with no nuke (`debug_out/screens/2026-10-30-t3-death-blast.jpg`). A new Splash spec checks the Titan's blast.
+
+### C-271 — Transport icons and the Load / Unload button icons uploaded (2026-10-30)
+
+- sim-A's S-218 and S-219 (protocol 43; m-sim-2 e7765af2) add four HELI transports: ord_courier, chs_buzzard, ord_ark and chs_charon. They can't reach main without their icons, so they come through the client, as S-213 did. Merged with 2D-E's E-13 (2d 485edc70, design approved by the user in E's session).
+- `render.mjs` maps all 207 defs from 121 items. The new tiles `light_transport_t1` (Courier, Buzzard) and `heavy_transport_t2` (Ark, Charon) land on sheet 2; sheet 1 is unchanged. `ui_icons.mjs` adds `load` and `unload` (49 icons; only `alert` moved).
+- The user approved both uploads in this session: sheet 2 is 100470717468643 and the UI atlas is 89353396855864, with their pixel hashes in `tools/icons/assets.json`.
+- Studio, Coastline: both images load. The four transports draw the air frame at a distance, with two tier dots on the T2s (`debug_out/screens/2026-10-30-transport-icons.jpg`).
+- The client work for S-218 and S-219 follows separately: the RECLAIM_UNIT spray, Load and Unload orders, cargo on the transport.
