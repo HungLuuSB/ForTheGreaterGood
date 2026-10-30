@@ -16,6 +16,7 @@ local Upgrades = require("./Core/Upgrades")
 local World = require("./Core/World")
 local CommandSet = require("./Core/CommandSet")
 local AttackPreview = require("./Core/AttackPreview")
+local Transports = require("./Core/Transports")
 
 local Api = {}
 
@@ -347,6 +348,31 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 					ok, why = ok or ok1, if ok or ok1 then nil else why1
 				end
 			end
+		elseif kind == "load" then
+			-- transports (S-219, C-272): on a unit that fits, the selected
+			-- transports pick it up; on an own transport, the selected units
+			-- that fit board it (both LOAD it, Orders' right click)
+			if u == nil then
+				return false, "load needs a unit"
+			end
+			local loaders = {}
+			local onTransport = Transports.spec(World.def(world, u)) ~= nil and u.team == world.me.team
+			for _, id in sel.ids do
+				local su = world.units[id]
+				if su and (if onTransport then Transports.fits(world, u, su) else Transports.fits(world, su, u)) then
+					table.insert(loaders, id)
+				end
+			end
+			if #loaders == 0 then
+				return false, "nothing selected fits"
+			end
+			ok, why = issue({ cmdType = CT.LOAD, queue = queue == true, targetId = unitId }, loaders)
+		elseif kind == "unload" then
+			local carriers = Transports.among(world, sel.ids)
+			if #carriers == 0 then
+				return false, "no selected transport"
+			end
+			ok, why = issue({ cmdType = CT.UNLOAD, queue = queue == true, x = x, z = z }, carriers)
 		elseif kind == "reclaim" or kind == "resurrect" then
 			-- the known wreck nearest the click (wrecks aren't pickable models), C-109;
 			-- RESURRECT the same way (S-168, C-216: workers with canResurrect)

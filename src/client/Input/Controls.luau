@@ -37,6 +37,7 @@ local Api = require("../Api")
 local Selection = require("../Core/Selection")
 local Upgrades = require("../Core/Upgrades")
 local CommandSet = require("../Core/CommandSet")
+local Transports = require("../Core/Transports")
 local World = require("../Core/World")
 
 local Controls = {}
@@ -93,6 +94,8 @@ Controls.HINT = {
 	reclaim = "RECLAIM: left-click a wreck, or drag a zone (every wreck in it)",
 	resurrect = "RESURRECT: left-click a wreck, or drag a zone (refills with supply, then comes back for power)",
 	upgrade = "UPGRADE: drag a circle, or click an extractor",
+	load = "LOAD: left-click a unit to pick up (or, with units selected, a transport to board)",
+	unload = "UNLOAD: left-click where to set the cargo down",
 }
 
 local DIGITS = {
@@ -392,6 +395,12 @@ function Controls.bind(api: Api.Api): Controls
 			if x and z then
 				api.actions.commandAt(x, z, id, shift(), shift(), ctrl())
 			end
+			return
+		end
+		if (input.KeyCode == Controls.FIRE_STATE_KEY or input.KeyCode == Controls.TOGGLE_KEY) and Transports.only(world, api.state.selection) then
+			-- only transports selected (S-219, C-272): BAR's L and U load and
+			-- unload (transports have no fire state and no switch)
+			api.actions.setCommandMode(if input.KeyCode == Controls.FIRE_STATE_KEY then "load" else "unload")
 			return
 		end
 		if input.KeyCode == Controls.FIRE_STATE_KEY then

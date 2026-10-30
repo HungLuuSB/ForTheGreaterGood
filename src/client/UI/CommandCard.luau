@@ -64,7 +64,7 @@ end
 -- BAR's order: states, then orders.
 local ORDER = CommandSet.ORDER
 -- each button's key action (Core/Keybinds; rebindable, C-159)
-local ACTION = { move = "move", fight = "fight", attack = "attack", patrol = "patrol", guard = "guard", stop = "stop", fire = "fireState", movestate = "moveState", ["repeat"] = "repeat", toggle = "toggle", cancel = "cancel", alert = "lastAlert", reclaim = "reclaim", resurrect = "resurrect", dgun = "resurrect" }
+local ACTION = { move = "move", fight = "fight", attack = "attack", patrol = "patrol", guard = "guard", stop = "stop", fire = "fireState", movestate = "moveState", ["repeat"] = "repeat", toggle = "toggle", cancel = "cancel", alert = "lastAlert", reclaim = "reclaim", resurrect = "resurrect", dgun = "resurrect", load = "fireState", unload = "toggle" }
 local function keyOf(name: string): string
 	if name == "selfdestruct" then
 		local k = SettingsMenu.binds.resurrect
@@ -89,7 +89,7 @@ end
 
 local function act(api: Api.Api, name: string)
 	local a = api.actions
-	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" or name == "repair" or name == "reclaim" or name == "resurrect" or name == "upgrade" or name == "dgun" then
+	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" or name == "repair" or name == "reclaim" or name == "resurrect" or name == "upgrade" or name == "dgun" or name == "load" or name == "unload" then
 		a.setCommandMode(if api.state.commandMode == name then nil else name)
 	elseif name == "stop" then
 		a.stop()
@@ -257,6 +257,8 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		reclaim = "Reclaim",
 		resurrect = "Resurrect", -- T1 workers (S-168, C-216)
 		dgun = "D-Gun", -- Commanders (S-194, G5)
+		load = "Load", -- transports (S-219, C-272)
+		unload = "Unload",
 		retreat = RETREAT[api.state.retreat or 1] or "Retreat",
 		selfdestruct = if api.state.selfDestructing then "Stop self-d" else "Self-destruct",
 		upgrade = "Upgrade", -- Upgrade extractors (C-121)

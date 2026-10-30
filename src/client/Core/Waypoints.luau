@@ -86,7 +86,7 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 	end
 	if kind ~= CT.MOVE and kind ~= CT.FIGHT and kind ~= CT.PATROL and kind ~= CT.ATTACK
 		and kind ~= CT.ATTACK_GROUND and kind ~= CT.GUARD and kind ~= CT.REPAIR and kind ~= CT.RECLAIM
-		and kind ~= CT.BUILD and kind ~= CT.AREA then
+		and kind ~= CT.BUILD and kind ~= CT.AREA and kind ~= CT.LOAD and kind ~= CT.UNLOAD then
 		return -- state commands don't move anything
 	end
 	local slots = if intent.x2
