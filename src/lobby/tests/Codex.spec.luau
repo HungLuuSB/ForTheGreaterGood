@@ -19,13 +19,31 @@ return function(t: RunAll.Context)
 			for side, list in { order = role.order, chaos = role.chaos } do
 				for _, id in list do
 					local def = defs.units[id]
-					t.expect(def ~= nil, `{role.name}: no def {id}`)
+					-- an announced unit may come before its def (Codex.ANNOUNCED)
+					t.expect(def ~= nil or Codex.ANNOUNCED[id] ~= nil, `{role.name}: no def {id}`)
 					if def then
 						t.equal(def.faction, side, `{role.name}: {id}`)
 					end
 					t.equal(seen[id], nil, `{id} is in two roles ({seen[id]}, {role.name})`)
 					seen[id] = role.name
 				end
+			end
+		end
+	end)
+
+	t.test("announced units are named by a role and stay hidden until their def lands", function()
+		local named: { [string]: boolean } = {}
+		for _, role in Codex.ROLES do
+			for _, list in { role.order, role.chaos } do
+				for _, id in list do
+					named[id] = true
+				end
+			end
+		end
+		for id in Codex.ANNOUNCED do
+			t.expect(named[id], `{id} is announced but no role names it`)
+			if defs.units[id] == nil then
+				t.equal(codex.entries[id], nil, id)
 			end
 		end
 	end)

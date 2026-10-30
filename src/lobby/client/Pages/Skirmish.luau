@@ -7,6 +7,7 @@
 -- once (the same start path as any room).
 
 local Config = require("../../shared/Config")
+local Emblem = require("../Emblem")
 local MapImage = require("../MapImage")
 local Net = require("../Net")
 local Ui = require("../Ui")
@@ -74,20 +75,14 @@ function Skirmish.new(frame: Frame, _router: any): any
 	Ui.label(cond, "Destroy the enemy Command Vehicle", "small", Kit.COLOR.text)
 
 	local choice = { faction = "order", level = "normal", enemy = "chaos", map = nil :: any }
-	local function options(list: { string }): { { string } }
-		local out = {}
-		for _, v in list do
-			table.insert(out, { v, Ui.label2(v) })
-		end
-		return out
-	end
-	-- segmented, not dropdowns: a dropdown's list would be clipped by the scroll
-	Kit.segmented(Kit.row(detail, "Your faction", 6), options(Config.FACTIONS), choice.faction, function(v)
+	-- cards and segmented, not dropdowns: a dropdown's list would be clipped
+	-- by the scroll
+	Emblem.picker(Kit.row(detail, "Your faction", 6, 94), Config.FACTIONS, choice.faction, function(v)
 		choice.faction = v
-	end, 90)
-	Kit.segmented(Kit.row(detail, "Opponent faction", 7), options(Config.FACTIONS), choice.enemy, function(v)
+	end)
+	Emblem.picker(Kit.row(detail, "Opponent faction", 7, 94), Config.FACTIONS, choice.enemy, function(v)
 		choice.enemy = v
-	end, 90)
+	end)
 	local levels = {}
 	for _, v in Config.LEVELS do
 		table.insert(levels, { v, (Config.LEVEL_SHORT :: any)[v] or Ui.label2(v) })
