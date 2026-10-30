@@ -10,6 +10,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Counterpart:** the article's counterpart is a card with its 76 px picture, its name and its faction, role and tier; clicking it opens that article. The comparison line stays under it. The "Builds" and "Built by" chips keep their small icons.
 - **Studio** (`debug_out/screens/`): `lobby_pictures_list`, `lobby_pictures_counterpart` (Titan → Juggernaut card), `lobby_pictures_chaos` (the card opened the Juggernaut, whose card is the Titan). No script errors.
 - Lobby specs 67 / 67; the build check passes (652 scripts, 1085 requires).
+- Ready to merge: `9db7385b` (unit pictures in the Units tab; touches only `src/lobby`, `lobby.project.json` and the lobby progress)
 
 ## Summary (2026-10-30: faction emblems, D-E2)
 
