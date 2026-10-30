@@ -1,6 +1,6 @@
 # Skirmish AI guideline
 
-How the skirmish AI thinks, what it reacts to, and how each level plays. The code is `src/server/Sim/AI/Skirmish.luau` (D90); the decisions behind it are S-17, S-31, S-57, S-76, S-92, S-97, S-101, S-105, S-110, S-187 in `docs/decisions/sim.md`. This guide describes the code as of S-191 (2026-10-26). When the AI changes, update it in the same change.
+How the skirmish AI thinks, what it reacts to, and how each level plays. The code is `src/server/Sim/AI/Skirmish.luau` (D90); the decisions behind it are S-17, S-31, S-57, S-76, S-92, S-97, S-101, S-105, S-110, S-187, S-216, S-221, S-222, S-223 in `docs/decisions/sim.md`. This guide describes the code as of S-191 (2026-10-26), with S-221 (2.2a), S-222 (2.3a) and S-223 (2.2b) since. When the AI changes, update it in the same change.
 
 ## 1. Ground rules: it plays fair
 
@@ -43,7 +43,7 @@ Each factory keeps a few items queued (1 on easy, 2 on normal and hard):
   - a mobile anti-nuke if it knows of an enemy silo;
   - one fire-control radar;
   - a mobile jammer (Chaos);
-  - then MLRS and main battle tanks half and half.
+  - then MLRS and main battle tanks half and half (normal and hard: by the enemy's mix, section 2.2b).
 - **Bot lab:**
   - anti-air bots when more than 2 enemy aircraft are known;
   - two helper bots (Lazarus / Graverobber);
@@ -60,16 +60,48 @@ After BAR's CircuitAI: the AI never runs more build power than its income pays f
 - When **power** is what limits it: more generators, and the T2 builder's fusions, then advanced fusion. When power is plentiful (it pays for 1.5 times what supply does): converters.
 - **More T2 builders** as supply income grows: one more per 20 supply/s, at most 3. The first upgrades extractors; the others work down the tech list.
 
+### 2.2b Counters by the enemy's spending (normal and hard; S-223)
+
+After BAR's CircuitAI. The table is data, in `src/server/Sim/AI/Counters.luau`.
+
+- **The enemy's mix:** every armed enemy unit and structure its team has identified counts by value in one class: light, armored, artillery, defence, air or naval. Each class is remembered, halving every 3 minutes once out of sight.
+- **The table:** each class's share of that value asks for a share of production in the roles that answer it, each role capped:
+
+  | Enemy class | Asks for (per unit of its share) | Role cap |
+  |---|---|---|
+  | light | heavy 0.6 | heavy 0.7 |
+  | armored | artillery 0.3, heavy 0.3 | artillery 0.5 |
+  | artillery | raiders 0.6 | raiders 0.4 |
+  | defence | artillery 0.8 | |
+  | air | anti-air 0.5 | anti-air 0.35 |
+
+- **Vehicle plant:** artillery at the larger of its level's share and the ask; raiders (scouts) among its tanks at the ask.
+- **Advanced plant:** MLRS at 0.5 + the artillery ask − the heavy ask (0.2 to 0.8), else main battle tanks. Chaos's Tzar at 0.15 + 0.4 × the artillery ask.
+- **Bot lab:** anti-air bots at the anti-air ask (at least 0.3 while 3+ enemy aircraft are known, since radar shows aircraft without their type); scout bots at least a quarter.
+- Easy keeps S-187's thresholds: 3+ known turrets, 3+ known artillery.
+
 ### 2.3 Army: waves
 
 - New units gather at a **rally point** in front of the base, at least 600 studs from any other side's rally point.
 - A **wave** leaves when the army at home is worth the wave's value. Value is supply cost plus power cost / 10; one wave "unit" is 300, about a T1 tank. So Chaos's cheaper units make the same wave with more of them. Each wave is bigger than the last.
-- Before leaving, normal and hard also want the wave to **outweigh the known defence** at its target: 1.5 times the armed units and structures, turrets included, its team knows within 450 studs. Until then it **masses**. An army of half the unit cap (or 150 units) goes anyway.
-- The wave **attack-moves** at the nearest known enemy: structures and the Commander first, or the enemy start if it knows nothing. It re-targets every 5 s.
+- Before leaving, normal and hard also want the wave to **outweigh the known defence** at a target: 1.5 times the threat there (2.3a). Until then it **masses**. An army of half the unit cap (or 150 units) goes anyway.
+- Normal and hard also wait until the wave is worth **three quarters of the strongest enemy army group** they have seen (2.3a).
+- The wave **attack-moves** at the nearest known enemy: structures and the Commander first, or the enemy start if it knows nothing. Normal and hard **skip targets stronger than the wave** (threat over 1/1.5 of its value) for the next best one. It re-targets every 5 s.
   - Artillery follows the lead tank instead of stopping at its own long range.
   - Radar and fire-control vehicles go with it, so artillery can fire on radar contacts.
 - Waves of **12+ front units split in two lanes**, so half comes round a flank (all non-easy levels since S-187).
 - **Kiting** (not easy): artillery that an enemy gets within half its range backs off 100 studs, then rejoins.
+
+### 2.3a Threat map, group sizes, repair (normal and hard; S-222)
+
+After BAR's CircuitAI. Built from what its team knows, like everything else (section 1).
+
+- **Threat map:** a grid of 64-stud cells. Every known armed enemy except aircraft adds its value to each cell its ground weapons reach (range + 32 studs): what would fire on a tank standing there. Unidentified radar contacts count as a T1 tank with 150 studs of reach. Remembered structures count where they were seen.
+- **Targets:** a wave goes for the best target (as above) whose threat it outweighs 1.5×, so it takes the outlying extractors and solars before the turret line. If it outweighs none, it masses.
+- **Group size:** it remembers the strongest enemy army group it has seen: the most identified armed ground units and ships within 2 cells of one another, by value. Radar blips don't count here: they may be workers. The memory halves every 2 minutes once the group is out of sight. A wave waits until the army at home is worth three quarters of it. At the full value, mirrored AIs decided on a few units of noise, and the one that thought first left alone and lost.
+- **Repair:** a ground unit below half health leaves its wave for the nearest Construction Turret, which repairs it once it is in reach. At 90% health (or after 90 s) it is back with the army at home.
+  - A third of its turrets (at least one) repair at once; the rest keep building.
+  - Two units at most per repairing turret pull back; the others fight on. Without these limits, turrets repaired instead of building, and waves bled away to the repair line and fell back.
 
 ### 2.4 Tech (normal and up)
 
@@ -96,9 +128,10 @@ Once the advanced plant stands and 600 supply is stored, its T2 builder:
 | Known enemy aircraft | its airfield builds fighters | levels and roles with an airfield |
 | Enemies inside its home (260 studs) | everyone at home fights them | all |
 | An enemy wave (3+ ground units) within ~570 studs of home | **recalls the whole army home**; no new wave for 20 s | normal; Order on every level above easy |
+| One of its ground units below half health, a Construction Turret standing | pulls it back to the turret for repair (two per repairing turret at most); it rejoins at 90% (or after 90 s) | normal, hard |
 | Its wave out in the field meets enemy forces worth 1.3× its own | **falls back** to the rally point; the next wave waits until the army is worth 1.2× what it fled, and none leaves for 20 s | normal, hard |
-| 3+ known enemy turrets | more artillery (+20%); Chaos builds the Tzar more often | all |
-| 3+ known enemy artillery pieces | fast raiders and scout bots among its tanks | all |
+| 3+ known enemy turrets | more artillery (+20%); Chaos builds the Tzar more often | easy (normal and hard: by the enemy's mix, 2.2b) |
+| 3+ known enemy artillery pieces | fast raiders and scout bots among its tanks | easy (normal and hard: by the enemy's mix, 2.2b) |
 | A known enemy nuke silo | a mobile anti-nuke for the army, a second anti-nuke over the base | normal, hard |
 | A deposit with known armed enemies within 300 studs (contested) | its worker waits for an escort of 2+ army units | Chaos above easy |
 | A far deposit (over 160 studs from home) | escorts the worker with 3 army units, and guards the far extractors with turrets | hard |
@@ -128,7 +161,8 @@ Once the advanced plant stands and 600 supply is stored, its T2 builder:
 - Opening: from its second generator its plant builds 2–3 tanks before more workers, and no third generator until they're out, unless power runs below 60%.
 - Expands to any free deposit, nearest first. Second plant at 600 supply, advanced plant at 900, airfield and shipyard once established.
 - Radar, anti-air on demand, one scout looping round your start, kiting artillery.
-- Waves start at 8 tanks' worth, growing by 2 each time. Each wave waits to outweigh your known defence 1.5×.
+- Waves start at 8 tanks' worth, growing by 2 each time. Each wave waits to be worth three quarters of the biggest army group of yours it has seen, then goes for the best target it outweighs 1.5×, skipping your stronger defences.
+- Pulls damaged units back to its Construction Turrets for repair.
 - **Defends:** recalls its army against your waves, and **retreats** from fights it's losing.
 - Techs with a T2 builder: upgraded extractors, a shield, Pinpointers, T2 defences, an anti-nuke. No nuke.
 
@@ -142,7 +176,8 @@ Once the advanced plant stands and 600 supply is stored, its T2 builder:
 - **Safe expansion:** it takes only deposits nearer its own start than any enemy start, and escorts workers to the far ones with 3 army units.
 - Defences: from 5 extractors and 4 army units it builds gun turrets, 2 on the way home and one more per two far extractors. Order adds a turret and a Barrier wall across the front.
 - Airfield and shipyard once 6 extractors and 6 army units stand. The airfield builds helicopters and bombers, and fighters against known aircraft. A fleet of 4 ships attacks on its own.
-- **Big waves:** 12 tanks' worth, growing by 4. They outweigh your known defence 1.5×, and **hunt your Commander first**, since that ends the match.
+- **Big waves:** 12 tanks' worth, growing by 4, and at least three quarters of the biggest army group of yours it has seen. They go for targets they outweigh 1.5×, and **hunt your Commander first**, since that ends the match.
+- Pulls damaged units back to its Construction Turrets for repair.
 - Retreats from lost fights. It doesn't recall against your waves (Order does); its turrets and the units at home hold instead.
 - Full tech. Order adds a Citadel. When rich it builds a **nuke silo** and fires about once a minute at your best known target.
 
@@ -239,7 +274,7 @@ Today a bot lab builds two helpers, but the AI never orders them to reclaim.
 
 ## 8. Known limits
 
-- **It has no plan for the map.** It goes the shortest way to the nearest known target, and its lanes are fixed offsets, not chokepoints.
+- **It has no plan for the map.** It goes the shortest way to its target, and its lanes are fixed offsets, not chokepoints. The threat map (S-222) weighs targets, not the way there: a wave may still walk past a turret line to a bare target behind it.
 - **It doesn't learn.** It reacts to what it sees now (counters, recalls, retreats), but doesn't remember what worked earlier in the match.
 - **Air and sea are simple.** Hard's and the air role's aircraft and the hard fleet attack on their own, not together with the ground waves.
 - **Transports, Scavengers and Legion** aren't in its plans yet (roadmap).

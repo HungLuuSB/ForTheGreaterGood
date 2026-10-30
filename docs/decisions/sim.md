@@ -3133,3 +3133,63 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Fewer bots and tanks, more economy. Mirror wins by start stay within the slow suite's guard (Ridgeline 21 / 15 of 36).
 - **Tests:** `AI.spec` (slow): Hard on Supreme Strait holds a supply ratio of at least 0.3 from minute 8 to 14 (0.55; about 0.03 without it), and sets something to low priority. `Skirmish.spec`'s full match on the 192×192 map may run 60 minutes (was 45): seed 1 ended at 11 minutes with Order's rush; governed, Chaos survives it and Order wins at 44 minutes.
 - **Next (phases 2 and 3 of the plan):** a threat map, attack groups sized to the enemy, retreat; counters by cost share, and data-driven config.
+
+## S-222 — The AI's military: a threat map, targets it can beat, waves sized to the enemy, repair (the user: "Proceed", phase 2 after BAR's CircuitAI) (2026-10-30)
+
+- **Why:** waves went for the nearest known target whatever guarded it, left at a fixed value whatever army the enemy had, and damaged units fought on until they died. CircuitAI keeps a threat map, skips targets stronger than a group, gathers to the enemy's groups, and pulls damaged units back to repair (GPL-2: ideas only, no code).
+- **Threat map (`AI/ThreatMap`):** 64-stud cells, built from the team's sensors only (D101, D107), once a tick per ally team.
+  - `surface`: every known armed enemy except aircraft adds its value (supply + power / 10, S-92) to each cell its ground weapons reach (range + 32 studs; manual-fire weapons don't count). Radar blips count as 300 with 150 studs of reach; ghosts count where they were seen.
+  - `army`: identified armed ground units and ships, in the cell they stand in.
+- **Targets (`Skirmish.pickTarget`):** the best known target as `knownTargets` scores them whose surface threat the group outweighs `ATTACK_MARGIN` 1.5×. With none known, the enemy start. It replaces S-105's single-target defence check before a wave leaves (it masses if it outweighs none). Every 5 s it re-targets with the wave's own value.
+- **Group size:** the strongest enemy group (most army value within 2 cells of one army cell) is remembered, halving every `GROUP_HALF_LIFE` 2 minutes once out of sight. A wave also waits until the army at home is worth `GROUP_MARGIN` 0.75 of it; a massed army (S-105) goes anyway.
+  - Blips stay out of the army layer: they may be workers or the Commander. Counted as tanks, they made the east's remembered groups half again as big as the west's in Ridgeline mirrors (3,030 against 1,975 at the first wave window).
+  - At a margin of 1, mirrored AIs decided on a few units of noise: the west, which thinks 10 ticks first (S-31), left alone in 23 of 36 matches and lost 14 of them (west 9 / east 27). At 0.75: 17 / 19 and 21 / 15 (seeds 1–18, 19–36).
+- **Repair:** a ground unit of the army below `REPAIR_HEALTH` 50% leaves for the nearest finished Construction Turret, waits `REPAIR_STANDOFF` 60 studs from it, and the turret is ordered to REPAIR it (S-4) once it is in reach. At `REJOIN_HEALTH` 90%, or after `REPAIR_TICKS` 90 s, it is with the army at home again.
+  - `REPAIR_NANO_SHARE`: a third of the turrets (at least one) repair at once; the rest keep building.
+  - `REPAIR_QUEUE`: two units at most per repairing turret pull back; the rest fight on.
+  - Without these limits, on the 192×192 map turrets did 1,200 repairs in 75 minutes. Chaos stored 20,000 supply it couldn't spend, 14–42 units at a time waited by the turrets, and every Chaos wave bled away and fell back (21 retreats in 20 waves; no winner at 75 minutes).
+- Normal and Hard (`threat`, `repair`); Hard - Aggressive and Easy are unchanged.
+- **Result** (seed 1, `debug_out` runs; before → after):
+  - Supreme Strait Hard, 30 minutes: armies worth 15k / 36k → 13k / 45k; waves fall back 17 → 8 times; the AI's think time 2.9 → 4.2 s per 30 minutes.
+  - Coastline Hard: still fighting at 35 minutes → Chaos wins at 34.9.
+  - The 192×192 Normal match: Order wins at 44.1 → 17.1 minutes.
+  - Ridgeline Normal mirrors (seeds 1–36): west 44 / east 28 → 38 / 34.
+- **Tests:** `Military.spec` (fast):
+  - the threat map's reach and army cells;
+  - a weak wave skips a guarded target for a bare one;
+  - a wave gathers against a remembered group three times its size;
+  - a damaged Lancer pulls back, is repaired and rejoins.
+- **Next (phase 3):** counters by cost share, and data-driven config.
+
+## S-223 — The AI's counters by the enemy's spending, from a data table (the user: "Proceed", phase 3 after BAR's CircuitAI) (2026-10-30)
+
+- **Why:** S-187's counters were count thresholds in code (3+ known turrets: +20% artillery; 3+ known artillery: 30% raiders). The light-unit count was gathered and never used, and nothing weighed what the enemy spends. CircuitAI answers the enemy's army by spending share, with a cap per role (GPL-2: ideas only).
+- **`AI/Counters` (data):**
+  - `classOf`: every armed unit or structure the team has identified (D107) falls in one class: light, armored, artillery, defence, air or naval. Commanders and unarmed units have none.
+  - `RESPONSE`: each class's share of the enemy's known armed value asks for production shares by role:
+    - light: heavy 0.6;
+    - armored: artillery 0.3, heavy 0.3;
+    - artillery: raider 0.6;
+    - defence: artillery 0.8;
+    - air: anti-air 0.5.
+  - `CAPS`: heavy 0.7, artillery 0.5, raider 0.4, anti-air 0.35.
+  - `HALF_LIFE`: the brain remembers each class's value, halving every 3 minutes once out of sight (watched every think, S-31).
+- **Production** (`counters = true`: Normal and Hard; Easy keeps S-187's thresholds):
+  - vehicle plant: artillery at max(level share, ask); raiders at the raider ask;
+  - advanced plant: MLRS at 0.5 + artillery − heavy (0.2 to 0.8); Chaos's Tzar at 0.15 + 0.4 × artillery;
+  - bot lab: anti-air bots at the ask, but at least 0.3 while 3+ enemy aircraft are known (radar shows aircraft without their type); scout bots at least a quarter.
+  - AA trucks and fighters still go by the aircraft count (S-7, S-57).
+- **Result** (seed 1): the 192×192 Normal match ends at 26.3 minutes (Order; 17.1 with S-222 alone). Coastline Hard: Chaos wins at 27.7 (34.9). Ridgeline Normal mirrors: west 22 / east 14 (seeds 1–18), 20 / 16 (19–36).
+- **Tests:** `Counters.spec` (fast):
+  - the classes;
+  - the table's shares and caps;
+  - Normal Order with remembered enemy artillery makes 5 Heralds in 6 minutes (1 without); with remembered defences, 16 Verdicts (10).
+  - `AIUnits.spec`'s Normal check now records what each side had at any point in its 14 minutes: Order's attack took Chaos's only Construction Turret at minute 13.
+
+## S-224 — The Goliath is back as Chaos's T2 main battle tank (the user) (2026-10-30)
+
+- **Asked (the user):** "Okay, Goliath add it, but tell C to re-model it". This answers the question S-213 left open (Chaos's T2 plant had no main battle tank, the Paladin's counterpart row empty).
+- `chs_goliath` is no longer `retired`. It is back on the Chaos advanced vehicle plant's list, second after the Forgemaster (the Paladin's place on Order's list); its stats are unchanged.
+- **The AI:** the advanced plant's main battle tank is the Goliath again. The Tzar keeps its own chance on top (S-223: 0.15 + 0.4 × the artillery ask), as before S-216 made it the stand-in.
+- **Other streams:** models-C re-models it (the user). Lobby-D puts it back in the Codex (the main battle tank row, now Paladin / Goliath). B and E check the build menu entry, icon and picture.
+- **Tests:** `Playtest3Units.spec`: not retired, and on the Chaos advanced plant's list.
