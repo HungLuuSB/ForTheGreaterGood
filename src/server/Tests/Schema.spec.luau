@@ -311,7 +311,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 43, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 44, "protocol version changed: update the golden bytes below")
 		-- version 41: the Strategic header's part / parts (S-212)
 		local parts = { encodeOne(Schema.encodeStrategicHeader, 0x0102), encodeOne(Schema.encodeStrategicHeader, 0x0102) }
 		Schema.numberStrategicParts(parts)
@@ -650,7 +650,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 34, 1, 0 }, "unknown event kind 34") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29, 25 since 31, 26 since 34, 27 since 35, 28..30 since 36, 31..33 since 37
+		expectRejected(t, Schema.decodeEvent, { 36, 1, 0 }, "unknown event kind 36") -- 34..35 since 44, 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29, 25 since 31, 26 since 34, 27 since 35, 28..30 since 36, 31..33 since 37
 		expectRejected(t, Schema.decodeEvent, { 18, 10, 0, 0, 0, 0 }, "alert kind 10")
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind

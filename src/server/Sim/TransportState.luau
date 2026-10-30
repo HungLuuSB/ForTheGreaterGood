@@ -11,10 +11,13 @@ export type TransportState = {
 	carrier: { [number]: number }, -- carried unit → its transport (0 once the transport is gone: it dies)
 	loading: { [number]: number }, -- transport → ticks spent picking up / setting down the unit it is on now
 	slow: { [number]: number }, -- loaded transport → its top speed's share (1 - SLOW_PER_SLOT × slots used)
+	busy: { [number]: number }, -- transport → the unit it is picking up or setting down now (S-220)
+	dropX: { [number]: number }, -- transport → where it sets that unit down (chosen at the start, S-220)
+	dropZ: { [number]: number },
 }
 
 function TransportState.new(): TransportState
-	return { cargo = {}, carrier = {}, loading = {}, slow = {} }
+	return { cargo = {}, carrier = {}, loading = {}, slow = {}, busy = {}, dropX = {}, dropZ = {} }
 end
 
 -- Hash over transports in `ids` (ascending), so it's independent of table order.
@@ -29,7 +32,11 @@ function TransportState.hash(t: TransportState, ids: { number }, h: number): num
 		end
 		local loading = t.loading[id]
 		if loading then
-			h = Hash.u32(h, loading)
+			h = Hash.u32(Hash.u32(h, loading), t.busy[id] or 0)
+			local dx = t.dropX[id]
+			if dx then
+				h = Hash.number(Hash.number(h, dx), t.dropZ[id] :: number)
+			end
 		end
 	end
 	return h
