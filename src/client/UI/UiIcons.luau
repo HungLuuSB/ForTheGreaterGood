@@ -9,7 +9,7 @@ local UiIcons = {}
 
 export type Icon = { name: string, group: string, tint: { number }, rect: { [number]: { number } } }
 
-UiIcons.image = "rbxassetid://98955338730678"
+UiIcons.image = "rbxassetid://89353396855864"
 UiIcons.sizes = { 16, 24, 32 } :: { number } -- pixels; a rect per size
 UiIcons.atlasSize = { 1024, 136 } :: { number } -- the atlas image, pixels
 
@@ -61,7 +61,9 @@ UiIcons.icons = {
 	resurrect = { name = "Resurrect", group = "command", tint = { 106, 176, 240 }, rect = { [16] = { 774, 0, 16, 16 }, [24] = { 104, 44, 24, 24 }, [32] = { 442, 104, 32, 32 } } },
 	upgrade = { name = "Upgrade", group = "command", tint = { 246, 190, 80 }, rect = { [16] = { 792, 0, 16, 16 }, [24] = { 130, 44, 24, 24 }, [32] = { 476, 104, 32, 32 } } },
 	selfdestruct = { name = "Self-destruct", group = "command", tint = { 230, 88, 78 }, rect = { [16] = { 810, 0, 16, 16 }, [24] = { 156, 44, 24, 24 }, [32] = { 510, 104, 32, 32 } } },
-	alert = { name = "Last alert", group = "command", tint = { 255, 170, 70 }, rect = { [16] = { 828, 0, 16, 16 }, [24] = { 182, 44, 24, 24 }, [32] = { 544, 104, 32, 32 } } },
+	load = { name = "Load", group = "command", tint = { 79, 208, 176 }, rect = { [16] = { 828, 0, 16, 16 }, [24] = { 182, 44, 24, 24 }, [32] = { 544, 104, 32, 32 } } },
+	unload = { name = "Unload", group = "command", tint = { 240, 140, 180 }, rect = { [16] = { 846, 0, 16, 16 }, [24] = { 208, 44, 24, 24 }, [32] = { 578, 104, 32, 32 } } },
+	alert = { name = "Last alert", group = "command", tint = { 255, 170, 70 }, rect = { [16] = { 864, 0, 16, 16 }, [24] = { 234, 44, 24, 24 }, [32] = { 612, 104, 32, 32 } } },
 } :: { [string]: Icon }
 
 return UiIcons

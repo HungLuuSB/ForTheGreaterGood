@@ -390,9 +390,21 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		end
 	end
 	local lights, liveMissiles = 0, {}
+	local held: { [number]: boolean } = {} -- projectiles holding a Continuous template this frame
 	for _, v in visible do
 		local p = v[1] :: Effects.Proj
 		local kind = p.weapon.type
+		if p.weapon.fx and p.weapon.fx.trail == "dgun" then
+			-- the D-Gun's bolt: models-C's DgunBolt held on it while it flies,
+			-- facing its flight (C-266); the plain ball below without one
+			local pos = Vector3.new(v[2], v[3], v[4])
+			local flat = Vector3.new(p.vx, 0, p.vz)
+			local frame = if flat.Magnitude > 1e-3 then CFrame.lookAt(pos, pos + flat) else CFrame.new(pos)
+			if Vfx.follow(r.vfx, p.id, "dgunBolt", frame, vt) then
+				held[p.id] = true
+				continue
+			end
+		end
 		if kind == "HOMING" or p.weapon.strategic then
 			local style = p.weapon.fx and p.weapon.fx.trail
 			if MISSILE_STYLE[style] == nil then
@@ -426,6 +438,15 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			local vel = Vector3.new(p.vx, p.vy, p.vz)
 			local frame = if vel.Magnitude > 1e-3 then CFrame.lookAt(pos, pos + vel) else CFrame.new(pos)
 			m.root:SetAttribute("TrailLength", vel.Magnitude * m.smoke.Lifetime) -- for the scene dump
+			-- models-C's booster on the nozzle (MissileExhaust, C-267) in place
+			-- of the built-in flame and puffs; the smoke trail stays
+			local look = MISSILE_STYLE[style] :: any
+			if Vfx.follow(r.vfx, p.id, "missileExhaust", frame * CFrame.new(0, 0, 2.2 * look.scale), vt, look.scale) then
+				held[p.id] = true
+				if m.flame.Enabled or m.puffs.Enabled then
+					m.flame.Enabled, m.puffs.Enabled = false, false
+				end
+			end
 			for k, part in m.parts do
 				table.insert(parts, part)
 				table.insert(frames, frame * m.offsets[k])
@@ -488,6 +509,12 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		part:SetAttribute("TrailLength", vel.Magnitude * TRAIL_SECONDS) -- for the scene dump
 		table.insert(parts, part)
 		table.insert(frames, if vel.Magnitude > 1e-3 then CFrame.lookAt(pos, pos + vel) else CFrame.new(pos))
+	end
+	-- bolts and missiles no longer drawn: their held effect stops and fades
+	for key in r.vfx.held do
+		if type(key) == "number" and not held[key] then
+			Vfx.release(r.vfx, key, vt)
+		end
 	end
 	for i, s in r.shells do
 		if not inUse[i] then
@@ -610,8 +637,9 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		r.emitted[b] = true
 		local kind = b.kind
 		local burstScale = 1
-		if kind == "impact" or kind == "death" then
-			burstScale = Vfx.scaleFor(math.max(BURST_MIN[kind], b.radius * 2 * BURST_SCALE[kind]))
+		if kind == "impact" or kind == "death" or kind == "structureDeath" then
+			local as = if kind == "structureDeath" then "death" else kind -- (sized as a unit's death)
+			burstScale = Vfx.scaleFor(math.max(BURST_MIN[as], b.radius * 2 * BURST_SCALE[as]))
 		elseif kind == "muzzle" then
 			burstScale = math.clamp(b.radius / 0.7, 0.6, 2.5)
 		elseif kind == "launch" then

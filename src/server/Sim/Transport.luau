@@ -7,8 +7,8 @@
 -- loaded transport dies, its cargo dies with it, with no wrecks.
 --
 -- Who fits: a light transport takes one light unit (tier 1 or a Commander,
--- footprint up to 2); a heavy one up to four units of tier up to 2 and
--- footprint up to 3, by slots (footprint 1 = 1, 2 = 2, 3 = 4). Never
+-- footprint up to 2); a heavy one one unit of tier up to 2 and footprint up
+-- to 3 (S-220, the user: one unit for both). Never
 -- structures, aircraft, ships, T3, other transports, deployed units or
 -- shield carriers.
 
@@ -120,15 +120,27 @@ function Transport.pickUp(sim: Types.Sim, t: number, u: number)
 	setSlow(sim, t)
 end
 
+-- A TRANSPORT event (S-220, client request 40): the client lowers the
+-- transport over the pick-up / set-down and grabs or lets go at the end.
+local function announce(sim: Types.Sim, t: number, u: number, action: number, x: number, z: number)
+	Combat.addEvent(sim.combat, { kind = "TRANSPORT", tick = sim.tick, unit = t, other = u, action = action, x = x, z = z })
+end
+Transport.PICKUP, Transport.DROP, Transport.CANCEL = 1, 2, 3 -- Schema.TransportAction
+
 -- One tick of transport `t` picking up `u` (in reach, hovering): true while
 -- it is still at it, false once `u` is on board.
 function Transport.loadTick(sim: Types.Sim, t: number, u: number): boolean
-	local n = (sim.transport.loading[t] or 0) + 1
+	local tr = sim.transport
+	local n = (tr.loading[t] or 0) + 1
+	if n == 1 then
+		tr.busy[t] = u
+		announce(sim, t, u, Transport.PICKUP, sim.world.posX[u], sim.world.posZ[u])
+	end
 	if n < Transport.LOAD_TICKS then
-		sim.transport.loading[t] = n
+		tr.loading[t] = n
 		return true
 	end
-	sim.transport.loading[t] = nil
+	tr.loading[t], tr.busy[t] = nil, nil
 	Transport.pickUp(sim, t, u)
 	return false
 end
@@ -191,35 +203,53 @@ local function setDown(sim: Types.Sim, t: number, u: number, x: number, z: numbe
 end
 
 -- One tick of transport `t` setting its cargo down (at its unload point,
--- hovering): one unit each LOAD_TICKS, nearest open ground first; with no
--- room it waits. True while units are left on board.
+-- hovering): one unit each LOAD_TICKS on the nearest open ground, chosen
+-- when it starts (the DROP event says where, S-220); with no room it waits.
+-- True while units are left on board.
 function Transport.unloadTick(sim: Types.Sim, t: number): boolean
 	local tr = sim.transport
 	local cargo = tr.cargo[t]
 	if cargo == nil or #cargo == 0 then
-		tr.loading[t] = nil
+		Transport.idle(sim, t)
 		return false
 	end
-	local n = (tr.loading[t] or 0) + 1
+	local w = sim.world
+	local u = cargo[1]
+	local n = tr.loading[t]
+	if n == nil then
+		local x, z = dropSpot(sim, def(sim, u), w.posX[t], w.posZ[t])
+		if x == nil or z == nil then
+			return true -- no room: wait
+		end
+		tr.loading[t], tr.busy[t], tr.dropX[t], tr.dropZ[t] = 1, u, x, z
+		announce(sim, t, u, Transport.DROP, x, z)
+		return true
+	end
+	n += 1
 	if n < Transport.LOAD_TICKS then
 		tr.loading[t] = n
 		return true
 	end
-	tr.loading[t] = Transport.LOAD_TICKS -- (waits here while there's no room)
-	local w = sim.world
-	local u = cargo[1]
-	local x, z = dropSpot(sim, def(sim, u), w.posX[t], w.posZ[t])
+	-- the spot it chose, or the nearest open one if something stands there now
+	local x, z = dropSpot(sim, def(sim, u), tr.dropX[t] :: number, tr.dropZ[t] :: number)
 	if x == nil or z == nil then
+		Transport.idle(sim, t) -- (CANCEL; it tries again next tick)
 		return true
 	end
-	tr.loading[t] = nil
+	tr.loading[t], tr.busy[t], tr.dropX[t], tr.dropZ[t] = nil, nil, nil, nil
 	setDown(sim, t, u, x, z)
 	return tr.cargo[t] ~= nil
 end
 
--- Stops loading / unloading (the transport's order ended or changed).
+-- Stops loading / unloading (the transport's order ended or changed): a
+-- CANCEL if it was in the middle of one.
 function Transport.idle(sim: Types.Sim, t: number)
-	sim.transport.loading[t] = nil
+	local tr = sim.transport
+	local u = tr.busy[t]
+	if u ~= nil and sim.world.slot[t] ~= nil then
+		announce(sim, t, u, Transport.CANCEL, 0, 0)
+	end
+	tr.loading[t], tr.busy[t], tr.dropX[t], tr.dropZ[t] = nil, nil, nil, nil
 end
 
 -- Each tick: carried units ride along (their position is the transport's,
@@ -255,7 +285,7 @@ table.insert(Lifecycle.removalHooks, function(sim: Types.Sim, id: number)
 		end
 		tr.cargo[id] = nil
 	end
-	tr.loading[id] = nil
+	tr.loading[id], tr.busy[id], tr.dropX[id], tr.dropZ[id] = nil, nil, nil, nil
 	tr.slow[id] = nil
 	local t = tr.carrier[id]
 	if t ~= nil then

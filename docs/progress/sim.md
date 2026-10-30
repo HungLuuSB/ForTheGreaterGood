@@ -18,6 +18,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 - **S-217:** Titan and Juggernaut blasts are 480 over 52 studs (35% of a nuke's; a Commander survives); the Solar Array costs 100 supply.
 - **S-218:** the Construction Turret reclaims live enemy units in its reach first (never a Commander), no wreck; protocol 42 WORK kind RECLAIM_UNIT.
 - **S-219: air transports** (Courier / Buzzard T1, Ark / Charon T2): LOAD / UNLOAD, cargo parked out of the world, dies with its transport; protocol 43. Design: `docs/design/transports.md`.
+- **S-220:** both transport tiers carry one unit; TRANSPORT and CARRY events (protocol 44) let every viewer see the pick-up, the set-down and what hangs under the transport.
 - **S-215 (client-B):** the power bar's demand now counts extractor upkeep and converters' burn.
 - **S-214: unit descriptions** are "Role. What it does." for all 203 units, with no comparison to the counterpart; `Defs.spec` keeps them that way.
 

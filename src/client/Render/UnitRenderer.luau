@@ -184,6 +184,9 @@ end
 -- Extra drawn height for a unit at render tick `t` (the pre-game's
 -- landing, Render/Landing), or nil for none.
 UnitRenderer.lift = nil :: ((u: World.Unit, def: any, t: number) -> number)?
+-- Moves a unit's drawn spot at render tick `t` (a transport coming down to
+-- pick up or set down, Render/Transports, C-273), or nil for none.
+UnitRenderer.adjust = nil :: ((u: World.Unit, def: any, t: number, x: number, y: number, z: number) -> (number, number, number))?
 
 function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: number, hidden: boolean?, camera: Vector3?, speed: number?)
 	for _, id in world.entered do
@@ -282,6 +285,10 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		end
 		if d.floats then
 			y += Attitude.waterOffset(d.def, u.state or 0, d.hullHeight)
+		end
+		local adjust = UnitRenderer.adjust
+		if adjust then
+			x, y, z = adjust(u, d.def, t, x, y, z)
 		end
 		u.rx, u.ry, u.rz = x, y, z
 		u.rheading = heading

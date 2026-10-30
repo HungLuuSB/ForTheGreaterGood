@@ -2399,3 +2399,157 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - in range: the band ends on the yellow D-Gun ring (`debug_out/screens/2026-10-30-dgun-preview.jpg`);
   - cursor far outside: the band still stops at the ring (`…-dgun-preview-far.jpg`). The click fired from where the Commander stood, with power 1.0k → 513 and the bolt flying along the band (`…-dgun-fired-far.jpg`).
 - The D-Gun's own effects (bolt, muzzle, hits, end) were asked of models-C, as the user requested. They will come as templates `Vfx.DgunBolt` / `DgunMuzzle` / `DgunHit` / `DgunEnd` in `place/Vfx.model.json`, which B wires when they land.
+
+### C-265 — Unit pictures and faction emblems uploaded (2026-10-30)
+
+- The user approved uploading 2D-E's E-11 unit pictures (2d 3b0aedf1) and the faction emblem atlas (2d d9d67900); the `2d` branch is merged in up to a8a12d1d. The ids are in `tools/icons/assets.json` with their pixel hashes:
+  - pictures, sheets 1–4: 122608829388990, 77489597273393, 138922904621520, 97328947914631;
+  - emblems: 136358453510061.
+- `UI/UnitPictures` is regenerated: all 197 defs have a picture on an uploaded sheet. E packs 126-px pictures 2 px apart, 64 to a sheet. `Portrait` reads `TILE` from the module, and `UnitPictures.spec` now checks rects on that 128-px pitch instead of the tile size.
+- New `tools/icons/emblems.mjs` writes `UI/FactionEmblems` from E's `keys.json`, read-only for lobby-D as `UiIcons` is:
+  - the atlas image and size;
+  - each emblem's name, faction, tint and rect at every drawn size (16 to 256 px);
+  - `keyOf(faction)`, `pick(px)` (the smallest drawn size that covers it), and `of(faction, px)` → image, rect, tint.
+  - An id whose atlas changed since its upload is dropped, as for every other sheet. Nothing in the match draws an emblem yet.
+- Spec: `FactionEmblems.spec` (both factions, every rect on the atlas, `pick`).
+- Studio, Coastline: the build tiles and the unit panel show the pictures (Order blue, in their setting), cropped cleanly with no neighbour bleeding in (`debug_out/screens/2026-10-30-unit-pictures.png`).
+
+### C-266 — The D-Gun's effects (2026-10-30, models-C's templates)
+
+- The user asked C for the D-Gun's VFX. C made four templates in `place/Vfx.model.json` (m-models 51db9785, merged in). They're authored at real size, so they play at scale 1, and their colour is fixed (255, 200, 90), not team-tinted.
+- `Render/Vfx`:
+  - `TEMPLATE_NAMES` gains `dgunMuzzle`, `dgunHit`, `dgunEnd` and `dgunBolt`.
+  - While the place has no template, the first three fall back to the built-in muzzle, hit and impact (`Vfx.FALLBACK`).
+  - **Held templates:** a template with the attribute `Continuous` is held by an owner. `Vfx.follow(key, kind, frame)` starts it on the first call and moves it on later ones; `Vfx.release(key)` ends it.
+  - While held, its emitters saved Enabled with no EmitCount run, and its lights with no LightSeconds stay lit. Released, it stops and is reused once its longest particles have faded (the burning path's 3.5 s). A full pool never steals a held copy.
+- `Render/Effects`: a D-Gun bolt is drawn as the held `DgunBolt`, facing its flight on the level. Bolts no longer drawn are released. The plain ball stays as the fallback without the template.
+- `Core/Effects`:
+  - a D-Gun's SPAWN_PROJ flash is `dgunMuzzle`;
+  - its one IMPACT (the end of its range) is `dgunEnd`, played level so its ring lies flat;
+  - the server sends no IMPACT for the units the bolt passes through (S-194). So a DEATH within the bolt's reach of its last 1.5 s of path plays `dgunHit` there too (`Effects.boltThrough`).
+- Spec (`Dgun.spec`): the bolt through three tanks plays one `dgunMuzzle`, one `dgunEnd` and three `dgunHit`.
+- **Studio, Coastline:** the Sovereign fired through a row of its own Lancers. The muzzle, the held bolt, the end and both hits played as templates, with no errors (`debug_out/screens/2026-10-30-dgun-vfx-launch.jpg`, `…-dgun-vfx-path.jpg`). The flight itself is about a second, too short to frame well by tool; the burning path and the end scorch show after it.
+
+### C-267 — The D-Gun fixed; models-C's new explosions and missile booster (2026-10-30)
+
+- **C-266 didn't work as logged. Two faults:**
+  - C's templates shipped with no attributes: Rojo drops a top-level "Attributes" in a .model.json. So DgunBolt had no `Continuous`, and every emitter fell back to the default count of 10. C fixed this in m-models 39aa66e8, merged in.
+  - My release loop for held copies landed in `shellFor` instead of the frame step. It never ran there, and it named an undefined local (`bolts`), so a shell asked for while a bolt was held would have errored. It's moved into the step.
+  - So C-266's Studio note ("the held bolt played") was wrong: the bolt ran as a plain 0.2-s burst.
+- **Re-checked in Studio, Coastline:**
+  - The D-Gun bolt's 8 emitters run for its 1.25-s flight, then stop.
+  - The muzzle, the end and three hits (three Lancers) play as templates.
+- **C's request 12, in `Render/Vfx`:**
+  - New template names: `nuke` → Nuke (scale 1 = a 150-stud blast, as before), `structureDeath` → StructureDeath (falls back to the death look), `missileExhaust` → MissileExhaust.
+  - A template's Attachment positions scale with the burst like sizes and speeds: debris arms, chain blasts and shock diamonds are authored at scale 1. Accelerations scale by its square root.
+  - Emitters with `GroundOnly` play only in a ground burst (within `GROUND_BURST` of the ground, as the built-in dust).
+  - `Vfx.follow` takes a scale.
+- `Core/Effects`: a structure's death is a `structureDeath` burst, sized as a unit's.
+- **Missiles** (`Render/Effects`): MissileExhaust is held on each missile's nozzle (2.2 × its style scale behind the centre) at its style's scale, and released when the missile ends. While it's there, the built-in flame trail and smoke puffs are off; the smoke trail stays.
+- C's Impact and Death templates (already named) now replace every impact and unit death in the game.
+- **Not done yet:** C's blast-mark decals (`assets/fx/scorch`, soot and glow in place of the dark scorch disc). They wait for the user's upload approval and the ids.
+- **Studio, Coastline:**
+  - a nuke from a Reckoning: Launch, then the held MissileExhaust (10 emitters running, its booster flame on the tail; `debug_out/screens/2026-10-30-missile-exhaust.jpg`), then the Nuke template at the impact, with the exhaust released;
+  - the silo killed: StructureDeath, with its smoke column and rubble fires (`…-structure-death.jpg`);
+  - no script errors.
+
+### C-268 — Blast-mark decals (2026-10-30, models-C)
+
+- The user approved C's upload. `Meshes.textures` has `blastMarkA`, `blastMarkB` (soot, greyscale, untinted) and `blastMarkGlow` (m-models 2d0afbe4, merged in).
+- `Render/Vfx`'s scorch mark is now a transparent part holding two decals, in place of the dark disc:
+  - soot, A or B picked by a hash of the spot, at a yaw of its own;
+  - the glow on top, tinted (1, 0.55, 0.18) × 2.2 (overbright, as BeamShots).
+  - The glow cools in `GLOW_SECONDS` (2 s); the soot fades over `SCORCH_SECONDS` (14 s), as the disc did.
+- The part casts no shadow (decals would throw a blob) and sits `MARK_LIFT` (0.6) studs over the ground. At +0.08, Terrain's sand ripples hid it.
+- **Templated bursts get the mark too.** C's Impact and Death templates replace the built-in rig, which used to leave the disc, so they had no lasting mark at all. Any ground burst of a kind with a scorch (its own kind's or its fallback's) now leaves one at that kind's size.
+- **Studio, Coastline:** a D-Gun shot through three Lancers left six marks, both variants, with no shadows. The glow faded and the soot stayed (`debug_out/screens/2026-10-30-blast-marks-glow.jpg`, `…-soot.jpg`).
+
+### C-269 — The re-rendered unit pictures uploaded (2026-10-30)
+
+- The user wanted C's re-render of the unit pictures (no fog, more glow, more colour). E repacked it into the same four sheets and rects (2d 68c390e0, merged in up to ee9cfd2a).
+- The old sheet ids went stale with the new pixels. The user approved the upload; the new ids are 129402755258680, 137517755831073, 118640861030060 and 108902714225981 in `tools/icons/assets.json`, with their hashes. `UI/UnitPictures` is regenerated: 197 of 197 on uploaded sheets.
+- Studio, Coastline: the build tiles and the unit panel load the new sheets (`debug_out/screens/2026-10-30-unit-pictures-rerender.png`).
+
+### C-270 — T3 walkers' death blasts play the heavier StructureDeath (2026-10-30)
+
+- S-217 cut the Titan's and Juggernaut's death blasts to 52 studs (480 damage), below `Effects.HUGE_BLAST` (90), so they fell back to the ordinary "impact" burst. models-C flagged it through sim-A.
+- A middle tier, `Effects.HEAVY_BLAST = 50`: a death blast from 50 studs up to HUGE_BLAST plays models-C's StructureDeath template, at the same shown radius as before (aoe × `BLAST_SHOWN`) and for twice the death burst's life. It is not the nuke's look and leaves no crater. Huge blasts (Commanders, fusion) are unchanged; so are the Construction Turrets' (40).
+- Studio, Coastline: a Titan's and a Juggernaut's deaths each play StructureDeath plus their own death burst, with no nuke (`debug_out/screens/2026-10-30-t3-death-blast.jpg`). A new Splash spec checks the Titan's blast.
+
+### C-271 — Transport icons and the Load / Unload button icons uploaded (2026-10-30)
+
+- sim-A's S-218 and S-219 (protocol 43; m-sim-2 e7765af2) add four HELI transports: ord_courier, chs_buzzard, ord_ark and chs_charon. They can't reach main without their icons, so they come through the client, as S-213 did. Merged with 2D-E's E-13 (2d 485edc70, design approved by the user in E's session).
+- `render.mjs` maps all 207 defs from 121 items. The new tiles `light_transport_t1` (Courier, Buzzard) and `heavy_transport_t2` (Ark, Charon) land on sheet 2; sheet 1 is unchanged. `ui_icons.mjs` adds `load` and `unload` (49 icons; only `alert` moved).
+- The user approved both uploads in this session: sheet 2 is 100470717468643 and the UI atlas is 89353396855864, with their pixel hashes in `tools/icons/assets.json`.
+- Studio, Coastline: both images load. The four transports draw the air frame at a distance, with two tier dots on the T2s (`debug_out/screens/2026-10-30-transport-icons.jpg`).
+- The client work for S-218 and S-219 follows separately: the RECLAIM_UNIT spray, Load and Unload orders, cargo on the transport.
+
+### C-272 — Transports on the client: Load, Unload, cargo; the turret's reclaim spray on enemies (2026-10-30)
+
+- **RECLAIM_UNIT (protocol 42, S-218):** `BuildTargets.served` draws a construction turret's work on a live enemy unit as a reclaim spray. Before, it was the "build" spray that any unknown kind falls back to.
+- **Who fits:** new `Core/Transports` mirrors the server's `Transport.canCarry` from the defs' `transport` spec. That means:
+  - an allied, finished ground unit;
+  - not a transport or a shield carrier, and not deployed, deploying or submerged;
+  - within the transport's tier and footprint limits;
+  - room in slots (footprint 1 takes 1 slot, 2 takes 2, 3 takes 4) and in unit count.
+  - The server still decides; this only picks who an order goes to.
+- **Orders:** transports get Load and Unload on the command card (2D-E's icons serve as the cursors). Each command is also an order line, tinted with the icon's colour.
+  - Load: click a unit that fits and the selected transports pick it up. Click an own transport and the selected units that fit board it.
+  - Unload: click the ground (UNLOAD).
+  - A right click does Load as well: transports selected and a unit that fits clicked, or units that fit and an own transport clicked. The rest of the selection gets the usual smart order.
+  - With only transports selected, L and U mean Load and Unload: BAR's keys, which transports would otherwise spend on a fire state and a switch they don't have.
+- **Cargo:** the CARGO owner field is kept on the transport. Each carried unit's def is noted as last seen: on its LEAVE (`world.carriedDefs`) or when CARGO names it.
+  - Carried units leave the client's world at once, rather than at the next strategic snapshot. They come back with their ENTER.
+  - The unit panel lists the cargo, e.g. "Cargo 1 / 2: Lancer".
+- `tests/client/Transports.spec` covers who fits, the right click (pick up, board, the rest guards), the Load / CARGO / Unload round trip against the real sim, and the RECLAIM_UNIT spray.
+- **Studio, Coastline:** a Courier, ordered with Load, picked up a Lancer. The Lancer left the view and the panel read "Cargo 1 / 2: Lancer". Unload set it down nearby and the panel went back to "Cargo 0 / 2: empty". The console showed no errors. Screens: `debug_out/screens/2026-10-30-transport-loaded.jpg` and `-unloaded.jpg`.
+- **Not yet:** a cargo badge on the map, and a wired-up Load button press in the playtest (the API was driven directly; the button calls the same `setCommandMode`).
+
+### C-273 — Transports come down to pick up and set down; the carried unit hangs under the belly (2026-10-30)
+
+- **The user:** "The transport must descend from the air, grab the unit model under its belly and rise up again, same for dropping them".
+- **Hanging model:** while a transport carries a unit, a pooled model of that unit hangs under the drawn transport (`Render/Transports`).
+  - It sits `GAP` (0.4 studs) under the belly, measured from both templates.
+  - It isn't clickable: a click goes to the transport.
+- **Pick-up and set-down (`Core/TransportLift`):**
+  - The drawn transport comes down over the server's 1 s, until the hanging (or picked) unit stands on the ground.
+  - Picking up, it also slides over the unit.
+  - It holds low until the grab or release lands (the CARGO count changes, with the LEAVE or ENTER), then rises over 12 ticks.
+  - It gives up on another order, or 2 s past the 1 s.
+  - Visual only (guide 14): the server's transport just hovers. Drawn through a new `UnitRenderer.adjust` hook.
+- **Inferred start:** the server doesn't say when a lift starts yet, so the client infers it from own transports' orders. A pick-up starts in reach of the Load target (10 studs plus the unit's radius, plus 4 slack). A drop starts within 12 + 4 of the Unload point, with cargo on board.
+  - The server starts its timer on reach while the transport is still gliding in. A helicopter always reports MOVING, so "stopped" can't be the cue.
+  - Client request 40 asks sim-A for a start event and for the carried def for every viewer: today only the owner sees CARGO, so other players see no lift and no hanging unit.
+- **Unload order lines** now last until the cargo is down, rather than ending on arrival.
+- **Studio, Coastline:**
+  - Pick-up: the Courier came down from 54 to 23 studs, centred on the Lancer, and climbed back with it hanging at 50.6 (`debug_out/screens/2026-10-30-transport-slung.jpg`).
+  - Drop: it came down at the Unload point (`-drop.jpg`), set the Lancer on the ground 2 studs from the click, and flew off.
+- **Also seen in Studio, not from this change:** twice, after `Sim.step` missed a tick (tick 300 just after a pick-up; tick 900, the Watchdog's summary tick), Entry's `PlayerReplay.record` threw "expected tick N" every frame before `send()`. The client then froze.
+  - The first error had already rolled out of the log, and a third run with a log listener didn't reproduce it.
+  - Reported to sim-A.
+- `tests/client/Transports.spec` adds the lift against the real sim: down before the grab, over the Lancer, risen after; a set-down that ends on the release.
+
+### C-274 — The transport lift from the server's TRANSPORT and CARRY events (protocol 44); a skipped tick no longer freezes clients (2026-10-30)
+
+- **Merged:** sim-A's S-220 (m-sim-2 5c1ba421, protocol 44, client request 40), on top of their order-hash fix 02a4a84e. S-220:
+  - every transport carries one unit (the user: "they only carry 1 cargo, both for T1 and T2");
+  - adds TRANSPORT 34 (a pick-up or set-down starts, with its ticks and the unit's spot or the set-down spot; or CANCEL);
+  - adds CARRY 35 (what a transport carries, for everyone who sees it).
+- **NetIn:** keeps `world.carry` (cleared on the transport's LEAVE and DEATH) and queues both events with their sim tick in `world.transportFx`.
+- **`Core/TransportLift`** now runs from those events on the sim's tick clock, in step with the render. It replaces C-273's guess from own orders:
+  - it comes down over the event's ticks and slides over its spot (the unit picked up, or where it will be set down);
+  - it rises at the CARRY that marks the grab or release, or at a CANCEL; HOLD_TICKS stays as a backstop for a lost event.
+  - The hanging model comes from CARRY, so other players see the lift and the slung unit too.
+- **Entry:** a viewer whose replay misses a tick (a step that threw) now stops being recorded, with one warning. Before, `PlayerReplay.record` threw every frame before `send()` and froze every client. That froze Studio twice: the sim's order hash had no code for load and unload, so `Sim.hash` threw on checkpoint ticks 300 and 900; sim-A fixed it in 02a4a84e.
+- `tests/client/Transports.spec`: the lift from the events, CARRY set after the pick-up and cleared after the drop, the Lancer set down on the DROP's spot.
+- **Studio, Coastline:**
+  - Pick-up: the Courier came down from 54 to 25 studs over the Lancer, the hanging copy took over at the grab, and it climbed back with it.
+  - Drop: it came down with the Lancer, which appeared on the drop spot as the copy went, and climbed away.
+  - It ran past tick 900 with a Load order under way: no errors, and the client stayed current (tick 940).
+
+### C-275 — The unit panel shows no unit states (2026-10-30)
+
+- **The user:** "in the unit stats panel, please do not provide the current state of the unit like Fire at will | Maneuver | Retreat and things like that".
+- `UnitStats.lines` drops the fire state, move state and retreat line. `UnitPanel` drops the On / Off and Repeat flags. Those settings show on the command card's state buttons.
+- Kept, as facts rather than settings: the self-destruct countdown (a warning), countermeasure charges, a factory's queue, the next missile's progress, radar accuracy, and a transport's cargo.
+- Studio, Coastline: a selected Lancer's panel reads name, role, DPS / range / reload, speed / line of sight and cost, with nothing else (`debug_out/screens/2026-10-30-panel-no-states.jpg`).

@@ -1174,6 +1174,15 @@ RunService.Heartbeat:Connect(function(dt: number)
 			if recordedBytes < MAX_RECORDED_BYTES then
 				for id, rep in recorders do
 					local outbox = sim.net.players[id].outbox
+					if sim.tick ~= rep.lastTick + 1 then
+						-- ticks went by unrecorded (a step that threw): the replay
+						-- can't be whole, so this viewer's recording ends here
+						-- rather than throwing every frame before send() and
+						-- freezing every client (C-274; S-219's hash fix)
+						warn(`[Entry] replay of player {id} stopped: ticks {rep.lastTick + 1}..{sim.tick - 1} were not recorded`)
+						recorders[id] = nil
+						continue
+					end
 					PlayerReplay.record(rep, sim.tick, outbox)
 					for _, list in outbox do
 						for _, msg in list do

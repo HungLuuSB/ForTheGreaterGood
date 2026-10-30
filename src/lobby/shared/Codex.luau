@@ -47,6 +47,16 @@ local function r(section: string, name: string, tier: number, order: { string },
 	return { name = name, section = section, tier = tier, order = order, chaos = chaos }
 end
 
+-- Units the sim stream announced ahead of their defs (the decision that
+-- adds them): the roles may name them before the defs reach this branch.
+-- Remove each once its def is on main.
+Codex.ANNOUNCED = table.freeze({
+	ord_courier = "S-219",
+	chs_buzzard = "S-219",
+	ord_ark = "S-219",
+	chs_charon = "S-219",
+})
+
 -- Guide 13.1-13.5 plus the economy, factories and the units added since.
 Codex.ROLES = {
 	r("command", "Command Vehicle", 0, { "ord_sovereign" }, { "chs_warlord" }),
@@ -88,10 +98,12 @@ Codex.ROLES = {
 	r("air", "Fighter", 1, { "ord_falcon" }, { "chs_harpy" }),
 	r("air", "Attack helicopter", 1, { "ord_guardian" }, { "chs_wasp" }),
 	r("air", "Bomber", 1, { "ord_absolution" }, { "chs_plague" }),
+	r("air", "Air transport", 1, { "ord_courier" }, { "chs_buzzard" }), -- S-219
 	r("air", "Air superiority fighter", 2, { "ord_archon" }, { "chs_manticore" }),
 	r("air", "Strategic bomber", 2, { "ord_phantom" }, { "chs_behemoth" }),
 	r("air", "ASW helicopter", 2, { "ord_tidewatch" }, { "chs_leech" }),
 	r("air", "Support aircraft", 2, { "ord_archangel" }, { "chs_banshee" }),
+	r("air", "Heavy air transport", 2, { "ord_ark" }, { "chs_charon" }), -- S-219
 	r("air", "Decoy drone", 2, {}, { "chs_wraith" }),
 	r("air", "Heavy bomber", 2, { "ord_liche" }, {}),
 	r("air", "Flying fortress", 2, {}, { "chs_dragon" }),

@@ -28,6 +28,8 @@ local KIND_COLOR: { [number]: Color3 } = {
 	[CT.RECLAIM] = Color3.fromRGB(200, 120, 235),
 	[CT.BUILD] = Color3.fromRGB(235, 220, 80),
 	[CT.AREA] = Color3.fromRGB(200, 120, 235), -- Smart Reclaim's zone (S-183), the reclaim colour
+	[CT.LOAD] = Color3.fromRGB(79, 208, 176), -- transports (S-219, C-272): 2D-E's load / unload tints
+	[CT.UNLOAD] = Color3.fromRGB(240, 140, 180),
 }
 local FLASH_SECONDS = 0.6
 local LIFT = 0.15 -- studs above the ground

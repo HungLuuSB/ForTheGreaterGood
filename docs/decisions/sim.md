@@ -3104,3 +3104,13 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - C: models.
   - D: Codex roles (done, aa71a107).
   - E: icons and pictures.
+
+## S-220 — Transports carry one unit and show their pick-ups (the user, client request 40) (2026-10-30)
+
+- **Asked (the user, through client-B):** "they only carry 1 cargo, both for T1 and T2", and the transport should "descend from the air, grab the unit model under its belly and rise up again, same for dropping them".
+- **One unit:** the Ark and Charon have `maxUnits = 1`. They keep the heavier limits: tier up to 2, footprint up to 3.
+- **Visible pick-up and set-down (protocol 44):**
+  - A TRANSPORT event goes out as each pick-up or set-down starts (PICKUP at the unit, DROP at the spot), with its ticks, or when it stops before the end (CANCEL). It goes to every player who has the transport tactical.
+  - The set-down spot is now chosen when the set-down starts. At the end, the nearest open spot is used if something stands there.
+  - CARRY (the unit's def and team, 0 = empty) goes to the same players, with the ENTER and on change, so enemies see what hangs under a transport. CARGO stays owner-only.
+- **Tests:** `Transport.spec`: an enemy hears PICKUP and CARRY, then the DROP; the unit comes down where the DROP said; both tiers take one unit.
