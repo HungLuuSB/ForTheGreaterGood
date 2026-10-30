@@ -43,6 +43,7 @@ ANIM = {
     # helicopters' main rotors (tail rotors are sub-pieces)
     "ord_skywright": HELI, "chs_vulture": HELI, "ord_guardian": HELI, "chs_wasp": HELI,
     "ord_zenith": HELI, "chs_condor": HELI, "ord_tidewatch": HELI, "chs_leech": HELI,
+    "ord_courier": HELI, "chs_buzzard": HELI, "ord_ark": HELI, "chs_charon": HELI,  # transports (S-219)
     # windmills
     "ord_windmill": {"rotor": a("spin", Z)}, "chs_windmill": {"rotor": a("spin", Z)},
     # radar dishes and arrays
