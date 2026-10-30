@@ -246,9 +246,6 @@ function UnitStats.ofDef(world: World.World, def: any): Sheet
 	return UnitStats.of(world, u)
 end
 
-local FIRE = { [0] = "Hold fire", [1] = "Return fire", [2] = "Fire at will" }
-local MOVE = { [0] = "Hold position", [1] = "Maneuver", [2] = "Roam" }
-
 local function n(x: number): string
 	if x >= 100 or x == math.floor(x) then
 		return tostring(math.floor(x + 0.5))
@@ -343,25 +340,14 @@ function UnitStats.lines(sheet: Sheet): { string }
 	if #flow > 0 then
 		table.insert(out, join(flow))
 	end
-	local state = {}
-	if sheet.fireState then
-		table.insert(state, FIRE[sheet.fireState] or "?")
-	end
-	if sheet.moveState then
-		table.insert(state, MOVE[sheet.moveState] or "?")
-	end
-	if sheet.retreat then
-		local share = Schema.RETREAT_SHARE[sheet.retreat] or 0
-		table.insert(state, if share > 0 then `Retreat at {math.floor(share * 100 + 0.5)}%` else "Never retreat")
-	end
+	-- no fire / move state or retreat setting (C-275, the user: "do not
+	-- provide the current state of the unit like Fire at will | Maneuver |
+	-- Retreat"): the command card shows those
 	if sheet.selfDestruct then
 		table.insert(out, 1, `Self-destruct in {sheet.selfDestruct} s`)
 	end
-	for _, c in sheet.countermeasures do
-		table.insert(state, c)
-	end
-	if #state > 0 then
-		table.insert(out, join(state))
+	if #sheet.countermeasures > 0 then
+		table.insert(out, join(sheet.countermeasures))
 	end
 	return out
 end

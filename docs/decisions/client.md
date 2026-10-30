@@ -2546,3 +2546,10 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - Pick-up: the Courier came down from 54 to 25 studs over the Lancer, the hanging copy took over at the grab, and it climbed back with it.
   - Drop: it came down with the Lancer, which appeared on the drop spot as the copy went, and climbed away.
   - It ran past tick 900 with a Load order under way: no errors, and the client stayed current (tick 940).
+
+### C-275 — The unit panel shows no unit states (2026-10-30)
+
+- **The user:** "in the unit stats panel, please do not provide the current state of the unit like Fire at will | Maneuver | Retreat and things like that".
+- `UnitStats.lines` drops the fire state, move state and retreat line. `UnitPanel` drops the On / Off and Repeat flags. Those settings show on the command card's state buttons.
+- Kept, as facts rather than settings: the self-destruct countdown (a warning), countermeasure charges, a factory's queue, the next missile's progress, radar accuracy, and a transport's cargo.
+- Studio, Coastline: a selected Lancer's panel reads name, role, DPS / range / reload, speed / line of sight and cost, with nothing else (`debug_out/screens/2026-10-30-panel-no-states.jpg`).
