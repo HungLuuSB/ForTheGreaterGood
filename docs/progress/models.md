@@ -36,6 +36,16 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 - **Full re-render done (2026-10-30):** all 197 pictures are in `debug_out/pictures/` with the look below, and no masks. Contact sheet: `debug_out/screens/pictures_all_v3.png`. 2D session E repacks from them (request 13).
 - **Later notes from the user (2026-10-30), all built in:** "too blurry because of the fog. Remove it" (the haze is off, the sub's murk halved, the depth of field eased); "Make them glow more" (glow 3.5, a stronger bloom); "push the color up too" (unit saturation 2.1, plus a whole-picture grade).
 
+**Transports (S-219, 2026-10-30, sim-A's defs, the user approved the units):** `ord_courier` Courier, `chs_buzzard` Buzzard (T1, footprint 2), `ord_ark` Ark, `chs_charon` Charon (T2, footprint 3). Def pieces: `base` only.
+- **Meshes and wrecks built**, not uploaded (`assets/models/<id>/build.py`; sheets `debug_out/screens/transports_v1.png`, `transports_wrecks_v1.png`):
+  - Courier: an armored utility lifter a size up from the Skywright, sponsons, team door plates, tall skids, a cargo winch.
+  - Buzzard: a skeletal lifter, bubble-nosed pod on an open lattice spine, exposed engine, tall legs, folded grapple talons with lit tips.
+  - Ark: a tandem-rotor heavy lifter with sponsons, wheels, a ramp, twin engines on the aft pylon and two belly hooks.
+  - Charon: a flying crane with four splayed legs, an open cradle with four lit chain hooks, and the ferryman's lantern on a bow arm.
+- **Rig:** each has a `cargo` attachment (where the carried units hang), the client-spun `rotor` and a `tailRotor`. The Ark's aft rotor is its `tailRotor` with axis −Y, so the client's Ambient already runs it with the main rotor, counter-rotating; no client change.
+- **Blockouts** are written and pass `Blockout.validate` against the def pieces, but aren't in `Blockouts/Registry.luau` yet: the defs aren't on `main`. Register them after sim-A's merge.
+- **Waiting:** the user's look review and upload approval; then rig, record, manifest, pictures.
+
 **D-Gun effects (2026-10-30, the user via clients-B: "make the VFX for D-gun too"):** four templates in `place/Vfx.model.json`, from `assets/fx/vfx/build_vfx.py`, next to F27's `Death`. The colour is fixed (255, 200, 90) for both factions. They're authored at real size: the bolt is about 7 studs across, for the 14-stud-wide path.
 - **`DgunBolt`:** a Folder of two Attachments.
   - `Bolt` holds the core, plasma, halo, a world-space heat trail, sparks and a light that stays on.

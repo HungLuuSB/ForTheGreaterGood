@@ -1,0 +1,120 @@
+{
+  "id": "ord_courier_wreck",
+  "wreckOf": "ord_courier",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0346,
+        2.5378,
+        2.4182
+      ],
+      "size": [
+        4.3447,
+        5.215,
+        17.2755
+      ]
+    },
+    "tailRotor": {
+      "parent": "base",
+      "center": [
+        0.3224,
+        4.121,
+        10.393
+      ],
+      "size": [
+        0.3145,
+        2.5223,
+        2.4603
+      ],
+      "pivot": [
+        0.32,
+        4.1,
+        10.3
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        -0.0684,
+        4.3774,
+        -0.5747
+      ],
+      "size": [
+        10.3291,
+        0.8369,
+        10.186
+      ],
+      "pivot": [
+        0.0,
+        4.4,
+        -0.6
+      ]
+    }
+  },
+  "attachments": {
+    "cargo": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.25,
+        -0.4
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "tailRotor"
+  ],
+  "anim": {
+    "tailRotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 888,
+    "tailRotor": 56,
+    "rotor": 84,
+    "total": 1028
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
