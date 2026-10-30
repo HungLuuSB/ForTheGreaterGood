@@ -427,6 +427,15 @@
 				126
 			]
 		},
+		"chs_goliath": {
+			"sheet": 4,
+			"rect": [
+				128,
+				128,
+				126,
+				126
+			]
+		},
 		"chs_gorgon": {
 			"sheet": 1,
 			"rect": [
