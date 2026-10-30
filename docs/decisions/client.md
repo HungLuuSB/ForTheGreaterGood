@@ -2475,3 +2475,11 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - S-217 cut the Titan's and Juggernaut's death blasts to 52 studs (480 damage), below `Effects.HUGE_BLAST` (90), so they fell back to the ordinary "impact" burst. models-C flagged it through sim-A.
 - A middle tier, `Effects.HEAVY_BLAST = 50`: a death blast from 50 studs up to HUGE_BLAST plays models-C's StructureDeath template, at the same shown radius as before (aoe × `BLAST_SHOWN`) and for twice the death burst's life. It is not the nuke's look and leaves no crater. Huge blasts (Commanders, fusion) are unchanged; so are the Construction Turrets' (40).
 - Studio, Coastline: a Titan's and a Juggernaut's deaths each play StructureDeath plus their own death burst, with no nuke (`debug_out/screens/2026-10-30-t3-death-blast.jpg`). A new Splash spec checks the Titan's blast.
+
+### C-271 — Transport icons and the Load / Unload button icons uploaded (2026-10-30)
+
+- sim-A's S-218 and S-219 (protocol 43; m-sim-2 e7765af2) add four HELI transports: ord_courier, chs_buzzard, ord_ark and chs_charon. They can't reach main without their icons, so they come through the client, as S-213 did. Merged with 2D-E's E-13 (2d 485edc70, design approved by the user in E's session).
+- `render.mjs` maps all 207 defs from 121 items. The new tiles `light_transport_t1` (Courier, Buzzard) and `heavy_transport_t2` (Ark, Charon) land on sheet 2; sheet 1 is unchanged. `ui_icons.mjs` adds `load` and `unload` (49 icons; only `alert` moved).
+- The user approved both uploads in this session: sheet 2 is 100470717468643 and the UI atlas is 89353396855864, with their pixel hashes in `tools/icons/assets.json`.
+- Studio, Coastline: both images load. The four transports draw the air frame at a distance, with two tier dots on the T2s (`debug_out/screens/2026-10-30-transport-icons.jpg`).
+- The client work for S-218 and S-219 follows separately: the RECLAIM_UNIT spray, Load and Unload orders, cargo on the transport.
