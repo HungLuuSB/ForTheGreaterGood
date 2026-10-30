@@ -1,0 +1,187 @@
+{
+  "id": "chs_charon",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.7,
+        0.24
+      ],
+      "size": [
+        8.2,
+        7.4,
+        27.92
+      ]
+    },
+    "tailRotor": {
+      "parent": "base",
+      "center": [
+        0.38,
+        6.0,
+        13.4
+      ],
+      "size": [
+        0.25,
+        3.6,
+        3.4238
+      ],
+      "pivot": [
+        0.42,
+        6.0,
+        13.4
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        0.0,
+        7.6,
+        -1.2
+      ],
+      "size": [
+        20.4,
+        0.35,
+        18.017
+      ],
+      "pivot": [
+        0.0,
+        7.6,
+        -1.2
+      ]
+    }
+  },
+  "attachments": {
+    "cargo": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.8,
+        -0.8
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "rotor",
+    "tailRotor"
+  ],
+  "visualPieces": [
+    "tailRotor"
+  ],
+  "anim": {
+    "tailRotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        6.09,
+        5.9625
+      ],
+      "size": [
+        3.6,
+        2.52,
+        15.925
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        3.365,
+        -11.63
+      ],
+      "size": [
+        0.6,
+        0.83,
+        4.06
+      ]
+    },
+    {
+      "name": "base_glow_weapon",
+      "piece": "base",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        1.0,
+        -0.8
+      ],
+      "size": [
+        3.5,
+        0.22,
+        6.54
+      ]
+    }
+  ],
+  "glowShare": 0.0271,
+  "triangles": {
+    "base": 1424,
+    "tailRotor": 56,
+    "rotor": 188,
+    "total": 1668
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

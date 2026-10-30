@@ -18,6 +18,7 @@ local Prng = require("@shared/Util/Prng")
 local Replay = require("./Replay")
 local Schema = require("@shared/Net/Schema")
 local SensorsState = require("./SensorsState")
+local TransportState = require("./TransportState")
 local Stats = require("./Stats")
 local World = require("./World")
 
@@ -52,6 +53,7 @@ export type Sim = {
 	build: BuildState.BuildState, -- construction orders, factory queues, reclaim
 	air: AirState.AirState, -- aircraft ammo and rearming
 	orders: OrdersState.OrdersState, -- unit order queues, factory rally / repeat (S-4)
+	transport: TransportState.TransportState, -- air transports' cargo (S-219)
 	ew: EWState.EWState, -- countermeasure charges and cooldowns
 	match: MatchState.MatchState, -- match rules: counts, eliminations, result
 	sensors: SensorsState.State, -- sensor maps, visibility, ghosts

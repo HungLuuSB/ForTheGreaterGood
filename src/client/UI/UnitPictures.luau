@@ -13,7 +13,7 @@ UnitPictures.sheets = {
 	"rbxassetid://129402755258680",
 	"rbxassetid://137517755831073",
 	"rbxassetid://118640861030060",
-	"rbxassetid://108902714225981",
+	"rbxassetid://111703066289053",
 } :: { string }
 
 -- def id → { sheet, x, y }: its picture's sheet and top-left pixel
@@ -41,10 +41,12 @@ UnitPictures.units = {
 	chs_botlab = { 1, 512, 256 },
 	chs_breaker = { 1, 640, 256 },
 	chs_bulwark = { 1, 768, 256 },
+	chs_buzzard = { 4, 640, 0 },
 	chs_carapace = { 1, 896, 256 },
 	chs_cataclysm = { 1, 0, 384 },
 	chs_centurion = { 1, 128, 384 },
 	chs_cerberus = { 1, 256, 384 },
+	chs_charon = { 4, 768, 0 },
 	chs_chimera = { 1, 384, 384 },
 	chs_condor = { 1, 512, 384 },
 	chs_converter = { 1, 640, 384 },
@@ -136,6 +138,7 @@ UnitPictures.units = {
 	ord_archangel = { 2, 384, 768 },
 	ord_architect = { 2, 512, 768 },
 	ord_archon = { 2, 640, 768 },
+	ord_ark = { 4, 896, 0 },
 	ord_artisan = { 2, 768, 768 },
 	ord_barrier = { 2, 896, 768 },
 	ord_bastion = { 2, 0, 896 },
@@ -146,6 +149,7 @@ UnitPictures.units = {
 	ord_choir = { 2, 640, 896 },
 	ord_citadel = { 2, 768, 896 },
 	ord_converter = { 2, 896, 896 },
+	ord_courier = { 4, 0, 128 },
 	ord_crusader = { 3, 0, 0 },
 	ord_curtain = { 3, 128, 0 },
 	ord_custodian = { 3, 256, 0 },

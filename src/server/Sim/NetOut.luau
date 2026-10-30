@@ -89,6 +89,7 @@ local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
 local Icons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
+local EMPTY_CARGO: { number } = table.freeze({})
 local WK = Schema.WorkKind
 local Combat = require("./Combat/Combat")
 local SelfDestruct = require("./SelfDestruct")
@@ -99,6 +100,7 @@ local Pinpoint = require("@shared/Combat/Pinpoint")
 local Pregame = require("./Pregame")
 local Sensors = require("./Sensors")
 local Shield = require("./Shield")
+local Transport = require("./Transport")
 local Types = require("./Types")
 local World = require("./World")
 
@@ -1004,11 +1006,12 @@ function NetOut.step(sim: Types.Sim)
 			end
 		end
 
-		-- tactical units removed without a DEATH (reclaimed, cancelled frames)
+		-- tactical units removed without a DEATH (reclaimed, cancelled frames),
+		-- or picked up by a transport (S-219: it enters again when set down)
 		local i = 1
 		while i <= #pn.tacticalList do
 			local id = pn.tacticalList[i]
-			if not World.isRef(w, id, pn.tactical[id]) then -- gone (or its ID reused, D109)
+			if not World.isRef(w, id, pn.tactical[id]) or World.isParked(w, id) then -- gone (or its ID reused, D109)
 				pn.tactical[id] = nil
 				table.remove(pn.tacticalList, i)
 				table.insert(events, { kind = Schema.EventKind.LEAVE, unitId = id })
@@ -1038,6 +1041,39 @@ function NetOut.step(sim: Types.Sim)
 				entered[id] = true
 				table.insert(events, enterEvent(sim, g, id))
 			end
+		end
+
+		-- transports on the tactical tier (S-220, client request 40): each
+		-- pick-up / set-down as it starts (or stops), and what each carries,
+		-- slung under it, with the ENTER and when it changes
+		for _, e in sim.combat.events do
+			if e.kind == "TRANSPORT" and pn.tactical[e.unit] then
+				local ev: Schema.Event = {
+					kind = Schema.EventKind.TRANSPORT,
+					unitId = e.unit,
+					targetId = e.other,
+					defIndex = w.defIndex[e.other] or 0,
+					action = e.action,
+					actionTicks = Transport.LOAD_TICKS,
+				}
+				if e.action ~= Schema.TransportAction.CANCEL then
+					ev.cell, ev.offX, ev.offZ = g:encode(e.x :: number, e.z :: number)
+				end
+				table.insert(events, ev)
+			end
+		end
+		local sentCarry = pn.sentCarry
+		for _, id in pn.tacticalList do
+			if sim.defs.unitByIndex[w.defIndex[id]].transport == nil then
+				continue
+			end
+			local cargo = sim.transport.cargo[id]
+			local u = cargo and cargo[1]
+			local sig = if u then w.defIndex[u] * 256 + w.team[u] else 0
+			if (entered[id] and sig ~= 0) or (not entered[id] and (sentCarry[id] or 0) ~= sig) then
+				table.insert(events, { kind = Schema.EventKind.CARRY, unitId = id, defIndex = if u then w.defIndex[u] else 0, team = if u then w.team[u] else 0 })
+			end
+			sentCarry[id] = sig
 		end
 
 		-- shield domes (S-79): after their ENTER, and when they changed
@@ -1239,7 +1275,7 @@ function NetOut.step(sim: Types.Sim)
 				local unit = b.target[id] or 0
 				if unit ~= 0 and w.slot[unit] ~= nil then
 					workTarget = unit
-					workKind = if b.assist[id] then WK.ASSIST elseif b.repair[id] then WK.REPAIR else WK.BUILD
+					workKind = if b.drain[id] then WK.RECLAIM_UNIT elseif b.assist[id] then WK.ASSIST elseif b.repair[id] then WK.REPAIR else WK.BUILD
 				elseif (b.reclaim[id] or 0) ~= 0 then
 					workKind, workTarget = WK.RECLAIM, b.reclaim[id]
 				elseif (b.resurrect[id] or 0) ~= 0 then
@@ -1247,7 +1283,10 @@ function NetOut.step(sim: Types.Sim)
 				end
 				wSig = workKind .. ":" .. workTarget
 			end
-			local now = { qSig, sSig, aSig, cSig, dSig, wSig }
+			-- a transport's cargo (S-219): the units on board, in loading order
+			local cargo = if d.transport then sim.transport.cargo[id] or EMPTY_CARGO else nil
+			local gSig = if cargo then table.concat(cargo, ",") else ""
+			local now = { qSig, sSig, aSig, cSig, dSig, wSig, gSig }
 			ownerNow[id] = now
 			local before = if entered[id] then nil else sentOwner[id]
 			local rec: Schema.State? = nil
@@ -1278,6 +1317,9 @@ function NetOut.step(sim: Types.Sim)
 			if d.buildPower and (before == nil or before[6] ~= wSig) and (before ~= nil or workKind ~= WK.NONE) then
 				local r = record()
 				r.workKind, r.workTarget = workKind, workTarget
+			end
+			if cargo and (before == nil or before[7] ~= gSig) and (before ~= nil or #cargo > 0) then
+				record().cargo = table.clone(cargo)
 			end
 			if ammo ~= nil and (before == nil or before[3] ~= aSig) then
 				local r = record()

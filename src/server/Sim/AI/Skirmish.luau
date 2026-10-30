@@ -118,6 +118,8 @@ local Packer = require("@shared/Net/Packer")
 local Passability = require("@shared/Grid/Passability")
 local Prng = require("@shared/Util/Prng")
 local Schema = require("@shared/Net/Schema")
+local Counters = require("./Counters")
+local Economy = require("../Economy")
 local Nav = require("../Nav")
 local Placement = require("../Placement")
 local Pregame = require("../Pregame")
@@ -125,6 +127,7 @@ local Quadtree = require("../Path/Quadtree")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Sensors = require("../Sensors")
 local Sim = require("../Sim")
+local ThreatMap = require("./ThreatMap")
 local Types = require("../Types")
 local World = require("../World")
 
@@ -193,6 +196,37 @@ Skirmish.BARRIERS = 6 -- Barrier segments in Order hard's wall (S-101)
 Skirmish.TECH_EXTRACTORS = 8 -- (S-216) extractors that tech up without stored supply: a match-long AI spends every unit as it comes, and never stored the 900 / 600 the advanced plant and T2 builder wait for
 Skirmish.TECH_TICKS = 10 * 60 * 15 -- (S-216) or this long with 6 extractors: Hard's safe deposits on a 1v1 map are 8 or 9
 Skirmish.CONVERTERS = 3 -- (S-216) T1 converters it adds while power sits full and supply runs short
+-- The economy governor (S-221, after BAR's CircuitAI: spending follows
+-- income). A typical job costs WORK_SUPPLY supply and WORK_POWER power a
+-- second per unit of build power; the AI keeps GOV_RATIO × what its income
+-- pays for at high priority (factories in tech order, after its busy
+-- builders), the rest of its factories and their Construction Turrets low:
+-- Economy serves them only what is left (S-156). Incomes are averaged every
+-- economy step (GOV_EMA), watched every tick like the stall memories (S-31).
+Skirmish.WORK_SUPPLY = 0.035
+Skirmish.WORK_POWER = 0.45
+Skirmish.GOV_RATIO = 1.2
+Skirmish.GOV_FACTORY_MIN = 0.5 -- factories always get this share of the affordable build power
+Skirmish.GOV_EMA = 0.05 -- weight of each economy step's income in the average (~7 s)
+Skirmish.GOV_NANO_SHARE = 0.6 -- new Construction Turrets only while theirs stays under this share of it
+Skirmish.GOV_POWER_RICH = 1.5 -- power pays for this many times what supply does: converters
+Skirmish.GOV_ROTATE = 900 -- ticks: factories of one tier take turns at the head of their group (a minute)
+Skirmish.GOV_T2_INCOME = 20 -- supply a second per T2 builder past the first (one Architect did nothing but upgrades for 13 minutes)
+Skirmish.GOV_T2_BUILDERS = 3 -- at most
+-- The military (S-222, after BAR's CircuitAI): a threat map of what the
+-- team knows of enemy firepower (ThreatMap); a wave goes for the best target
+-- it outweighs ATTACK_MARGIN times there, skipping stronger ones, and gathers
+-- until it is worth GROUP_MARGIN times the strongest enemy group seen
+-- (remembered, halving every GROUP_HALF_LIFE); units hurt below REPAIR_HEALTH
+-- pull back to a Construction Turret until REJOIN_HEALTH (or REPAIR_TICKS).
+Skirmish.GROUP_MARGIN = 0.75 -- (1 made mirrors decide on a few units of noise: the side that thought first left alone, S-31)
+Skirmish.GROUP_HALF_LIFE = 2 * 60 * 15 -- ticks
+Skirmish.REPAIR_HEALTH = 0.5
+Skirmish.REJOIN_HEALTH = 0.9
+Skirmish.REPAIR_TICKS = 90 * 15
+Skirmish.REPAIR_STANDOFF = 60 -- studs from the turret it waits at
+Skirmish.REPAIR_NANO_SHARE = 1 / 3 -- of its Construction Turrets (at least one) repair at once: the rest keep building
+Skirmish.REPAIR_QUEUE = 2 -- units pulled back at most per turret that may repair; the rest fight on
 Skirmish.GANTRY_TICKS = 15 * 60 * 15 -- (S-216) hard's gantry also comes after this long with GANTRY_EXTRACTORS extractors
 Skirmish.GANTRY_EXTRACTORS = 8
 Skirmish.ADV_SOLAR_AFTER = 6 -- solars before its power comes from advanced solar (S-216)
@@ -257,6 +291,10 @@ export type Level = {
 	teamwork: boolean?, -- joins an ally's wave, answers an ally's call for help
 	-- S-216 (the user): playtest 3's units
 	nanos: number?, -- Construction Turrets wanted beside each factory
+	governor: boolean?, -- (S-221) spending follows income: factories and turrets past it go low priority
+	threat: boolean?, -- (S-222) waves pick targets they outweigh and gather to the strongest enemy group
+	repair: boolean?, -- (S-222) damaged units pull back to a Construction Turret for repair
+	counters: boolean?, -- (S-223) production answers the enemy's spending by class (AI/Counters)
 	advEco: boolean?, -- advanced solar; the T2 builder's fusion, storages, converters, advanced fusion
 	offshore: boolean?, -- the shipyard's naval worker takes offshore deposits
 	experimental: boolean?, -- an Experimental Gantry when rich, building Titans / Juggernauts
@@ -327,6 +365,10 @@ Skirmish.LEVELS = table.freeze({
 		nanos = 1,
 		advEco = true,
 		offshore = true,
+		governor = true, -- (S-221)
+		threat = true, -- (S-222)
+		repair = true,
+		counters = true, -- (S-223)
 	},
 	hard = {
 		think = 10,
@@ -365,6 +407,10 @@ Skirmish.LEVELS = table.freeze({
 		advEco = true,
 		offshore = true,
 		experimental = true,
+		governor = true, -- (S-221)
+		threat = true, -- (S-222)
+		repair = true,
+		counters = true, -- (S-223)
 	},
 } :: { [string]: Level })
 
@@ -381,6 +427,7 @@ do
 	s.safeExpansion = false
 	s.outweigh = false
 	s.retreat = false
+	s.threat = false -- (S-222: it doesn't wait for the enemy's groups either)
 	s.recall = false
 	s.attackMargin = 0.8
 	s.raid = true
@@ -606,6 +653,16 @@ export type Brain = {
 	powerShortAt: number, -- last tick power was stalling (S-31)
 	supplyShortAt: number, -- last tick supply was stalling (S-114)
 	powerLowAt: number, -- last tick power ran below ARMY_FIRST_RATIO (S-94)
+	incS: number?, -- (S-221) average supply income (and reclaim), per second
+	incP: number?, -- (S-221) average power income less upkeep and converters, per second
+	lowPriority: { [number]: boolean }, -- (S-221) units it set to low priority
+	enemyGroup: number, -- (S-222) the strongest enemy group's value it remembers
+	enemyGroupAt: number, -- tick it last updated it
+	repairing: { [number]: number }, -- (S-222) units pulled back for repair → tick they left
+	repairs: number, -- units it pulled back so far
+	skipped: number, -- thinks a wave's best target was too strong and it went for another
+	enemyMix: { [string]: number }, -- (S-223) the enemy's armed value per Counters class it remembers
+	enemyMixAt: number, -- tick it last updated it
 	airNearAt: number, -- last tick enemy aircraft were known near home (S-57)
 	lastWaveAt: number, -- tick the last wave left (S-57)
 	raidAt: number, -- tick the last raid left (S-187)
@@ -766,6 +823,14 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		powerShortAt = -math.huge,
 		supplyShortAt = -math.huge,
 		powerLowAt = -math.huge,
+		lowPriority = {},
+		enemyGroup = 0, -- (S-222)
+		enemyGroupAt = 0,
+		repairing = {},
+		repairs = 0,
+		skipped = 0,
+		enemyMix = {}, -- (S-223)
+		enemyMixAt = 0,
 		airNearAt = -math.huge,
 		lastWaveAt = -math.huge,
 		raidAt = -math.huge, -- (S-187)
@@ -1094,32 +1159,23 @@ local freeDeposit = Skirmish.freeDeposit
 -- closer. Untracked radar blips have no known type (D107); remembered
 -- structures count even if they died unseen. Returns threatX, threatZ, targetX, targetZ (nil when
 -- none).
-function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number?)
+local function eachKnown(brain: Brain, fn: (kx: number, kz: number, dh: number, score: number) -> ())
 	local hunt = brain.cfg.hunt
 	local sim = brain.sim
 	local w = sim.world
-	local L = Sensors.Level
-	local threatX, threatZ, threatD = nil, nil, math.huge
-	local targetX, targetZ, targetScore = nil, nil, math.huge
 	local function consider(id: number, gen: number?)
 		local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id, gen)
 		if kx == nil or kz == nil then
 			return
 		end
 		local dh = (kx - brain.homeX) ^ 2 + (kz - brain.homeZ) ^ 2
-		if dh < Skirmish.HOME_RADIUS ^ 2 and dh < threatD then
-			threatX, threatZ, threatD = kx, kz, dh
-		end
 		local important, commander = false, false
 		if Sensors.typeKnown(sim, brain.ally, id, level) then -- visible, remembered or tracked (D107)
 			local d = sim.defs.unitByIndex[defIndex :: number]
 			commander = bit32.band(d.categoryMask, BIT.COMMANDER) ~= 0
 			important = d.domain == "structure" or commander
 		end
-		local score = dh * (if hunt and commander then 0.02 elseif important then 0.25 else 1)
-		if score < targetScore then
-			targetX, targetZ, targetScore = kx, kz, score
-		end
+		fn(kx, kz, dh, dh * (if hunt and commander then 0.02 elseif important then 0.25 else 1))
 	end
 	for _, id in w.ids do
 		if w.ally[id] ~= brain.ally then
@@ -1132,13 +1188,43 @@ function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number
 			consider(gid, ghost.gen)
 		end
 	end
+end
+
+function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number?)
+	local threatX, threatZ, threatD = nil, nil, math.huge
+	local targetX, targetZ, targetScore = nil, nil, math.huge
+	eachKnown(brain, function(kx, kz, dh, score)
+		if dh < Skirmish.HOME_RADIUS ^ 2 and dh < threatD then
+			threatX, threatZ, threatD = kx, kz, dh
+		end
+		if score < targetScore then
+			targetX, targetZ, targetScore = kx, kz, score
+		end
+	end)
 	return threatX, threatZ, targetX, targetZ
 end
 
--- A unit def's value: supply + power / 10 (S-92).
-function Skirmish.value(d: Defs.UnitDef): number
-	return d.cost.supply + d.cost.power / 10
+-- A group's target (S-222, after CircuitAI: groups skip targets stronger
+-- than themselves): the best known target as knownTargets scores them
+-- whose surface threat (ThreatMap) is at most `power`; with none known,
+-- the enemy start, if its threat is. Nil when every known one is stronger.
+function Skirmish.pickTarget(brain: Brain, tm: ThreatMap.Map, power: number): (number?, number?)
+	local bestX, bestZ, bestScore = nil, nil, math.huge
+	local any = false
+	eachKnown(brain, function(kx, kz, _dh, score)
+		any = true
+		if score < bestScore and ThreatMap.at(tm, kx, kz) <= power then
+			bestX, bestZ, bestScore = kx, kz, score
+		end
+	end)
+	if not any and ThreatMap.at(tm, brain.enemyX, brain.enemyZ) <= power then
+		return brain.enemyX, brain.enemyZ
+	end
+	return bestX, bestZ
 end
+
+-- A unit def's value: supply + power / 10 (S-92).
+Skirmish.value = ThreatMap.value
 
 -- The value of the known enemy forces within `radius` of (x, z) (S-92):
 -- armed units and structures whose type the team knows (visible, tracked
@@ -1248,8 +1334,10 @@ type Census = {
 	enemyArty: number, -- known enemy artillery (counters: fast raiders)
 	enemyLight: number, -- known enemy light ground units (counters: heavy, beams)
 	enemyExtractors: { { number } }, -- known enemy extractors' { x, z } (raids)
+	enemyMix: { [string]: number }, -- (S-223) known enemy armed value per Counters class
 	-- S-216
 	nanos: { { number } }, -- Construction Turrets' { x, z }: standing, framed or ordered
+	nanoIds: { number }, -- (S-221) finished Construction Turrets
 	advSolars: number,
 	gantries: { number }, -- complete Experimental Gantries
 	gantryFrames: number,
@@ -1312,7 +1400,9 @@ local function census(brain: Brain): Census
 		enemyArty = 0,
 		enemyLight = 0,
 		enemyExtractors = {},
+		enemyMix = {},
 		nanos = {}, -- (S-216) { x, z } of Construction Turrets, standing, framed or ordered
+		nanoIds = {},
 		advSolars = 0,
 		gantries = {},
 		gantryFrames = 0,
@@ -1334,7 +1424,11 @@ local function census(brain: Brain): Census
 					if ed.id == "ord_reckoning" or ed.id == "chs_ragnarok" then
 						c.enemySilo = true -- (S-110) a second umbrella site
 					end
-					-- what the enemy fields (S-187: counters)
+					-- what the enemy fields (S-187: counters; S-223 by value)
+					local cls = Counters.classOf(ed)
+					if cls then
+						c.enemyMix[cls] = (c.enemyMix[cls] or 0) + Skirmish.value(ed)
+					end
 					if ed.domain == "structure" then
 						if #ed.weapons > 0 then
 							c.enemyTurrets += 1
@@ -1372,6 +1466,9 @@ local function census(brain: Brain): Census
 			c.built[d.id] = (c.built[d.id] or 0) + 1
 			if d.assistOnly then
 				table.insert(c.nanos, { w.posX[id], w.posZ[id] }) -- (S-216)
+				if w.buildProgress[id] >= 1 then
+					table.insert(c.nanoIds, id) -- (S-221)
+				end
 			end
 			if d.extractor then
 				c.upkeep += d.extractor.upkeep or 0
@@ -1539,6 +1636,90 @@ local function idleBuilder(sim: Types.Sim, id: number): boolean
 	return b.order[id] == nil and (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0
 end
 
+-- The governor's factory pass (S-221): factories with work, in tech order
+-- (gantries; advanced plants, labs and airfields; plants, labs and
+-- airfields; shipyards; within a tier they take turns, a GOV_ROTATE each
+-- at the head), each with the Construction Turrets in its reach, stay at
+-- high priority while their build power fits the budget: what the income
+-- pays for less what busy builders use, but at least GOV_FACTORY_MIN of it;
+-- the first always does. The rest go low: they build with what is left.
+-- Commands only when a unit's priority changes.
+function Skirmish.govern(brain: Brain, c: Census, afford: number)
+	local sim = brain.sim
+	local w = sim.world
+	local busy = 0
+	for _, list in { c.builders, c.t2Builders, c.navalBuilders, { c.commander } } do
+		for _, b in list do
+			if b ~= 0 and w.slot[b] and ((sim.build.target[b] or 0) ~= 0 or sim.build.order[b] ~= nil) then
+				busy += unitDef(sim, b).buildPower or 0
+			end
+		end
+	end
+	local budget = math.max(afford * Skirmish.GOV_FACTORY_MIN, afford - busy)
+	local used = 0
+	local want: { [number]: boolean } = {} -- unit → low priority wanted
+	local turn = sim.tick // Skirmish.GOV_ROTATE
+	for _, tier in { { c.gantries }, { c.advFactories, c.advBotLabs, c.advAirfields }, { c.factories, c.botLabs, c.airfields }, { c.shipyards } } do
+		local list: { number } = {}
+		for _, l in tier do
+			table.move(l, 1, #l, #list + 1, list)
+		end
+		local n = #list
+		for i = 1, n do
+			local f = list[(i - 1 + turn) % n + 1]
+			if want[f] ~= nil or w.slot[f] == nil then
+				continue
+			end
+			local q = sim.build.queue[f]
+			local power = unitDef(sim, f).buildPower or 0
+			local nanos: { number } = {}
+			for _, n in c.nanoIds do
+				if (w.posX[n] - w.posX[f]) ^ 2 + (w.posZ[n] - w.posZ[f]) ^ 2 <= Skirmish.NANO_REACH ^ 2 then
+					table.insert(nanos, n)
+					power += unitDef(sim, n).buildPower or 0
+				end
+			end
+			local low = false
+			if q ~= nil and #q > 0 then
+				low = used > 0 and used + power > budget
+				if not low then
+					used += power
+				end
+			end
+			want[f] = low
+			for _, n in nanos do
+				want[n] = want[n] == true or low
+			end
+		end
+	end
+	for _, n in c.nanoIds do
+		if want[n] == nil then
+			want[n] = false
+		end
+	end
+	local ids: { number } = {}
+	for id in want do
+		table.insert(ids, id)
+	end
+	table.sort(ids) -- (commands in a fixed order)
+	for _, id in ids do
+		local low = want[id]
+		if (brain.lowPriority[id] == true) ~= low then
+			brain.lowPriority[id] = if low then true else nil
+			submit(sim, brain.player, { cmdType = CT.PRIORITY, flags = 0, unitIds = { id }, value = if low then 0 else 1 })
+		end
+	end
+	local gone: { number } = {}
+	for id in brain.lowPriority do
+		if w.slot[id] == nil then
+			table.insert(gone, id)
+		end
+	end
+	for _, id in gone do
+		brain.lowPriority[id] = nil
+	end
+end
+
 local function think(brain: Brain)
 	local sim = brain.sim
 	local w = sim.world
@@ -1546,6 +1727,16 @@ local function think(brain: Brain)
 	local acc = sim.eco.accounts[brain.team]
 	if c.enemyAirNearHome > 0 then
 		brain.airNearAt = sim.tick
+	end
+	-- (S-223) the enemy's mix by value, remembered; the production shares it asks for
+	local demand: { [string]: number }? = nil
+	if brain.cfg.counters then
+		local fade = 0.5 ^ ((sim.tick - brain.enemyMixAt) / Counters.HALF_LIFE)
+		for _, k in Counters.CLASSES do
+			brain.enemyMix[k] = math.max(c.enemyMix[k] or 0, (brain.enemyMix[k] or 0) * fade)
+		end
+		brain.enemyMixAt = sim.tick
+		demand = Counters.demand(brain.enemyMix)
 	end
 	local plant = faction(brain, "vehplant", "vehplant")
 
@@ -1624,6 +1815,21 @@ local function think(brain: Brain)
 	-- draw more, and no generator would come; S-94)
 	local armyFirst = brain.tanksFirst > 0 and c.generators >= 2 and #c.army < brain.tanksFirst and #c.factories > 0
 		and sim.tick - brain.powerLowAt > Skirmish.POWER_MEMORY
+	-- (S-221) the economy governor: the build power its income pays for,
+	-- and whether supply or power is what limits it
+	local affordS = (brain.incS or 0) / Skirmish.WORK_SUPPLY
+	local affordP = (brain.incP or 0) / Skirmish.WORK_POWER
+	local afford = Skirmish.GOV_RATIO * math.min(affordS, affordP)
+	local governed = cfg.governor == true
+	local powerBound = governed and affordP < affordS
+	local powerRich = governed and affordP >= affordS * Skirmish.GOV_POWER_RICH
+	local nanoPower = 0
+	for _, id in c.nanoIds do
+		nanoPower += unitDef(sim, id).buildPower or 0
+	end
+	if governed then
+		Skirmish.govern(brain, c, afford)
+	end
 	-- (S-216) the first finished factory with fewer than `nanos`
 	-- Construction Turrets near it: its position
 	local function nanoFactory(): (number?, number?)
@@ -1742,7 +1948,8 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if (cfg.nanos or 0) > 0 and not isCommander and not powerShort and c.extractors >= 6 and #c.army >= 4 then
+		if (cfg.nanos or 0) > 0 and not isCommander and not powerShort and c.extractors >= 6 and #c.army >= 4
+			and (not governed or nanoPower + 200 <= afford * Skirmish.GOV_NANO_SHARE) then
 			-- (S-216) Construction Turrets beside the factories, `nanos` each,
 			-- behind them (away from the enemy)
 			local fx, fz = nanoFactory()
@@ -1786,7 +1993,7 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if cfg.advEco and not isCommander and supplyShort and not powerShort and acc.power.stored >= acc.power.storage * 0.9
+		if cfg.advEco and not isCommander and supplyShort and not powerShort and (acc.power.stored >= acc.power.storage * 0.9 or powerRich)
 			and (c.built[brain.prefix .. "converter"] or 0) < Skirmish.CONVERTERS and #c.factories > 0 then
 			-- (S-216) power sits full while supply runs short: turn it into supply
 			local conv = brain.prefix .. "converter"
@@ -1829,7 +2036,7 @@ local function think(brain: Brain)
 		-- S-31 / S-94)
 		local genWanted = math.ceil((factoryPower + builderPower + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP) + c.upkeep) / Skirmish.GENERATOR_POWER) -- (S-216: extractors' upkeep too)
 		local extractorFirst = cell ~= nil and (c.extractors < c.generators or (supplyShort and not powerShort))
-		local genCap = genWanted + (if powerShort and not supplyShort then Skirmish.GEN_SLACK else 0)
+		local genCap = genWanted + (if (powerShort and not supplyShort) or powerBound then Skirmish.GEN_SLACK else 0) -- (S-221: power is what limits it)
 		-- (S-216) an advanced solar makes ADV_SOLAR_EQ solars' power
 		local genEq = c.generators + c.advSolars * Skirmish.ADV_SOLAR_EQ
 		local wantGen = c.generators + c.advSolars < Skirmish.MIN_GENERATORS or (not extractorFirst and genEq < genCap)
@@ -1939,14 +2146,14 @@ local function think(brain: Brain)
 	local function count(defId: string): number
 		return c.built[defId] or 0
 	end
-	for _, id in c.t2Builders do
+	for k, id in c.t2Builders do
 		if not idleBuilder(sim, id) then
 			continue
 		end
 		-- (S-216) while power stalls, a fusion before more upgrades (each adds upkeep)
 		local fusionFirst = cfg.advEco and powerShort and count(brain.prefix .. "fusion") < Skirmish.FUSIONS
 		local ux, uz = nil, nil
-		if not fusionFirst then
+		if not fusionFirst and k == 1 then -- (S-221: the others work down the list)
 			ux, uz = nextUpgrade()
 		end
 		if ux and uz then
@@ -1963,13 +2170,17 @@ local function think(brain: Brain)
 		local fusion, advFusion = brain.prefix .. "fusion", brain.prefix .. "advfusion"
 		local advDepot, advCap = brain.prefix .. "advdepot", faction(brain, "advcapacitor", "advaccumulator")
 		local advConverter, gantry = brain.prefix .. "advconverter", brain.prefix .. "gantry"
-		if cfg.advEco and powerShort and count(fusion) < Skirmish.FUSIONS then
-			-- (S-216) fusion behind the base while power stalls
+		if cfg.advEco and (powerShort or powerBound) and count(fusion) < Skirmish.FUSIONS then
+			-- (S-216) fusion behind the base while power stalls (S-221: or limits what it can spend)
 			job, cx, cz = fusion, brain.homeX - brain.dirX * 90, brain.homeZ - brain.dirZ * 90
 			c.built[fusion] = count(fusion) + 1
 		elseif c.shields == 0 then
 			job, cx, cz = faction(brain, "phalanx", "carapace"), brain.homeX + brain.toward * 40, brain.homeZ
 			c.shields += 1
+		elseif cfg.advEco and powerBound and count(advFusion) == 0 and count(fusion) >= Skirmish.FUSIONS then
+			-- (S-221) power still limits what it can spend with two fusions: the big reactor now
+			job, cx, cz = advFusion, brain.homeX - brain.dirX * 150, brain.homeZ - brain.dirZ * 150
+			c.built[advFusion] = 1
 		elseif cfg.experimental and count(gantry) == 0 and (acc.supply.stored >= math.min(Skirmish.GANTRY_SUPPLY, acc.supply.storage * 0.8) or (sim.tick >= Skirmish.GANTRY_TICKS and c.extractors >= Skirmish.GANTRY_EXTRACTORS)) then
 			-- (S-216, hard) the Experimental Gantry: Titans / Juggernauts; late in the game it
 			-- comes before the rest of the list (in a match the builder never reached the end)
@@ -2086,10 +2297,15 @@ local function think(brain: Brain)
 				break -- (S-187, air role) the airfield takes this share of the power
 			else
 				-- counters (S-187): artillery against known turrets, fast units
-				-- against known artillery
+				-- against known artillery; by the enemy's spending (S-223)
 				local artyChance = cfg.artyChance + (if c.enemyTurrets >= 3 then 0.2 else 0)
+				local raiderChance = if c.enemyArty >= 3 then 0.3 else 0
+				if demand then
+					artyChance = math.max(cfg.artyChance, demand.artillery)
+					raiderChance = demand.raider
+				end
 				item = if brain.rng:chance(artyChance) then arty else tank
-				if item == tank and c.enemyArty >= 3 and brain.rng:chance(0.3) then
+				if item == tank and raiderChance > 0 and brain.rng:chance(raiderChance) then
 					item = scoutUnit -- raiders against artillery
 				end
 				if item == tank and cfg.locustShare and brain.rng:chance(cfg.locustShare) then
@@ -2106,11 +2322,16 @@ local function think(brain: Brain)
 	local mobilePlanned = #c.mobileAntiNukes + queued(sim, c.advFactories, mobileUnit)
 	local t2BuilderUnit = faction(brain, "architect", "forgemaster")
 	local t2Planned = #c.t2Builders + queued(sim, c.advFactories, t2BuilderUnit)
+	local t2Wanted = 1
+	if cfg.governor and #c.t2Builders >= 1 then
+		-- (S-221) more T2 builders as supply income grows
+		t2Wanted = math.min(Skirmish.GOV_T2_BUILDERS, 1 + math.floor((brain.incS or 0) / Skirmish.GOV_T2_INCOME))
+	end
 	for _, f in c.advFactories do
 		local q = sim.build.queue[f] or {}
 		for _ = #q + 1, cfg.queue do
 			local item
-			if cfg.t2Builder and t2Planned < 1 and (acc.supply.stored >= Skirmish.ADV_BUILDER_SUPPLY or c.extractors >= Skirmish.TECH_EXTRACTORS or (sim.tick >= Skirmish.TECH_TICKS and c.extractors >= 6)) then
+			if cfg.t2Builder and t2Planned < t2Wanted and (acc.supply.stored >= Skirmish.ADV_BUILDER_SUPPLY or c.extractors >= Skirmish.TECH_EXTRACTORS or (sim.tick >= Skirmish.TECH_TICKS and c.extractors >= 6)) then
 				item = t2BuilderUnit -- shield and Pinpointers (S-101)
 				t2Planned += 1
 			elseif c.enemySilo and mobilePlanned < 1 then
@@ -2123,8 +2344,11 @@ local function think(brain: Brain)
 				item = "chs_shroud" -- a jammer to cover the waves (S-76)
 				jammerPlanned += 1
 			else
-				item = if brain.rng:chance(0.5) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "tzar") -- (S-216: chs_juggernaut is the T3 bot since S-213, and the Goliath is retired; the Tzar takes its place)
-				if brain.prefix == "chs_" and brain.rng:chance(if c.enemyTurrets >= 3 then 0.35 else 0.15) then
+				-- (S-223) artillery against defences and armour, heavy against light
+				local artyShare = if demand then math.clamp(0.5 + demand.artillery - demand.heavy, 0.2, 0.8) else 0.5
+				local tzarChance = if demand then 0.15 + 0.4 * demand.artillery elseif c.enemyTurrets >= 3 then 0.35 else 0.15
+				item = if brain.rng:chance(artyShare) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "tzar") -- (S-216: chs_juggernaut is the T3 bot since S-213, and the Goliath is retired; the Tzar takes its place)
+				if brain.prefix == "chs_" and brain.rng:chance(tzarChance) then
 					item = "chs_tzar" -- (S-187) heavy plasma, more against defences
 				elseif cfg.wardenShare and brain.rng:chance(cfg.wardenShare) then
 					item = "ord_warden" -- Order's deployable guns (S-76)
@@ -2152,15 +2376,19 @@ local function think(brain: Brain)
 				break
 			end
 			local item
-			if c.enemyAir > 2 and brain.rng:chance(0.3) then
+			-- (S-223) anti-air and scouts by the enemy's spending
+			local aaChance = if c.enemyAir > 2 then 0.3 else 0 -- (radar shows aircraft without their type: kept)
+			if demand then
+				aaChance = math.max(aaChance, demand.antiair)
+			end
+			local scoutChance = if cfg.role == "spam" then 0.5 elseif demand then math.max(0.25, demand.raider) elseif c.enemyArty >= 3 then 0.5 else 0.25
+			if aaChance > 0 and brain.rng:chance(aaChance) then
 				item = botAA
 			elseif helpers < 2 then
 				item = botHelp
 				helpers += 1
-			elseif cfg.role == "spam" or c.enemyArty >= 3 then
-				item = if brain.rng:chance(0.5) then botScout else botLine
 			else
-				item = if brain.rng:chance(0.25) then botScout else botLine
+				item = if brain.rng:chance(scoutChance) then botScout else botLine
 			end
 			queueItem(f, item)
 		end
@@ -2253,6 +2481,15 @@ local function think(brain: Brain)
 	end
 	-- known enemies: the nearest one near home, and the best attack target
 	local threatX, threatZ, targetX, targetZ = Skirmish.knownTargets(brain)
+	-- (S-222) the threat map; the strongest enemy group, remembered
+	local tm = if cfg.threat then ThreatMap.of(sim, brain.ally) else nil
+	if tm then
+		local gv = ThreatMap.strongestGroup(tm)
+		local fade = 0.5 ^ ((sim.tick - brain.enemyGroupAt) / Skirmish.GROUP_HALF_LIFE)
+		brain.enemyGroup = math.max(gv, brain.enemyGroup * fade)
+		brain.enemyGroupAt = sim.tick
+	end
+	local margin = cfg.attackMargin or Skirmish.ATTACK_MARGIN
 
 	-- artillery kites (S-7): a known enemy unit inside KITE_RANGE of its
 	-- range → back off, then (queued) rejoin the attack
@@ -2304,8 +2541,72 @@ local function think(brain: Brain)
 		end
 	end
 	brain.escorts = escorts
+	-- damaged units pull back to the nearest Construction Turret, which
+	-- repairs them once they are in its reach; back with the army when
+	-- healed or after REPAIR_TICKS (S-222, after CircuitAI's retreat)
+	local repairing: { [number]: number } = {}
+	if cfg.repair and #c.nanoIds > 0 then
+		local nanoBusy: { [number]: boolean } = {}
+		local slots = math.max(1, math.floor(#c.nanoIds * Skirmish.REPAIR_NANO_SHARE))
+		local nanoFree = slots
+		local room = slots * Skirmish.REPAIR_QUEUE
+		for id, since in brain.repairing do
+			if w.slot[id] and sim.tick - since < Skirmish.REPAIR_TICKS and w.health[id] < unitDef(sim, id).health * Skirmish.REJOIN_HEALTH then
+				room -= 1
+			end
+		end
+		for _, n in c.nanoIds do
+			if sim.build.repair[n] then
+				nanoFree -= 1
+			end
+		end
+		for _, id in c.army do
+			local d = unitDef(sim, id)
+			if escorts[id] or kiting[id] or d.domain ~= "ground" then
+				continue
+			end
+			local hp = w.health[id] / d.health
+			local since = brain.repairing[id]
+			local fresh = false
+			if since then
+				if hp >= Skirmish.REJOIN_HEALTH or sim.tick - since >= Skirmish.REPAIR_TICKS then
+					continue
+				end
+			elseif hp < Skirmish.REPAIR_HEALTH and room > 0 then
+				since, fresh = sim.tick, true
+				room -= 1
+				brain.repairs += 1
+			else
+				continue
+			end
+			repairing[id] = since :: number
+			brain.attacking[id] = nil
+			local x, z = w.posX[id], w.posZ[id]
+			local nano, nd2 = 0, math.huge
+			for _, n in c.nanoIds do
+				local d2 = (w.posX[n] - x) ^ 2 + (w.posZ[n] - z) ^ 2
+				if d2 < nd2 then
+					nano, nd2 = n, d2
+				end
+			end
+			local reach = unitDef(sim, nano).buildRange or 0
+			if nd2 <= reach * reach then
+				if not nanoBusy[nano] and sim.build.target[nano] ~= id and nanoFree > 0 then
+					nanoBusy[nano] = true
+					nanoFree -= 1
+					submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { nano }, targetId = id })
+				end
+			elseif fresh or w.orderId[id] == 0 then
+				local dl = math.max(math.sqrt(nd2), 1)
+				local nx, nz = w.posX[nano], w.posZ[nano]
+				local cell, ox, oz = g:encode(nx + (x - nx) / dl * Skirmish.REPAIR_STANDOFF, nz + (z - nz) / dl * Skirmish.REPAIR_STANDOFF)
+				submit(sim, brain.player, { cmdType = CT.MOVE, flags = 0, unitIds = { id }, cell = cell, offX = ox, offZ = oz })
+			end
+		end
+	end
+	brain.repairing = repairing
 	for _, id in c.army do
-		if escorts[id] then
+		if escorts[id] or repairing[id] then
 			continue
 		end
 		if kiting[id] then
@@ -2453,12 +2754,23 @@ local function think(brain: Brain)
 	end
 	-- the known defence where the wave would go (S-105): it leaves only
 	-- worth ATTACK_MARGIN times that, or once massed to MASS_SHARE of the cap
+	local cap = sim.match.unitCap
+	local massed = #home >= (if cap > 0 then math.min(Skirmish.MASS_UNITS, cap * Skirmish.MASS_SHARE) else Skirmish.MASS_UNITS)
+	-- (S-222) the wave also gathers until it outweighs the strongest
+	-- enemy group it remembers (a massed army goes anyway)
+	local need = brain.waveValue
+	if tm and not massed then
+		need = math.max(need, brain.enemyGroup * Skirmish.GROUP_MARGIN)
+	end
 	local outweighs = true
-	if cfg.outweigh and homeValue >= brain.waveValue and mayAttack then
-		local defense = Skirmish.enemyValueNear(brain, targetX or brain.enemyX, targetZ or brain.enemyZ, Skirmish.DEFENSE_RADIUS)
-		local cap = sim.match.unitCap
-		local massed = #home >= (if cap > 0 then math.min(Skirmish.MASS_UNITS, cap * Skirmish.MASS_SHARE) else Skirmish.MASS_UNITS)
-		outweighs = homeValue >= defense * (cfg.attackMargin or Skirmish.ATTACK_MARGIN) or massed
+	if cfg.outweigh and homeValue >= need and mayAttack then
+		if tm then
+			-- (S-222) a target it outweighs, anywhere it knows of
+			outweighs = Skirmish.pickTarget(brain, tm, homeValue / margin) ~= nil or massed
+		else
+			local defense = Skirmish.enemyValueNear(brain, targetX or brain.enemyX, targetZ or brain.enemyZ, Skirmish.DEFENSE_RADIUS)
+			outweighs = homeValue >= defense * margin or massed
+		end
 		if not outweighs then
 			brain.held += 1
 		end
@@ -2485,7 +2797,7 @@ local function think(brain: Brain)
 			end
 		end
 		fight(half, team.helpX, team.helpZ)
-	elseif (homeValue >= brain.waveValue and mayAttack and outweighs) or join then
+	elseif (homeValue >= need and mayAttack and outweighs) or join then
 		-- easy (a wave interval) sends only the wave's value; the others wait
 		local cap = if cfg.waveInterval > 0 then brain.waveValue else math.huge
 		local stay = {}
@@ -2571,6 +2883,20 @@ local function think(brain: Brain)
 		end
 		local lead = if #front > 0 then front[1] else wave[1]
 		local tx, tz = targetX or brain.enemyX, targetZ or brain.enemyZ
+		if tm then
+			-- (S-222) the best target the wave outweighs, if the best known isn't
+			local wv = 0
+			for _, id in wave do
+				wv += Skirmish.value(unitDef(sim, id))
+			end
+			local px, pz = Skirmish.pickTarget(brain, tm, wv / margin)
+			if px and pz then
+				if px ~= tx or pz ~= tz then
+					brain.skipped += 1
+				end
+				tx, tz = px, pz
+			end
+		end
 		if #front >= Skirmish.LANE_MIN and (cfg.lanes or 1) >= 2 then
 			-- two lanes (S-76): every second unit comes round a flank, through
 			-- a waypoint off the straight line, then joins the attack
@@ -2609,12 +2935,12 @@ local function think(brain: Brain)
 				submit(sim, brain.player, { cmdType = CT.GUARD, flags = 0, unitIds = support, targetId = lead })
 			end
 		elseif #front > 0 then
-			fight(front, targetX or brain.enemyX, targetZ or brain.enemyZ)
+			fight(front, tx, tz)
 			if #support > 0 then
 				submit(sim, brain.player, { cmdType = CT.GUARD, flags = 0, unitIds = support, targetId = lead })
 			end
 		else
-			fight(wave, targetX or brain.enemyX, targetZ or brain.enemyZ)
+			fight(wave, tx, tz)
 		end
 		local escorts = {}
 		for _, list in { c.radarTrucks, c.trackers, c.jammers, c.mobileAntiNukes } do
@@ -2698,6 +3024,14 @@ function Skirmish.tick(brain: Brain)
 	end
 	if acc and acc.power.ratio < Skirmish.ARMY_FIRST_RATIO then
 		brain.powerLowAt = sim.tick -- (S-94; watched every tick like the stall, S-31)
+	end
+	if acc and sim.tick % Economy.STEP_TICKS == 0 then
+		-- (S-221) the governor's income averages
+		local s = acc.supply.income + (acc.supply.reclaimRate or 0)
+		local p = math.max(0, acc.power.income - (acc.power.fixedRate or 0))
+		local k = Skirmish.GOV_EMA
+		brain.incS = if brain.incS then brain.incS + (s - brain.incS) * k else s
+		brain.incP = if brain.incP then brain.incP + (p - brain.incP) * k else p
 	end
 	if (sim.tick - brain.thinkOffset) % brain.cfg.think ~= 0 then
 		return

@@ -65,7 +65,7 @@ end
 local function ownedUnits(w: World.World, player: number, unitIds: { number }): { number }
 	local out = {}
 	for _, id in unitIds do
-		if w.owner[id] == player then
+		if w.owner[id] == player and not World.isParked(w, id) then -- (a carried unit takes no orders, S-219)
 			table.insert(out, id)
 		end
 	end
@@ -150,6 +150,41 @@ local function applyBuild(sim: Types.Sim, player: number, cmd: Schema.Command)
 	end
 end
 
+-- LOAD (S-219): transports among the units pick up the target, an allied
+-- ground unit; units told to LOAD one of the sender's transports board it
+-- (the transport picks each up, after what it already does).
+-- UNLOAD: the sender's transports set their cargo down around the point.
+local function applyTransport(sim: Types.Sim, player: number, cmd: Schema.Command)
+	local w = sim.world
+	local units = ownedUnits(w, player, cmd.unitIds)
+	local transports, others = {}, {}
+	for _, id in units do
+		table.insert(if sim.defs.unitByIndex[w.defIndex[id]].transport then transports else others, id)
+	end
+	if cmd.cmdType == CT.UNLOAD then
+		local g = if sim.map then (sim.map :: any).grid else nil
+		if g == nil or #transports == 0 then
+			return
+		end
+		local x, z = g:decodeOnMap(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
+		Orders.give(sim, transports, { kind = "unload", x = x, z = z }, placing(cmd))
+		return
+	end
+	local t = cmd.targetId :: number
+	local ally = sim.players[player].allyTeam :: number
+	if w.slot[t] == nil or World.isParked(w, t) or w.ally[t] ~= ally then
+		return
+	end
+	if #transports > 0 then
+		Orders.give(sim, transports, { kind = "load", target = t, gen = w.gen[t] }, placing(cmd))
+	end
+	if #others > 0 and w.owner[t] == player and sim.defs.unitByIndex[w.defIndex[t]].transport then
+		for _, u in others do
+			Orders.give(sim, { t }, { kind = "load", target = u, gen = w.gen[u] }, true)
+		end
+	end
+end
+
 local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	if sim.pregame and Pregame.command(sim, player, cmd) then
 		return
@@ -161,6 +196,9 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 		return
 	elseif cmdType == CT.BUILD then
 		applyBuild(sim, player, cmd)
+		return
+	elseif cmdType == CT.LOAD or cmdType == CT.UNLOAD then
+		applyTransport(sim, player, cmd)
 		return
 	elseif cmdType == CT.ATTACK or cmdType == CT.GUARD or cmdType == CT.REPAIR or cmdType == CT.RECLAIM or cmdType == CT.RESURRECT then
 		applyTargeted(sim, player, cmd)

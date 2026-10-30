@@ -60,13 +60,15 @@ export type Event = {
 		| "SHIELD_HIT" -- a shell turned, broke through or was destroyed at a dome: unit = generator, other = projectile, x/y/z = the dome point (S-79, S-85)
 		| "SHIELD_FIELD" -- a projectile came into a dome's field: unit = generator, other = projectile (S-79)
 		| "ELIMINATED" -- other = player
-		| "MATCH_END", -- other = winning ally team (0 = nobody)
+		| "MATCH_END" -- other = winning ally team (0 = nobody)
+		| "TRANSPORT", -- a transport starts / stops a pick-up or set-down: unit = transport, other = the unit, action, x/z (S-220)
 	tick: number,
 	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), missile's target (DECOYED, LOST_LOCK), dead unit (DEATH)
 	other: number, -- target (FIRE), projectile (SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK), wreck or 0 (DEATH)
 	slot: number?, -- FIRE, SPAWN_PROJ
 	weaponIndex: number?, -- FIRE: the weapon's def index (S-118: SHOT carries it)
 	hit: boolean?, -- FIRE (hitscan)
+	action: number?, -- TRANSPORT: Schema.TransportAction
 	severity: number?, -- DEATH: 0..255
 	reason: string?, -- BUILD_FAILED
 	x: number?,

@@ -27,6 +27,7 @@ local Kit = require("./Kit")
 local UiIcon = require("./UiIcon")
 local Icons = require("../Core/Icons")
 local Precision = require("../Core/Precision")
+local Transports = require("../Core/Transports")
 local Selection = require("../Core/Selection")
 local UnitStats = require("../Core/UnitStats")
 local Features = require("@shared/Defs/Features")
@@ -294,18 +295,16 @@ local function one(ui: UI, api: Api.Api, id: number)
 			break
 		end
 	end
+	local cargo = Transports.line(world, u) -- a transport's units on board (S-219, C-272)
+	if cargo then
+		table.insert(lines, cargo)
+	end
 	if Precision.relevant(def) then
 		-- the team's radar precision from its Pinpointers (S-59, C-72)
 		local p = Precision.of(world)
 		table.insert(lines, string.format("Accuracy %d%%", math.floor(p * 100 + 0.5))) -- the user's wording
 	end
-	local st, flags = u.state or 0, {}
-	if def.converter then -- only converters read the on / off bit (Economy)
-		table.insert(flags, if bit32.band(st, 2) ~= 0 then "On" else "Off")
-	end
-	if bit32.band(st, 16) ~= 0 then
-		table.insert(flags, "Repeat")
-	end
+	local flags = {} -- (no On / Off or Repeat: states stay on the command card, C-275)
 	local q = api.state.factoryQueues[id]
 	if q and #q > 0 then
 		local parts, last, count = {}, nil, 0

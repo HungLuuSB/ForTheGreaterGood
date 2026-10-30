@@ -294,6 +294,18 @@
       }
     },
     {
+      "Name": "chs_buzzard",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://100802932066707",
+        "NormalMapContent": "rbxassetid://115995067955401",
+        "RoughnessMapContent": "rbxassetid://77201707824318",
+        "MetalnessMapContent": "rbxassetid://134292981070142",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_carapace",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -338,6 +350,18 @@
         "NormalMapContent": "rbxassetid://70407179153396",
         "RoughnessMapContent": "rbxassetid://89617830471676",
         "MetalnessMapContent": "rbxassetid://80603629363076",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "chs_charon",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://77094696978317",
+        "NormalMapContent": "rbxassetid://78150492044153",
+        "RoughnessMapContent": "rbxassetid://125972982005486",
+        "MetalnessMapContent": "rbxassetid://124963028634128",
         "EmissiveStrength": 0
       }
     },
@@ -1902,6 +1926,18 @@
       }
     },
     {
+      "Name": "ord_ark",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://122955050270898",
+        "NormalMapContent": "rbxassetid://74702602815911",
+        "RoughnessMapContent": "rbxassetid://91734944562695",
+        "MetalnessMapContent": "rbxassetid://122303582346372",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_artisan",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2030,6 +2066,18 @@
         "NormalMapContent": "rbxassetid://83627732459421",
         "RoughnessMapContent": "rbxassetid://71667771286137",
         "MetalnessMapContent": "rbxassetid://123002379322064",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_courier",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://84338211051203",
+        "NormalMapContent": "rbxassetid://73424312162550",
+        "RoughnessMapContent": "rbxassetid://133668289277748",
+        "MetalnessMapContent": "rbxassetid://133926230428471",
         "EmissiveStrength": 0
       }
     },
@@ -3150,6 +3198,18 @@
       }
     },
     {
+      "Name": "wreck_chs_buzzard",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://72831288848238",
+        "NormalMapContent": "rbxassetid://97580050835713",
+        "RoughnessMapContent": "rbxassetid://88488478324331",
+        "MetalnessMapContent": "rbxassetid://80073090110170",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_carapace",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -3194,6 +3254,18 @@
         "NormalMapContent": "rbxassetid://76256850928113",
         "RoughnessMapContent": "rbxassetid://135567315028320",
         "MetalnessMapContent": "rbxassetid://97305527084005",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_chs_charon",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://114391288978819",
+        "NormalMapContent": "rbxassetid://90645829231869",
+        "RoughnessMapContent": "rbxassetid://119582311209385",
+        "MetalnessMapContent": "rbxassetid://103419889229085",
         "EmissiveStrength": 0
       }
     },
@@ -4338,6 +4410,18 @@
       }
     },
     {
+      "Name": "wreck_ord_ark",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://123125542571561",
+        "NormalMapContent": "rbxassetid://75592356518487",
+        "RoughnessMapContent": "rbxassetid://77669440835094",
+        "MetalnessMapContent": "rbxassetid://112502313756486",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_artisan",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -4466,6 +4550,18 @@
         "NormalMapContent": "rbxassetid://128953886295766",
         "RoughnessMapContent": "rbxassetid://79373990057116",
         "MetalnessMapContent": "rbxassetid://85178370923119",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_courier",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://102607562156394",
+        "NormalMapContent": "rbxassetid://99233794694998",
+        "RoughnessMapContent": "rbxassetid://112524982608667",
+        "MetalnessMapContent": "rbxassetid://96738286684002",
         "EmissiveStrength": 0
       }
     },

@@ -1,65 +1,63 @@
-# Transports (proposal, waiting for the user's OK)
+# Transports (S-219, approved by the user 2026-10-30)
 
-Short design for air transports (playtest 3's open item), on BAR's model. Nothing is built until the user approves it; the decisions marked **(you pick)** are open.
+Air transports on BAR's model. The user's answers: Commanders and units can be carried; the light transport carries light units (Commanders included); most heavier units use the T2 transport; if a transport dies, the units it carries die with it.
 
 ## Units
 
-| Tier | Order | Chaos | Capacity | Built at |
+| Tier | Order | Chaos | Carries | Built at |
 |---|---|---|---|---|
-| T1 | Air transport (name TBD) | Air transport (name TBD) | 1 unit of footprint 1–2 | Airfield / Aerodrome |
-| T2 | Heavy air transport (name TBD) | Heavy air transport (name TBD) | 4 slots: footprint 1 = 1 slot, footprint 2 = 2 slots, footprint 3 = 4 slots | Advanced Airfield / Aerodrome |
+| T1 | Courier (`ord_courier`) | Buzzard (`chs_buzzard`) | One light unit: tier 1 or a Commander, footprint up to 2 | Airfield |
+| T2 | Ark (`ord_ark`) | Charon (`chs_charon`) | One unit of tier up to 2 and footprint up to 3 (S-220, the user: "they only carry 1 cargo, both for T1 and T2") | Advanced Airfield |
 
-- **Unarmed.** Light armor. Each new id goes to B (icon), C (model), D (Codex) and E (2D art), as usual.
-- **Speed:** slower while loaded: 1 − 0.1 × slots used (T2 full: 60%).
+- Helicopters (`HELI`), unarmed. Names are placeholders the user can change.
+- The def field is `transport = { slots, maxUnits, maxTier, maxFootprint }` (`Shared/Defs/Defs`). Commanders are tier 0.
+- **Speed:** a loaded transport flies at `1 − 0.1 × slots used` of its top speed (slots by the unit's footprint: 1, 2 or 4; an Ark with a footprint-3 tank: 60%).
 
-## Which units fit
+## Who fits (`Transport.canCarry`)
 
-- Ground units only: vehicles, bots and amphibious units, on land or in shallow water (not submerged).
-- Never structures, aircraft, ships or T3 walkers.
-- **Commanders (you pick):**
-  - Yes, as in BAR. A T1 transport can carry one, which allows a "Commander drop".
-  - Or no, which is safer for Command Ends.
+- Allied ground units only (`domain = "ground"`: vehicles, bots, amphibious units), finished.
+- Never structures, aircraft, ships, T3, other transports, shield carriers, a deployed or deploying Warden, or a submerged unit.
 
 ## Load
 
-- `LOAD` targets one unit or an area. The transport flies to each unit in turn, hovers over it, and picks it up in about 1 s.
-- Only its own team's units. Allies too **(you pick)**.
-- A picked-up unit:
-  - drops its orders;
-  - is hidden on the map and can't be seen, targeted or hit;
-  - doesn't fire, build or use its sensors;
-  - keeps its health, ammo and stockpile.
-- A unit can also be told to board: right-click a transport.
+- `LOAD` with a target unit: each transport flies over it, hovers within 10 studs plus the unit's radius, and picks it up in 1 s (`Transport.LOAD_TICKS` = 15). The unit stops when the pick-up starts.
+- Units told to `LOAD` one of the sender's transports board it: the transport picks them up one by one, after its other orders.
+- A carried unit is **parked** (`World.park`): it stays alive but leaves `world.ids`, so it doesn't move, fire, build, see, get seen or get hit. Its orders and work are dropped. It keeps its health, ammo and stockpile.
+- A carried unit takes no orders.
 
 ## Unload
 
-- `UNLOAD` at a point or an area. The transport flies there and lands the units one by one, about 1 s each.
-- Each unit is set down on the nearest open cell its move class can stand on, spread by its footprint.
-- If there's no room, the transport waits and reports "can't unload here".
-- Units come out idle. A queued order after the unload (move, fight) goes to them.
+- `UNLOAD` at a point: the transport flies there (within 12 studs) and hovers. It sets one unit down each second on the nearest open ground its move class can stand on, with no structure on it, searching in rings out from where it hovers.
+- With no room, it waits there.
+- Units come out idle where they were set down.
 
 ## Death of a loaded transport
 
-- **(you pick):**
-  - **a)** As in BAR: every unit on board dies with it, without wrecks.
-  - **b)** Passengers drop where it crashes and take 50% of their max health as fall damage, so light units usually die and heavy ones survive.
-- Self-destructing a loaded transport kills its passengers, under a or b.
+- Every unit on board dies with it, with no wrecks and no death blasts (the user's choice: as in BAR). A carried Commander dies too, which ends its player under Command Ends.
+- The same when the transport self-destructs.
 
-## Sim, network and AI
+## What players see (S-220, the user via client request 40)
 
-- **Sim:**
-  - World: `cargo[id]`, the list of carried units, and `carrier[id]`, the transport a unit rides in.
-  - Carried units stay in the world, but Movement, Combat, Sensors and the quadtree skip them.
-  - Hashed and replayed.
-- **Protocol (+1):**
-  - Commands: `LOAD` and `UNLOAD`.
-  - Unit state: a `CARRIED` bit.
-  - The transport's own-status record carries its cargo, so the client can show the passengers' icons on it.
-- **AI:** none at first. Later, Hard could ferry builders to far deposits.
-- **Tests:**
-  - Load and unload round trip.
-  - Capacity by footprint.
-  - Which units fit.
-  - Death under the picked rule.
-  - A carried unit can't be targeted.
-  - Replay.
+- The transport descends, grabs the unit under its belly and rises again; the same to set it down. The client times it from TRANSPORT events, sent as each pick-up or set-down starts.
+- Everyone who sees the transport sees what hangs under it (CARRY), not only its owner.
+- The set-down spot is chosen when the set-down starts, so the DROP event can say where. If something stands there by the end, the nearest open spot is used; with none, it cancels (CANCEL) and tries again.
+
+## Network (protocols 43, 44)
+
+- Commands: `LOAD` 32 (`targetId`) and `UNLOAD` 33 (`pos`).
+- Owner field `CARGO` 128 on the transport's own-status record: `count u8`, then a `u16` unit ID per unit on board, in loading order. It is sent when the cargo changes, and with the ENTER when not empty.
+- A carried unit leaves every player's view, its owner's too: a `LEAVE`. Setting it down brings an `ENTER`.
+- Protocol 44 (S-220): event TRANSPORT 34 (`unitId` transport, `targetId` unit, `defIndex`, `action` PICKUP 1 / DROP 2 / CANCEL 3, `ticks`, then the pick-up point or set-down spot) as each starts or stops; event CARRY 35 (`unitId`, `defIndex` 0 = empty, `team`) with the transport's ENTER and when it changes. Both to every player with the transport on its tactical tier.
+
+## AI
+
+- None for now. Later, Hard could ferry builders to far deposits.
+
+## Tests (`Transport.spec`)
+
+- Load and unload round trip.
+- Who fits, slots and capacity.
+- Boarding, and a carried unit taking no orders.
+- Death on board.
+- Determinism.
+- The wire: LEAVE, CARGO, ENTER.

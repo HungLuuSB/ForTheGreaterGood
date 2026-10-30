@@ -39,6 +39,7 @@ local MoveClasses = require("@shared/Defs/MoveClasses")
 local Nav = require("../Nav")
 local Quadtree = require("../Path/Quadtree")
 local Terrain = require("@shared/Grid/Terrain")
+local Transport = require("../Transport")
 local Types = require("../Types")
 local World = require("../World")
 
@@ -387,7 +388,7 @@ return function(sim: Types.Sim)
 
 		-- speed: slow down to stop at the goal, and while facing away
 		-- terrain: the cell under the unit scales its top speed (S-37)
-		local top = p.maxSpeed
+		local top = p.maxSpeed * (sim.transport.slow[id] or 1) -- a loaded transport (S-219)
 		if not p.air then
 			local tx, tz = g:cellAt(nx[k], nz[k])
 			-- (clamped: a ground unit off the map, e.g. a debug spawn, used to
@@ -535,4 +536,5 @@ return function(sim: Types.Sim)
 		end
 	end
 	updateMoving(sim, profiles)
+	Transport.step(sim) -- carried units ride along (S-219)
 end

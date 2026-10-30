@@ -146,8 +146,9 @@ return function(sim: Types.Sim)
 		local airborne = def.domain == "air" and bit32.band(w.state[id], World.State.LANDED) == 0
 		local frame = w.buildProgress[id] < 1
 		local selfDestructed = c.selfDestructed[id] == true
+		local carried = sim.transport.carrier[id] ~= nil -- died on board a transport (S-219)
 		-- (S-194) no wreck from a self-destruct or a D-Gun bolt
-		if severity <= Combat.WRECK_MAX_SEVERITY and not airborne and not frame and not selfDestructed and not c.noWreck[id] then
+		if severity <= Combat.WRECK_MAX_SEVERITY and not airborne and not frame and not selfDestructed and not carried and not c.noWreck[id] then
 			wreck = Combat.addWreck(c, w.posX[id], w.posZ[id], def, w.heading[id])
 		end
 		Combat.addEvent(c, {
@@ -163,7 +164,7 @@ return function(sim: Types.Sim)
 		local quiet = sim.match.quiet[id]
 		sim.match.quiet[id] = nil
 		local noBlast = selfDestructed and def.deathBlast ~= nil and def.deathBlast.notSelfDestruct == true -- (S-209: a self-destructed nano hurts nobody)
-		if def.deathBlast and not frame and not quiet and not noBlast and not upgradedFrom(sim, id) then
+		if def.deathBlast and not frame and not quiet and not noBlast and not carried and not upgradedFrom(sim, id) then
 			-- its death blast (guide 8.5, S-70; every unit since S-178): every
 			-- unit in reach, own and allied included (team 0 is nobody's);
 			-- applied next tick, so blasts can set each other off. Not for a

@@ -86,7 +86,7 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 	end
 	if kind ~= CT.MOVE and kind ~= CT.FIGHT and kind ~= CT.PATROL and kind ~= CT.ATTACK
 		and kind ~= CT.ATTACK_GROUND and kind ~= CT.GUARD and kind ~= CT.REPAIR and kind ~= CT.RECLAIM
-		and kind ~= CT.BUILD and kind ~= CT.AREA then
+		and kind ~= CT.BUILD and kind ~= CT.AREA and kind ~= CT.LOAD and kind ~= CT.UNLOAD then
 		return -- state commands don't move anything
 	end
 	local slots = if intent.x2
@@ -250,6 +250,15 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 			end
 			if first.kind == CT.BUILD or first.kind == CT.PATROL or first.kind == CT.AREA then
 				break -- a build until its frame is finished; a patrol until replaced; an area until idle
+			end
+			if first.kind == CT.UNLOAD then
+				-- until the cargo is down (S-219, C-273), not on arrival: the set-down takes a while there
+				if u.cargo == nil or #u.cargo == 0 then
+					table.remove(list, 1)
+					first = list[1]
+					continue
+				end
+				break
 			end
 			local x, z = u.rx or u.x, u.rz or u.z
 			local d2 = (first.x - x) ^ 2 + (first.z - z) ^ 2

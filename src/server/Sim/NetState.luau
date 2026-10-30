@@ -22,6 +22,7 @@ export type PlayerNet = {
 	sentTargets: { [number]: string }, -- own tactical units → the weapon targets last sent (S-16)
 	sentStock: { [number]: string }, -- own tactical units → the missile stock last sent (S-47)
 	sentOwner: { [number]: { string } }, -- own tactical units → queue, states, ammo last sent (S-61)
+	sentCarry: { [number]: number }, -- tactical transports → defIndex × 256 + team of what they carry, 0 empty (S-220)
 	sentIdle: { [number]: number }, -- own builders / factories last sent idle → their generation (S-136)
 	sentProducing: { [number]: string }, -- allied tactical factories → item and progress last sent (S-103)
 	sentOwn: { [number]: number }, -- own units off camera → their status last sent (NetOut's signature; S-158)
@@ -90,6 +91,7 @@ function NetState.viewer(spectator: boolean): PlayerNet
 		sentTargets = {},
 		sentStock = {},
 		sentOwner = {},
+		sentCarry = {},
 		sentIdle = {},
 		sentProducing = {},
 		sentOwn = {},
