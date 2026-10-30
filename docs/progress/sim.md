@@ -16,6 +16,8 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 - `tools/studio/sync_all.cmd`: a double-click start for the three places' live syncs.
 - **S-216: the AI builds playtest 3's units:** bot labs and bots, Construction Turrets by its factories, advanced solar, fusion, advanced storage, converters and fusion, offshore extractors on sea maps; Hard a gantry and T3 walkers. Report: `lune run mirror_units`.
 - **S-217:** Titan and Juggernaut blasts are 480 over 52 studs (35% of a nuke's; a Commander survives); the Solar Array costs 100 supply.
+- **S-218:** the Construction Turret reclaims live enemy units in its reach first (never a Commander), no wreck; protocol 42 WORK kind RECLAIM_UNIT.
+- **S-219: air transports** (Courier / Buzzard T1, Ark / Charon T2): LOAD / UNLOAD, cargo parked out of the world, dies with its transport; protocol 43. Design: `docs/design/transports.md`.
 - **S-215 (client-B):** the power bar's demand now counts extractor upkeep and converters' burn.
 - **S-214: unit descriptions** are "Role. What it does." for all 203 units, with no comparison to the counterpart; `Defs.spec` keeps them that way.
 
@@ -560,6 +562,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E reads this section; the sim stream doesn't edit E's files.
 
 1. **S-213 (2026-10-29):** the Chaos T3 bot's id is now `chs_juggernaut` (was `chs_korgoth`); the retired T2 tank is `chs_goliath` (was `chs_juggernaut`). Its unit picture and icon sheet entry should follow the new ids. The T3 walker still borrows the T2 tank's tile in B's `IconAtlas`; it needs its own art, with the Titan's. B swaps the `IconAtlas` keys.
+2. **S-219 (2026-10-30): four transports** need unit icons (style B) and build-menu pictures once C has models: `ord_courier` (Courier, Order T1 light air transport), `chs_buzzard` (Buzzard, Chaos T1), `ord_ark` (Ark, Order T2 heavy air transport, up to 4 units), `chs_charon` (Charon, Chaos T2). Def icon key `transport`. B also needs Load and Unload command-button icons (E-10 style).
 
 ## For the client stream
 

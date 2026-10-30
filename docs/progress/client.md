@@ -56,6 +56,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, transport icons: C-271)
+
+- **Transports come through the client (C-271):** sim-A's S-218 and S-219 (m-sim-2 e7765af2) and 2D-E's E-13 icons (2d 485edc70) are merged. Unit icon sheet 2 and the UI atlas are re-rendered and uploaded with the user's approval (100470717468643, 89353396855864).
+- Ready to merge: `2b6878bc` (C-271; carries m-sim-2 e7765af2 and 2d 485edc70. test_client 348 / 348, build passed (890 scripts, 2506 requires). Studio, Coastline: both images load, the transports draw their icons)
+
 ## Summary (2026-10-30, T3 death blasts: C-270)
 
 - **Heavier T3 walker deaths (C-270):** the Titan's and Juggernaut's 52-stud death blasts (S-217) play models-C's StructureDeath instead of a plain impact; not a nuke.

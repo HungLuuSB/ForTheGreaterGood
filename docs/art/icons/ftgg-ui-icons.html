@@ -200,6 +200,10 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
     // selfdestruct: a bomb, its fuse lit
     selfdestruct: () => L("M20.5 11 Q23 5.5 26.5 5.5", 2) + F("M17.5 8 L23.5 11 L21.2 15.6 L15.2 12.6 Z") + C(13.5, 19.5, 9.8) + H("M8 15 A6.5 6.5 0 0 1 12 11 L12.6 13 A4.5 4.5 0 0 0 10 15.7 Z") + F(poly([...Array(12)].map((_, i) => { const r = i % 2 ? 1.6 : 4.4, a = i * Math.PI / 6; return [27 + r * Math.cos(a), 5 + r * Math.sin(a)]; }))),
     // alert (jump to the last alert): a warning triangle
+    // load (transports): a unit (diamond) lifted into the clamp that grips it (the transport units' symbol)
+    load: () => L("M4 12.5 V3.5 H28 V12.5", 3) + F("M16 5 L22 11 L16 17 L10 11 Z") + F("M16 18.5 L22.5 25 H18.5 V30 H13.5 V25 H9.5 Z"),
+    // unload (transports): the clamp empty, the unit set down below it
+    unload: () => L("M4 12.5 V3.5 H28 V12.5", 3) + F("M13.5 6.5 H18.5 V10.5 H22.5 L16 16.5 L9.5 10.5 H13.5 Z") + F("M16 17.5 L22.5 24 L16 30.5 L9.5 24 Z"),
     alert: () => F("M16 2.5 L30 28.5 H2 Z") + H("M14.3 10.5 H17.7 L17 20.5 H15 Z") + HC(16, 24, 1.9),
   };
 
@@ -251,6 +255,8 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
     { key: "resurrect", n: "Resurrect", group: "command", tint: "#6AB0F0", use: "Command card, T1 workers." },
     { key: "upgrade", n: "Upgrade", group: "command", tint: "#F6BE50", use: "Command card: upgrade extractors in place (an area command)." },
     { key: "selfdestruct", n: "Self-destruct", group: "command", tint: "#E6584E", use: "Command card (Ctrl + key)." },
+    { key: "load", n: "Load", group: "command", tint: "#4FD0B0", use: "Command card, load cursor and order lines: transports pick units up (S-219)." },
+    { key: "unload", n: "Unload", group: "command", tint: "#F08CB4", use: "Command card, unload cursor and order lines: transports set units down (S-219)." },
     { key: "alert", n: "Last alert", group: "command", tint: "#FFAA46", use: "Command card: jump to the last alert (the alert feed's orange)." },
   ];
   const SIZES = [16, 24, 32];
@@ -337,18 +343,18 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
     // command card (B): the full set, icon + label, state segments under the state buttons
     const SEGC = { fire: 2, movestate: 1, retreat: 1, repeat: 1, toggle: 1, priority: 1 }, SEGN = { fire: 3, movestate: 3, retreat: 3, repeat: 2, toggle: 2, priority: 2 };
     const segCol = (n, i) => (n === 2 ? ["#e6584e", "#6fd36f"] : ["#e6584e", "#e6c84e", "#6fd36f"])[i];
-    const cmdLabel = { fire: "Fire at will", movestate: "Maneuver", retreat: "Retreat 40%", repeat: "Repeat On", toggle: "On", priority: "High prio", cancel: "Cancel", stop: "Stop", attack: "Attack", dgun: "D-Gun", move: "Move", patrol: "Patrol", fight: "Fight", guard: "Guard", repair: "Repair", reclaim: "Reclaim", resurrect: "Resurrect", upgrade: "Upgrade", selfdestruct: "Self-destruct", alert: "Last alert" };
+    const cmdLabel = { fire: "Fire at will", movestate: "Maneuver", retreat: "Retreat 40%", repeat: "Repeat On", toggle: "On", priority: "High prio", cancel: "Cancel", stop: "Stop", attack: "Attack", dgun: "D-Gun", move: "Move", patrol: "Patrol", fight: "Fight", guard: "Guard", repair: "Repair", reclaim: "Reclaim", resurrect: "Resurrect", upgrade: "Upgrade", selfdestruct: "Self-destruct", load: "Load", unload: "Unload", alert: "Last alert" };
     const cmds = Object.keys(cmdLabel);
-    m += `<rect x="0" y="610" width="560" height="250" fill="#2d3a2c"/><rect x="0" y="610" width="560" height="250" fill="url(#grid)"/><rect x="10" y="620" width="540" height="230" rx="3" fill="${B.panel}" fill-opacity=".92"/>`;
+    m += `<rect x="0" y="610" width="560" height="294" fill="#2d3a2c"/><rect x="0" y="610" width="560" height="294" fill="url(#grid)"/><rect x="10" y="620" width="540" height="274" rx="3" fill="${B.panel}" fill-opacity=".92"/>`;
     cmds.forEach((k, i) => {
       const x = 18 + (i % 4) * 133, y = 628 + Math.floor(i / 4) * 44;
       m += `<rect x="${x}" y="${y}" width="127" height="38" rx="3" fill="${k === "move" ? "#3c5a8a" : "#2a2e36"}"/>` + place(uiSVG(byKey(k), "#E8EAEE", 16), x + 7, y + 8, 16) + txt(x + 29, y + 20, cmdLabel[k], 11, B.text);
       if (SEGN[k]) for (let j = 0; j < SEGN[k]; j++) m += `<rect x="${x + 29 + j * 11}" y="${y + 28}" width="9" height="2" fill="${j === SEGC[k] ? segCol(SEGN[k], j) : "#14161b"}"/>`;
     });
-    c += `<rect x="580" y="610" width="360" height="250" fill="${Dc.card}"/>` + txt(596, 632, "ORDER COLOURS · 24 PX", 11, Dc.dim, "start", 600);
+    c += `<rect x="580" y="610" width="360" height="294" fill="${Dc.card}"/>` + txt(596, 632, "ORDER COLOURS · 24 PX", 11, Dc.dim, "start", 600);
     cmds.forEach((k, i) => { const x = 596 + (i % 5) * 68, y = 646 + Math.floor(i / 5) * 52; c += `<rect x="${x}" y="${y}" width="32" height="32" rx="3" fill="${Dc.cell}"/>` + place(uiSVG(byKey(k), byKey(k).tint, 24), x + 4, y + 4, 24) + txt(x + 16, y + 44, k.length > 9 ? k.slice(0, 8) + "…" : k, 8, Dc.dim, "middle"); });
     const defs = `<defs><pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0 H0 V24" fill="none" stroke="#3a4a38" stroke-width="1"/></pattern><linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4250" stop-opacity=".6"/><stop offset="1" stop-color="#11141a" stop-opacity=".2"/></linearGradient></defs>`;
-    document.getElementById("inplace").innerHTML = `<svg width="940" height="860" viewBox="0 0 940 860" role="img" aria-label="Resource and stat icons in the match HUD and the Codex">${defs}${m}${c}</svg>`;
+    document.getElementById("inplace").innerHTML = `<svg width="940" height="904" viewBox="0 0 940 904" role="img" aria-label="Resource and stat icons in the match HUD and the Codex">${defs}${m}${c}</svg>`;
   }
 
   function renderSizes() {
