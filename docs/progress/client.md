@@ -61,6 +61,7 @@ Written for a new session (the project is moving to another Claude account). Eve
 
 - **The Goliath's picture (C-277):** E's build-menu picture for the returning Goliath (S-224, request E2), on sheet 4. Sheet 4 was re-uploaded with the user's approval (120576950340042); all 202 units have a picture.
 - E2 is done.
+- Ready to merge: `6efce007` (C-277; carries 2d c83c4477. test_client 352 / 352, build passed (901 scripts, 2545 requires). Studio: the Advanced Foundry's Goliath tile shows its picture)
 
 ## Summary (2026-10-30, transport pictures: C-276)
 
