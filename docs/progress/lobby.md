@@ -2,6 +2,16 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-30: unit pictures in the Units tab)
+
+- Merged main `98c29349` (fast-forward: the emblems' merge).
+- **`lobby.project.json`** mounts client-B's `UI/UnitPictures` read-only (`ClientKit.UI.UnitPictures`; 2d-E's pre-rendered pictures, C-262).
+- **Units list:** each row (now 44 px) starts with the unit's 38 px picture; a unit without one keeps its strategic icon in a cell of the same size.
+- **Counterpart:** the article's counterpart is a card with its 76 px picture, its name and its faction, role and tier; clicking it opens that article. The comparison line stays under it. The "Builds" and "Built by" chips keep their small icons.
+- **Studio** (`debug_out/screens/`): `lobby_pictures_list`, `lobby_pictures_counterpart` (Titan → Juggernaut card), `lobby_pictures_chaos` (the card opened the Juggernaut, whose card is the Titan). No script errors.
+- Lobby specs 67 / 67; the build check passes (652 scripts, 1085 requires).
+- Ready to merge: `9db7385b` (unit pictures in the Units tab; touches only `src/lobby`, `lobby.project.json` and the lobby progress)
+
 ## Summary (2026-10-30: faction emblems, D-E2)
 
 - Merged main `40368ba8` (S-216, S-217: no Codex change, it reads costs from the defs and shows no death blasts) and `411f7cb0` (B's C-265..C-269 with `UI/FactionEmblems` and `UI/UnitPictures`).

@@ -14,6 +14,7 @@ local Defs = require("@shared/Defs/Defs")
 local UserInputService = game:GetService("UserInputService")
 
 local IconAtlas = require("@client/UI/IconAtlas")
+local UnitPictures = require("@client/UI/UnitPictures")
 local Emblem = require("../Emblem")
 local Showroom = require("../Showroom")
 local StatBars = require("../StatBars")
@@ -80,6 +81,27 @@ local function icon(parent: Instance, def: any, size: number, color: Color3): Im
 		img.ImageRectSize = Vector2.new(IconAtlas.TILE_W, IconAtlas.TILE_H)
 	end
 	img.Parent = parent
+	return img
+end
+
+-- 2d-E's pre-rendered picture of a def, `px` square with rounded corners;
+-- nil while it has none (or its sheet isn't uploaded): callers draw the icon.
+local function picture(parent: Instance, defId: string, px: number): ImageLabel?
+	local image, x, y = UnitPictures.of(defId)
+	if image == nil then
+		return nil
+	end
+	local img = Instance.new("ImageLabel")
+	img.Name = "Picture"
+	img.BackgroundColor3 = Color3.fromRGB(20, 22, 26)
+	img.BackgroundTransparency = 0
+	img.Size = UDim2.fromOffset(px, px)
+	img.Image = image
+	img.ImageRectOffset = Vector2.new(x, y)
+	img.ImageRectSize = Vector2.new(UnitPictures.TILE, UnitPictures.TILE)
+	img.ScaleType = Enum.ScaleType.Fit
+	img.Parent = parent
+	Ui.corner(img, 4)
 	return img
 end
 
@@ -168,6 +190,57 @@ local function chips(parent: Instance, codex: Codex.Codex, ids: { string }, orde
 				open(id)
 			end)
 		end
+	end
+end
+
+-- A counterpart's card: its picture (else its icon), its name, and its
+-- role and tier; opens its article.
+local function counterpartCard(parent: Instance, codex: Codex.Codex, id: string, order: number, open: (string) -> ())
+	local def = codex.defs.units[id]
+	local e = codex.entries[id]
+	if def == nil then
+		return
+	end
+	local b = Instance.new("TextButton")
+	b.Name = id
+	b.AutoButtonColor = false
+	b.Text = ""
+	b.Size = UDim2.new(1, 0, 0, 88)
+	b.BackgroundColor3 = Kit.COLOR.raised
+	b.BackgroundTransparency = 0.93
+	b.LayoutOrder = order
+	b.Parent = parent
+	Ui.corner(b, 6)
+	Kit.pad(b, 6, 6, 6, 6)
+	local bl = Kit.list(b, Kit.SPACE.m, true)
+	bl.VerticalAlignment = Enum.VerticalAlignment.Center
+	local pic = picture(b, id, 76)
+	if pic then
+		pic.LayoutOrder = 1
+	else
+		icon(b, def, 40, factionColor(def.faction)).LayoutOrder = 1
+	end
+	local text = Ui.frame(b, "Text", UDim2.new(1, -90, 1, 0))
+	text.LayoutOrder = 2
+	local tl = Kit.list(text, 2)
+	tl.VerticalAlignment = Enum.VerticalAlignment.Center
+	local name = Kit.text(text, def.name, "section", if e then Kit.COLOR.text else Kit.COLOR.dim)
+	name.Size = UDim2.new(1, 0, 0, 22)
+	name.LayoutOrder = 1
+	local sub = Kit.text(text, `<font color="#{factionColor(def.faction):ToHex()}">{Ui.label2(def.faction)}</font>  ·  {if e and e.role then e.role.name else "Unit"}  ·  {Codex.tierName(def.tier)}`, "small", Kit.COLOR.dim)
+	sub.RichText = true
+	sub.Size = UDim2.new(1, 0, 0, 16)
+	sub.LayoutOrder = 2
+	if e then
+		b.MouseEnter:Connect(function()
+			b.BackgroundTransparency = 0.86
+		end)
+		b.MouseLeave:Connect(function()
+			b.BackgroundTransparency = 0.93
+		end)
+		b.MouseButton1Click:Connect(function()
+			open(id)
+		end)
 	end
 end
 
@@ -465,7 +538,9 @@ function Units.new(frame: Frame, _router: any): any
 		if #e.counterparts == 0 then
 			paragraph(article, `None: only {Ui.label2(e.faction)} has a {if e.role then string.lower(e.role.name) else "unit like this"}.`, nextOrder(), "small", Kit.COLOR.dim)
 		else
-			chips(article, c, e.counterparts, nextOrder(), select)
+			for _, other in e.counterparts do
+				counterpartCard(article, c, other, nextOrder(), select)
+			end
 			for _, other in e.counterparts do
 				local diffs = Codex.compare(c, id, other)
 				local parts = {}
@@ -683,16 +758,25 @@ function Units.new(frame: Frame, _router: any): any
 			b.Name = e.id
 			b.AutoButtonColor = false
 			b.Text = ""
-			b.Size = UDim2.new(1, -6, 0, 34)
+			b.Size = UDim2.new(1, -6, 0, 44)
 			b.BackgroundColor3 = if on then Kit.COLOR.selected else Kit.COLOR.raised
 			b.BackgroundTransparency = if on then 0.2 else 1
 			b.LayoutOrder = order
 			b.Parent = list
 			Ui.corner(b, 5)
-			Kit.pad(b, Kit.SPACE.s, 0, Kit.SPACE.s, 0)
+			Kit.pad(b, 3, 0, Kit.SPACE.s, 0)
 			local rl = Kit.list(b, Kit.SPACE.s, true)
 			rl.VerticalAlignment = Enum.VerticalAlignment.Center
-			icon(b, e.def, 22, factionColor(e.faction)).LayoutOrder = 1
+			-- its picture (2d-E's), else its icon in a picture-sized cell
+			local pic: GuiObject? = picture(b, e.id, 38)
+			if pic == nil then
+				local cell = Ui.frame(b, "Picture", UDim2.fromOffset(38, 38))
+				local glyph = icon(cell, e.def, 22, factionColor(e.faction))
+				glyph.AnchorPoint = Vector2.new(0.5, 0.5)
+				glyph.Position = UDim2.fromScale(0.5, 0.5)
+				pic = cell
+			end
+			(pic :: GuiObject).LayoutOrder = 1
 			local nm = Ui.label(b, e.def.name, "label", Kit.COLOR.text, 2)
 			nm.TextTruncate = Enum.TextTruncate.AtEnd
 			local role = Ui.label(b, if e.role then e.role.name else "", "small", Kit.COLOR.faint, 3)

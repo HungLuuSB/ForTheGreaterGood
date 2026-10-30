@@ -28,6 +28,9 @@
           },
           "FactionEmblems": {
             "$path": "build/lobby/src/client/UI/FactionEmblems.luau"
+          },
+          "UnitPictures": {
+            "$path": "build/lobby/src/client/UI/UnitPictures.luau"
           }
         },
         "Core": {
