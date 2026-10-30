@@ -2,6 +2,8 @@
 // one catalogue item, no item lists an id that is no def, each item's tier
 // and frame agree with its defs, every symbol exists, tile keys are unique,
 // and the ten placeholders (one per frame, ph:1, no defs, no tier) are there.
+// An item with `soon` (the sim task that adds its defs, e.g. "S-219") may list
+// ids this checkout has no def for yet: those are notes until the defs land.
 // Runs the sheet's own FR / SYM / CAT the way tools/icons/render.mjs does.
 //
 // From the project root:
@@ -70,7 +72,11 @@ for (const it of items) {
 for (const f of PH_FRAMES) if (!phSeen.has(f)) problems.push(`no placeholder for frame ${f}`);
 
 const known = new Map(defs.map((d) => [d.id, d]));
-for (const [id, it] of itemOf) if (!known.has(id)) problems.push(`"${it.n}" lists ${id}, which is no unit def`);
+for (const [id, it] of itemOf) {
+	if (known.has(id)) continue;
+	if (it.soon) notes.push(`"${it.n}" lists ${id}, which comes with ${it.soon} (no def here yet)`);
+	else problems.push(`"${it.n}" lists ${id}, which is no unit def`);
+}
 let retired = 0;
 for (const d of defs) {
 	const it = itemOf.get(d.id);

@@ -1386,14 +1386,14 @@
 				]
 			}
 		},
-		"alert": {
-			"name": "Last alert",
+		"load": {
+			"name": "Load",
 			"group": "command",
-			"tint": "#FFAA46",
+			"tint": "#4FD0B0",
 			"files": {
-				"16": "alert_16.png",
-				"24": "alert_24.png",
-				"32": "alert_32.png"
+				"16": "load_16.png",
+				"24": "load_24.png",
+				"32": "load_32.png"
 			},
 			"rect": {
 				"16": [
@@ -1410,6 +1410,66 @@
 				],
 				"32": [
 					544,
+					104,
+					32,
+					32
+				]
+			}
+		},
+		"unload": {
+			"name": "Unload",
+			"group": "command",
+			"tint": "#F08CB4",
+			"files": {
+				"16": "unload_16.png",
+				"24": "unload_24.png",
+				"32": "unload_32.png"
+			},
+			"rect": {
+				"16": [
+					846,
+					0,
+					16,
+					16
+				],
+				"24": [
+					208,
+					44,
+					24,
+					24
+				],
+				"32": [
+					578,
+					104,
+					32,
+					32
+				]
+			}
+		},
+		"alert": {
+			"name": "Last alert",
+			"group": "command",
+			"tint": "#FFAA46",
+			"files": {
+				"16": "alert_16.png",
+				"24": "alert_24.png",
+				"32": "alert_32.png"
+			},
+			"rect": {
+				"16": [
+					864,
+					0,
+					16,
+					16
+				],
+				"24": [
+					234,
+					44,
+					24,
+					24
+				],
+				"32": [
+					612,
 					104,
 					32,
 					32
