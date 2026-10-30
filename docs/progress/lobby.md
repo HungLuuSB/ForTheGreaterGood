@@ -4,7 +4,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 
 ## Summary (2026-10-30: S-219's transports on main)
 
-- Merged main `e1e51407` (S-219's transport defs, the Goliath's Codex role as `e1e51407`; S-224 itself isn't on main yet, so the Goliath stays hidden here).
+- Merged main `e1e51407` (S-219's transport defs and the Goliath's Codex role; S-224 itself isn't on main yet, so the Goliath stays hidden here).
 - **`Codex.ANNOUNCED`** is empty: the Courier, Buzzard, Ark and Charon have their defs, so they show in the Units tab with their roles. `Codex.spec` checks that the Courier and Buzzard, and the Ark and Charon, are each other's counterparts.
 - Their pictures come with B's C-276 / C-277 (`UI/UnitPictures`, read-only); until then the rows show their icons.
 - Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
