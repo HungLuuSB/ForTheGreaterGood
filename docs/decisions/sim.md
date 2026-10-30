@@ -3114,3 +3114,22 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - The set-down spot is now chosen when the set-down starts. At the end, the nearest open spot is used if something stands there.
   - CARRY (the unit's def and team, 0 = empty) goes to the same players, with the ENTER and on change, so enemies see what hangs under a transport. CARGO stays owner-only.
 - **Tests:** `Transport.spec`: an enemy hears PICKUP and CARRY, then the DROP; the unit comes down where the DROP said; both tiers take one unit.
+
+## S-221 — The AI's economy governor: spending follows income (the user: "Proceed", after BAR's CircuitAI) (2026-10-30)
+
+- **Why:** from minute 7, Hard's factories and Construction Turrets drew about three times its supply income. Everything built at 1–3% speed, and the late game (advanced fusion, the gantry, T3 walkers) never came. CircuitAI (BAR's AI, GPL-2: ideas only, no code) never lets build power outrun income.
+- **Income averages:** every economy step (5 ticks), `incS` (supply income plus reclaim) and `incP` (power income less upkeep and converters) average with weight `GOV_EMA` 0.05 (about 7 s). Watched every tick, like the stall memories (S-31).
+- **Affordable build power:** `GOV_RATIO` 1.2 × min(incS / `WORK_SUPPLY` 0.035, incP / `WORK_POWER` 0.45): a typical job costs 0.035 supply and 0.45 power a second per unit of build power.
+- **Factories (`Skirmish.govern`):** busy builders' build power comes first. Factories with work, in tech order (gantries; advanced plants, labs and airfields; plants, labs and airfields; shipyards; within a tier they take turns at the head, a minute each, `GOV_ROTATE`, or Normal's bot lab built no bots by minute 14), each with the Construction Turrets in its reach, stay at high priority while they fit what is left (at least `GOV_FACTORY_MIN` half of it; the first always does). The rest go low through the PRIORITY command (S-156): they build with what high consumers leave. A command only when a unit's priority changes.
+- **Builders:** new Construction Turrets only while theirs stays under `GOV_NANO_SHARE` 60% of the affordable build power.
+- **Power-bound** (power pays for less than supply): generators get their slack even while supply is short; the T2 builder's fusions, then advanced fusion right after the first shield.
+- **Power-rich** (power pays for 1.5× what supply does): T1 converters without waiting for full power storage.
+- **T2 builders:** one more per `GOV_T2_INCOME` 20 supply/s of income, at most 3 (one Architect did nothing but extractor upgrades from minute 22 to 35). Only the first upgrades extractors; the others work down the T2 list.
+- Normal and Hard (`governor = true`); Easy is unchanged.
+- **Result** (`lune run mirror_units 4 35`, Supreme Strait and Coastline; before → after):
+  - Supreme Strait Hard, minute 24: supply income 17 → 50/s, power 300 → 710/s; supply ratio from minute 8 about 0.03 → mostly 1.0.
+  - Supreme Strait Hard: gantry 0 → 13 of 16 AIs, Titans / Juggernauts 0 → 7 of 16, advanced fusion 0 → 10 of 16. Normal: advanced fusion 0 → 10 of 16.
+  - Coastline Hard: gantry 1 → 6 of 16, Titans 0 → 6, advanced fusion 0 → 5, all Order. Chaos on Coastline Hard still reaches none of them (still open).
+  - Fewer bots and tanks, more economy. Mirror wins by start stay within the slow suite's guard (Ridgeline 21 / 15 of 36).
+- **Tests:** `AI.spec` (slow): Hard on Supreme Strait holds a supply ratio of at least 0.3 from minute 8 to 14 (0.55; about 0.03 without it), and sets something to low priority. `Skirmish.spec`'s full match on the 192×192 map may run 60 minutes (was 45): seed 1 ended at 11 minutes with Order's rush; governed, Chaos survives it and Order wins at 44 minutes.
+- **Next (phases 2 and 3 of the plan):** a threat map, attack groups sized to the enemy, retreat; counters by cost share, and data-driven config.

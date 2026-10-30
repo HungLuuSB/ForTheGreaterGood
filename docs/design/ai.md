@@ -39,7 +39,7 @@ Each factory keeps a few items queued (1 on easy, 2 on normal and hard):
   - one scout at a time, a new one at most every 2 minutes;
   - then tanks, with about one artillery piece in four (easy: one in seven).
 - **Advanced plant:**
-  - one T2 builder (Architect / Forgemaster) once 600 supply is stored;
+  - one T2 builder (Architect / Forgemaster) once 600 supply is stored; up to 3 as income grows (section 2.2a);
   - a mobile anti-nuke if it knows of an enemy silo;
   - one fire-control radar;
   - a mobile jammer (Chaos);
@@ -49,6 +49,16 @@ Each factory keeps a few items queued (1 on easy, 2 on normal and hard):
   - two helper bots (Lazarus / Graverobber);
   - then scout bots and the light combat bot (Mace / Thug).
 - **Advanced bot lab:** the heavy bot: Fatboy (Order) or Centurion (Chaos).
+
+### 2.2a Spending follows income (normal and hard; S-221)
+
+After BAR's CircuitAI: the AI never runs more build power than its income pays for.
+
+- It averages its supply income (with reclaim) and its power income (less upkeep and converters) over about 7 s. A typical job costs 0.035 supply and 0.45 power a second per unit of build power, so its income pays for a certain build power; it plans for 1.2 times that.
+- Busy builders come first. Then factories with work, in tech order (gantry, advanced factories, T1 factories, shipyards; factories of one tier take turns at the head, a minute each), each with the Construction Turrets beside it, stay at **high priority** while they fit. The rest go **low priority**: they build with what is left.
+- New Construction Turrets only while theirs stays under 60% of what it can afford.
+- When **power** is what limits it: more generators, and the T2 builder's fusions, then advanced fusion. When power is plentiful (it pays for 1.5 times what supply does): converters.
+- **More T2 builders** as supply income grows: one more per 20 supply/s, at most 3. The first upgrades extractors; the others work down the tech list.
 
 ### 2.3 Army: waves
 
