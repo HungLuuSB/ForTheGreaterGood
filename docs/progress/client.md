@@ -56,6 +56,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-30, transport pictures: C-276)
+
+- **Transport pictures (C-276):** E's build-menu pictures for the Courier, Buzzard, Ark and Charon. Picture sheet 4 was re-uploaded with the user's approval (111703066289053); all 201 units have a picture.
+- Ready to merge: `f78f2ad8` (C-276; carries 2d 77e8433a. test_client 352 / 352, build passed (893 scripts, 2520 requires). Studio, Coastline: the Airfield's Courier tile shows its picture)
+
 ## Summary (2026-10-30, unit panel without states: C-275)
 
 - **No unit states in the unit panel (C-275):** no more "Fire at will · Maneuver · Retreat at 30%", On / Off or Repeat; the command card shows them.
