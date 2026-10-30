@@ -110,6 +110,8 @@ export type View = {
 	alerts: { { alert: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT records (S-68)
 	shields: { [number]: { charge: number, flags: number } }, -- SHIELD records by generator (S-79)
 	idle: { [number]: boolean }, -- own builders / factories reported idle (S-136)
+	transportActions: { { transport: number, unit: number, defIndex: number, action: number, x: number?, z: number? } }, -- TRANSPORT events in order (S-220)
+	carry: { [number]: { defIndex: number, team: number } }, -- CARRY: what each transport carries (S-220)
 	ownStatus: { [number]: { health: number, build: number, queueHead: number, queueProgress: number, queueCount: number } }, -- own units off camera, from OWN_STATUS (S-158)
 	pregame: { [number]: { flags: number, x: number?, z: number? } }, -- players' pre-game state, from PREGAME (S-169)
 	prebuilds: { [number]: { { defIndex: number, x: number, z: number, facing: number } } }, -- from PREBUILD
@@ -153,6 +155,8 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?)
 		alerts = {},
 		shields = {},
 		idle = {},
+		transportActions = {},
+		carry = {},
 		ownStatus = {},
 		pregame = {},
 		prebuilds = {},
@@ -363,6 +367,16 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				continue
 			elseif kind == EK.IDLE then
 				view.idle[e.unitId :: number] = if e.idle then true else nil
+				continue
+			elseif kind == EK.TRANSPORT then
+				local x, z = nil, nil
+				if e.action ~= Schema.TransportAction.CANCEL then
+					x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+				end
+				table.insert(view.transportActions, { transport = e.unitId :: number, unit = e.targetId :: number, defIndex = e.defIndex :: number, action = e.action :: number, x = x, z = z })
+				continue
+			elseif kind == EK.CARRY then
+				view.carry[e.unitId :: number] = if e.defIndex ~= 0 then { defIndex = e.defIndex :: number, team = e.team :: number } else nil
 				continue
 			elseif kind == EK.OWN_STATUS then
 				view.ownStatus[e.unitId :: number] = { health = e.health :: number, build = e.build :: number, queueHead = e.queueHead :: number, queueProgress = e.queueProgress :: number, queueCount = e.queueCount :: number }

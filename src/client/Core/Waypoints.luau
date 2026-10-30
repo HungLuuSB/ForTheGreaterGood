@@ -251,6 +251,15 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 			if first.kind == CT.BUILD or first.kind == CT.PATROL or first.kind == CT.AREA then
 				break -- a build until its frame is finished; a patrol until replaced; an area until idle
 			end
+			if first.kind == CT.UNLOAD then
+				-- until the cargo is down (S-219, C-273), not on arrival: the set-down takes a while there
+				if u.cargo == nil or #u.cargo == 0 then
+					table.remove(list, 1)
+					first = list[1]
+					continue
+				end
+				break
+			end
 			local x, z = u.rx or u.x, u.rz or u.z
 			local d2 = (first.x - x) ^ 2 + (first.z - z) ^ 2
 			local passed = false

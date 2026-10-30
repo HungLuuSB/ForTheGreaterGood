@@ -11,6 +11,7 @@ local CommandSet = require("../../src/client/Core/CommandSet")
 local Commands = require("../../src/client/Core/Commands")
 local NetIn = require("../../src/client/Core/NetIn")
 local Orders = require("../../src/client/Core/Orders")
+local TransportLift = require("../../src/client/Core/TransportLift")
 local Transports = require("../../src/client/Core/Transports")
 local World = require("../../src/client/Core/World")
 local Schema = require("@shared/Net/Schema")
@@ -135,5 +136,71 @@ return function(t: any)
 		t.equal(out[1].kind, "reclaim")
 		t.equal(out[1].target, 2)
 		t.expect(not out[1].wreck, "a unit, not a wreck")
+	end)
+
+	t.test("the drawn lift from TRANSPORT and CARRY: down to the unit while the server picks it up, up after; the same for setting it down (C-273, C-274)", function()
+		local sim, world, api, step = setup()
+		local courier = Spawn.unit(sim, "ord_courier", 1, 0, 0, 0)
+		local lancer = Spawn.unit(sim, "ord_lancer", 1, 40, 0, 0)
+		local lift = TransportLift.new()
+		local tick = 0
+		local function frame(n: number)
+			for _ = 1, n do
+				step(1)
+				tick += 1
+				TransportLift.step(lift, world, tick)
+			end
+		end
+		frame(3)
+		api.actions.select({ courier })
+		api.actions.setCommandMode("load")
+		api.actions.commandAt(40, 0, lancer, false, false)
+		local started, lowBeforeGrab, grabbedAt, overX = nil, 0, nil, nil
+		for _ = 1, 15 * 20 do
+			frame(1)
+			local l = lift.lifts[courier]
+			if l and started == nil then
+				started = tick
+			end
+			local share, ox = TransportLift.of(lift, courier, tick)
+			if share and l and l.up == nil then
+				lowBeforeGrab = math.max(lowBeforeGrab, share)
+				overX = ox or overX
+			end
+			if l and l.up and l.grabbed and grabbedAt == nil then
+				grabbedAt = tick
+			end
+			if grabbedAt and lift.lifts[courier] == nil then
+				break
+			end
+		end
+		t.expect(started, "a pick-up lift started")
+		t.expect(grabbedAt, "it ended in a grab (the CARGO)")
+		t.expect(lowBeforeGrab > 0.9, `all the way down before the grab ({lowBeforeGrab})`)
+		t.expect(overX and math.abs(overX - 40) < 2, `over the Lancer ({overX})`)
+		t.equal(lift.lifts[courier], nil, "risen and done")
+		t.equal(world.carry[courier], sim.defs.units.ord_lancer.index, "CARRY: the Lancer hangs under it, for every viewer")
+		api.actions.setCommandMode("unload")
+		api.actions.commandAt(-40, 30, nil, false, false)
+		local drop, released = false, false
+		local dropX, dropZ = 0, 0
+		for _ = 1, 15 * 25 do
+			frame(1)
+			local l = lift.lifts[courier]
+			if l and l.kind == "drop" and not drop then
+				dropX, dropZ = l.x, l.z
+			end
+			drop = drop or (l ~= nil and l.kind == "drop")
+			released = released or (l ~= nil and l.kind == "drop" and l.grabbed)
+			if released and l == nil then
+				break
+			end
+		end
+		t.expect(drop, "a set-down lift started")
+		t.expect(released, "it ended on the release")
+		t.expect(world.units[lancer] ~= nil, "the Lancer is back")
+		t.equal(world.carry[courier], nil, "CARRY: nothing hangs under it")
+		local l = world.units[lancer]
+		t.expect((l.x - dropX) ^ 2 + (l.z - dropZ) ^ 2 < 1, `set down on the DROP's spot ({l.x}, {l.z} vs {dropX}, {dropZ})`)
 	end)
 end

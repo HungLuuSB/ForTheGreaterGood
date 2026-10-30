@@ -304,13 +304,7 @@ local function one(ui: UI, api: Api.Api, id: number)
 		local p = Precision.of(world)
 		table.insert(lines, string.format("Accuracy %d%%", math.floor(p * 100 + 0.5))) -- the user's wording
 	end
-	local st, flags = u.state or 0, {}
-	if def.converter then -- only converters read the on / off bit (Economy)
-		table.insert(flags, if bit32.band(st, 2) ~= 0 then "On" else "Off")
-	end
-	if bit32.band(st, 16) ~= 0 then
-		table.insert(flags, "Repeat")
-	end
+	local flags = {} -- (no On / Off or Repeat: states stay on the command card, C-275)
 	local q = api.state.factoryQueues[id]
 	if q and #q > 0 then
 		local parts, last, count = {}, nil, 0

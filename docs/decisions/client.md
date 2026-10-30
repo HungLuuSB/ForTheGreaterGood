@@ -2504,3 +2504,52 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - `tests/client/Transports.spec` covers who fits, the right click (pick up, board, the rest guards), the Load / CARGO / Unload round trip against the real sim, and the RECLAIM_UNIT spray.
 - **Studio, Coastline:** a Courier, ordered with Load, picked up a Lancer. The Lancer left the view and the panel read "Cargo 1 / 2: Lancer". Unload set it down nearby and the panel went back to "Cargo 0 / 2: empty". The console showed no errors. Screens: `debug_out/screens/2026-10-30-transport-loaded.jpg` and `-unloaded.jpg`.
 - **Not yet:** a cargo badge on the map, and a wired-up Load button press in the playtest (the API was driven directly; the button calls the same `setCommandMode`).
+
+### C-273 — Transports come down to pick up and set down; the carried unit hangs under the belly (2026-10-30)
+
+- **The user:** "The transport must descend from the air, grab the unit model under its belly and rise up again, same for dropping them".
+- **Hanging model:** while a transport carries a unit, a pooled model of that unit hangs under the drawn transport (`Render/Transports`).
+  - It sits `GAP` (0.4 studs) under the belly, measured from both templates.
+  - It isn't clickable: a click goes to the transport.
+- **Pick-up and set-down (`Core/TransportLift`):**
+  - The drawn transport comes down over the server's 1 s, until the hanging (or picked) unit stands on the ground.
+  - Picking up, it also slides over the unit.
+  - It holds low until the grab or release lands (the CARGO count changes, with the LEAVE or ENTER), then rises over 12 ticks.
+  - It gives up on another order, or 2 s past the 1 s.
+  - Visual only (guide 14): the server's transport just hovers. Drawn through a new `UnitRenderer.adjust` hook.
+- **Inferred start:** the server doesn't say when a lift starts yet, so the client infers it from own transports' orders. A pick-up starts in reach of the Load target (10 studs plus the unit's radius, plus 4 slack). A drop starts within 12 + 4 of the Unload point, with cargo on board.
+  - The server starts its timer on reach while the transport is still gliding in. A helicopter always reports MOVING, so "stopped" can't be the cue.
+  - Client request 40 asks sim-A for a start event and for the carried def for every viewer: today only the owner sees CARGO, so other players see no lift and no hanging unit.
+- **Unload order lines** now last until the cargo is down, rather than ending on arrival.
+- **Studio, Coastline:**
+  - Pick-up: the Courier came down from 54 to 23 studs, centred on the Lancer, and climbed back with it hanging at 50.6 (`debug_out/screens/2026-10-30-transport-slung.jpg`).
+  - Drop: it came down at the Unload point (`-drop.jpg`), set the Lancer on the ground 2 studs from the click, and flew off.
+- **Also seen in Studio, not from this change:** twice, after `Sim.step` missed a tick (tick 300 just after a pick-up; tick 900, the Watchdog's summary tick), Entry's `PlayerReplay.record` threw "expected tick N" every frame before `send()`. The client then froze.
+  - The first error had already rolled out of the log, and a third run with a log listener didn't reproduce it.
+  - Reported to sim-A.
+- `tests/client/Transports.spec` adds the lift against the real sim: down before the grab, over the Lancer, risen after; a set-down that ends on the release.
+
+### C-274 — The transport lift from the server's TRANSPORT and CARRY events (protocol 44); a skipped tick no longer freezes clients (2026-10-30)
+
+- **Merged:** sim-A's S-220 (m-sim-2 5c1ba421, protocol 44, client request 40), on top of their order-hash fix 02a4a84e. S-220:
+  - every transport carries one unit (the user: "they only carry 1 cargo, both for T1 and T2");
+  - adds TRANSPORT 34 (a pick-up or set-down starts, with its ticks and the unit's spot or the set-down spot; or CANCEL);
+  - adds CARRY 35 (what a transport carries, for everyone who sees it).
+- **NetIn:** keeps `world.carry` (cleared on the transport's LEAVE and DEATH) and queues both events with their sim tick in `world.transportFx`.
+- **`Core/TransportLift`** now runs from those events on the sim's tick clock, in step with the render. It replaces C-273's guess from own orders:
+  - it comes down over the event's ticks and slides over its spot (the unit picked up, or where it will be set down);
+  - it rises at the CARRY that marks the grab or release, or at a CANCEL; HOLD_TICKS stays as a backstop for a lost event.
+  - The hanging model comes from CARRY, so other players see the lift and the slung unit too.
+- **Entry:** a viewer whose replay misses a tick (a step that threw) now stops being recorded, with one warning. Before, `PlayerReplay.record` threw every frame before `send()` and froze every client. That froze Studio twice: the sim's order hash had no code for load and unload, so `Sim.hash` threw on checkpoint ticks 300 and 900; sim-A fixed it in 02a4a84e.
+- `tests/client/Transports.spec`: the lift from the events, CARRY set after the pick-up and cleared after the drop, the Lancer set down on the DROP's spot.
+- **Studio, Coastline:**
+  - Pick-up: the Courier came down from 54 to 25 studs over the Lancer, the hanging copy took over at the grab, and it climbed back with it.
+  - Drop: it came down with the Lancer, which appeared on the drop spot as the copy went, and climbed away.
+  - It ran past tick 900 with a Load order under way: no errors, and the client stayed current (tick 940).
+
+### C-275 — The unit panel shows no unit states (2026-10-30)
+
+- **The user:** "in the unit stats panel, please do not provide the current state of the unit like Fire at will | Maneuver | Retreat and things like that".
+- `UnitStats.lines` drops the fire state, move state and retreat line. `UnitPanel` drops the On / Off and Repeat flags. Those settings show on the command card's state buttons.
+- Kept, as facts rather than settings: the self-destruct countdown (a warning), countermeasure charges, a factory's queue, the next missile's progress, radar accuracy, and a transport's cargo.
+- Studio, Coastline: a selected Lancer's panel reads name, role, DPS / range / reload, speed / line of sight and cost, with nothing else (`debug_out/screens/2026-10-30-panel-no-states.jpg`).
