@@ -1378,7 +1378,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Self-propelled artillery | T1 | **Verdict** | **Hellmouth** |
 | Mobile IR SAM | T1 | **Halo** | **Hornet** |
 | Mobile radar | T1 | **Oracle** | **Watcher** |
-| Main battle tank | T2 | **Paladin** | ~~Goliath~~ (`chs_goliath`, raises arms to fire; retired, S-213) |
+| Main battle tank | T2 | **Paladin** | **Goliath** (`chs_goliath`, raises arms to fire; retired by S-213, back since S-224, new model to come) |
 | Experimental assault walker (S-209) | T3 | **Titan** (`ord_titan`; beam 320, missiles 390, S-213) | **Juggernaut** (`chs_juggernaut`, was `chs_korgoth`; heat ray 230, missiles 520, S-213) |
 | MLRS | T2 | **Judgement** (precise) | **Hydra** (large salvo) |
 | Mobile radar SAM | T2 | **Seraph** | **Gorgon** |
