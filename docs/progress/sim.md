@@ -10,9 +10,9 @@ Plan: `docs/design/bar-roster-plan.md` (the user's answers at the top). sim-A le
 
 | Step | What | State |
 |---|---|---|
-| Part 1 | S-225: four price fixes (the Juggernaut priced to take on two Titans), 28 renames by role | done (sim) · D: Codex names · B: tooltips |
+| Part 1 | S-225: four price fixes (the Juggernaut priced to take on two Titans), 28 renames by role | done: sim; B and D checked, no change needed (both read names from the defs) |
 | Autoheal | Idle units heal (the user: "important, add it") | next (S-226) |
-| Part 3 | `docs/design/reserved-units.md`: the 65 unreachable units, drafted only | next |
+| Part 3 | `docs/design/reserved-units.md`: the 65 unreachable units, drafted only (49 new names, 7 modes and events) | done |
 | Part 4 | Wrecks take damage, resources follow health, scrap heaps below 40%, protocol 45 | after autoheal · C: heap meshes · B: swap and sparks · E: scrap mark · D: note |
 | Batch 1 | 29 vehicles and hovercraft + 2 hover factories; mechanics first: hovercraft check, cloak, EMP | after part 4 · C: blockouts → meshes → wrecks, a preview for the user per unit · E: icons, pictures · B: cloak, EMP, hover effects · D: Codex |
 | Batches 2–5 | Bots, air, naval, structures | the next batch's defs are drafted while C models the current one |
