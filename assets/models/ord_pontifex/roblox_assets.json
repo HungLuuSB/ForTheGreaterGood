@@ -1,0 +1,57 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 1-2, uploaded with the user's approval 2026-10-31: 1788 triangles, glow share 3.5%",
+  "bar": {
+    "model": "rbxassetid://93521965461670",
+    "meshes": {
+      "base": "rbxassetid://126280688830420",
+      "base_glow_head": "rbxassetid://96670540238971",
+      "base_glow_running": "rbxassetid://80073840542182",
+      "nano": "rbxassetid://95288370426739",
+      "nano_glow_power": "rbxassetid://117895260553029",
+      "nano_glow_running": "rbxassetid://102824662232448",
+      "trackL": "rbxassetid://90809061875127",
+      "trackR": "rbxassetid://80304104899685"
+    },
+    "decals": {
+      "ALB": "rbxassetid://77876160588823",
+      "RGH": "rbxassetid://70642701826465",
+      "NOR": "rbxassetid://96337231458469",
+      "MTL": "rbxassetid://115042611054620",
+      "EMI": "rbxassetid://83818542910804"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://127661414526090",
+      "NOR": "rbxassetid://124775310286451",
+      "RGH": "rbxassetid://87524143878890",
+      "MTL": "rbxassetid://107072991047630",
+      "EMI": "rbxassetid://87821485690728"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_pontifex_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://88139197145760",
+    "meshes": {
+      "base": "rbxassetid://77058410211210",
+      "nano": "rbxassetid://95364674926515",
+      "trackL": "rbxassetid://77255099012280",
+      "trackR": "rbxassetid://81370687597504"
+    },
+    "decals": {
+      "ALB": "rbxassetid://118221726801170",
+      "RGH": "rbxassetid://82442902487035",
+      "NOR": "rbxassetid://105762143719289",
+      "MTL": "rbxassetid://138253202486969",
+      "EMI": "rbxassetid://123399150297592"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://88425352849946",
+      "NOR": "rbxassetid://100877860762391",
+      "RGH": "rbxassetid://83117437963413",
+      "MTL": "rbxassetid://131656907554687",
+      "EMI": "rbxassetid://70497765368175"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_pontifex_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 1-2, uploaded with the user's approval 2026-10-31: 1740 triangles"
+  }
+}

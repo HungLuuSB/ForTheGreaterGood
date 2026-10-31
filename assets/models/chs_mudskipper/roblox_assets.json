@@ -1,0 +1,59 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 1-2, uploaded with the user's approval 2026-10-31: 1896 triangles, glow share 4.2%",
+  "bar": {
+    "model": "rbxassetid://112027447525750",
+    "meshes": {
+      "barrel": "rbxassetid://89545280538153",
+      "barrel_glow_weapon": "rbxassetid://132168884661956",
+      "base": "rbxassetid://74585388561358",
+      "base_glow_head": "rbxassetid://96351779710170",
+      "base_glow_running": "rbxassetid://75775686729458",
+      "trackL": "rbxassetid://138899124708260",
+      "trackR": "rbxassetid://130912717937859",
+      "turret": "rbxassetid://125065198268122",
+      "turret_glow_running": "rbxassetid://129049746487892"
+    },
+    "decals": {
+      "ALB": "rbxassetid://76850520874104",
+      "RGH": "rbxassetid://80596141328651",
+      "NOR": "rbxassetid://70452390394660",
+      "MTL": "rbxassetid://75160426077933",
+      "EMI": "rbxassetid://138585110578894"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://81863304201557",
+      "NOR": "rbxassetid://139270129059093",
+      "RGH": "rbxassetid://96520324015271",
+      "MTL": "rbxassetid://133895491004732",
+      "EMI": "rbxassetid://70421767781137"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_mudskipper_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://113475274276728",
+    "meshes": {
+      "barrel": "rbxassetid://86301033907734",
+      "base": "rbxassetid://136167547440245",
+      "trackL": "rbxassetid://110921729698980",
+      "trackR": "rbxassetid://114753578100434",
+      "turret": "rbxassetid://132323090713420"
+    },
+    "decals": {
+      "ALB": "rbxassetid://127279881340455",
+      "RGH": "rbxassetid://104329189864006",
+      "NOR": "rbxassetid://137526414085600",
+      "MTL": "rbxassetid://113399735271772",
+      "EMI": "rbxassetid://126410700252963"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://91856172352770",
+      "NOR": "rbxassetid://104862845503841",
+      "RGH": "rbxassetid://98669282981969",
+      "MTL": "rbxassetid://92339661612179",
+      "EMI": "rbxassetid://94489391500207"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_mudskipper_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 1-2, uploaded with the user's approval 2026-10-31: 1624 triangles"
+  }
+}

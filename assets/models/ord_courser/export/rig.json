@@ -1,0 +1,365 @@
+{
+  "id": "ord_courser",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.3725,
+        -0.2833
+      ],
+      "size": [
+        4.41,
+        1.145,
+        7.3667
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -2.0,
+        0.75,
+        -2.0
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.0,
+        0.75,
+        -2.0
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -2.0,
+        0.75,
+        0.1
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.0,
+        0.75,
+        0.09999999999999964
+      ]
+    },
+    "wheelL3": {
+      "parent": "base",
+      "center": [
+        -2.0,
+        0.75,
+        2.2
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.0,
+        0.75,
+        2.1999999999999993
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        2.0,
+        0.75,
+        -2.0
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.0,
+        0.75,
+        -2.0
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        2.0,
+        0.75,
+        0.1
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.0,
+        0.75,
+        0.09999999999999964
+      ]
+    },
+    "wheelR3": {
+      "parent": "base",
+      "center": [
+        2.0,
+        0.75,
+        2.2
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.0,
+        0.75,
+        2.1999999999999993
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.825,
+        0.0522
+      ],
+      "size": [
+        2.8792,
+        1.85,
+        2.8754
+      ],
+      "pivot": [
+        0.0,
+        1.9,
+        0.5
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        2.45,
+        -2.6
+      ],
+      "size": [
+        0.7,
+        0.55,
+        3.7
+      ],
+      "pivot": [
+        0.0,
+        2.45,
+        -0.9
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        2.45,
+        -4.5
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3",
+    "turret",
+    "barrel"
+  ],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.77,
+        -0.16
+      ],
+      "size": [
+        3.69,
+        0.5,
+        7.24
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.25,
+        -3.73
+      ],
+      "size": [
+        2.95,
+        0.2,
+        0.08
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.69,
+        0.43
+      ],
+      "size": [
+        2.96,
+        0.7,
+        1.94
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        2.45,
+        -3.9
+      ],
+      "size": [
+        0.4,
+        0.4,
+        0.08
+      ]
+    }
+  ],
+  "glowShare": 0.043,
+  "triangles": {
+    "base": 384,
+    "wheelL1": 56,
+    "wheelL2": 56,
+    "wheelL3": 56,
+    "wheelR1": 56,
+    "wheelR2": 56,
+    "wheelR3": 56,
+    "turret": 252,
+    "barrel": 220,
+    "total": 1192
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
