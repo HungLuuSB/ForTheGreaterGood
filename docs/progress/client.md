@@ -28,6 +28,7 @@ Written for a new session (the project is moving to another Claude account). Eve
 2D-E (`C:\Workspace\Projects\FTGG-2d`, branch `2d`) owns the 2D assets: the icon sheet source, unit pictures, command and resource icons, thumbnails. Requests to E go here, numbered E1, E2, ...; B renders and wires what E delivers.
 
 - **E1 (2026-10-29): icons for the 21 playtest-3 units.** Done: E's approved set (E-3, E-6) covers all 203 defs; rendered, uploaded and wired in C-258..C-261.
+- **E2 (2026-10-30): a build-menu picture for the Goliath (`chs_goliath`).** Done: 2d b11a39ae, wired in C-277. S-224 brings it back as Chaos's T2 main battle tank (second on `chs_advvehplant`'s list). It was retired when the pictures were made, so `pictures.json` has no entry for it, and its tile falls back to the live portrait. Its icon (`main_battle_tank_t2`) and piece script are still in place. models-C is re-modelling it for the user, so render the picture from the new model once it lands, in a stable slot (sheet 4 has room). B then renders, uploads (with the user's approval) and wires it.
 
 ### How to work
 
@@ -55,6 +56,12 @@ Written for a new session (the project is moving to another Claude account). Eve
   - On the Server, `ServerStorage.FtggDebug:Invoke("spawn", defId, player, x, z, heading, count?, spacing?)` and `("damage", id, amount)`.
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
+
+## Summary (2026-10-30, the Goliath's picture: C-277)
+
+- **The Goliath's picture (C-277):** E's build-menu picture for the returning Goliath (S-224, request E2), on sheet 4. Sheet 4 was re-uploaded with the user's approval (120576950340042); all 202 units have a picture.
+- E2 is done.
+- Ready to merge: `6efce007` (C-277; carries 2d c83c4477. test_client 352 / 352, build passed (901 scripts, 2545 requires). Studio: the Advanced Foundry's Goliath tile shows its picture)
 
 ## Summary (2026-10-30, transport pictures: C-276)
 

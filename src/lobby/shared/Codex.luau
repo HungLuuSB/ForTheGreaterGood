@@ -50,12 +50,8 @@ end
 -- Units the sim stream announced ahead of their defs (the decision that
 -- adds them): the roles may name them before the defs reach this branch.
 -- Remove each once its def is on main.
-Codex.ANNOUNCED = table.freeze({
-	ord_courier = "S-219",
-	chs_buzzard = "S-219",
-	ord_ark = "S-219",
-	chs_charon = "S-219",
-})
+-- Empty now: S-219's four transports are on main.
+Codex.ANNOUNCED = table.freeze({} :: { [string]: string })
 
 -- Guide 13.1-13.5 plus the economy, factories and the units added since.
 Codex.ROLES = {
@@ -75,7 +71,7 @@ Codex.ROLES = {
 	r("ground", "Self-propelled artillery", 1, { "ord_verdict" }, { "chs_hellmouth" }),
 	r("ground", "Mobile IR SAM", 1, { "ord_halo" }, { "chs_hornet" }),
 	r("ground", "Mobile radar", 1, { "ord_oracle" }, { "chs_watcher" }),
-	r("ground", "Main battle tank", 2, { "ord_paladin" }, {}), -- Chaos: none until the user picks one (S-213 retired the Goliath, chs_goliath)
+	r("ground", "Main battle tank", 2, { "ord_paladin" }, { "chs_goliath" }), -- S-224 brings the Goliath back (S-213 had retired it)
 	r("ground", "MLRS", 2, { "ord_judgement" }, { "chs_hydra" }),
 	r("ground", "Mobile radar SAM", 2, { "ord_seraph" }, { "chs_gorgon" }),
 	r("ground", "Mobile jammer", 2, { "ord_veil" }, { "chs_shroud" }),

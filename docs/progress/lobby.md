@@ -2,6 +2,35 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-31: the Goliath and the transports checked in Studio)
+
+- `m-lobby` holds main `85292c93` (fast-forward: S-224's Goliath def, C's new Goliath model, B's C-276 / C-277 with picture sheet 4 `rbxassetid://120576950340042`).
+- **`Codex.spec`** now runs the Goliath's restored case: the Paladin and Goliath are each other's counterparts.
+- **Studio** (`debug_out/screens/`): `lobby_goliath_paladin_card` (the Paladin's Chaos counterpart card is the Goliath, with its picture), `lobby_goliath_article` (the Goliath opened from that card: C's new model, the Paladin card), `lobby_transport_buzzard` (the Buzzard's row, model and Courier card). The Goliath, Buzzard and Charon rows take their pictures from sheet 4. No script errors; the console's only failures are two assets that aren't the lobby's (`203785492`, place content per client.md; `100010822937708`, an HTTP 502).
+- Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+- Ready to merge: `5da27d4a` (progress only: the Studio check; touches only the lobby progress)
+
+## Summary (2026-10-30: S-219's transports on main)
+
+- Merged main `e1e51407` (S-219's transport defs and the Goliath's Codex role; S-224 itself isn't on main yet, so the Goliath stays hidden here).
+- **`Codex.ANNOUNCED`** is empty: the Courier, Buzzard, Ark and Charon have their defs, so they show in the Units tab with their roles. `Codex.spec` checks that the Courier and Buzzard, and the Ark and Charon, are each other's counterparts.
+- Their pictures come with B's C-276 / C-277 (`UI/UnitPictures`, read-only); until then the rows show their icons.
+- Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+- Ready to merge: `e575532d` (S-219's ids out of `Codex.ANNOUNCED`; includes a merge of main; touches only `src/lobby` and the lobby progress)
+
+## Summary (2026-10-30: forced start keeps the pick time)
+
+- **Forced start:** your answer "No": the lobby's forced start doesn't skip the match's pick time. That is the current behaviour, so no code changes; L-27 and "Needs my review" item 4 record it, and nothing is open there now.
+- Ready to merge: `77bdef61` (docs only: the forced-start answer; touches only the lobby decisions and progress)
+
+## Summary (2026-10-30: the Goliath back in the Codex, S-224)
+
+- Merged main `4dd01cee` (fast-forward: the S-219 roles' merge).
+- **Codex:** the "Main battle tank" role's Chaos side is the Goliath `chs_goliath` again (sim-A's S-224, the user: Chaos's T2 main battle tank, second on the Advanced Vehicle Plant's list). The Codex still hides retired defs, so on this branch, where the def is still retired (S-213), the Goliath stays hidden. It shows, with the Paladin as its counterpart, once S-224's def is on main.
+- **`Codex.spec`:** while the Goliath's def is retired, it is hidden and the Paladin has no counterpart. Once the def is back, the Paladin and Goliath point at each other. Either order of the merges passes. Only the retired case is tested so far (S-224 isn't committed on sim-A's branch yet); I'll check the other case after merging main.
+- Lobby specs 68 / 68; the build check passes (652 scripts, 1085 requires).
+- Ready to merge: `1b222657` (the Goliath's Codex role; can merge before or after S-224; touches only `src/lobby` and the lobby progress)
+
 ## Summary (2026-10-30: S-219's transports in the Codex)
 
 - **Codex:** two new Air roles for sim-A's S-219 transports (the user approved): "Air transport" (T1) Courier `ord_courier` / Buzzard `chs_buzzard`, and "Heavy air transport" (T2) Ark `ord_ark` / Charon `chs_charon`. The articles read their descriptions and numbers from the defs.
@@ -498,7 +527,7 @@ Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4
 1. **Done (2026-10-24): rooms across lobby servers** (L-15). Needs the live test (Part A above).
 2. **Guide 16.3 says "map vote".** Your design has the host pick the map (BAR). I followed your design; the guide is the sim stream's file, so I asked sim-A to update it (request A-3).
 3. **Decided (2026-10-29, "Agreed"): cheats** (L-27). The host can turn them on in any room; such matches are listed on the profile but don't count; the match server enforces the allow-list (C-119).
-4. **Decided (2026-10-29): forced start** (L-27). In the lobby it skips only the ready check. In the match, the host's force start goes straight to the 3 s countdown, and whoever hasn't picked a spot gets the best free one at the start. The match's pre-game already does this (`Pregame`, S-174). Open: should the lobby's forced start also skip the match's pick time? (Below.)
+4. **Decided (2026-10-29): forced start** (L-27). In the lobby it skips only the ready check. In the match, the host's force start goes straight to the 3 s countdown, and whoever hasn't picked a spot gets the best free one at the start. The match's pre-game already does this (`Pregame`, S-174). The lobby's forced start doesn't skip the match's pick time (your answer, 2026-10-30).
 5. **Decided (2026-10-29): spectators only join and watch** (L-27). The match place supports it (C-79: no seat, every unit, no fog).
 6. **Outdated:** starts are picked in the match's pre-game since S-171 / S-174, in spawn boxes the host may draw in the room (L-20).
 7. **Outdated:** a room holds 16 people, AIs included (L-25).
