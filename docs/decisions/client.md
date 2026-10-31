@@ -2606,3 +2606,14 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - the Whisper's card has On / Off;
   - the new units draw their type's placeholder.
 - Studio: a cloaked Whisper drawn see-through beside a stunned Lancer crackling blue (`debug_out/screens/c279_cloak_emp.jpg`).
+
+### C-280 — Batch 1 on the client: hover wakes, hover factories on water, unit codes, the batch 1 icons (2026-10-31)
+
+- S-230: batch 1's 29 further vehicles and hovercraft (sim 67a74543 → 11b13f85, with effbd528's hover factory pieces and muzzle names). Merged through m-models 761d0d72 (C's blockouts, valid against effbd528) and 2d c3aa6cb4 (E3: the batch 1 icons, which the user approved in E's session).
+- **Unit codes** (`Core/Icons.codes`, C-67): the Skimmer ran out of candidates, its initial S with each of its letters and S1..S9 all taken. A code now falls back to the initial with any other letter, then any free pair. No per-id table is needed.
+- **Hover factories on water:** the Hover Dock and Skim Yard have placement "either", which the shared `PlacementRules` already allows on land or water. `World.floats` now counts it, so one built on water is drawn on the surface; on land the ground is higher than any water.
+- **Hover wake** (`Render/UnitRenderer`): units whose move class rides on "hover" throw spray from under the stern while moving.
+  - The rate is 6 puffs per stud a second of speed, at most 90.
+  - Foam over water, dust over land, switched when the surface under it changes.
+- **Icons:** `render.mjs` mapped all 238 defs to 142 catalogue items; only sheet 2 changed. The user approved the upload here: sheet 2 is 125202931406059 (sha256 69f8b0d9…), and sheet 1 keeps its id.
+- Studio, Coastline: a Hover Dock floating on the water and two Skimmers trailing foam across it (`debug_out/screens/c280_hover_wake.jpg`).

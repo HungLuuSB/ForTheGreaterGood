@@ -17,7 +17,9 @@ local Deaths = require("../Core/Deaths")
 local Interp = require("../Core/Interp")
 local PieceAnim = require("../Core/PieceAnim")
 local PieceScripts = require("../Core/PieceScripts/Registry")
+local Terrain = require("../Core/Terrain")
 local World = require("../Core/World")
+local MoveClasses = require("@shared/Defs/MoveClasses")
 local Schema = require("@shared/Net/Schema")
 local Glow = require("./Glow")
 local ModelPool = require("./ModelPool")
@@ -49,7 +51,51 @@ type Drawn = {
 	pulses: { Glow.Pulse }?, -- its `pulse` pieces, which swell with their breath (C-257)
 	cloaked: boolean, -- drawn see-through (S-228, C-279)
 	stun: Attachment?, -- its crackle while stunned (S-229, C-279)
+	wake: ParticleEmitter?, -- a hovercraft's skirt spray (S-230, C-280)
+	wakeWater: boolean?, -- its spray is foam (over water), else dust
+	lastX: number?, -- where it was drawn last frame (the wake's speed)
+	lastZ: number?,
 }
+
+UnitRenderer.WAKE_RATE = 6 -- spray puffs a second per stud a second of speed
+UnitRenderer.WAKE_MAX = 90
+local FOAM = ColorSequence.new(Color3.fromRGB(240, 248, 252), Color3.fromRGB(200, 222, 236))
+local DUST = ColorSequence.new(Color3.fromRGB(176, 158, 128), Color3.fromRGB(150, 140, 125))
+
+-- Whether `def` rides on an air cushion (its move class's surface "hover").
+local function hovers(def: any): boolean
+	local mc = def.moveClass and (MoveClasses :: any)[def.moveClass]
+	return mc ~= nil and mc.surface == "hover"
+end
+
+-- A hovercraft's skirt spray (S-230): puffs thrown out low behind it while
+-- it moves, foam over water and dust over land; the rate follows its speed
+-- (`UnitRenderer.step`).
+local function newWake(d: Drawn): ParticleEmitter
+	local size = math.max(1, d.def.footprint or 1)
+	local a = Instance.new("Attachment")
+	a.Name = "Wake"
+	a.Position = Vector3.new(0, 0.3, size * 2.5) -- under its stern (models face -Z)
+	local e = Instance.new("ParticleEmitter")
+	e.Name = "Spray"
+	e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	e.Rate = 0
+	e.Lifetime = NumberRange.new(0.6, 1.1)
+	e.Speed = NumberRange.new(2, 5)
+	e.SpreadAngle = Vector2.new(70, 20)
+	e.EmissionDirection = Enum.NormalId.Back
+	e.Acceleration = Vector3.new(0, -2, 0)
+	e.Drag = 2
+	e.Rotation = NumberRange.new(0, 360)
+	e.RotSpeed = NumberRange.new(-40, 40)
+	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.8 * size), NumberSequenceKeypoint.new(1, 2.6 * size) })
+	e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
+	e.Color = FOAM
+	e.LightInfluence = 0.6
+	e.Parent = a
+	a.Parent = d.root
+	return e
+end
 
 -- Cloaked (S-228): see-through on top of whatever it is (LocalTransparencyModifier
 -- leaves the parts' own transparency, and the building look, alone).
@@ -185,6 +231,9 @@ local function show(r: Renderer, world: World.World, id: number)
 		stun = nil,
 	}
 	local d = r.drawn[id]
+	if hovers(def) then
+		d.wake = newWake(d)
+	end
 	d.glows, d.heads = Glow.collect(model, def)
 	d.pulses = Glow.collectPulses(model, def)
 	PieceAnim.add(r.anim, id, def, PieceScripts.forDef(def))
@@ -195,6 +244,10 @@ local function release(d: Drawn)
 	setBuilding(d, false)
 	setCloaked(d, false)
 	setStunned(d, false)
+	if d.wake then
+		(d.wake.Parent :: Instance):Destroy()
+		d.wake = nil
+	end
 	Glow.reset(d.glows, d.root, d.pulses)
 	for _, motor in d.motors do
 		motor.Transform = CFrame.identity
@@ -364,6 +417,18 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		local state = u.state or 0
 		setCloaked(d, bit32.band(state, US.CLOAKED) ~= 0)
 		setStunned(d, bit32.band(state, US.PARALYZED) ~= 0)
+		local wake = d.wake
+		if wake then
+			local speed = if d.lastX and dt > 0 then math.sqrt((x - d.lastX :: number) ^ 2 + (z - d.lastZ :: number) ^ 2) / dt else 0
+			wake.Rate = if speed > 0.5 then math.min(UnitRenderer.WAKE_MAX, speed * UnitRenderer.WAKE_RATE) else 0
+			local layers = world.layers
+			local water = layers ~= nil and Terrain.waterY(layers, x, z) ~= nil
+			if water ~= d.wakeWater then
+				d.wakeWater = water
+				wake.Color = if water then FOAM else DUST
+			end
+		end
+		d.lastX, d.lastZ = x, z
 		local stun = d.stun
 		if stun then
 			-- the crackle's light flickers: a cheap hash of the render tick and the unit

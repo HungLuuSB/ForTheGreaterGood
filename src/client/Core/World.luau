@@ -382,12 +382,13 @@ end
 -- that float.
 -- Whether a unit is drawn on the water surface rather than the bed (C-192,
 -- the user: each on its terrain): ships, structures built on water (their
--- models float), and amphibious or hover units, which ride the surface.
+-- models float, as do those that stand on land or water where there's
+-- water), and amphibious or hover units, which ride the surface.
 -- Amphibious walkers (the Commanders, Titan, Juggernaut: AMPHIB_WALKER,
 -- S-210) share the amphibious surface but walk the seafloor (C-254, H18).
 function World.floats(def: any): boolean
-	if def.domain == "naval" or def.placement == "water" then
-		return true
+	if def.domain == "naval" or def.placement == "water" or def.placement == "either" then
+		return true -- ("either": the hover factories, S-230; on land the ground is higher than any water)
 	end
 	local mc = def.moveClass and (MoveClasses :: any)[def.moveClass]
 	return mc ~= nil and mc.id ~= "AMPHIB_WALKER" and (mc.surface == "amphib" or mc.surface == "hover")

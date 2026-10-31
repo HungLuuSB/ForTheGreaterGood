@@ -57,6 +57,14 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-31, batch 1: C-280)
+
+- **Batch 1 (C-280, S-230):**
+  - The 29 further vehicles and hovercraft land through this branch, with C's blockouts and E's approved icons (sheet 2 re-uploaded with the user's approval: 125202931406059).
+  - Hovercraft trail foam or dust; the hover factories float on water.
+  - Every def gets a unique two-letter code.
+- Carries sim 11b13f85, m-models 761d0d72 and 2d c3aa6cb4.
+
 ## Summary (2026-10-31, cloak and EMP: C-279)
 
 - **Cloak and EMP (C-279, S-228 / S-229, protocol 46):**
