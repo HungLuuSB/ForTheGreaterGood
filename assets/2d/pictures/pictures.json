@@ -26,7 +26,7 @@
 			"file": "ftgg-unit-pictures-4.png",
 			"size": [
 				1024,
-				254
+				382
 			]
 		}
 	],
@@ -301,6 +301,15 @@
 				126
 			]
 		},
+		"chs_cleaver": {
+			"sheet": 4,
+			"rect": [
+				256,
+				128,
+				126,
+				126
+			]
+		},
 		"chs_condor": {
 			"sheet": 1,
 			"rect": [
@@ -360,6 +369,15 @@
 			"rect": [
 				256,
 				512,
+				126,
+				126
+			]
+		},
+		"chs_dredger": {
+			"sheet": 4,
+			"rect": [
+				384,
+				128,
 				126,
 				126
 			]
@@ -630,6 +648,15 @@
 			"rect": [
 				896,
 				896,
+				126,
+				126
+			]
+		},
+		"chs_mudskipper": {
+			"sheet": 4,
+			"rect": [
+				512,
+				128,
 				126,
 				126
 			]
@@ -1228,6 +1255,15 @@
 				126
 			]
 		},
+		"ord_courser": {
+			"sheet": 4,
+			"rect": [
+				640,
+				128,
+				126,
+				126
+			]
+		},
 		"ord_crusader": {
 			"sheet": 3,
 			"rect": [
@@ -1349,6 +1385,15 @@
 			"sheet": 3,
 			"rect": [
 				640,
+				128,
+				126,
+				126
+			]
+		},
+		"ord_gemini": {
+			"sheet": 4,
+			"rect": [
+				768,
 				128,
 				126,
 				126
@@ -1539,6 +1584,15 @@
 			"rect": [
 				256,
 				512,
+				126,
+				126
+			]
+		},
+		"ord_pontifex": {
+			"sheet": 4,
+			"rect": [
+				896,
+				128,
 				126,
 				126
 			]
@@ -1804,6 +1858,15 @@
 				126
 			]
 		},
+		"ord_wader": {
+			"sheet": 4,
+			"rect": [
+				0,
+				256,
+				126,
+				126
+			]
+		},
 		"ord_warden": {
 			"sheet": 4,
 			"rect": [
@@ -1850,5 +1913,30 @@
 			]
 		}
 	},
-	"missing": []
+	"missing": [
+		"chs_drifter",
+		"chs_glaive",
+		"chs_gnat",
+		"chs_grendel",
+		"chs_hellfire",
+		"chs_hurler",
+		"chs_skimyard",
+		"chs_skua",
+		"chs_sling",
+		"chs_snapjaw",
+		"chs_typhon",
+		"ord_dart",
+		"ord_fulgur",
+		"ord_halcyon",
+		"ord_hoverdock",
+		"ord_luminary",
+		"ord_magistrate",
+		"ord_mandate",
+		"ord_skimmer",
+		"ord_skimwright",
+		"ord_tempest",
+		"ord_thunderer",
+		"ord_volley",
+		"ord_whisper"
+	]
 }
