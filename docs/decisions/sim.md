@@ -3193,3 +3193,49 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **The AI:** the advanced plant's main battle tank is the Goliath again. The Tzar keeps its own chance on top (S-223: 0.15 + 0.4 × the artillery ask), as before S-216 made it the stand-in.
 - **Other streams:** models-C re-models it (the user). Lobby-D puts it back in the Codex (the main battle tank row, now Paladin / Goliath). B and E check the build menu entry, icon and picture.
 - **Tests:** `Playtest3Units.spec`: not retired, and on the Chaos advanced plant's list.
+
+## S-225 — The roster audit: four price fixes, the Juggernaut as a Titan-killer, 28 renames (the user) (2026-10-31)
+
+- **Asked (the user):** the BAR roster program's part 1 (`docs/design/bar-roster-plan.md` §1.1, §1.4), approved: "Agreed with four stats changes", and "if you can come up with names that's much more compatible to the unit's role and position then go ahead … like the Juggernaut is a big mech with strong health, high dps, capable of taking multiple titans".
+- **Stats** (each was cheap against BAR's counterpart by the median conversion):
+  - **Juggernaut** `chs_juggernaut`: supply 3,600 → 5,400, power 52,000 → 78,000, build time 120,000 → 180,000, health 36,000 → 54,000. BAR prices it at about 1.5× the Titan; ours cost 1.1× while doing 2.2× its DPS. Weapons unchanged (1,830 DPS against the Titan's 843), so one Juggernaut takes on about two Titans (6,400 supply).
+  - **Bulwark** `chs_bulwark`: health 2,600 → 4,800, the Radiance's factor. In BAR it's the tougher of the two beam towers.
+  - **Dragon** `chs_dragon`: supply 900 → 1,600, power 16,000 → 28,000, build time 30,000 → 50,000. Health and weapons unchanged.
+  - **Wyvern** `chs_wyvern` and **Aegis** `ord_aegis` (long-range SAM sites, placeholders): ×1.8. Wyvern 540 / 6,800 / 15,000, Aegis 580 / 7,600 / 16,000.
+- **Renames** (display names only; ids stay, S-157). Each old name is a different unit in BAR. The new names say what the unit does; none is a BAR name or one of ours:
+
+  | Id | Was | Now | Role |
+  |---|---|---|---|
+  | `chs_augur` | Augur | Haruspex | pinpointer (reads the radar's omens) |
+  | `chs_banshee` | Banshee | Smother | jammer aircraft |
+  | `chs_barracuda` | Barracuda | Piranha | corvette |
+  | `chs_basilisk` | Basilisk | Flytrap | point defence: snaps missiles out of the air |
+  | `chs_behemoth` | Behemoth | Hecatomb | strategic bomber |
+  | `chs_centurion` | Centurion | Sunder | heavy laser bot that cuts a line |
+  | `chs_cerberus` | Cerberus | Ladon | anti-nuke (the dragon that guards) |
+  | `chs_condor` | Condor | Carrion | advanced air worker (picks wrecks clean) |
+  | `chs_corsair` | Corsair | Cutthroat | destroyer |
+  | `chs_cyclops` | Cyclops | Demolisher | siege mortar, structures only |
+  | `chs_gorgon` | Gorgon | Medusa | long-range radar SAM (its gaze) |
+  | `chs_hailstorm` | Hailstorm | Sleet | flak tower |
+  | `chs_hornet` | Hornet | Gadfly | short-range IR SAM |
+  | `chs_kraken` | Kraken | Charybdis | cruiser |
+  | `chs_lamprey` | Lamprey | Hagfish | submarine |
+  | `chs_manticore` | Manticore | Strix | fighter |
+  | `chs_ragnarok` | Ragnarok | Doomsday | nuke silo |
+  | `chs_riptide` | Riptide | Whirlpool | floating turret |
+  | `chs_shroud` | Shroud | Murk | mobile jammer |
+  | `chs_watcher` | Watcher | Gazer | mobile radar |
+  | `ord_arbiter` | Arbiter | Assessor | fire-control radar |
+  | `ord_archangel` | Archangel | Firmament | AWACS |
+  | `ord_citadel` | Citadel | Stronghold | fortress |
+  | `ord_oracle` | Oracle | Scryer | mobile radar |
+  | `ord_paladin` | Paladin | Vindicator | main battle tank |
+  | `ord_phantom` | Phantom | Eclipse | stealth bomber |
+  | `ord_veil` | Veil | Mantle | mobile jammer |
+  | `ord_warden` | Warden | Steadfast | deployable gun |
+
+  The Juggernaut keeps its name: BAR's Juggernaut is the same unit.
+- **Other streams:** lobby-D renames the Codex entries, clients-B checks tooltips and any text that names a unit, 2d-E checks pictures with a name on them. The Juggernaut stays a mech (no model change).
+- **Kept as they are** (§1.1): Edict, Cataclysm, Cyclops (now Demolisher) and Glint are FTGG-only roles, re-labelled in the plan rather than changed; the fighters, scouts, radars and AA towers are deliberate (S-62, S-179).
+- **Tests:** the fast and client suites pass unchanged; no test pinned these prices or names.

@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.2 "Main battle tank", T2); stats to balance in M8.
 return Templates.extend(Templates.TankT1, {
 	id = "ord_paladin",
-	name = "Paladin",
+	name = "Vindicator", -- Paladin until S-225: BAR's Paladin is a different unit
 	description = "Main battle tank. A heavy gun on an armored hull.",
 	faction = "order",
 	tier = 2,

@@ -1,7 +1,10 @@
 # The BAR roster program: plan (draft for the user's approval)
 
 Owner: sim-A (lead and integrator). Streams: clients-B, models-C, lobby-D, 2d-E.
-Status: **draft, nothing applied.** Every proposal below waits for the user's decision; the "Decisions needed" list at the end collects them.
+Status: **approved by the user on 2026-10-31**, with these answers:
+- Part 1: the four stat changes (the Juggernaut priced up to take on two Titans, S-225); cloak and EMP in batch 1; no minelayers for now; spy bots without capture; **idle autoheal: yes**; no veterancy. Renames: sim-A picks names that fit each unit's role (S-225's table).
+- Parts 2, 3 and 4 approved as written, the 40% heap threshold included.
+- Models: every unit C finishes is shown to the user as a preview, saved where the user can open it easily.
 
 **Reference:** `assets/reference/bar-units/` (README, `armada.md`, `cortex.md`, `pictures/`). It is git-ignored (`.gitignore`: `assets/reference/`).
 - The stats are game data (BAR's GPL-2.0 code): fine to compare and to start drafts from.

@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.2 "Mobile jammer", T2): long-range jammer.
 return Templates.extend(Templates.Unit, {
 	id = "chs_shroud",
-	name = "Shroud",
+	name = "Murk", -- Shroud until S-225: BAR's Shroud is a different unit
 	description = "Mobile jammer. Hides nearby friendly units from enemy radar.",
 	faction = "chaos",
 	tier = 2,

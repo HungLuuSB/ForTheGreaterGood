@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.4 "Cruiser / battleship", T2); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_kraken",
-	name = "Kraken",
+	name = "Charybdis", -- Kraken until S-225: BAR's Kraken is a different unit
 	description = "Cruiser. Heavy guns and flak.",
 	faction = "chaos",
 	tier = 2,

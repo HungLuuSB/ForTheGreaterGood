@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.3 "Air superiority fighter", T2); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_manticore",
-	name = "Manticore",
+	name = "Strix", -- Manticore until S-225: BAR's Manticore is a different unit
 	description = "Air superiority fighter. Heavy missiles and flares.",
 	faction = "chaos",
 	tier = 2,

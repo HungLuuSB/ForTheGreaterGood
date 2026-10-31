@@ -9,7 +9,7 @@ return Templates.extend(Templates.Structure, {
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE", "ANTIAIR", "RADAR_EMITTER" },
-	cost = { supply = 320, power = 4200, buildTime = 9000 },
+	cost = { supply = 580, power = 7600, buildTime = 16000 }, -- (S-225) ×1.8: a long-range SAM can't blanket the map cheaply
 	health = 1800,
 	footprint = 3,
 	sensors = { sight = 150, radar = 1200, radarError = 15 },
