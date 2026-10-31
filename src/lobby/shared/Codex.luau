@@ -50,8 +50,18 @@ end
 -- Units the sim stream announced ahead of their defs (the decision that
 -- adds them): the roles may name them before the defs reach this branch.
 -- Remove each once its def is on main.
--- Empty now: S-219's four transports are on main.
-Codex.ANNOUNCED = table.freeze({} :: { [string]: string })
+local ANNOUNCED: { [string]: string } = {}
+-- batch 1 of the BAR roster program (S-228..S-230): vehicles and hovercraft
+for _, id in {
+	"ord_courser", "ord_gemini", "ord_wader", "ord_pontifex", "ord_magistrate", "ord_whisper", "ord_fulgur",
+	"ord_mandate", "ord_luminary", "ord_thunderer", "ord_tempest", "ord_hoverdock", "ord_skimwright",
+	"ord_skimmer", "ord_volley", "ord_dart", "ord_halcyon",
+	"chs_cleaver", "chs_mudskipper", "chs_dredger", "chs_hellfire", "chs_grendel", "chs_hurler", "chs_typhon",
+	"chs_skimyard", "chs_drifter", "chs_snapjaw", "chs_sling", "chs_gnat", "chs_skua", "chs_glaive",
+} do
+	ANNOUNCED[id] = "S-230"
+end
+Codex.ANNOUNCED = table.freeze(ANNOUNCED)
 
 -- Guide 13.1-13.5 plus the economy, factories and the units added since.
 Codex.ROLES = {
@@ -64,6 +74,9 @@ Codex.ROLES = {
 	r("command", "Advanced naval worker", 2, { "ord_harbormaster" }, { "chs_reaver" }),
 	r("command", "Bot constructor", 1, { "ord_artisan" }, { "chs_tinker" }),
 	r("command", "Field engineer (repair, resurrect, reclaim)", 1, { "ord_lazarus" }, { "chs_graverobber" }),
+	r("command", "Amphibious worker", 1, { "ord_pontifex" }, { "chs_dredger" }), -- S-230
+	r("command", "Hover worker", 1, { "ord_skimwright" }, { "chs_drifter" }), -- S-230
+	r("command", "Combat engineer", 2, { "ord_magistrate" }, {}), -- S-230
 
 	r("ground", "Scout", 1, { "ord_herald" }, { "chs_jackal" }),
 	r("ground", "Light tank", 1, { "ord_lancer" }, { "chs_ravager" }),
@@ -82,6 +95,25 @@ Codex.ROLES = {
 	r("ground", "Deployable gun", 2, { "ord_warden" }, {}),
 	r("ground", "Siege ram", 2, {}, { "chs_minotaur" }),
 	r("ground", "Siege mortar", 2, {}, { "chs_cyclops" }),
+	-- batch 1 (S-230): BAR's pairs where both factions have one
+	r("ground", "Fast raider", 1, { "ord_courser" }, {}),
+	r("ground", "Rocket tank", 1, { "ord_gemini" }, {}),
+	r("ground", "Riot tank", 1, {}, { "chs_cleaver" }),
+	r("ground", "Light amphibious tank", 1, { "ord_wader" }, { "chs_mudskipper" }),
+	r("ground", "Mobile artillery", 2, { "ord_mandate" }, { "chs_hurler" }),
+	r("ground", "Cloaked tank", 2, { "ord_whisper" }, {}), -- S-228
+	r("ground", "Lightning raider", 2, { "ord_fulgur" }, {}),
+	r("ground", "Tachyon tank", 2, { "ord_luminary" }, {}),
+	r("ground", "Heavy missile tank", 2, {}, { "chs_hellfire" }),
+	r("ground", "Heavy amphibious tank", 2, {}, { "chs_grendel" }),
+	r("ground", "Experimental lightning tank", 3, { "ord_thunderer" }, {}), -- S-229
+	-- hovercraft (S-230): cross land and water
+	r("ground", "Hover tank", 1, { "ord_skimmer" }, { "chs_snapjaw" }),
+	r("ground", "Hover raider", 1, { "ord_dart" }, { "chs_gnat" }),
+	r("ground", "Hover rocket artillery", 1, { "ord_volley" }, { "chs_sling" }),
+	r("ground", "Hover anti-air", 1, { "ord_halcyon" }, { "chs_skua" }),
+	r("ground", "Assault hovertank", 1, {}, { "chs_glaive" }),
+	r("ground", "Heavy hovertank", 3, { "ord_tempest" }, { "chs_typhon" }),
 	-- bots (S-181): ground units that climb steep terrain and turn in place
 	r("ground", "Scout bot", 1, { "ord_glint" }, { "chs_skitter" }),
 	r("ground", "Light combat bot", 1, { "ord_mace" }, { "chs_thug" }),
@@ -165,6 +197,7 @@ Codex.ROLES = {
 	r("factory", "Rearm pad", 1, { "ord_airpad" }, { "chs_airpad" }),
 	r("factory", "Bot lab", 1, { "ord_botlab" }, { "chs_botlab" }),
 	r("factory", "Construction turret", 1, { "ord_nano" }, { "chs_nano" }),
+	r("factory", "Hover factory", 1, { "ord_hoverdock" }, { "chs_skimyard" }), -- S-230
 	r("factory", "Advanced vehicle plant", 2, { "ord_advvehplant" }, { "chs_advvehplant" }),
 	r("factory", "Advanced airfield", 2, { "ord_advairfield" }, { "chs_advairfield" }),
 	r("factory", "Advanced shipyard", 2, { "ord_advshipyard" }, { "chs_advshipyard" }),

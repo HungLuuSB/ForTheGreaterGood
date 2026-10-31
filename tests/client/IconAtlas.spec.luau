@@ -9,11 +9,16 @@ local Defs = require("@shared/Defs/Defs")
 local SHEET = 1024
 
 return function(t: any)
-	t.test("every unit def has a tile", function()
+	t.test("every unit def has a tile: its own, or its type's placeholder until the sheet lists it", function()
+		local Icons = require("../../src/client/Core/Icons")
 		for _, def in Defs.load().unitByIndex do
 			local e = IconAtlas.byDef[def.id]
-			t.expect(e ~= nil, `{def.id} has no icon: rerun node tools/icons/render.mjs`)
-			if e then
+			if e == nil then
+				-- a def newer than the sheet (2D-E draws it from the def): the sheet's
+				-- placeholder rule (C-258), as render.mjs warns
+				local f = Icons.placeholderFrame(def)
+				t.expect(IconAtlas.placeholders[f] ~= nil, `{def.id} has no icon and no placeholder for its frame {f}`)
+			else
 				t.expect(IconAtlas.tiles[e.tile] ~= nil, `{def.id}: no tile {e.tile}`)
 				t.expect(e.scale >= 1 and e.scale <= 1.4, `{def.id}: scale {e.scale}`) -- 1.4: the experimental mechs (draft 7)
 				t.expect(IconAtlas.contacts[e.frame] ~= nil, `{def.id}: no contact tile for its frame {e.frame}`)

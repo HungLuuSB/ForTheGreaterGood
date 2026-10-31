@@ -413,6 +413,10 @@ local landing = Landing.new() -- the Commanders drop in with a star flare as the
 UnitRenderer.lift = Landing.lift(world)
 local transports = TransportsRender.new() -- carried units under their transport; down to pick up and set down (C-273)
 UnitRenderer.adjust = TransportsRender.adjust(transports, world)
+-- a wreck's sparks and its collapse into a scrap heap (S-227, C-278), on the effects' clock
+RenderDeaths.onFx = function(kind: string, x: number, y: number, z: number, scale: number)
+	Vfx.spawn(fxRenderer.vfx, kind, x, y, z, scale, fxRenderer.vfxNow, y - 1)
+end
 Controls.pregameClick = function(ground: Vector3?): boolean
 	local pg = world.pregame
 	if not pg.active or world.me.player == 0 then

@@ -46,7 +46,8 @@ Icons.AIR_ALT = 8
 
 -- Two-letter codes from the unit names, unique over every unit def (in def
 -- order): the initials of a two-word name, else its first letter with a
--- later one, else a digit (C-67).
+-- later one, else a digit (C-67); else its first letter with any other,
+-- else any free pair.
 function Icons.codes(defs: any): { [number]: string }
 	local out, used = {}, {}
 	for index, def in defs.unitByIndex do
@@ -72,6 +73,25 @@ function Icons.codes(defs: any): { [number]: string }
 				used[c] = true
 				out[index] = c
 				break
+			end
+		end
+		if out[index] == nil then
+			-- every one of its own taken (batch 1 brought many S- names, S-230):
+			-- its first letter with any other, then any free pair
+			local LETTERS = "abcdefghijklmnopqrstuvwxyz"
+			for i = 0, 26 do
+				local f = if i == 0 then first else string.upper(string.sub(LETTERS, i, i))
+				for k = 1, 26 do
+					local c = f .. string.sub(LETTERS, k, k)
+					if not used[c] then
+						used[c] = true
+						out[index] = c
+						break
+					end
+				end
+				if out[index] then
+					break
+				end
 			end
 		end
 	end

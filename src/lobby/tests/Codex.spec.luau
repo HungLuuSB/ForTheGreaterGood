@@ -74,18 +74,19 @@ return function(t: RunAll.Context)
 	t.test("counterparts point at each other", function()
 		t.deepEqual(codex.entries.ord_titan.counterparts, { "chs_juggernaut" })
 		t.deepEqual(codex.entries.chs_juggernaut.counterparts, { "ord_titan" })
-		-- S-224 brings the Goliath back; until its def is on this branch it's
-		-- still retired (S-213), hidden, and the Paladin has no counterpart
-		if defs.units.chs_goliath.retired then
-			t.equal(codex.entries.chs_goliath, nil, "the retired Goliath")
-			t.equal(#codex.entries.ord_paladin.counterparts, 0, "no Chaos main battle tank while it's retired")
-		else
-			t.deepEqual(codex.entries.ord_paladin.counterparts, { "chs_goliath" })
-			t.deepEqual(codex.entries.chs_goliath.counterparts, { "ord_paladin" })
-		end
+		-- the main battle tanks (S-224 brought chs_goliath back)
+		t.deepEqual(codex.entries.ord_paladin.counterparts, { "chs_goliath" })
+		t.deepEqual(codex.entries.chs_goliath.counterparts, { "ord_paladin" })
 		-- S-219's transports
 		t.deepEqual(codex.entries.ord_courier.counterparts, { "chs_buzzard" })
 		t.deepEqual(codex.entries.chs_charon.counterparts, { "ord_ark" })
+		-- batch 1 (S-230), once its defs are on this branch
+		if defs.units.ord_skimmer then
+			t.deepEqual(codex.entries.ord_skimmer.counterparts, { "chs_snapjaw" })
+			t.deepEqual(codex.entries.chs_typhon.counterparts, { "ord_tempest" })
+			t.deepEqual(codex.entries.ord_hoverdock.counterparts, { "chs_skimyard" })
+			t.equal(#codex.entries.chs_glaive.counterparts, 0, "Chaos-only")
+		end
 		t.deepEqual(codex.entries.ord_overwatch.counterparts, { "chs_twin_guard", "chs_geryon" })
 		t.deepEqual(codex.entries.chs_geryon.counterparts, { "ord_overwatch" })
 		t.equal(#codex.entries.ord_warden.counterparts, 0, "faction-only")

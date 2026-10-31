@@ -377,9 +377,12 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			-- the known wreck nearest the click (wrecks aren't pickable models), C-109;
 			-- RESURRECT the same way (S-168, C-216: workers with canResurrect)
 			local best, bestD2 = nil, 24 * 24
+			local heaps = false
 			for wid, w in world.wrecks do
-				if kind == "resurrect" and w.feature then
-					continue -- trees and rocks don't come back (S-197)
+				if kind == "resurrect" and (w.feature or w.heap) then
+					-- trees and rocks don't come back (S-197), nor scrap heaps (S-227)
+					heaps = heaps or (w.heap == true and (w.x - x) ^ 2 + (w.z - z) ^ 2 < 24 * 24)
+					continue
 				end
 				local d2 = (w.x - x) ^ 2 + (w.z - z) ^ 2
 				if d2 < bestD2 then
@@ -387,7 +390,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 				end
 			end
 			if best == nil then
-				return false, "no wreck there"
+				return false, if heaps then "a scrap heap can't be resurrected" else "no wreck there"
 			end
 			ok, why = issue({ cmdType = if kind == "resurrect" then CT.RESURRECT else CT.RECLAIM, queue = queue == true, targetId = best })
 		else
