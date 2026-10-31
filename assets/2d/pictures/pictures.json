@@ -26,7 +26,7 @@
 			"file": "ftgg-unit-pictures-4.png",
 			"size": [
 				1024,
-				382
+				766
 			]
 		}
 	],
@@ -382,6 +382,15 @@
 				126
 			]
 		},
+		"chs_drifter": {
+			"sheet": 4,
+			"rect": [
+				128,
+				256,
+				126,
+				126
+			]
+		},
 		"chs_extractor": {
 			"sheet": 1,
 			"rect": [
@@ -445,6 +454,24 @@
 				126
 			]
 		},
+		"chs_glaive": {
+			"sheet": 4,
+			"rect": [
+				256,
+				256,
+				126,
+				126
+			]
+		},
+		"chs_gnat": {
+			"sheet": 4,
+			"rect": [
+				384,
+				256,
+				126,
+				126
+			]
+		},
 		"chs_goliath": {
 			"sheet": 4,
 			"rect": [
@@ -468,6 +495,15 @@
 			"rect": [
 				384,
 				640,
+				126,
+				126
+			]
+		},
+		"chs_grendel": {
+			"sheet": 4,
+			"rect": [
+				512,
+				256,
 				126,
 				126
 			]
@@ -508,6 +544,15 @@
 				126
 			]
 		},
+		"chs_hellfire": {
+			"sheet": 4,
+			"rect": [
+				640,
+				256,
+				126,
+				126
+			]
+		},
 		"chs_hellmouth": {
 			"sheet": 1,
 			"rect": [
@@ -522,6 +567,15 @@
 			"rect": [
 				128,
 				768,
+				126,
+				126
+			]
+		},
+		"chs_hurler": {
+			"sheet": 4,
+			"rect": [
+				768,
+				256,
 				126,
 				126
 			]
@@ -805,6 +859,15 @@
 				126
 			]
 		},
+		"chs_skimyard": {
+			"sheet": 4,
+			"rect": [
+				896,
+				256,
+				126,
+				126
+			]
+		},
 		"chs_skitter": {
 			"sheet": 2,
 			"rect": [
@@ -814,11 +877,38 @@
 				126
 			]
 		},
+		"chs_skua": {
+			"sheet": 4,
+			"rect": [
+				0,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_sling": {
+			"sheet": 4,
+			"rect": [
+				128,
+				384,
+				126,
+				126
+			]
+		},
 		"chs_smog": {
 			"sheet": 2,
 			"rect": [
 				128,
 				256,
+				126,
+				126
+			]
+		},
+		"chs_snapjaw": {
+			"sheet": 4,
+			"rect": [
+				256,
+				384,
 				126,
 				126
 			]
@@ -890,6 +980,15 @@
 			"sheet": 2,
 			"rect": [
 				128,
+				384,
+				126,
+				126
+			]
+		},
+		"chs_typhon": {
+			"sheet": 4,
+			"rect": [
+				384,
 				384,
 				126,
 				126
@@ -1291,6 +1390,15 @@
 				126
 			]
 		},
+		"ord_dart": {
+			"sheet": 4,
+			"rect": [
+				512,
+				384,
+				126,
+				126
+			]
+		},
 		"ord_depot": {
 			"sheet": 3,
 			"rect": [
@@ -1363,6 +1471,15 @@
 				126
 			]
 		},
+		"ord_fulgur": {
+			"sheet": 4,
+			"rect": [
+				640,
+				384,
+				126,
+				126
+			]
+		},
 		"ord_fusion": {
 			"sheet": 3,
 			"rect": [
@@ -1417,6 +1534,15 @@
 				126
 			]
 		},
+		"ord_halcyon": {
+			"sheet": 4,
+			"rect": [
+				768,
+				384,
+				126,
+				126
+			]
+		},
 		"ord_halo": {
 			"sheet": 3,
 			"rect": [
@@ -1440,6 +1566,15 @@
 			"rect": [
 				256,
 				256,
+				126,
+				126
+			]
+		},
+		"ord_hoverdock": {
+			"sheet": 4,
+			"rect": [
+				896,
+				384,
 				126,
 				126
 			]
@@ -1498,11 +1633,38 @@
 				126
 			]
 		},
+		"ord_luminary": {
+			"sheet": 4,
+			"rect": [
+				0,
+				512,
+				126,
+				126
+			]
+		},
 		"ord_mace": {
 			"sheet": 3,
 			"rect": [
 				128,
 				384,
+				126,
+				126
+			]
+		},
+		"ord_magistrate": {
+			"sheet": 4,
+			"rect": [
+				128,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_mandate": {
+			"sheet": 4,
+			"rect": [
+				256,
+				512,
 				126,
 				126
 			]
@@ -1723,6 +1885,24 @@
 				126
 			]
 		},
+		"ord_skimmer": {
+			"sheet": 4,
+			"rect": [
+				384,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_skimwright": {
+			"sheet": 4,
+			"rect": [
+				512,
+				512,
+				126,
+				126
+			]
+		},
 		"ord_skywright": {
 			"sheet": 3,
 			"rect": [
@@ -1746,6 +1926,24 @@
 			"rect": [
 				384,
 				768,
+				126,
+				126
+			]
+		},
+		"ord_tempest": {
+			"sheet": 4,
+			"rect": [
+				640,
+				512,
+				126,
+				126
+			]
+		},
+		"ord_thunderer": {
+			"sheet": 4,
+			"rect": [
+				768,
+				512,
 				126,
 				126
 			]
@@ -1858,6 +2056,15 @@
 				126
 			]
 		},
+		"ord_volley": {
+			"sheet": 4,
+			"rect": [
+				896,
+				512,
+				126,
+				126
+			]
+		},
 		"ord_wader": {
 			"sheet": 4,
 			"rect": [
@@ -1881,6 +2088,15 @@
 			"rect": [
 				128,
 				0,
+				126,
+				126
+			]
+		},
+		"ord_whisper": {
+			"sheet": 4,
+			"rect": [
+				0,
+				640,
 				126,
 				126
 			]
@@ -1913,30 +2129,5 @@
 			]
 		}
 	},
-	"missing": [
-		"chs_drifter",
-		"chs_glaive",
-		"chs_gnat",
-		"chs_grendel",
-		"chs_hellfire",
-		"chs_hurler",
-		"chs_skimyard",
-		"chs_skua",
-		"chs_sling",
-		"chs_snapjaw",
-		"chs_typhon",
-		"ord_dart",
-		"ord_fulgur",
-		"ord_halcyon",
-		"ord_hoverdock",
-		"ord_luminary",
-		"ord_magistrate",
-		"ord_mandate",
-		"ord_skimmer",
-		"ord_skimwright",
-		"ord_tempest",
-		"ord_thunderer",
-		"ord_volley",
-		"ord_whisper"
-	]
+	"missing": []
 }
