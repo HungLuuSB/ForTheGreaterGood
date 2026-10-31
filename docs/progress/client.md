@@ -57,6 +57,14 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-31, FEEDBACK-4 item 3: C-282)
+
+- **Explosions and missile launches toned down (C-282):** after the 8v8 on Supreme Strait, the user asked: "The effect of exploding, missile launch is too much, tune them down."
+  - One tone table in `Render/Vfx` scales size, particle count, light and lifetime, for both the built-in effects and C's saved templates.
+  - Explosions and deaths play at 0.75 size, 0.6 particles, 0.55 light and 0.75 duration. Missile launches play at 0.65 / 0.5 / 0.5 / 0.6.
+  - Blast marks keep their true size.
+- Ready to merge: `8d418cbd` (C-282. test_client 356 / 356, build passed (996 scripts, 2710 requires). Studio, Coastline: toned deaths at hull size, and copies measured shorter-lived than C's templates; no console errors)
+
 ## Summary (2026-10-31, scrap heap meshes: C-281)
 
 - **Scrap heap meshes (C-281):** C's approved heaps (4 sizes) replace the stand-in, their ground patch tinted to the terrain like deposits; a stand-in shown before a mesh is built swaps to it.
