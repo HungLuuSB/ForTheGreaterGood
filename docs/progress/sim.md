@@ -14,7 +14,7 @@ Plan: `docs/design/bar-roster-plan.md` (the user's answers at the top). sim-A le
 | Autoheal | S-226: idle units heal 1% a second after 10 s without damage | done (sim); no wire change |
 | Part 3 | `docs/design/reserved-units.md`: the 65 unreachable units, drafted only (49 new names, 7 modes and events) | done |
 | Part 4 | S-227: wrecks take damage, resources follow health, scrap heaps below 40%, protocol 45 | done (sim) · C: heap meshes · B: swap and sparks (contract in net.md 7a) · E: scrap mark · D: note |
-| Batch 1 | 29 vehicles and hovercraft + 2 hover factories; mechanics first: hovercraft check, cloak (S-228, done), EMP (S-229, done; protocol 46), with the Whisper and the Thunderer; the other 29 defs next | in progress · C: blockouts → meshes → wrecks, a preview for the user per unit · E: icons, pictures · B: cloak, EMP, hover effects · D: Codex |
+| Batch 1 | 29 vehicles and hovercraft + 2 hover factories; S-228 cloak, S-229 EMP (protocol 46), S-230 all 31 defs, hovercraft checked, AI picks (hover factories on water maps still to do) | defs done (sim), lands through B's and C's branches · C: blockouts → meshes → wrecks, a preview for the user per unit · E: icons, pictures · B: cloak, EMP, hover effects · D: Codex |
 | Batches 2–5 | Bots, air, naval, structures | the next batch's defs are drafted while C models the current one |
 
 
@@ -592,7 +592,8 @@ Requests from the sim stream to session C (models, `FTGG-models`, branch `m-mode
 Requests from the sim stream to session D (lobby and Codex, `FTGG-lobby`, branch `m-lobby`).
 
 1. **S-225 (2026-10-31): 28 display-name renames** (ids unchanged): the table is in `docs/decisions/sim.md` S-225. New prices: Juggernaut 5,400 / 78,000 / 180,000, health 54,000; Bulwark health 4,800; Dragon 1,600 / 28,000 / 50,000; Wyvern 540 / 6,800 / 15,000; Aegis 580 / 7,600 / 16,000. If the Codex reads names and stats from the defs, only text that names a unit needs a look.
-2. **Coming:** autoheal (S-226), wrecks and scrap heaps (S-227), then batch 1's 31 entries. Each one gets a line here when its defs land.
+2. **Codex lines:** S-226 idle autoheal (1% of max health a second after 10 s without damage); S-227 wrecks and scrap heaps (a wreck's resources fall with its health, below 40% a heap that can only be reclaimed); S-228 cloak (the Whisper); S-229 EMP (the Thunderer).
+3. **Batch 1 (S-230), 31 Codex entries:** the table in `docs/decisions/sim.md` S-230 (names, roles, factories). Counterpart rows: Order/Chaos pairs where both have one (Courser/Gnat-class raiders are not pairs; the README's BAR ids are in each def's header comment).
 
 ## For the 2D stream (E)
 

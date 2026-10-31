@@ -3319,3 +3319,40 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - EMP fills the bar, not health; past max it stuns, capped by the weapon's seconds, and it wears off;
   - the Thunderer's EMP fills a Juggernaut's bar;
   - a stunned tank neither fires at a tank beside it nor moves.
+
+## S-230 — Batch 1: vehicles and hovercraft (the user) (2026-10-31)
+
+- **Asked (the user):** the BAR roster program's part 2, batch 1, approved with its names (`docs/design/bar-roster-plan.md` §2.2). The minelayers are skipped ("Skip the minelayers").
+- **31 defs**, with the Whisper and the Thunderer from S-228 and S-229:
+
+  | Faction | T1 vehicle plant | T2 advanced plant | Gantry (T3) | Hover factory |
+  |---|---|---|---|---|
+  | Order | Courser (fast raider), Gemini (twin rockets), Wader (amphibious tank), Pontifex (amphibious worker) | Magistrate (combat engineer), Whisper, Fulgur (lightning raider with an AA missile), Mandate (artillery), Luminary (tachyon beam) | Thunderer, Tempest (heavy hovertank) | **Hover Dock**: Skimwright (worker), Skimmer (tank), Volley (rocket artillery), Dart (fast raider), Halcyon (anti-air) |
+  | Chaos | Cleaver (riot tank), Mudskipper (amphibious tank), Dredger (amphibious worker) | Hellfire (heavy missiles), Grendel (very heavy amphibious), Hurler (artillery) | Typhon (heavy laser hovertank) | **Skim Yard**: Drifter (worker), Snapjaw (tank), Sling (rocket artillery), Gnat (fast raider), Skua (anti-air), Glaive (assault hovertank, heavy laser) |
+
+- **The hover factories** merge BAR's land and floating platforms into one def each, `placement = "either"`, footprint 4 (C's 22-stud deck). Commanders and T1 workers build them, and so do the new amphibious and hover workers and the Magistrate. The amphibious and hover workers also build the sea extractor and the shipyard.
+- **First-draft numbers:** the README's suggested conversion, scaled to where our tanks sit against their counterparts:
+  - supply about as suggested;
+  - build time about 28 × supply (T1), 25× (T2);
+  - power about 10× supply (12× at T2);
+  - health ×0.6 at T1, ×0.85 at T2;
+  - speed ×0.85, sight ×1.3;
+  - ranges ×0.85;
+  - DPS as suggested.
+
+  T3 is compressed like the Titan. Footprints and piece names follow C's blockouts. The balance pass waits for "run the balance checkpoint".
+- **Hovercraft:** the `HOVER` move class had no units before. `Batch1.spec` drives a Skimmer from land onto 30-stud-deep sea and back: it rides the surface, never submerged.
+- **The AI** (`Skirmish.BATCH1_SHARE` 0.25):
+  - vehicle plants: Order's Gemini and Chaos's Cleaver in a quarter of the tank picks (the Cleaver more when the enemy fields light units); Order's Courser in a quarter of the raider picks;
+  - advanced plants: a quarter of the picks go to batch 1's units in the same role: Mandate / Hurler for artillery, Luminary / Hellfire or Fulgur / Grendel for heavy.
+  - Not yet: hover factories on water maps, the amphibious and hover workers, and the T3 hovers. These are the batch's AI follow-ups.
+- **Tests:** `Batch1.spec` (fast):
+  - all 31 can be built from a Commander's tree;
+  - every armed one with a ground weapon damages (or stuns) an enemy tank in its reach;
+  - hovercraft cross land and water;
+  - the hover factories pass placement on land and on the sea.
+- **Other streams:**
+  - C: blockouts done (6c9268f2), meshes and wrecks next, previews to the user;
+  - E: icons from the defs, then pictures from C's models;
+  - B: placeholders through the relaxed IconAtlas rule, then rigs and effects;
+  - D: Codex entries.
