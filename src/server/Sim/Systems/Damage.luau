@@ -13,6 +13,7 @@
 local Alerts = require("../Alerts")
 local AutoHeal = require("../AutoHeal")
 local Combat = require("../Combat/Combat")
+local Paralyze = require("../Paralyze")
 local Deploy = require("../Deploy")
 local Lifecycle = require("../Lifecycle")
 local SelfDestruct = require("../SelfDestruct")
@@ -91,6 +92,10 @@ return function(sim: Types.Sim)
 			continue -- god mode (S-102)
 		end
 		local amount = c.dmgAmount[i]
+		if c.dmgPara[i] > 0 then
+			Paralyze.add(sim, t, amount, c.dmgPara[i]) -- EMP: the stun bar, not health (S-229)
+			continue
+		end
 		if w.deploy[t] == 1 then
 			amount /= Deploy.armor(sim, t) -- a deployed Warden's fortification (S-64)
 		elseif Combat.retracted(sim, t) then

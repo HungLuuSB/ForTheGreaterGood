@@ -416,7 +416,7 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 		buildProgress = 0,
 	})
 	Placement.occupy(sim, id)
-	if d.converter or d.retract or d.shield then
+	if d.converter or d.retract or d.shield or d.cloak then
 		World.setState(w, id, bit32.bor(w.state[id], World.State.TOGGLED_ON)) -- converters, retracting towers (S-96) and shield generators (S-154) start on
 	end
 	Lifecycle.added(sim, id)
@@ -679,8 +679,8 @@ function Build.step(sim: Types.Sim)
 	for _, id in w.ids do
 		local d = def(sim, id)
 		local bp = d.buildPower
-		if bp == nil or w.buildProgress[id] < 1 then
-			continue
+		if bp == nil or w.buildProgress[id] < 1 or World.isParalyzed(w, id) then
+			continue -- (stunned by EMP: no work, S-229)
 		end
 		if d.domain == "structure" then
 			local q = b.queue[id]

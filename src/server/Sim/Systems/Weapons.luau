@@ -657,6 +657,9 @@ return function(sim: Types.Sim)
 				if canFire and not Deploy.canFire(w, id) then
 					canFire = false -- packed or (un)packing (S-64)
 				end
+				if canFire and World.isParalyzed(w, id) then
+					canFire = false -- stunned by EMP (S-229)
+				end
 				if canFire and weapon.shotCost then
 					if Stockpile.charges(weapon) then
 						canFire = Stockpile.charged(w, key) -- paid while it reloaded (S-205)

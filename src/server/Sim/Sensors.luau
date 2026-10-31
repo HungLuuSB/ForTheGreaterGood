@@ -476,7 +476,8 @@ local function levelFor(sim: Types.Sim, s: State, team: number, id: number, cell
 	end
 	local onRadar = readu16(m.radar, cell * 2) > 0 and Sensors.radarDetects(sim, s, team, id, cell)
 	local tracked = onRadar and readu16(m.track, cell * 2) > 0
-	if readu16(m.los, cell * 2) > 0 or (domain == "air" and readu16(m.airLos, cell * 2) > 0) then
+	local cloaked = bit32.band(w.state[id], World.State.CLOAKED) ~= 0 -- sight passes over it (S-228)
+	if not cloaked and (readu16(m.los, cell * 2) > 0 or (domain == "air" and readu16(m.airLos, cell * 2) > 0)) then
 		return L.VISIBLE, tracked
 	end
 	if onRadar then
@@ -732,8 +733,12 @@ function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number }, lowP: 
 	local eco = sim.eco
 	local dt = Sensors.DT
 	for _, id in w.ids do
-		local sensors = sim.defs.unitByIndex[w.defIndex[id]].sensors
+		local d = sim.defs.unitByIndex[w.defIndex[id]]
+		local sensors = d.sensors
 		local drain = 0
+		if d.cloak and bit32.band(w.state[id], World.State.TOGGLED_ON) ~= 0 then
+			drain += d.cloak.drain -- a cloak switched on (S-228)
+		end
 		if (sensors.track or 0) > 0 then
 			drain += sensors.trackDrain or 0
 		end
