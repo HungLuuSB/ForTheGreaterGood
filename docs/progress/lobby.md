@@ -2,6 +2,20 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-31: batch 1's Codex roles, S-230)
+
+- Merged main `fde1ba91` (S-225: the new names and prices show from the defs).
+- **sim-A's request 3 (batch 1, 31 units): Codex roles.** BAR's Order/Chaos pairs where both factions have one:
+  - **Command and workers:** Amphibious worker (Pontifex / Dredger), Hover worker (Skimwright / Drifter), Combat engineer (Magistrate, Order only).
+  - **Ground, one faction only:** Fast raider (Courser), Rocket tank (Gemini), Riot tank (Cleaver), Cloaked tank (Whisper), Lightning raider (Fulgur), Tachyon tank (Luminary), Heavy missile tank (Hellfire), Heavy amphibious tank (Grendel), Experimental lightning tank (Thunderer).
+  - **Ground, pairs:** Light amphibious tank (Wader / Mudskipper), Mobile artillery (Mandate / Hurler).
+  - **Hovercraft:** Hover tank (Skimmer / Snapjaw), Hover raider (Dart / Gnat), Hover rocket artillery (Volley / Sling), Hover anti-air (Halcyon / Skua), Assault hovertank (Glaive, Chaos only), Heavy hovertank (Tempest / Typhon, T3).
+  - **Factories:** Hover factory (Hover Dock / Skim Yard).
+- **`Codex.ANNOUNCED`** holds the 31 ids until their defs are on main, so this merges before or after S-230. `Codex.spec` checks four of the pairs once the defs are there.
+- Checked against sim-A's S-230 defs (a scratch copy with m-sim-2's `src/shared` and `src/server`): 68 / 68, every batch-1 unit has a role of its own faction.
+- **Request 2 (Codex lines for S-226 autoheal, S-227 wrecks and heaps, S-228 cloak, S-229 EMP): next, once they're on main.** Their numbers are the sim's (`AutoHeal`, `Combat.WRECK_*`, `Cloak`, `Combat.PARALYZE_SECONDS`), so the lobby's copies get a spec that checks them against those modules.
+- Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+
 ## Summary (2026-10-31: S-225's renames and prices)
 
 - Merged main `31bc0078` (fast-forward).
