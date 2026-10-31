@@ -1,0 +1,112 @@
+{
+  "id": "chs_gnat_wreck",
+  "wreckOf": "chs_gnat",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0188,
+        1.4554,
+        -0.1187
+      ],
+      "size": [
+        3.7769,
+        2.8164,
+        7.1391
+      ]
+    },
+    "fan1": {
+      "parent": "base",
+      "center": [
+        -0.0553,
+        1.8702,
+        2.2387
+      ],
+      "size": [
+        1.4353,
+        0.2239,
+        1.326
+      ],
+      "pivot": [
+        0,
+        1.92,
+        2.2439999999999998
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.067,
+        1.6695,
+        -1.8194
+      ],
+      "size": [
+        0.4208,
+        0.7054,
+        2.1218
+      ],
+      "pivot": [
+        0.0,
+        1.3,
+        -1.1
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0,
+        1.9,
+        -3.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "fan1"
+  ],
+  "anim": {
+    "fan1": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 652,
+    "fan1": 64,
+    "turret": 52,
+    "total": 768
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

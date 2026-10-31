@@ -1,0 +1,278 @@
+{
+  "id": "ord_tempest",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.675,
+        -0.0981
+      ],
+      "size": [
+        8.16,
+        3.15,
+        11.7245
+      ]
+    },
+    "fan1": {
+      "parent": "base",
+      "center": [
+        -1.85,
+        2.62,
+        4.2
+      ],
+      "size": [
+        2.09,
+        0.12,
+        1.9004
+      ],
+      "pivot": [
+        -1.85,
+        2.62,
+        4.2
+      ]
+    },
+    "fan2": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.62,
+        4.2
+      ],
+      "size": [
+        2.09,
+        0.12,
+        1.9004
+      ],
+      "pivot": [
+        0.0,
+        2.62,
+        4.2
+      ]
+    },
+    "fan3": {
+      "parent": "base",
+      "center": [
+        1.85,
+        2.62,
+        4.2
+      ],
+      "size": [
+        2.09,
+        0.12,
+        1.9004
+      ],
+      "pivot": [
+        1.85,
+        2.62,
+        4.2
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.96,
+        0.5482
+      ],
+      "size": [
+        5.167,
+        1.92,
+        5.8635
+      ],
+      "pivot": [
+        0.0,
+        2.0,
+        0.4
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        2.9,
+        -4.85
+      ],
+      "size": [
+        1.4,
+        1.0,
+        7.3
+      ],
+      "pivot": [
+        0.0,
+        2.9,
+        -1.8
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        2.9,
+        -8.6
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "fan1",
+    "fan2",
+    "fan3",
+    "turret",
+    "barrel"
+  ],
+  "visualPieces": [
+    "fan1",
+    "fan2",
+    "fan3"
+  ],
+  "anim": {
+    "fan1": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan2": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan3": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.6,
+        0.2
+      ],
+      "size": [
+        6.92,
+        0.12,
+        9.0
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.6,
+        -5.55
+      ],
+      "size": [
+        6.3,
+        0.18,
+        0.08
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.235,
+        0.4
+      ],
+      "size": [
+        5.28,
+        1.19,
+        2.4
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        2.9,
+        -8.52
+      ],
+      "size": [
+        0.48,
+        0.468,
+        0.06
+      ]
+    }
+  ],
+  "glowShare": 0.0155,
+  "triangles": {
+    "base": 640,
+    "fan1": 64,
+    "fan2": 64,
+    "fan3": 64,
+    "turret": 296,
+    "barrel": 452,
+    "total": 1580
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

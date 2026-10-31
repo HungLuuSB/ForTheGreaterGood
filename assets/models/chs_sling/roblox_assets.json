@@ -1,0 +1,56 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 1060 triangles, glow share 2.5%",
+  "bar": {
+    "model": "rbxassetid://105928994964421",
+    "meshes": {
+      "base": "rbxassetid://90308331917452",
+      "base_glow_head": "rbxassetid://79417553085161",
+      "base_glow_running": "rbxassetid://85489274263181",
+      "fan1": "rbxassetid://104229703151611",
+      "fan2": "rbxassetid://77427607336191",
+      "turret": "rbxassetid://104125057433977",
+      "turret_glow_weapon": "rbxassetid://105459623307416"
+    },
+    "decals": {
+      "ALB": "rbxassetid://98858933673778",
+      "RGH": "rbxassetid://89147447677600",
+      "NOR": "rbxassetid://99514094531400",
+      "MTL": "rbxassetid://88075697875307",
+      "EMI": "rbxassetid://88547428391390"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75933513428490",
+      "NOR": "rbxassetid://88161661971360",
+      "RGH": "rbxassetid://77424938819965",
+      "MTL": "rbxassetid://109154168383473",
+      "EMI": "rbxassetid://90085768011450"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_sling_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://113723330093652",
+    "meshes": {
+      "base": "rbxassetid://98480385798490",
+      "fan1": "rbxassetid://78210680279920",
+      "fan2": "rbxassetid://98620571005238",
+      "turret": "rbxassetid://115421841097745"
+    },
+    "decals": {
+      "ALB": "rbxassetid://125154911898552",
+      "RGH": "rbxassetid://74728101154744",
+      "NOR": "rbxassetid://72272911630274",
+      "MTL": "rbxassetid://76195688645300",
+      "EMI": "rbxassetid://113938638260400"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75839757049348",
+      "NOR": "rbxassetid://74007440714155",
+      "RGH": "rbxassetid://111828952058912",
+      "MTL": "rbxassetid://117562840786389",
+      "EMI": "rbxassetid://102675696781704"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_sling_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 960 triangles"
+  }
+}

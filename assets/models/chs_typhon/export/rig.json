@@ -1,0 +1,299 @@
+{
+  "id": "chs_typhon",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.675,
+        -0.3073
+      ],
+      "size": [
+        10.54,
+        3.15,
+        12.143
+      ]
+    },
+    "fan1": {
+      "parent": "base",
+      "center": [
+        -1.75,
+        2.62,
+        4.2
+      ],
+      "size": [
+        2.09,
+        0.12,
+        1.9004
+      ],
+      "pivot": [
+        -1.75,
+        2.62,
+        4.2
+      ]
+    },
+    "fan2": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.62,
+        4.2
+      ],
+      "size": [
+        2.09,
+        0.12,
+        1.9004
+      ],
+      "pivot": [
+        0.0,
+        2.62,
+        4.2
+      ]
+    },
+    "fan3": {
+      "parent": "base",
+      "center": [
+        1.75,
+        2.62,
+        4.2
+      ],
+      "size": [
+        2.09,
+        0.12,
+        1.9004
+      ],
+      "pivot": [
+        1.75,
+        2.62,
+        4.2
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.1766,
+        0.8277
+      ],
+      "size": [
+        5.1492,
+        2.3532,
+        6.0046
+      ],
+      "pivot": [
+        0.0,
+        2.0,
+        0.6
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        3.0,
+        -3.3
+      ],
+      "size": [
+        2.8,
+        0.85,
+        5.5
+      ],
+      "pivot": [
+        0.0,
+        3.0,
+        -1.2
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        -0.75,
+        3.0,
+        -6.15
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "fan1",
+    "fan2",
+    "fan3",
+    "turret",
+    "barrel"
+  ],
+  "visualPieces": [
+    "fan1",
+    "fan2",
+    "fan3"
+  ],
+  "anim": {
+    "fan1": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan2": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan3": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.6,
+        0.2
+      ],
+      "size": [
+        6.52,
+        0.12,
+        9.0
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.6,
+        -5.55
+      ],
+      "size": [
+        5.9,
+        0.18,
+        0.08
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.3,
+        -1.85
+      ],
+      "size": [
+        2.0,
+        0.1074,
+        0.0804
+      ]
+    },
+    {
+      "name": "turret_glow_weapon",
+      "piece": "turret",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        3.55,
+        2.4
+      ],
+      "size": [
+        2.32,
+        0.32,
+        1.8
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        3.0,
+        -4.415
+      ],
+      "size": [
+        2.14,
+        0.64,
+        3.35
+      ]
+    }
+  ],
+  "glowShare": 0.0289,
+  "triangles": {
+    "base": 832,
+    "fan1": 64,
+    "fan2": 64,
+    "fan3": 64,
+    "turret": 488,
+    "barrel": 732,
+    "total": 2244
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
