@@ -1,0 +1,131 @@
+{
+  "id": "ord_hoverdock",
+  "footprintStuds": 32,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        4.7475,
+        -1.8
+      ],
+      "size": [
+        30.4,
+        10.695,
+        30.8
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        1.1,
+        -2.2
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -6.82,
+        7.6,
+        -2.75
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        6.82,
+        7.6,
+        -2.75
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        0.0,
+        8.8,
+        0.22
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.25,
+        -1.275
+      ],
+      "size": [
+        29.3,
+        3.66,
+        26.55
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        6.01,
+        4.2326
+      ],
+      "size": [
+        14.12,
+        7.74,
+        14.4218
+      ]
+    }
+  ],
+  "glowShare": 0.0216,
+  "triangles": {
+    "base": 3420,
+    "total": 3420
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

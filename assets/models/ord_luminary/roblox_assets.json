@@ -1,0 +1,59 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 2272 triangles, glow share 5.7%",
+  "bar": {
+    "model": "rbxassetid://80527418628644",
+    "meshes": {
+      "barrel": "rbxassetid://80617402812355",
+      "barrel_glow_weapon": "rbxassetid://112557031841941",
+      "base": "rbxassetid://72569237644970",
+      "base_glow_head": "rbxassetid://113965787180725",
+      "base_glow_running": "rbxassetid://98953657836731",
+      "trackL": "rbxassetid://87621106773648",
+      "trackR": "rbxassetid://82883126783640",
+      "turret": "rbxassetid://105185089638569",
+      "turret_glow_running": "rbxassetid://120418802093608"
+    },
+    "decals": {
+      "ALB": "rbxassetid://76559381142237",
+      "RGH": "rbxassetid://98806086546963",
+      "NOR": "rbxassetid://90005208298820",
+      "MTL": "rbxassetid://113844544768588",
+      "EMI": "rbxassetid://137736987746106"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://111206738702136",
+      "NOR": "rbxassetid://84250790043745",
+      "RGH": "rbxassetid://103377706662908",
+      "MTL": "rbxassetid://113790800157753",
+      "EMI": "rbxassetid://90838461321391"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_luminary_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://92718871378372",
+    "meshes": {
+      "barrel": "rbxassetid://79125805675754",
+      "base": "rbxassetid://105749161322900",
+      "trackL": "rbxassetid://139731448429152",
+      "trackR": "rbxassetid://82231663879005",
+      "turret": "rbxassetid://123156559098683"
+    },
+    "decals": {
+      "ALB": "rbxassetid://104564641237443",
+      "RGH": "rbxassetid://87728622853607",
+      "NOR": "rbxassetid://79376520731201",
+      "MTL": "rbxassetid://131987336744309",
+      "EMI": "rbxassetid://81327277935263"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://139133644050225",
+      "NOR": "rbxassetid://114301144624867",
+      "RGH": "rbxassetid://129835643771003",
+      "MTL": "rbxassetid://96883254960967",
+      "EMI": "rbxassetid://70602762907894"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_luminary_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 1780 triangles"
+  }
+}

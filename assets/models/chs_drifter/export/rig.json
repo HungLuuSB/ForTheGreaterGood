@@ -1,0 +1,208 @@
+{
+  "id": "chs_drifter",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.425,
+        -0.098
+      ],
+      "size": [
+        5.12,
+        2.65,
+        7.7245
+      ]
+    },
+    "fan1": {
+      "parent": "base",
+      "center": [
+        -1.25,
+        2.12,
+        2.35
+      ],
+      "size": [
+        1.805,
+        0.12,
+        1.6534
+      ],
+      "pivot": [
+        -1.25,
+        2.12,
+        2.3499999999999996
+      ]
+    },
+    "fan2": {
+      "parent": "base",
+      "center": [
+        1.25,
+        2.12,
+        2.35
+      ],
+      "size": [
+        1.805,
+        0.12,
+        1.6534
+      ],
+      "pivot": [
+        1.25,
+        2.12,
+        2.3499999999999996
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        0.6,
+        2.3,
+        -1.5657
+      ],
+      "size": [
+        1.4,
+        1.6,
+        4.4629
+      ],
+      "pivot": [
+        0.6,
+        1.5,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.6,
+        3.05,
+        -3.85
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "fan1",
+    "fan2",
+    "nano"
+  ],
+  "visualPieces": [
+    "fan1",
+    "fan2"
+  ],
+  "anim": {
+    "fan1": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan2": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.825,
+        -0.035
+      ],
+      "size": [
+        4.52,
+        1.57,
+        5.47
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.1,
+        -3.55
+      ],
+      "size": [
+        3.9,
+        0.18,
+        0.08
+      ]
+    },
+    {
+      "name": "nano_glow_power",
+      "piece": "nano",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.6,
+        3.05,
+        -3.72
+      ],
+      "size": [
+        0.32,
+        0.32,
+        0.16
+      ]
+    }
+  ],
+  "glowShare": 0.0206,
+  "triangles": {
+    "base": 748,
+    "fan1": 64,
+    "fan2": 64,
+    "nano": 236,
+    "total": 1112
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

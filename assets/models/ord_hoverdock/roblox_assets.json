@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 3420 triangles, glow share 2.2%",
+  "bar": {
+    "model": "rbxassetid://136524247696445",
+    "meshes": {
+      "base": "rbxassetid://101946517767183",
+      "base_glow_power": "rbxassetid://92906484854605",
+      "base_glow_running": "rbxassetid://114899153228022"
+    },
+    "decals": {
+      "ALB": "rbxassetid://119340741982154",
+      "RGH": "rbxassetid://70720809501093",
+      "NOR": "rbxassetid://117442294038012",
+      "MTL": "rbxassetid://87829433612798",
+      "EMI": "rbxassetid://118282238344370"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://116045110019681",
+      "NOR": "rbxassetid://74896289382673",
+      "RGH": "rbxassetid://121506919978018",
+      "MTL": "rbxassetid://138323696002463",
+      "EMI": "rbxassetid://109810201535349"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_hoverdock_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://99206580185759",
+    "meshes": {
+      "base": "rbxassetid://94385596035403"
+    },
+    "decals": {
+      "ALB": "rbxassetid://85513923857122",
+      "RGH": "rbxassetid://124834533130104",
+      "NOR": "rbxassetid://72740597192541",
+      "MTL": "rbxassetid://78878588257551",
+      "EMI": "rbxassetid://118726066710243"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://112260381506925",
+      "NOR": "rbxassetid://103192325695379",
+      "RGH": "rbxassetid://71736312421276",
+      "MTL": "rbxassetid://113983577774712",
+      "EMI": "rbxassetid://133042957331989"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_hoverdock_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 2768 triangles"
+  }
+}
