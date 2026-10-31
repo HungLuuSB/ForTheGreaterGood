@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 -- field. Stats to balance.
 return Templates.extend(Templates.TankT1, {
 	id = "chs_cyclops",
-	name = "Cyclops",
+	name = "Demolisher", -- Cyclops until S-225: BAR's Cyclops is a different unit
 	description = "Siege mortar. Shells structures from long range; can't fire at units.",
 	faction = "chaos",
 	tier = 2,

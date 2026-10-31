@@ -6,7 +6,7 @@ local Templates = require("../Templates")
 -- coverage, one interceptor each; never units. Placeholder numbers.
 return Templates.extend(Templates.Structure, {
 	id = "chs_cerberus",
-	name = "Cerberus",
+	name = "Ladon", -- Cerberus until S-225: BAR's Cerberus is a different unit
 	description = "Anti-nuke. Stockpiles interceptors and shoots down enemy nukes over its coverage; never fires at units.",
 	faction = "chaos",
 	tier = 2,

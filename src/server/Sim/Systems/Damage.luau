@@ -11,6 +11,7 @@
 -- blast; they only become the real thing when complete).
 
 local Alerts = require("../Alerts")
+local AutoHeal = require("../AutoHeal")
 local Combat = require("../Combat/Combat")
 local Deploy = require("../Deploy")
 local Lifecycle = require("../Lifecycle")
@@ -97,6 +98,9 @@ return function(sim: Types.Sim)
 		end
 		local after = before - amount
 		World.setHealth(w, t, after)
+		if amount > 0 then
+			AutoHeal.damaged(sim, t) -- restarts its wait to heal (S-226)
+		end
 		-- the results screen (S-63): enemy health removed, and who finished it
 		local player = c.dmgPlayer[i]
 		if player == 0 and c.dmgAttacker[i] ~= 0 and w.slot[c.dmgAttacker[i]] then

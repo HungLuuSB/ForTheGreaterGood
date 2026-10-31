@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.2 "Mobile IR SAM", T1); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_hornet",
-	name = "Hornet",
+	name = "Gadfly", -- Hornet until S-225: BAR's Hornet is a different unit
 	description = "Mobile IR SAM. Short-range heat-seeking missiles against aircraft; jamming can't stop them.",
 	faction = "chaos",
 	tier = 1,

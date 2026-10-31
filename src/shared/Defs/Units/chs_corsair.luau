@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.4); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_corsair",
-	name = "Corsair",
+	name = "Cutthroat", -- Corsair until S-225: BAR's Corsair is a different unit
 	description = "Destroyer. Sonar, a gun, anti-submarine torpedoes and a naval SAM.",
 	faction = "chaos",
 	tier = 2,

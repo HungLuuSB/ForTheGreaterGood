@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 -- lighter flak guns, cheaper than Order's Lumen.
 return Templates.extend(Templates.Structure, {
 	id = "chs_hailstorm",
-	name = "Hailstorm",
+	name = "Sleet", -- Hailstorm until S-225: BAR's Hailstorm is a different unit
 	description = "Flak tower. Three flak guns against aircraft.",
 	faction = "chaos",
 	tier = 2,

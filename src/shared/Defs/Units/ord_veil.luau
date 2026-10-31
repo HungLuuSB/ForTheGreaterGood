@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.2 "Mobile jammer", T2): short-range jammer.
 return Templates.extend(Templates.Unit, {
 	id = "ord_veil",
-	name = "Veil",
+	name = "Mantle", -- Veil until S-225: BAR's Veil is a different unit
 	description = "Mobile jammer. Hides nearby friendly units from enemy radar.",
 	faction = "order",
 	tier = 2,

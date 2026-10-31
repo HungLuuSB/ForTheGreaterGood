@@ -6,7 +6,7 @@ local Templates = require("../Templates")
 -- radar. Anchors a front or a choke; siege units and nukes break it.
 return Templates.extend(Templates.Structure, {
 	id = "ord_citadel",
-	name = "Citadel",
+	name = "Stronghold", -- Citadel until S-225: BAR's Citadel is a different unit
 	description = "Fortress. A long heavy gun, an IR SAM and a radar on an armored block.",
 	faction = "order",
 	tier = 3,

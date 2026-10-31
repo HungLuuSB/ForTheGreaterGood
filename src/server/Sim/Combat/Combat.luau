@@ -26,6 +26,14 @@ Combat.RADIUS_PER_FOOTPRINT = PlacementRules.RADIUS_PER_FOOTPRINT -- the same as
 Combat.MAX_PROJECTILES = 2000 -- guide 10.5
 Combat.WRECK_SUPPLY_FRACTION = 0.5 -- of the unit's supply cost (guide 8.7)
 Combat.WRECK_MAX_SEVERITY = 0.5 -- overkill above this fraction of max health leaves no wreck
+-- Wrecks wear down (S-227, the user; BAR's featuredefs dead.damage): a
+-- wreck has WRECK_HEALTH of its unit's max health, and what it holds
+-- follows its health (supply = full × health fraction; reclaim and damage
+-- wear the same bar). Below WRECK_HEAP of it the wreck is a scrap heap:
+-- reclaim only, never resurrected. At 0 it's gone.
+Combat.WRECK_HEALTH = 0.54 -- of the unit's max health: BAR's median dead.damage / health
+Combat.WRECK_HEAP = 0.4 -- BAR's median heap / wreck metal
+Combat.WRECK_CELL = 64 -- studs: the wreck grid a blast looks wrecks up in
 Combat.DRAFT = 3 -- studs a ship's hull reaches below the surface
 Combat.SUB_DEPTH = 10 -- studs below the surface a submarine's hull starts
 Combat.TORPEDO_DEPTH = 1.5 -- studs below the surface torpedoes run
@@ -61,6 +69,7 @@ export type Event = {
 		| "SHIELD_FIELD" -- a projectile came into a dome's field: unit = generator, other = projectile (S-79)
 		| "ELIMINATED" -- other = player
 		| "MATCH_END" -- other = winning ally team (0 = nobody)
+		| "WRECK_HIT" -- a blast hit wreck `other` at x/z (S-227)
 		| "TRANSPORT", -- a transport starts / stops a pick-up or set-down: unit = transport, other = the unit, action, x/z (S-220)
 	tick: number,
 	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), missile's target (DECOYED, LOST_LOCK), dead unit (DEATH)
@@ -203,7 +212,13 @@ export type Combat = {
 	wreckRez: { [number]: number }, -- resurrect progress 0..1 (S-168; nil = none)
 	wreckSupply: { [number]: number }, -- what it holds: supply (a tree's: power, wreckKind)
 	wreckKind: { [number]: number }, -- map features (S-197): Features.TREE / ROCK; nil = a unit's wreck
-	wreckFull: { [number]: number }, -- a feature's amount at the start (what clients show as its full)
+	wreckFull: { [number]: number }, -- what it held at the start: a feature's amount, a wreck's full supply (S-227)
+	wreckMaxHp: { [number]: number }, -- a unit wreck's health at full supply (S-227); its health is wreckSupply / wreckFull of it
+	wreckRadius: { [number]: number }, -- a unit wreck's radius (its unit's), for blasts (S-227)
+	wreckBorn: { [number]: number }, -- the tick a unit wreck was made: that tick's blasts (its own death blast) leave it alone
+	wreckGrid: { [number]: { number } }, -- unit wrecks by WRECK_CELL cell (S-227)
+	maxWreckRadius: number,
+	tick: number, -- the tick being stepped (Sim.step), for events raised inside Combat
 	nextWreckId: number,
 
 	stats: { shots: number, hits: number, kills: number },
@@ -311,6 +326,12 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		wreckSupply = {},
 		wreckKind = {},
 		wreckFull = {},
+		wreckMaxHp = {},
+		wreckRadius = {},
+		wreckBorn = {},
+		wreckGrid = {},
+		maxWreckRadius = 0,
+		tick = 0,
 		nextWreckId = 1,
 		stats = { shots = 0, hits = 0, kills = 0 },
 	}
@@ -633,6 +654,11 @@ function Combat.explode(
 		local cm = if strategic and bit32.band(p.categoryMask, COMMANDER_BIT) ~= 0 then Combat.STRATEGIC_COMMANDER else 1
 		Combat.queueDamage(c, direct, weapon.damage[Combat.armorOf(w, direct, p)] * m * cm, attacker, player)
 	end
+	-- wrecks (S-227): a blast's splash, or a shell that lands on one; a
+	-- direct hit on a unit with no splash leaves them alone
+	if aoe > 0 or direct == 0 then
+		Combat.blastWrecks(c, x, z, aoe, edge, (weapon.damage.STRUCTURE or 0) * m)
+	end
 	if aoe <= 0 then
 		return
 	end
@@ -761,6 +787,10 @@ end
 -- Wrecks
 --------------------------------------------------------------------------------
 
+local function wreckCellKey(x: number, z: number): number
+	return math.floor(x / Combat.WRECK_CELL) * 65536 + math.floor(z / Combat.WRECK_CELL)
+end
+
 function Combat.addWreck(c: Combat, x: number, z: number, def: Defs.UnitDef, heading: number?): number
 	local id = c.nextWreckId
 	c.nextWreckId += 1
@@ -769,7 +799,24 @@ function Combat.addWreck(c: Combat, x: number, z: number, def: Defs.UnitDef, hea
 	c.wreckZ[id] = z
 	c.wreckDef[id] = def.index
 	c.wreckHeading[id] = heading or 0
-	c.wreckSupply[id] = Combat.fullWreckSupply(def)
+	local full = Combat.fullWreckSupply(def)
+	c.wreckSupply[id] = full
+	c.wreckFull[id] = full
+	c.wreckMaxHp[id] = def.health * Combat.WRECK_HEALTH
+	local p = c.profiles[def.index]
+	local r = if p then p.radius else 4
+	c.wreckRadius[id] = r
+	c.wreckBorn[id] = c.tick
+	if r > c.maxWreckRadius then
+		c.maxWreckRadius = r
+	end
+	local key = wreckCellKey(x, z)
+	local cell = c.wreckGrid[key]
+	if cell == nil then
+		cell = {}
+		c.wreckGrid[key] = cell
+	end
+	table.insert(cell, id)
 	return id
 end
 
@@ -778,7 +825,17 @@ function Combat.removeWreck(c: Combat, id: number)
 	if i then
 		table.remove(c.wreckIds, i)
 	end
+	if c.wreckMaxHp[id] ~= nil then
+		local cell = c.wreckGrid[wreckCellKey(c.wreckX[id], c.wreckZ[id])]
+		local j = cell and table.find(cell, id)
+		if j then
+			table.remove(cell, j)
+		end
+	end
 	c.wreckX[id], c.wreckZ[id], c.wreckDef[id], c.wreckSupply[id], c.wreckHeading[id] = nil, nil, nil, nil, nil
+	c.wreckMaxHp[id] = nil
+	c.wreckRadius[id] = nil
+	c.wreckBorn[id] = nil
 	c.wreckRez[id] = nil
 	c.wreckKind[id] = nil
 	c.wreckFull[id] = nil
@@ -798,6 +855,80 @@ function Combat.addFeature(c: Combat, x: number, z: number, kind: number, amount
 	c.wreckKind[id] = kind
 	c.wreckFull[id] = amount
 	return id
+end
+
+-- Is wreck `id` a scrap heap (S-227)? A unit's wreck holding less than
+-- WRECK_HEAP of its full supply. Supply only rises again through resurrect,
+-- which heaps refuse, so once a heap, always a heap.
+function Combat.isHeap(c: Combat, id: number): boolean
+	local hp = c.wreckMaxHp[id]
+	return hp ~= nil and c.wreckSupply[id] < c.wreckFull[id] * Combat.WRECK_HEAP
+end
+
+-- A wreck's health (S-227): its share of full supply × its max health.
+function Combat.wreckHealth(c: Combat, id: number): number
+	local full = c.wreckFull[id]
+	if c.wreckMaxHp[id] == nil or full == nil or full <= 0 then
+		return 0
+	end
+	return c.wreckMaxHp[id] * c.wreckSupply[id] / full
+end
+
+-- `amount` of damage to wreck `id` (S-227): it loses the same share of its
+-- supply. At 0 it's gone (a RECLAIMED event with no reclaimer).
+function Combat.damageWreck(c: Combat, id: number, amount: number)
+	local hp, full = c.wreckMaxHp[id], c.wreckFull[id]
+	if hp == nil or hp <= 0 or amount <= 0 then
+		return
+	end
+	local supply = c.wreckSupply[id] - amount / hp * full
+	table.insert(c.events, { kind = "WRECK_HIT", tick = c.tick, unit = 0, other = id, x = c.wreckX[id], z = c.wreckZ[id] })
+	if supply <= 1e-9 or full <= 0 then
+		Combat.removeWreck(c, id)
+		table.insert(c.events, { kind = "RECLAIMED", tick = c.tick, unit = 0, other = id })
+	else
+		c.wreckSupply[id] = supply
+	end
+end
+
+local wreckScratch: { number } = {}
+
+-- A blast at (x, z) of `damage` (its STRUCTURE value) over `aoe` hits the
+-- unit wrecks it reaches (S-227), measured to their edge; aoe 0 hits only a
+-- wreck the point lies on. Map features are untouched.
+function Combat.blastWrecks(c: Combat, x: number, z: number, aoe: number, edge: number, damage: number)
+	if damage <= 0 or c.maxWreckRadius <= 0 then
+		return
+	end
+	local reach = math.max(aoe, 0) + c.maxWreckRadius
+	local cx0, cx1 = math.floor((x - reach) / Combat.WRECK_CELL), math.floor((x + reach) / Combat.WRECK_CELL)
+	local cz0, cz1 = math.floor((z - reach) / Combat.WRECK_CELL), math.floor((z + reach) / Combat.WRECK_CELL)
+	local n = 0
+	for cx = cx0, cx1 do
+		for cz = cz0, cz1 do
+			local cell = c.wreckGrid[cx * 65536 + cz]
+			if cell then
+				for _, id in cell do
+					if c.wreckBorn[id] ~= c.tick then -- (not one this tick's deaths just left)
+						n += 1
+						wreckScratch[n] = id
+					end
+				end
+			end
+		end
+	end
+	if n == 0 then
+		return
+	end
+	local hits = table.move(wreckScratch, 1, n, 1, {})
+	table.sort(hits) -- by id: the same order on every machine
+	for _, id in hits do
+		local d = math.max(0, math.sqrt((c.wreckX[id] - x) ^ 2 + (c.wreckZ[id] - z) ^ 2) - c.wreckRadius[id])
+		local f = Ballistics.falloff(d, aoe, edge)
+		if f > 0 then
+			Combat.damageWreck(c, id, damage * f)
+		end
+	end
 end
 
 -- The supply a wreck of `def` holds when its unit dies (and must hold again
