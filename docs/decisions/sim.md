@@ -3351,6 +3351,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - every armed one with a ground weapon damages (or stuns) an enemy tank in its reach;
   - hovercraft cross land and water;
   - the hover factories pass placement on land and on the sea.
+  - Two AI tests counted what was alive at the end, which depends on how a seed's fights went; batch 1's extra picks moved them. `AI.spec`'s normal army counts what was fielded (standing + lost), and `AIRoles.spec`'s 3v3 counts every aircraft an air AI flew.
 - **Other streams:**
   - C: blockouts done (6c9268f2), meshes and wrecks next, previews to the user;
   - E: icons from the defs, then pictures from C's models;
