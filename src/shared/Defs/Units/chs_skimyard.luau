@@ -15,7 +15,7 @@ return Templates.extend(Templates.Structure, {
 	placement = "either",
 	buildPower = 200,
 	buildOptions = { "chs_drifter", "chs_snapjaw", "chs_sling", "chs_gnat", "chs_skua", "chs_glaive" },
-	pieces = { "base", "buildpad", "nano1", "nano2", "nano3" },
+	pieces = { "base" },
 	model = "chs_skimyard",
 	icon = "factory",
 })
