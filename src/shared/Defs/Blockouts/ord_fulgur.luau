@@ -18,9 +18,10 @@ return {
 		{ name = "coil1Ring2", parent = "barrel", shape = "cylinder", axis = "y", size = { 0.8, 0.15, 0.8 }, at = { 0, 3.9, -0.2 }, color = "glass" },
 		{ name = "coil1Ring3", parent = "barrel", shape = "cylinder", axis = "y", size = { 0.8, 0.15, 0.8 }, at = { 0, 4.4, -0.2 }, color = "glass" },
 		{ name = "coil1Top", parent = "barrel", shape = "ball", size = { 0.9, 0.9, 0.9 }, at = { 0, 5.1, -0.2 }, color = "glass" },
-		{ name = "missile", parent = "turret", shape = "box", size = { 0.8, 0.8, 1.8 }, at = { 1.9, 2.6, 0.4 }, color = "hull" },
+		{ name = "missileBox", parent = "turret", shape = "box", size = { 0.8, 0.8, 1.8 }, at = { 1.9, 2.6, 0.4 }, color = "hull" },
 	},
 	attachments = {
 		{ name = "muzzle", parent = "barrel", at = { 0, 5.3, -0.2 } },
+		{ name = "aa_muzzle", parent = "turret", at = { 1.9, 2.6, -0.6 } },
 	},
 }
