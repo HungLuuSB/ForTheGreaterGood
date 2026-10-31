@@ -200,6 +200,8 @@ DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a ran
                 "tint the ground patch (teamPieces, alpha mask) to the terrain")
 FEATURE_NOTE = ("map feature (S-197): pick a variant and a +-15% scale from the wreck ID, turn it by the wire "
                 "heading; a rock fills its 8-stud cell, a tree is a point")
+SCRAP_NOTE = ("scrap heaps (S-227): what a wreck becomes below 40% health, variants 1..4 by footprint "
+              "1, 2, 3, 4+ (fx.md); waiting for the user's review")
 # fx entries that reuse another weapon's mesh (the client looks meshes up by weapon ID)
 FX_ALIASES = {"ord_mobile_interceptor": "ord_interceptor", "chs_mobile_interceptor": "chs_interceptor"}
 # wreck versions (M-24) the user approved; the rest are "review"
@@ -390,7 +392,8 @@ def main():
     # supply deposits (M-28) and map features (S-197): one fx entry per family, variant 1's
     # fields plus every variant (`<family>_1`, `<family>_2`, ... in their folder)
     for family, folder, note in (("deposit", "deposit", DEPOSIT_NOTE), ("feature_tree", "features", FEATURE_NOTE),
-                                 ("feature_rock", "features", FEATURE_NOTE)):
+                                 ("feature_rock", "features", FEATURE_NOTE),
+                                 ("scrap_heap", "scrap", SCRAP_NOTE)):
         base = os.path.join(ROOT, "assets", "fx", folder)
         variants = []
         for vid in sorted(os.listdir(base)):

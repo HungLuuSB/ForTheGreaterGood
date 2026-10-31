@@ -2,6 +2,14 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-31: the Goliath and the transports checked in Studio)
+
+- `m-lobby` holds main `85292c93` (fast-forward: S-224's Goliath def, C's new Goliath model, B's C-276 / C-277 with picture sheet 4 `rbxassetid://120576950340042`).
+- **`Codex.spec`** now runs the Goliath's restored case: the Paladin and Goliath are each other's counterparts.
+- **Studio** (`debug_out/screens/`): `lobby_goliath_paladin_card` (the Paladin's Chaos counterpart card is the Goliath, with its picture), `lobby_goliath_article` (the Goliath opened from that card: C's new model, the Paladin card), `lobby_transport_buzzard` (the Buzzard's row, model and Courier card). The Goliath, Buzzard and Charon rows take their pictures from sheet 4. No script errors; the console's only failures are two assets that aren't the lobby's (`203785492`, place content per client.md; `100010822937708`, an HTTP 502).
+- Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+- Ready to merge: `5da27d4a` (progress only: the Studio check; touches only the lobby progress)
+
 ## Summary (2026-10-30: S-219's transports on main)
 
 - Merged main `e1e51407` (S-219's transport defs and the Goliath's Codex role; S-224 itself isn't on main yet, so the Goliath stays hidden here).
