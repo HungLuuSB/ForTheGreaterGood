@@ -8,6 +8,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **sim-A's request 1 (S-225: 28 display-name renames, five price changes): no lobby change needed.** The Codex and the Units tab read names, descriptions, prices and stats from the defs, and key everything on ids, which S-225 keeps. No lobby source names a renamed unit. The articles show the new names and prices once S-225 is on main.
 - **`Codex.spec`:** the main battle tanks' check no longer allows a retired Goliath (S-224 is on main): the two ids must be each other's counterparts. Its comments name units by id only.
 - Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+- Ready to merge: `c30428de` (Codex spec and progress only; touches only `src/lobby/tests` and the lobby progress)
 
 ## Summary (2026-10-31: the Goliath and the transports checked in Studio)
 
