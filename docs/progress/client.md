@@ -57,6 +57,41 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-31, scrap heap meshes: C-281)
+
+- **Scrap heap meshes (C-281):** C's approved heaps (4 sizes) replace the stand-in, their ground patch tinted to the terrain like deposits; a stand-in shown before a mesh is built swaps to it.
+- Carries m-models 893f4e82.
+- Ready to merge: `2945914e` (C-281; carries m-models 893f4e82. test_client 356 / 356, build passed (996 scripts, 2710 requires). Studio, Coastline: C's heaps 1 and 2 with grass-tinted patches)
+
+## Summary (2026-10-31, batch 1: C-280)
+
+- **Batch 1 (C-280, S-230):**
+  - The 29 further vehicles and hovercraft land through this branch, with C's blockouts and E's approved icons (sheet 2 re-uploaded with the user's approval: 125202931406059).
+  - Hovercraft trail foam or dust; the hover factories float on water.
+  - Every def gets a unique two-letter code.
+- Carries sim 11b13f85, m-models 761d0d72 and 2d c3aa6cb4.
+- Ready to merge: `02df8db7` (C-280; carries sim 11b13f85, m-models 761d0d72, 2d c3aa6cb4. test_client 356 / 356, build passed (996 scripts, 2709 requires). Studio, Coastline: the Hover Dock floats, Skimmers trail foam)
+
+## Summary (2026-10-31, cloak and EMP: C-279)
+
+- **Cloak and EMP (C-279, S-228 / S-229, protocol 46):**
+  - Own cloaked units are drawn see-through; stunned units crackle blue with a flickering light.
+  - A cloaker's card offers On / Off.
+  - Defs newer than the icon sheet (Whisper, Thunderer) draw their type's placeholder, and the icon specs accept that.
+- Carries sim 2ecf3802.
+- Ready to merge: `6ebf98cb` (C-279; carries sim 2ecf3802. test_client 356 / 356, build passed (912 scripts, 2588 requires). Studio: a cloaked Whisper see-through, a stunned Lancer crackling)
+
+## Summary (2026-10-31, scrap heaps: C-278)
+
+- **Scrap heaps (C-278, S-227, protocol 45):**
+  - A wreck worn below 40% gives way to a scrap pile with a burst of sparks and dust; blasts throw sparks off wrecks (WRECK_HIT).
+  - The tooltip names a heap with what's left to reclaim.
+  - Resurrect is refused, and greyed in the card, on heaps.
+  - The pile is a stand-in until models-C's `scrap_heap` meshes are approved.
+- Carries sim fbfc8d95 (S-226 autoheal, S-227).
+- S-225's renames: no client text names a unit; every screen reads `def.name`.
+- Ready to merge: `a26e3ae3` (C-278; carries sim fbfc8d95. test_client 354 / 354, build passed (904 scripts, 2564 requires). Studio: sparks off a Paladin wreck, and its heap with the burst after a partial reclaim)
+
 ## Summary (2026-10-30, the Goliath's picture: C-277)
 
 - **The Goliath's picture (C-277):** E's build-menu picture for the returning Goliath (S-224, request E2), on sheet 4. Sheet 4 was re-uploaded with the user's approval (120576950340042); all 202 units have a picture.

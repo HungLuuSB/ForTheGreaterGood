@@ -346,8 +346,8 @@ local function wreck(ui: UI, api: Api.Api, w: World.Wreck)
 	ui.healthFill.Size = UDim2.fromScale(if w.fullSupply > 0 then math.clamp(w.supply / w.fullSupply, 0, 1) else 0, 1)
 	-- a map feature (S-197): a tree holds power, a rock supply
 	local resource = if feature then feature.resource else "supply"
-	ui.name.Text = if feature then (if feature.id == Features.TREE then "Tree" else "Rock") else `{if def then def.name else "Unknown"} wreck`
-	ui.role.Text = `Reclaim with a builder for its {resource}`
+	ui.name.Text = if feature then (if feature.id == Features.TREE then "Tree" else "Rock") else `{if def then def.name else "Unknown"} {if w.heap then "scrap heap" else "wreck"}`
+	ui.role.Text = if w.heap then "Reclaim only: too far gone to resurrect" else `Reclaim with a builder for its {resource}`
 	ui.healthFill.BackgroundColor3 = if resource == "power" then POWER else SUPPLY
 	local lines = { string.format("%s left %d / %d", if resource == "power" then "Power" else "Supply", w.supply, w.fullSupply) }
 	if w.rez > 0 then

@@ -142,4 +142,14 @@ function RenderTerrain.clear()
 	end
 end
 
+-- The 3D terrain's color at (x, z): its ground type's material color (what a
+-- team-masked ground patch takes: deposits, scrap heaps (C-281)).
+function RenderTerrain.tintAt(layers: any, x: number, z: number): Color3
+	local material = MATERIAL[CoreTerrain.kind(layers, x, z)] or Enum.Material.Grass
+	local ok, color = pcall(function()
+		return workspace.Terrain:GetMaterialColor(material)
+	end)
+	return if ok and typeof(color) == "Color3" then color else Color3.fromRGB(96, 110, 70)
+end
+
 return RenderTerrain
