@@ -197,6 +197,8 @@ APPROVED = {
     "scrap_heap",  # 2026-10-31: the scrap heaps (S-227), all four sizes, approved by the user
     # 2026-10-31: batch 1 of the BAR roster, mesh groups 1-2 (approved from the previews)
     "ord_courser", "ord_gemini", "ord_wader", "ord_pontifex", "chs_cleaver", "chs_mudskipper", "chs_dredger",
+    # 2026-10-31: batch 1, mesh group 3 (Order T2), approved from the previews
+    "ord_magistrate", "ord_whisper", "ord_fulgur", "ord_mandate", "ord_luminary",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -254,6 +256,8 @@ APPROVED_WRECKS = {
     # 2026-10-30: the transports (S-219), with wrecks
     "ord_courier", "chs_buzzard", "ord_ark", "chs_charon",
     "chs_goliath",  # 2026-10-30: the re-modelled wreck (S-224), approved by the user
+    # 2026-10-31: batch 1, mesh groups 1-2
+    "ord_courser", "ord_gemini", "ord_wader", "ord_pontifex", "chs_cleaver", "chs_mudskipper", "chs_dredger",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
