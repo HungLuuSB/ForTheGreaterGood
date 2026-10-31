@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.4); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_lamprey",
-	name = "Lamprey",
+	name = "Hagfish", -- Lamprey until S-225: BAR's Lamprey is a different unit
 	description = "Submarine. Stays submerged and fires torpedoes.",
 	faction = "chaos",
 	tier = 1,

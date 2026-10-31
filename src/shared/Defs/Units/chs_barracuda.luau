@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.4); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_barracuda",
-	name = "Barracuda",
+	name = "Piranha", -- Barracuda until S-225: BAR's Barracuda is a different unit
 	description = "Corvette. A small fast ship with a light gun.",
 	faction = "chaos",
 	tier = 1,

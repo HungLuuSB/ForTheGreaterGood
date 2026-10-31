@@ -45,6 +45,7 @@ end
 return function(t: RunAll.T)
 	t.test("a transport picks a unit up, carries it out of the world and sets it down at the point (S-219)", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		sim.autoheal.off = true -- (S-226) the tank's health must hold as it was
 		local w = sim.world
 		local courier = Spawn.unit(sim, "ord_courier", 1, 0, 0)
 		local tank = Spawn.unit(sim, "ord_lancer", 1, 60, 20)

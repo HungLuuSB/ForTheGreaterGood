@@ -227,6 +227,7 @@ Skirmish.REPAIR_TICKS = 90 * 15
 Skirmish.REPAIR_STANDOFF = 60 -- studs from the turret it waits at
 Skirmish.REPAIR_NANO_SHARE = 1 / 3 -- of its Construction Turrets (at least one) repair at once: the rest keep building
 Skirmish.REPAIR_QUEUE = 2 -- units pulled back at most per turret that may repair; the rest fight on
+Skirmish.BATCH1_SHARE = 0.25 -- (S-230) a plant's share of batch 1's units in the roles they share with older ones
 Skirmish.GANTRY_TICKS = 15 * 60 * 15 -- (S-216) hard's gantry also comes after this long with GANTRY_EXTRACTORS extractors
 Skirmish.GANTRY_EXTRACTORS = 8
 Skirmish.ADV_SOLAR_AFTER = 6 -- solars before its power comes from advanced solar (S-216)
@@ -2307,6 +2308,11 @@ local function think(brain: Brain)
 				item = if brain.rng:chance(artyChance) then arty else tank
 				if item == tank and raiderChance > 0 and brain.rng:chance(raiderChance) then
 					item = scoutUnit -- raiders against artillery
+					if brain.rng:chance(Skirmish.BATCH1_SHARE) then
+						item = faction(brain, "courser", "ravager") -- (S-230) Order's fast raider tank
+					end
+				elseif item == tank and brain.rng:chance(Skirmish.BATCH1_SHARE + (if demand then demand.heavy * 0.3 else 0)) then
+					item = faction(brain, "gemini", "cleaver") -- (S-230) rockets; Chaos's riot tank, more against light units
 				end
 				if item == tank and cfg.locustShare and brain.rng:chance(cfg.locustShare) then
 					item = "chs_locust" -- Chaos numbers (S-76)
@@ -2348,6 +2354,12 @@ local function think(brain: Brain)
 				local artyShare = if demand then math.clamp(0.5 + demand.artillery - demand.heavy, 0.2, 0.8) else 0.5
 				local tzarChance = if demand then 0.15 + 0.4 * demand.artillery elseif c.enemyTurrets >= 3 then 0.35 else 0.15
 				item = if brain.rng:chance(artyShare) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "goliath") -- (S-224: the Goliath is back; the Tzar stood in for it from S-216)
+				if brain.rng:chance(Skirmish.BATCH1_SHARE) then
+					-- (S-230) batch 1's T2 tanks in the same roles
+					item = if item == faction(brain, "judgement", "hydra") then faction(brain, "mandate", "hurler")
+						elseif brain.rng:chance(0.5) then faction(brain, "luminary", "hellfire")
+						else faction(brain, "fulgur", "grendel")
+				end
 				if brain.prefix == "chs_" and brain.rng:chance(tzarChance) then
 					item = "chs_tzar" -- (S-187) heavy plasma, more against defences
 				elseif cfg.wardenShare and brain.rng:chance(cfg.wardenShare) then

@@ -95,10 +95,12 @@ Rules for IDs: lowercase, `snake_case`, never renamed after release (replays and
 
 **Display names** — the name itself carries the faction, no visible prefix needed:
 
-- **Order:** Latin, virtues, heraldry, angels, law. *Paladin, Bastion, Vigil, Seraph, Verdict, Sovereign.*
-- **Chaos:** Myth beasts, predators, plague, ruin. *Juggernaut, Hydra, Gorgon, Ravager, Maw, Warlord.*
+- **Order:** Latin, virtues, heraldry, angels, law. *Vindicator, Bastion, Vigil, Seraph, Verdict, Sovereign.*
+- **Chaos:** Myth beasts, predators, plague, ruin. *Juggernaut, Hydra, Medusa, Ravager, Maw, Warlord.*
 
-Optional tooltip designation for flavor: `ORD-T2 Paladin` / `CHS-T3 Juggernaut`.
+Optional tooltip designation for flavor: `ORD-T2 Vindicator` / `CHS-T3 Juggernaut`.
+
+**A name says what the unit does** (S-225, the user): a radar is a Scryer or a Gazer, a jammer a Mantle or a Murk, a wall-breaking mortar a Demolisher. No name is one BAR uses for a different unit (`docs/design/bar-roster-plan.md` §1.4 has the check), and new units from BAR's roster get names of our own.
 
 ---
 
@@ -979,7 +981,7 @@ Factories have build power and an optional rally point and repeat queue. Workers
 - **Size shows tech level** (S-104, the user via the models stream; `docs/art/size-scale.md` on the models branch):
   - T1 economy structures 2×2, T1 gun turrets 2, vehicle plants 4;
   - T2 factories 6, fusion 4, T2 extractors 3, beam towers, shield generators and heavy turrets 3, flak and advanced jammers 2;
-  - T3: Citadel 7, nuke silos 6;
+  - T3: Stronghold (was Citadel, S-225) 7, nuke silos 6;
   - T2 heavy tanks (Paladin, Warden, Juggernaut) footprint 2, like the Minotaur and Cyclops.
   - Commanders (Sovereign, Warlord): footprint 2, 10-stud walking mechs, build range 60 (S-124).
   - Deposits stay at least 3 cells apart (`MapGen.MIN_DEPOSIT_GAP`), so a 3×3 T2 extractor fits on each.
@@ -1070,7 +1072,7 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - **Blast:** `aoe` 150, `edgeEffectiveness` 0.3, 8,000–10,000 damage at the center: it hurts every side, the launcher's own units included (BAR).
 - **Interception (S-111, the user; client request 46; replaces S-48's radar SAM interception):** only **anti-nukes** stop strategic missiles; radar SAMs shoot aircraft only.
   - **Units:**
-    - structures: Order's Providence, Chaos's Cerberus (T2, footprint 3, built by T2 builders);
+    - structures: Order's Providence, Chaos's Ladon (was Cerberus, S-225) (T2, footprint 3, built by T2 builders);
     - mobile: Order's Custodian, Chaos's Chimera (T2 vehicles from the advanced vehicle plant, light armour, no other weapon).
   - **Cover:** an anti-nuke engages an enemy strategic missile whose **aim point** is inside its cover radius (its interceptor's `range`), from when the missile comes within 1.5× that radius.
   - **It spots strategic missiles anywhere** (the user): it needs no radar or sight of the missile, and anti-nukes carry no radar.
@@ -1107,6 +1109,8 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - Collision volumes are cylinders (radius 0.45 × footprint × 8, height 6 × footprint).
 - Projectile flight is exact, with a swept chord test. AoE is measured to the cylinder surface.
 - Damage is queued and applied in order. Deaths leave a wreck worth 50% of supply when overkill ≤ 50% of max health.
+- **Wrecks wear down to scrap (S-227, the user; BAR's feature damage):** a wreck has 0.54 × its unit's max health, and what it holds follows its health (supply = full × health fraction): blasts (splash, or a shell landing on it) and reclaim wear the same bar. Below 40% it is a **scrap heap**: a pile of scattered metal bars that can only be reclaimed, never resurrected. At 0 it's gone. Smart Reclaim takes heaps first (up to twice as far as a wreck). Map trees and rocks don't take damage.
+- **Idle autoheal (S-226, the user):** a finished unit or structure that has taken no damage for 10 s heals 1% of its max health a second, up to full (BAR's idle autoheal). Any damage, friendly included, restarts the wait. It is applied once a second, so health moves in 1% steps; units carried in a transport don't heal.
 - Per-tick events are in `sim.combat.events`.
 - Not yet: target leading, salvos, focus fire. Line of fire (10.8, S-32), guidance (11.5) and overkill (10.2, S-29) are built.
 
@@ -1190,7 +1194,7 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 
 ### 11.4 Radar error, jamming, stealth
 
-- **Pinpointers** (S-59, client request 34): T2 structures (Order **Witness**, Chaos **Augur**, `pinpointer = true`) that sharpen their ally team's radar. Precision = finished Pinpointers ÷ 6, at most 1 (`Shared/Combat/Pinpoint`). At precision p:
+- **Pinpointers** (S-59, client request 34): T2 structures (Order **Witness**, Chaos **Haruspex** (was Augur, S-225), `pinpointer = true`) that sharpen their ally team's radar. Precision = finished Pinpointers ÷ 6, at most 1 (`Shared/Combat/Pinpoint`). At precision p:
   - radar contacts wobble by radarError × (1 − 0.9 p), and fire-control tracks by trackError × (1 − 0.9 p). At full precision the aim point barely moves (1.5 studs instead of 14.6 in the test).
   - a radar-guided missile chasing a target its team has only on radar (not in sight) loses its lock with chance 0.1 × (1 − p) at each midcourse check (every 5 ticks). Without Pinpointers a 700-stud shot loses about a third (9 of 25 in the test); with six, none.
   - No wire record: a client counts its team's Pinpointers from their icons (unique per unit type, S-58) and applies the same formula.
@@ -1199,8 +1203,10 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 
 - **Radar error ("wobble"):** like BAR, a radar blip circles the real unit closely. The server sends the contact's **cell**, not its exact position (S-134). The client draws the blip circling that spot 1.5 studs out (S-131, C-154). The radar error lives in a **hidden aim point**, which circles the unit at the radar error and is never sent. Weapons firing at a contact aim there. Players see roughly where a contact is, but their radar-fired shots still miss by the radar error. Order radars have smaller error than Chaos radars.
 - **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks (implemented in D108: `jamDrain`, the radius scales with the share of upkeep it gets, like tracking radars).
+- **Cloak (S-228, BAR's cloak):** a unit whose def has `cloak = { drain, decloak }` is cloaked while finished, switched on (TOGGLE; it starts on), fully powered (it drains `drain` power a second while on), quiet (no shot for 2 s) and with no enemy within `decloak` studs. Enemy sight passes over a cloaked unit: radar still shows it (stealth shrinks that as usual), so a cloaked unit is at most a blip. First: the Whisper (`ord_whisper`, T2 tank).
+- **EMP (S-229, BAR's paralyzer):** a weapon with `paralyzer = true` fills its target's stun bar instead of taking health. Past the target's max health it is stunned (`PARALYZED`): it neither moves, fires nor builds, and its cloak drops. The bar drains a tenth of max health a second and tops out at max × (1 + `paralyzeSeconds` / 10), so a stun ends at most `paralyzeSeconds` (default 8) after the last hit. EMP never harms wrecks. First: the Thunderer (`ord_thunderer`, T3, its EMP projector).
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
-- **Point defence** (S-149): Sanctum and Basilisk (T2 structures) and Shepherd and Griffin (T2 vehicles) launch interceptors at enemy missiles and rockets flying within their reach that their team detects, one each; a burst destroys it with the interceptor's hit chance. They never fire at units, and a salvo bigger than their stock gets through. Nukes are the anti-nukes' job.
+- **Point defence** (S-149): Sanctum and Flytrap (was Basilisk, S-225) (T2 structures) and Shepherd and Griffin (T2 vehicles) launch interceptors at enemy missiles and rockets flying within their reach that their team detects, one each; a burst destroys it with the interceptor's hit chance. They never fire at units, and a salvo bigger than their stock gets through. Nukes are the anti-nukes' job.
 - **Lost radar missiles** (S-146): a RADAR-guided missile whose target is gone (killed, lock broken, decoy spent) corkscrews about its path, noses over and falls, until it hits the ground or its fuel runs out. If the target died while the missile was still launching (a vertical launch before pitch-over, or its first half second), it flies to the target's last known position and bursts there.
 - **Radar targeting:** every weapon fires at radar blips it can reach (S-202, the user; until then only weapons with `canTargetRadar = true`, mostly artillery and long-range missiles). A def can still opt out with `canTargetRadar = false`. They aim at the hidden aim point, not the drawn blip, so they miss more — that's intended, and Pinpointers and tracking radar sharpen it. Guided missiles still need a lock (IR seekers can't lock a blip).
 - **Fire-control (tracking) radar** (D104):
@@ -1365,7 +1371,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Ground Worker | T1 | `ord_mason` **Mason** | `chs_scrapper` **Scrapper** |
 | Advanced Ground Worker | T2 | `ord_architect` **Architect** | `chs_forgemaster` **Forgemaster** |
 | Air Worker | T1 | `ord_skywright` **Skywright** | `chs_vulture` **Vulture** |
-| Advanced Air Worker | T2 | `ord_zenith` **Zenith** | `chs_condor` **Condor** |
+| Advanced Air Worker | T2 | `ord_zenith` **Zenith** | `chs_condor` **Carrion** (was Condor, S-225) |
 | Naval Worker | T1 | `ord_tidewright` **Tidewright** | `chs_wrecker` **Wrecker** |
 | Advanced Naval Worker | T2 | `ord_harbormaster` **Harbormaster** | `chs_reaver` **Reaver** |
 
@@ -1376,19 +1382,19 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Scout | T1 | **Herald** (wheeled) | **Jackal** (wheeled) |
 | Light tank | T1 | **Lancer** | **Ravager** |
 | Self-propelled artillery | T1 | **Verdict** | **Hellmouth** |
-| Mobile IR SAM | T1 | **Halo** | **Hornet** |
-| Mobile radar | T1 | **Oracle** | **Watcher** |
-| Main battle tank | T2 | **Paladin** | **Goliath** (`chs_goliath`, raises arms to fire; retired by S-213, back since S-224, new model to come) |
+| Mobile IR SAM | T1 | **Halo** | **Gadfly** (was Hornet, S-225) |
+| Mobile radar | T1 | **Scryer** (was Oracle, S-225) | **Gazer** (was Watcher, S-225) |
+| Main battle tank | T2 | **Vindicator** (was Paladin, S-225) | **Goliath** (`chs_goliath`, raises arms to fire; retired by S-213, back since S-224, new model to come) |
 | Experimental assault walker (S-209) | T3 | **Titan** (`ord_titan`; beam 320, missiles 390, S-213) | **Juggernaut** (`chs_juggernaut`, was `chs_korgoth`; heat ray 230, missiles 520, S-213) |
 | MLRS | T2 | **Judgement** (precise) | **Hydra** (large salvo) |
-| Mobile radar SAM | T2 | **Seraph** | **Gorgon** |
-| Mobile jammer | T2 | **Veil** (short range) | **Shroud** (long range) |
-| Mobile fire-control radar | T2 | **Arbiter** (precise) | **Stalker** (cheaper, weaker) |
+| Mobile radar SAM | T2 | **Seraph** | **Medusa** (was Gorgon, S-225) |
+| Mobile jammer | T2 | **Mantle** (was Veil, S-225) (short range) | **Murk** (was Shroud, S-225) (long range) |
+| Mobile fire-control radar | T2 | **Assessor** (was Arbiter, S-225) (precise) | **Stalker** (cheaper, weaker) |
 | Amphibious tank | T2 | **Tideguard** | **Mire** |
-| Deployable gun (faction-only) | T2 | **Warden**: unpacks in 4 s whenever it stands still; deployed it fires (range 280), can't move and takes damage / 1.5; packed it can't fire (S-64) | — |
+| Deployable gun (faction-only) | T2 | **Steadfast** (was Warden, S-225): unpacks in 4 s whenever it stands still; deployed it fires (range 280), can't move and takes damage / 1.5; packed it can't fire (S-64) | — |
 | Siege ram (faction-only) | T2 | — | **Minotaur**: +50% gun damage to structures and a 30-stud demolition charge (3,000 to a structure, every 20 s) (S-64) |
 | Swarm tank (faction-only) | T1 | — | **Locust**: very cheap (value 150) and fast (45), a 120-stud autocannon (S-75) |
-| Siege mortar (faction-only) | T2 | — | **Cyclops**: structures only, range 520, 1,200 a shell every 8 s; can't fire at units (S-75) |
+| Siege mortar (faction-only) | T2 | — | **Demolisher** (was Cyclops, S-225): structures only, range 520, 1,200 a shell every 8 s; can't fire at units (S-75) |
 
 ### 13.3 Air units
 
@@ -1397,19 +1403,19 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Fighter | T1 | **Falcon** | **Harpy** |
 | Attack helicopter | T1 | **Guardian** | **Wasp** |
 | Bomber | T1 | **Absolution** | **Plague** |
-| Air superiority fighter | T2 | **Archon** (stealth 0.35, DIRCM) | **Manticore** (heavy missiles, many flares) |
-| Strategic bomber | T2 | **Phantom** (stealth 0.2) | **Behemoth** (armored, chaff) |
+| Air superiority fighter | T2 | **Archon** (stealth 0.35, DIRCM) | **Strix** (was Manticore, S-225) (heavy missiles, many flares) |
+| Strategic bomber | T2 | **Eclipse** (was Phantom, S-225) (stealth 0.2) | **Hecatomb** (was Behemoth, S-225) (armored, chaff) |
 | ASW helicopter | T2 | **Tidewatch** | **Leech** |
-| Support aircraft | T2 | **Archangel** (AWACS radar) | **Banshee** (EW jammer) |
+| Support aircraft | T2 | **Firmament** (was Archangel, S-225) (AWACS radar) | **Smother** (was Banshee, S-225) (EW jammer) |
 
 ### 13.4 Naval units
 
 | Role | Tier | Order | Chaos |
 |---|---|---|---|
-| Corvette | T1 | **Envoy** (`ord_sentry`; Sentry until S-157) | **Barracuda** |
-| Submarine | T1 | **Silence** | **Lamprey** |
-| Destroyer (SAM + sonar) | T2 | **Crusader** | **Corsair** |
-| Cruiser / battleship | T2 | **Dominion** | **Kraken** |
+| Corvette | T1 | **Envoy** (`ord_sentry`; Sentry until S-157) | **Piranha** (was Barracuda, S-225) |
+| Submarine | T1 | **Silence** | **Hagfish** (was Lamprey, S-225) |
+| Destroyer (SAM + sonar) | T2 | **Crusader** | **Cutthroat** (was Corsair, S-225) |
+| Cruiser / battleship | T2 | **Dominion** | **Charybdis** (was Kraken, S-225) |
 | Carrier | T2 | **Sanctuary** | **Leviathan** |
 | EW ship | T2 | — | **Siren** (naval jammer) |
 
@@ -1429,16 +1435,16 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Radar tower / long-range radar | T1 / T2 | **Watchtower / Beacon** | **Eye / All-Seer** | All workers |
 | Jammer tower | T1 / T2 | **Curtain / Veilspire** | **Smog / Blackout** | Ground / Adv. Ground |
 | Beam tower (S-96, BAR's Pulsar) | T2 | **Radiance** (488 since S-203, 3,000 over 3 s every 9 s, 700 power a shot) | **Bulwark** (`chs_bulwark`, S-157: 384 since S-203, 1,700 over 1.5 s every 7 s, 500 power a shot, plus Geryon's green laser; Inferno retired) | Adv. Ground |
-| Flak tower (S-96) | T2 | **Lumen** (2 flak guns) | **Hailstorm** (3, cheaper) | Adv. Ground |
+| Flak tower (S-96) | T2 | **Lumen** (2 flak guns) | **Sleet** (was Hailstorm, S-225) (3, cheaper) | Adv. Ground |
 | Fire-control radar | T2 | **Tribunal** | **Seeker Spire** (cheaper, weaker) | Adv. Ground |
-| Pinpointer (radar precision, S-59) | T2 | **Witness** | **Augur** | Adv. Ground |
-| Floating turret | T1 | **Moat** | **Riptide** | Naval |
+| Pinpointer (radar precision, S-59) | T2 | **Witness** | **Haruspex** (was Augur, S-225) | Adv. Ground |
+| Floating turret | T1 | **Moat** | **Whirlpool** (was Riptide, S-225) | Naval |
 | Torpedo launcher | T1 | **Undertow** | **Fang** | Naval |
 | Coastal battery | T2 | **Rampart** | **Breaker** | Adv. Naval |
 | Sonar buoy / station | T1 / T2 | **Ear / Choir** | **Listener / Deepear** | Naval / Adv. Naval |
 | Naval SAM platform (S-166) | T2 | **Pharos** (the Crusader's naval SAM, own radar 600) | **Scylla** (the Corsair's, radar 560) | Adv. Naval |
 | Rearm pad / advanced rearm pad (S-166) | T1 / T2 | **Aerie / Empyrean** | **Roost / Rookery** | Air / Adv. Air |
-| Nuclear missile silo (S-48) | T3 | **Reckoning** | **Ragnarok** | Adv. Ground (Architect / Forgemaster) |
+| Nuclear missile silo (S-48) | T3 | **Reckoning** | **Doomsday** (was Ragnarok, S-225) | Adv. Ground (Architect / Forgemaster) |
 
 Beam towers (S-96, client request 43): a precise BEAM, one very heavy hit on a long reload, each shot paid in power from the team's stores (`shotCost`). Since S-205 a shot costing 100 or more charges while the weapon reloads, as a priority consumer like a missile refill, so a stalled economy slows the beam instead of silencing it. Like any beam, terrain is the only thing in the way: they fire over walls and other defenses. They fire only at targets the team sees, not radar contacts. Switched off (TOGGLE), a beam tower retracts into its armored shell: it can't fire, and damage to it is divided by 4 (`retract.armor`); it starts switched on.
 

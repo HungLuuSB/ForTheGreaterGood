@@ -16,7 +16,7 @@ return Templates.extend(Templates.Builder, {
 	footprint = 2, -- a 10-stud walking mech (S-124, the user via models-C)
 	moveClass = "AMPHIB_WALKER", -- climbs 40° slopes (S-159) and walks the seafloor, hidden from radar under water (S-210, the user's H18 / H19)
 	buildRange = 60, -- 70% of 80 (client request 7, S-19), + 4 for the bigger body (S-124: the reach from its edge stays)
-	buildOptions = { "ord_extractor", "ord_seaextractor", "ord_solar", "ord_advsolar", "ord_capacitor", "ord_windmill", "ord_converter", "ord_depot", "ord_vehplant", "ord_botlab", "ord_airfield", "ord_shipyard", "ord_sentry_tower", "ord_watchtower", "ord_nano" },
+	buildOptions = { "ord_extractor", "ord_seaextractor", "ord_solar", "ord_advsolar", "ord_capacitor", "ord_windmill", "ord_converter", "ord_depot", "ord_vehplant", "ord_botlab", "ord_airfield", "ord_shipyard", "ord_sentry_tower", "ord_watchtower", "ord_nano", "ord_hoverdock" },
 	-- a laser on the left arm and the D-Gun on the right (S-194, the user's G5); both turn with the torso
 	pieces = { "base", "nano", "torso", "emitter", "muzzle" }, -- (S-194: the weapons turn with the torso)
 	weapons = {

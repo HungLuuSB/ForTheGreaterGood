@@ -48,3 +48,6 @@ node_modules/
 
 # Model previews for the user (the BAR roster rule, 2026-10-31): regenerable PNGs
 /previews/
+
+# BAR reference (CC BY-NC-ND pictures; look only, never committed)
+assets/reference/

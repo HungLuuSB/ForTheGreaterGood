@@ -1,10 +1,10 @@
 --!strict
--- Centurion: Chaos's heavy laser bot that clears swarms (S-181, the playtest's new units).
+-- Sunder (was Centurion): Chaos's heavy laser bot that clears swarms (S-181, the playtest's new units).
 local Templates = require("../Templates")
 
 return Templates.extend(Templates.Unit, {
 	id = "chs_centurion",
-	name = "Centurion",
+	name = "Sunder", -- Centurion until S-225: BAR's Centurion is a different unit
 	description = "Heavy bot. A long red laser that cuts through a line of units.",
 	faction = "chaos",
 	tier = 2,

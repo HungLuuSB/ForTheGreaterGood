@@ -250,6 +250,9 @@ function Build.commandResurrect(sim: Types.Sim, ids: { number }, wreckId: number
 	if c.wreckKind[wreckId] then
 		return -- a map feature: nothing to bring back (S-197)
 	end
+	if Combat.isHeap(c, wreckId) then
+		return -- a scrap heap: reclaim only (S-227)
+	end
 	local wd = sim.defs.unitByIndex[c.wreckDef[wreckId]]
 	if table.find(wd.categories, "COMMANDER") then
 		return
@@ -413,7 +416,7 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 		buildProgress = 0,
 	})
 	Placement.occupy(sim, id)
-	if d.converter or d.retract or d.shield then
+	if d.converter or d.retract or d.shield or d.cloak then
 		World.setState(w, id, bit32.bor(w.state[id], World.State.TOGGLED_ON)) -- converters, retracting towers (S-96) and shield generators (S-154) start on
 	end
 	Lifecycle.added(sim, id)
@@ -676,8 +679,8 @@ function Build.step(sim: Types.Sim)
 	for _, id in w.ids do
 		local d = def(sim, id)
 		local bp = d.buildPower
-		if bp == nil or w.buildProgress[id] < 1 then
-			continue
+		if bp == nil or w.buildProgress[id] < 1 or World.isParalyzed(w, id) then
+			continue -- (stunned by EMP: no work, S-229)
 		end
 		if d.domain == "structure" then
 			local q = b.queue[id]
@@ -748,6 +751,8 @@ function Build.step(sim: Types.Sim)
 			local wx = c.wreckX[rezWreck]
 			if wx == nil then
 				b.resurrect[id] = 0 -- gone (reclaimed away, or another builder finished it)
+			elseif Combat.isHeap(c, rezWreck) then
+				b.resurrect[id] = 0 -- worn down to a scrap heap: nothing to bring back (S-227)
 			elseif inRange(sim, id, wx, c.wreckZ[rezWreck], Grid.CELL_SIZE / 2) then
 				halt(sim, id)
 				resurrectStep(sim, id, rezWreck, bp)
