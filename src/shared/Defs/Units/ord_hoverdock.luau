@@ -15,7 +15,7 @@ return Templates.extend(Templates.Structure, {
 	placement = "either",
 	buildPower = 200,
 	buildOptions = { "ord_skimwright", "ord_skimmer", "ord_volley", "ord_dart", "ord_halcyon" },
-	pieces = { "base", "buildpad", "nano1", "nano2", "nano3" },
+	pieces = { "base" },
 	model = "ord_hoverdock",
 	icon = "factory",
 })
