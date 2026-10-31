@@ -77,13 +77,7 @@ end
 
 -- The surrounding terrain's color at (x, z) (grass, sand, rock: the patch is
 -- tinted to it; the deposit cell itself is bare ground, Core/Terrain).
-local function terrainTint(layers: any, x: number, z: number): Color3
-	local material = RenderTerrain.MATERIAL[CoreTerrain.kind(layers, x, z)] or Enum.Material.Grass
-	local ok, color = pcall(function()
-		return workspace.Terrain:GetMaterialColor(material)
-	end)
-	return if ok and typeof(color) == "Color3" then color else Color3.fromRGB(96, 110, 70)
-end
+local terrainTint = RenderTerrain.tintAt
 
 -- The fallback: a dark scraped patch and a few low stones (no glow).
 local function plainPatch(s: Site): Model

@@ -2566,3 +2566,63 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - 2D-E added it to sheet 4 at (128, 128), from models-C's render of the new model (2d b11a39ae, merged through c83c4477). No other slot moved; only sheet 4 changed.
 - The user approved the upload: sheet 4 is 120576950340042 (sha256 84c984c4…) in `tools/icons/assets.json`. `UI/UnitPictures` is regenerated: 202 of 202 units on uploaded sheets.
 - Studio: an Advanced Foundry's build menu shows the Goliath's picture as its second tile, and the image loads (`debug_out/screens/c277_goliath_menu.jpg`).
+
+### C-278 — Scrap heaps: the wreck→heap swap, sparks on wrecks, Resurrect refused on heaps (2026-10-31)
+
+- S-227 (protocol 45; merged from sim fbfc8d95 with S-226): wrecks take damage, what they hold follows their health, and below 40% a wreck is a scrap heap (reclaim only). WRECK and WRECK_STATE carry `heap`; WRECK_HIT 36 comes in the tick a blast hits a wreck in sight.
+- `Core/NetIn`: `heap` on `World.Wreck`. A WRECK_STATE turning it on queues the swap once (`world.wreckHeaped`; heaps never turn back). WRECK_HIT queues sparks (`world.wreckHits`). A join clears both queues.
+- `Render/Deaths`:
+  - A placed wreck gives way to a scrap pile sized by its unit's footprint (1, 2, 3, 4+), with a burst (`Vfx` kind `scrapCollapse`: sparks, flung scrap, a dust ring, a cloud).
+  - A wreck first seen as a heap is placed as one, with no burst. One whose death is still playing gives way once it's placed.
+  - WRECK_HIT throws sparks off the wreck (`scrapHit`). Both play through `RenderDeaths.onFx` on the effects' clock.
+  - The pile is models-C's `Meshes.fx.scrap_heap` (variant = size) once approved and built (C named them so, a0e7b315). Until then, a stand-in: charred and rusty bars over a scorched patch.
+- Text:
+  - The hover label and the unit panel name a heap "<unit> scrap heap" with what's left to reclaim (WRECK_STATE's supply).
+  - The panel's role line reads "Reclaim only: too far gone to resurrect".
+- Resurrect: a resurrect click skips heaps ("a scrap heap can't be resurrected"; the server refuses it anyway). The command card greys Resurrect while the mouse is over a heap.
+- Tests: `tests/client/ScrapHeaps.spec` covers:
+  - the flags, the queues, the label and the refused resurrect, from encoded events;
+  - from the server, a blast wearing a wreck's supply down and the heap below 40%.
+  - WRECK_HIT is checked from bytes only: a blast set off between `Sim.step` calls is cleared before NetOut sends it.
+- Studio:
+  - Death blasts next to a Paladin wreck threw sparks off it (45 `scrapHit`).
+  - Reclaiming it wore it to a heap, with one `scrapCollapse` (`debug_out/screens/c278_scrap_heap.jpg`).
+  - A first try drew the stand-in's disc upright: `PivotTo` places a model by its primary part's frame, so the disc now carries a pivot offset.
+
+### C-279 — Cloak and EMP: own cloaked units see-through, a crackle on stunned ones (2026-10-31)
+
+- S-228 and S-229 (protocol 46; merged from sim 2ecf3802) add no records, only the unit state bits CLOAKED 256 (sent to the own side only; enemies don't get the unit at all) and PARALYZED 512 (stunned).
+- `Render/UnitRenderer`, both on change only:
+  - **CLOAKED:** the model is drawn see-through, `LocalTransparencyModifier` 0.65 on its parts and decals, which leaves their own transparency and the building look alone.
+  - **PARALYZED:** blue sparkle crackle over the hull and a flickering blue light; the flicker is a hash of the render tick and unit, so no randomness.
+  - Studio took three passes on the crackle. From the hull's middle the sparks died inside it. The spark-streak texture read as a haze. The sparkle texture at brightness 4 was one white blob. Now: sparkle at brightness 2, blue, scattered.
+- A cloaker's card offers On / Off, its cloak (`CommandSet`, `CommandCard`: `def.cloak` is switchable, as converters and shields).
+- Icons: the first batch 1 defs (`ord_whisper`, `ord_thunderer`) aren't on the icon sheet yet.
+  - `IconAtlas.spec` and `Icons.spec` now accept a def with no `byDef` entry when its frame has a placeholder tile. That's the sheet's own rule (C-258), which the client already draws by, so a new def lands without editing the generated atlas.
+  - 2D-E draws their real icons from the defs.
+- Debug: `FtggDebug:Invoke("damage", id, amount, emp?)`, where `emp` is the stun's seconds instead of damage.
+- Tests: `tests/client/CloakEmp.spec` covers:
+  - from the sim, an own Whisper shows CLOAKED, a stunned Lancer shows PARALYZED and it wears off;
+  - the Whisper's card has On / Off;
+  - the new units draw their type's placeholder.
+- Studio: a cloaked Whisper drawn see-through beside a stunned Lancer crackling blue (`debug_out/screens/c279_cloak_emp.jpg`).
+
+### C-280 — Batch 1 on the client: hover wakes, hover factories on water, unit codes, the batch 1 icons (2026-10-31)
+
+- S-230: batch 1's 29 further vehicles and hovercraft (sim 67a74543 → 11b13f85, with effbd528's hover factory pieces and muzzle names). Merged through m-models 761d0d72 (C's blockouts, valid against effbd528) and 2d c3aa6cb4 (E3: the batch 1 icons, which the user approved in E's session).
+- **Unit codes** (`Core/Icons.codes`, C-67): the Skimmer ran out of candidates, its initial S with each of its letters and S1..S9 all taken. A code now falls back to the initial with any other letter, then any free pair. No per-id table is needed.
+- **Hover factories on water:** the Hover Dock and Skim Yard have placement "either", which the shared `PlacementRules` already allows on land or water. `World.floats` now counts it, so one built on water is drawn on the surface; on land the ground is higher than any water.
+- **Hover wake** (`Render/UnitRenderer`): units whose move class rides on "hover" throw spray from under the stern while moving.
+  - The rate is 6 puffs per stud a second of speed, at most 90.
+  - Foam over water, dust over land, switched when the surface under it changes.
+- **Icons:** `render.mjs` mapped all 238 defs to 142 catalogue items; only sheet 2 changed. The user approved the upload here: sheet 2 is 125202931406059 (sha256 69f8b0d9…), and sheet 1 keeps its id.
+- Studio, Coastline: a Hover Dock floating on the water and two Skimmers trailing foam across it (`debug_out/screens/c280_hover_wake.jpg`).
+
+### C-281 — C's scrap heap meshes, their ground patch tinted to the terrain (2026-10-31)
+
+- The user approved models-C's scrap heaps: `Meshes.fx.scrap_heap`, variants 1..4 by footprint (m-models 893f4e82, merged with C's batch 1 group 1 meshes).
+- `Render/Deaths` draws them as C-278 planned, with three additions:
+  - **Tint:** the team-masked `base` takes the terrain's colour where the heap lies, as a deposit's patch does. `RenderTerrain.tintAt` moved out of `Render/Deposits`, which now uses it too.
+  - **Pools and swap:** pool keys now say which model a heap is: `heap_<size>` for C's, `heapstand_<size>` for the stand-in. A stand-in heap is swapped for C's once that variant finishes building (on `MeshModels.fxVersion`, as map features are). A pooled heap is re-tinted wherever it lands.
+  - **Early build:** the four variants start building when the wreck renderer is made, so a match's first heap is rarely a stand-in.
+- Studio, Coastline: a Lancer's and a Paladin's wrecks reclaimed to 40% became `scrap_heap_1` and `scrap_heap_2`, their patches the grass colour (`debug_out/screens/c281_heap_close.jpg`).

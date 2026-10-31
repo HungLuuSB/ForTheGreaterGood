@@ -3239,3 +3239,121 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Other streams:** lobby-D renames the Codex entries, clients-B checks tooltips and any text that names a unit, 2d-E checks pictures with a name on them. The Juggernaut stays a mech (no model change).
 - **Kept as they are** (§1.1): Edict, Cataclysm, Cyclops (now Demolisher) and Glint are FTGG-only roles, re-labelled in the plan rather than changed; the fighters, scouts, radars and AA towers are deliberate (S-62, S-179).
 - **Tests:** the fast and client suites pass unchanged; no test pinned these prices or names.
+
+## S-226 — Idle autoheal (the user) (2026-10-31)
+
+- **Asked (the user):** "idle auto heal is important, add it" (the BAR roster plan, §1.2).
+- **Rule:** a finished unit or structure that has taken no damage for **10 s** heals **1% of its max health a second**, up to full. Any damage restarts the wait, a friendly hit included. Unfinished structures and units carried in a transport don't heal. BAR's units heal while idle too (`idleautoheal`, `idletime`); our numbers are simpler: a flat share of max health, so every unit is back to full in at most 110 s after a fight.
+- **Sim:** `Sim/AutoHeal` keeps the tick each unit last took damage (Damage marks it; not hashed, health is) and runs as the system `Sim.AutoHeal` once a second (every 15 ticks), after Construction. Health moves in 1% steps, so the wire's u8 health changes at most once a second per unit.
+- **The AI:** unchanged. S-222's repair pull-back (below 50% health, to a Construction Turret) still pays: a turret repairs far faster than 1% a second.
+- **Other streams:** no wire change; the client sees health rise through the usual updates. D: a Codex line on autoheal.
+- **Tests:** `AutoHeal.spec` (fast): no healing for 10 s, then at most 1% a second, up to full and never above; a new hit restarts the wait; an unfinished structure doesn't heal. `Sim.spec`'s system order includes `Sim.AutoHeal`.
+
+## S-227 — Wrecks wear down to scrap heaps (the user) (2026-10-31)
+
+- **Asked (the user):** the BAR roster program's part 4 (`docs/design/bar-roster-plan.md` §4), approved with the 40% threshold: "wrecks take damage and wear down to scrap".
+- **Rules:**
+  - A unit's wreck has **health 0.54 × its unit's max health**: BAR's median `featuredefs.dead.damage` / unit health over 260 units.
+  - **What it holds follows its health:** supply = full × health fraction. Supply stays the one stored value (`wreckSupply`), so health is derived: `Combat.wreckHealth`. Damage takes the same share of supply; reclaim takes supply and so health. Resurrect's refill (S-168) raises both.
+  - **Damage:** `Combat.explode` hits wrecks after units: splash with the weapon's falloff, measured to the wreck's edge (its unit's radius), at the weapon's STRUCTURE damage. A shell with no splash hits a wreck only if it lands on it; a direct hit on a unit with no splash leaves wrecks alone. Death blasts and nukes count. Units never target wrecks.
+  - **Scrap heap below 40%** of full supply (BAR's median heap / wreck metal, 0.40). A heap refuses RESURRECT (`Build.commandResurrect`, area resurrect) and stops one under way. Supply only rises through resurrect, so a heap stays a heap. It can only be reclaimed.
+  - **At 0 it's gone:** removed, with a RECLAIMED event with no reclaimer, so every team's map forgets it like a reclaimed wreck.
+  - Map features (trees, rocks, S-197) don't take damage.
+  - A wreck made this tick is left alone by this tick's blasts: the death blast of the unit that left it (or of units dying beside it) doesn't wear it down at birth.
+- **Sim:**
+  - `Combat`: `WRECK_HEALTH`, `WRECK_HEAP`, `wreckMaxHp`, `wreckRadius`, `wreckFull` (now also for unit wrecks), and a 64-stud wreck grid (`blastWrecks` looks up only the cells a blast reaches; map features stay out of it).
+  - `isHeap`, `wreckHealth`, `damageWreck`; `combat.tick` (set by `Sim.step`) for events raised inside Combat.
+- **Protocol 45:**
+  - WRECK and WRECK_STATE carry `heap u8`;
+  - new event WRECK_HIT 36 (`wreckId u16`), to players who have the wreck while its spot is in sight, for sparks.
+  - `docs/contracts/net.md` section 7a.
+- **The AI:** Smart Reclaim (`Orders.areaTarget`) takes a heap first, up to twice as far as a wreck. Area and AI resurrect skip heaps. The Construction Turret's auto-reclaim stays nearest-first.
+- **Other streams:**
+  - C: generic heap meshes, 4 sizes by footprint;
+  - B: the wreck → heap swap with sparks and dust, WRECK_HIT sparks, the current reclaim value in the tooltip, Resurrect greyed out on heaps;
+  - E: a scrap mark if B wants one;
+  - D: a Codex line.
+- **Tests:** `Wrecks.spec` (fast):
+  - health 0.54 × the unit's; a blast's damage takes the same share of supply; a WRECK_HIT event;
+  - splash falls off to the wreck's edge; a shell with no splash hits only the wreck it lands on;
+  - 41% is a wreck, 39% a heap: the resurrect under way stops, a new one and area resurrect are refused; at 0 it's gone with a RECLAIMED event;
+  - reclaim lowers health with supply; Smart Reclaim takes a heap before a nearer wreck;
+  - map trees don't take damage.
+  - `Resurrect.spec`'s refill case starts from a half-reclaimed wreck (a quarter left would now be a heap).
+  `Schema.spec`: protocol 45 golden bytes (WRECK 16 B, WRECK_STATE 7 B, WRECK_HIT 3 B), round trips, a heap flag of 2 rejected. The test client (`Tests/Support/Client`) keeps `heap` and shows WRECK_HIT sparks.
+- **S-226 in tests:** `AutoHeal.State.off` turns autoheal off for tests that set health by hand and check it holds (NetOut's OWN_STATUS counts, the turret's repair reach, a transport's cargo health).
+
+## S-228 — Cloak (the BAR roster program, batch 1) (2026-10-31)
+
+- **Asked (the user):** "Add cloak/EMP in batch 1" (`docs/design/bar-roster-plan.md` §1.2).
+- **Rule:**
+  - A unit whose def has `cloak = { drain, decloak }` is cloaked while it is finished, switched on (TOGGLE; it starts on, like converters and shields), fully powered, quiet (no FIRE or SPAWN_PROJ for 2 s), not stunned, and with no enemy unit within `decloak` studs.
+  - Its drain is a Sensors upkeep (power a second while switched on), so a power stall drops the cloak like it shrinks a radar.
+  - Cloaked, it carries the CLOAKED state bit (256), and enemy sight and air sight pass over it in `Sensors.levelFor`. Radar still detects it (stealth shrinks that, guide 11.4), so a cloaked unit is at most a blip. Sonar is unchanged.
+  - BAR's numbers: cloakCost 5 energy a second, mincloakdistance 75 elmos. Ours: Whisper drain 12, decloak 60 studs.
+- **Sim:**
+  - `Sim/Cloak` runs every tick after Projectiles (`Sim.Cloak`). It notes this tick's shots by cloaking units, and every 2nd tick sets each one's bit, looking up enemies in the contact grid.
+  - `Defs`: the `cloak` field. `Schema.UnitState.CLOAKED`; protocol 46.
+- **First unit:** `ord_whisper` (Whisper, Order T2 cloaked tank, BAR's Gremlin), on the advanced vehicle plant: a light gauss gun, stealthy, footprint 2 (C's blockout).
+- **Tests:** `Cloak.spec` (fast):
+  - cloaked when quiet and alone, and the enemy's level isn't VISIBLE;
+  - an enemy within 60 studs shows it;
+  - a shot shows it for 2 s;
+  - switched off, it's shown; on again, cloaked;
+  - short of power, no cloak.
+
+## S-229 — EMP (the BAR roster program, batch 1) (2026-10-31)
+
+- **Asked (the user):** as S-228.
+- **Rule:**
+  - A weapon with `paralyzer = true` puts its damage into the target's stun bar (`World.paralyze`, hashed) instead of its health.
+  - While the bar is above max health the unit is stunned: PARALYZED (512). It holds its spot (Movement treats it as anchored), its weapons don't fire, it does no build, factory, reclaim or resurrect work, and its cloak drops.
+  - The bar drains a tenth of max health a second (`Paralyze.DRAIN_SECONDS` 10). A hit tops it up to at most max × (1 + `paralyzeSeconds` / 10), so a stun ends at most `paralyzeSeconds` after the last hit (default 8, `Combat.PARALYZE_SECONDS`).
+  - EMP doesn't count as queued damage for overkill, never harms wrecks, and doesn't restart autoheal. A weapon's AIR damage of 0 keeps aircraft out of it, as in BAR's ground EMP.
+- **Sim:** `Combat.queueDamage(..., para)`, `Damage` routes it to `Paralyze.add`, `Sim.Paralyze` drains every 3 ticks; `World.isParalyzed`. Protocol 46: the PARALYZED bit.
+- **First unit:** `ord_thunderer` (Thunderer, Order T3 from the gantry, BAR's Thor).
+  - Price: 4,800 / 70,000 / 160,000, health 42,000: compressed like the Titan, about 1.5× its price.
+  - Weapons: a heavy lightning cannon (hitscan, 300 studs, 840 a bolt every 1.2 s) and an EMP projector (260 studs, 1,000 stun a second, 6 s).
+  - Footprint 3 (C's blockout).
+- **Tests:** `Cloak.spec`:
+  - EMP fills the bar, not health; past max it stuns, capped by the weapon's seconds, and it wears off;
+  - the Thunderer's EMP fills a Juggernaut's bar;
+  - a stunned tank neither fires at a tank beside it nor moves.
+
+## S-230 — Batch 1: vehicles and hovercraft (the user) (2026-10-31)
+
+- **Asked (the user):** the BAR roster program's part 2, batch 1, approved with its names (`docs/design/bar-roster-plan.md` §2.2). The minelayers are skipped ("Skip the minelayers").
+- **31 defs**, with the Whisper and the Thunderer from S-228 and S-229:
+
+  | Faction | T1 vehicle plant | T2 advanced plant | Gantry (T3) | Hover factory |
+  |---|---|---|---|---|
+  | Order | Courser (fast raider), Gemini (twin rockets), Wader (amphibious tank), Pontifex (amphibious worker) | Magistrate (combat engineer), Whisper, Fulgur (lightning raider with an AA missile), Mandate (artillery), Luminary (tachyon beam) | Thunderer, Tempest (heavy hovertank) | **Hover Dock**: Skimwright (worker), Skimmer (tank), Volley (rocket artillery), Dart (fast raider), Halcyon (anti-air) |
+  | Chaos | Cleaver (riot tank), Mudskipper (amphibious tank), Dredger (amphibious worker) | Hellfire (heavy missiles), Grendel (very heavy amphibious), Hurler (artillery) | Typhon (heavy laser hovertank) | **Skim Yard**: Drifter (worker), Snapjaw (tank), Sling (rocket artillery), Gnat (fast raider), Skua (anti-air), Glaive (assault hovertank, heavy laser) |
+
+- **The hover factories** merge BAR's land and floating platforms into one def each, `placement = "either"`, footprint 4 (C's 22-stud deck). Commanders and T1 workers build them, and so do the new amphibious and hover workers and the Magistrate. The amphibious and hover workers also build the sea extractor and the shipyard.
+- **First-draft numbers:** the README's suggested conversion, scaled to where our tanks sit against their counterparts:
+  - supply about as suggested;
+  - build time about 28 × supply (T1), 25× (T2);
+  - power about 10× supply (12× at T2);
+  - health ×0.6 at T1, ×0.85 at T2;
+  - speed ×0.85, sight ×1.3;
+  - ranges ×0.85;
+  - DPS as suggested.
+
+  T3 is compressed like the Titan. Footprints and piece names follow C's blockouts. The balance pass waits for "run the balance checkpoint".
+- **Hovercraft:** the `HOVER` move class had no units before. `Batch1.spec` drives a Skimmer from land onto 30-stud-deep sea and back: it rides the surface, never submerged.
+- **The AI** (`Skirmish.BATCH1_SHARE` 0.25):
+  - vehicle plants: Order's Gemini and Chaos's Cleaver in a quarter of the tank picks (the Cleaver more when the enemy fields light units); Order's Courser in a quarter of the raider picks;
+  - advanced plants: a quarter of the picks go to batch 1's units in the same role: Mandate / Hurler for artillery, Luminary / Hellfire or Fulgur / Grendel for heavy.
+  - Not yet: hover factories on water maps, the amphibious and hover workers, and the T3 hovers. These are the batch's AI follow-ups.
+- **Tests:** `Batch1.spec` (fast):
+  - all 31 can be built from a Commander's tree;
+  - every armed one with a ground weapon damages (or stuns) an enemy tank in its reach;
+  - hovercraft cross land and water;
+  - the hover factories pass placement on land and on the sea.
+  - Two AI tests counted what was alive at the end, which depends on how a seed's fights went; batch 1's extra picks moved them. `AI.spec`'s normal army counts what was fielded (standing + lost), and `AIRoles.spec`'s 3v3 counts every aircraft an air AI flew.
+- **Other streams:**
+  - C: blockouts done (6c9268f2), meshes and wrecks next, previews to the user;
+  - E: icons from the defs, then pictures from C's models;
+  - B: placeholders through the relaxed IconAtlas rule, then rigs and effects;
+  - D: Codex entries.

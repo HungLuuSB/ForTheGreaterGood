@@ -171,7 +171,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 		elseif kind == EK.WRECK then
 			local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 			local id = e.wreckId :: number
-			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0), supply = e.supply or 0, fullSupply = e.fullSupply or 0, rez = 0, feature = if (e.featureKind or 0) > 0 then e.featureKind else nil }
+			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0), supply = e.supply or 0, fullSupply = e.fullSupply or 0, rez = 0, feature = if (e.featureKind or 0) > 0 then e.featureKind else nil, heap = if e.heap then true else nil }
 			table.insert(world.wreckAdded, id)
 		elseif kind == EK.ALERT then
 			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0; a full
@@ -217,7 +217,15 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			if w then
 				w.supply = e.supply or w.supply
 				w.rez = (e.rez or 0) / 255
+				if e.heap and not w.heap then
+					-- worn down to a scrap heap (protocol 45, S-227): never back
+					w.heap = true
+					table.insert(world.wreckHeaped, w.id)
+				end
 			end
+		elseif EK.WRECK_HIT ~= nil and kind == EK.WRECK_HIT then
+			-- a blast hit a known wreck in sight (protocol 45, S-227): sparks there
+			table.insert(world.wreckHits, e.wreckId :: number)
 		elseif EK.PREGAME ~= nil and kind == EK.PREGAME then
 			-- one player's pick, ready and AI flags (protocol 36, S-169; C-218)
 			local pg = world.pregame

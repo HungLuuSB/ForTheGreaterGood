@@ -176,7 +176,7 @@ return function(sim: Types.Sim)
 			maxRadius = p.radius
 		end
 		moving[k] = w.orderId[id] ~= 0
-		anchored[k] = Deploy.anchored(w, id)
+		anchored[k] = Deploy.anchored(w, id) or World.isParalyzed(w, id) -- (stunned by EMP, S-229)
 		local exit = sim.build.exiting[id]
 		if exit then
 			-- out of the footprint on open ground (or stopped past its edge):
@@ -221,7 +221,7 @@ return function(sim: Types.Sim)
 			continue
 		end
 		if anchored[k] then
-			nspeed[k] = 0 -- unpacked or (un)packing: it holds its spot (Deploy)
+			nspeed[k] = 0 -- unpacked or (un)packing (Deploy), or stunned: it holds its spot
 			w.progressTick[id] = tick
 			continue
 		end

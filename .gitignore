@@ -46,5 +46,8 @@ node_modules/
 /assets/maps/*/export/preview_*.png
 /assets/maps/materials/*/preview_tile.png
 
+# Model previews for the user (the BAR roster rule, 2026-10-31): regenerable PNGs
+/previews/
+
 # BAR reference (CC BY-NC-ND pictures; look only, never committed)
 assets/reference/

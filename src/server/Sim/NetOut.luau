@@ -595,6 +595,8 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 				known[e.other] = nil -- destroyed: this is its end, no IMPACT follows (S-85)
 			end
 			table.insert(events, hit)
+		elseif kind == "WRECK_HIT" and pn.wrecksSent[e.other] and shown(e.x :: number, e.z :: number) then
+			table.insert(events, { kind = Schema.EventKind.WRECK_HIT, wreckId = e.other }) -- (S-227)
 		elseif kind == "INTERCEPTED" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
 			known[e.other] = nil
 			table.insert(events, withPos({ kind = Schema.EventKind.INTERCEPTED, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
@@ -625,7 +627,7 @@ local function updateWrecks(sim: Types.Sim, net: NetState.NetState, ally: number
 	local function learn(wid: number)
 		local x, z = c.wreckX[wid], c.wreckZ[wid]
 		if known[wid] == nil and x ~= nil and inSightFor(sim, ally, x, z) then
-			known[wid] = { x, z, c.wreckDef[wid], c.wreckHeading[wid], c.wreckSupply[wid], c.wreckKind[wid] }
+			known[wid] = { x, z, c.wreckDef[wid], c.wreckHeading[wid], c.wreckSupply[wid], c.wreckKind[wid], Combat.isHeap(c, wid) }
 			table.insert(list, wid)
 			changed = true
 		end
@@ -743,9 +745,10 @@ local function pregameEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNe
 	pn.sentCountdown = now
 end
 
--- A wreck's supply and resurrect progress as WRECK_STATE sends them (S-168).
-local function wreckState(c: any, wid: number): (number, number)
-	return math.clamp(math.floor((c.wreckSupply[wid] or 0) + 0.5), 0, 65535), math.clamp(math.floor((c.wreckRez[wid] or 0) * 255), 0, 255)
+-- A wreck's supply and resurrect progress as WRECK_STATE sends them (S-168),
+-- and whether it's a scrap heap (S-227).
+local function wreckState(c: any, wid: number): (number, number, boolean)
+	return math.clamp(math.floor((c.wreckSupply[wid] or 0) + 0.5), 0, 65535), math.clamp(math.floor((c.wreckRez[wid] or 0) * 255), 0, 255), Combat.isHeap(c, wid)
 end
 
 -- WRECK_STATE for the viewer's sent wrecks in its team's sight whose supply
@@ -756,11 +759,11 @@ local function wreckStateEvents(sim: Types.Sim, pn: NetState.PlayerNet, ally: nu
 	for _, wid in pn.wreckList do
 		local x = c.wreckX[wid]
 		if x ~= nil and inSightFor(sim, ally, x, c.wreckZ[wid]) then
-			local supply, rez = wreckState(c, wid)
-			local sig = supply * 256 + rez
+			local supply, rez, heap = wreckState(c, wid)
+			local sig = (supply * 256 + rez) * 2 + (if heap then 1 else 0)
 			if sent[wid] ~= sig then
 				sent[wid] = sig
-				table.insert(events, { kind = Schema.EventKind.WRECK_STATE, wreckId = wid, supply = supply, rez = rez })
+				table.insert(events, { kind = Schema.EventKind.WRECK_STATE, wreckId = wid, supply = supply, rez = rez, heap = heap })
 			end
 		end
 	end
@@ -793,16 +796,16 @@ local function wreckEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet,
 			local p = k.known[wid]
 			local cell, ox, oz = g:encode(p[1], p[2])
 			-- its supply now (S-168); a wreck gone since the team saw it: as it was
-			local supply, rez = wreckState(c, wid)
+			local supply, rez, heap = wreckState(c, wid)
 			if c.wreckX[wid] == nil then
-				supply, rez = math.clamp(math.floor((p[5] or 0) + 0.5), 0, 65535), 0
+				supply, rez, heap = math.clamp(math.floor((p[5] or 0) + 0.5), 0, 65535), 0, p[7] == true
 			end
-			pn.sentWreckState[wid] = supply * 256 + rez
+			pn.sentWreckState[wid] = (supply * 256 + rez) * 2 + (if heap then 1 else 0)
 			local feature = p[6]
 			local full = if feature then math.floor((c.wreckFull[wid] or p[5] or 0) + 0.5) else math.floor(Combat.fullWreckSupply(sim.defs.unitByIndex[p[3]]) + 0.5)
-			table.insert(events, { kind = Schema.EventKind.WRECK, wreckId = wid, defIndex = p[3], cell = cell, offX = ox, offZ = oz, heading = NetOut.headingU8(p[4]), supply = supply, fullSupply = math.clamp(full, 0, 65535), featureKind = feature or 0 })
+			table.insert(events, { kind = Schema.EventKind.WRECK, wreckId = wid, defIndex = p[3], cell = cell, offX = ox, offZ = oz, heading = NetOut.headingU8(p[4]), supply = supply, fullSupply = math.clamp(full, 0, 65535), featureKind = feature or 0, heap = heap })
 			if rez > 0 then
-				table.insert(events, { kind = Schema.EventKind.WRECK_STATE, wreckId = wid, supply = supply, rez = rez })
+				table.insert(events, { kind = Schema.EventKind.WRECK_STATE, wreckId = wid, supply = supply, rez = rez, heap = heap })
 			end
 		end
 	end

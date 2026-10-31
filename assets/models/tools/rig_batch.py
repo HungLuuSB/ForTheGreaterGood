@@ -39,7 +39,8 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")
 
 
 def unit_dir(u: str, sub: str) -> str:
-    base = "assets/fx/features" if u.startswith("feature_") else "assets/models"
+    base = ("assets/fx/features" if u.startswith("feature_") else "assets/fx/scrap" if u.startswith("scrap_heap_")
+            else "assets/models")
     return os.path.join(ROOT, base, u, sub)
 
 

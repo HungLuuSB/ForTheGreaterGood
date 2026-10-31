@@ -674,6 +674,7 @@ return function(t: RunAll.Context)
 
 	t.test("OWN_STATUS: the owner's units off camera send health, build and queue on change, capped per tick (S-158)", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		sim.autoheal.off = true -- (S-226) the test changes health by hand and counts the changes
 		local g = (sim.map :: any).grid
 		local w = sim.world
 		local plant = Spawn.unit(sim, "ord_vehplant", 1, 300, 300, 0)

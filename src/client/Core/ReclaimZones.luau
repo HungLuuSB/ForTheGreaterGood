@@ -107,12 +107,13 @@ function ReclaimZones.wreckAt(world: World.World, x: number, z: number): World.W
 	return best
 end
 
--- The hover text for wreck `w`: "<unit name> wreck · 45 supply", with the
--- resurrect progress when it has some.
+-- The hover text for wreck `w`: "<unit name> wreck · 45 supply" ("scrap
+-- heap" once it's worn below 40%), with the resurrect progress when it has
+-- some.
 function ReclaimZones.label(world: World.World, w: World.Wreck): string
 	local def = world.defs.unitByIndex[w.defIndex]
 	local name = if def then def.name else "Unknown"
-	local text = `{name} wreck · {w.supply} supply`
+	local text = `{name} {if w.heap then "scrap heap" else "wreck"} · {w.supply} supply` -- (a heap: S-227)
 	if w.rez > 0 then
 		text ..= ` · resurrect {math.floor(w.rez * 100)}%`
 	end

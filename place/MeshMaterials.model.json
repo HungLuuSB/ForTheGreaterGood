@@ -1566,6 +1566,66 @@
       }
     },
     {
+      "Name": "fx_scrap_heap",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://117746792019620",
+        "NormalMapContent": "rbxassetid://79898601453398",
+        "RoughnessMapContent": "rbxassetid://110564206528674",
+        "MetalnessMapContent": "rbxassetid://73205195218888",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "fx_scrap_heap_1",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://117746792019620",
+        "NormalMapContent": "rbxassetid://79898601453398",
+        "RoughnessMapContent": "rbxassetid://110564206528674",
+        "MetalnessMapContent": "rbxassetid://73205195218888",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "fx_scrap_heap_2",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://89737145882231",
+        "NormalMapContent": "rbxassetid://72766751592604",
+        "RoughnessMapContent": "rbxassetid://91762529627502",
+        "MetalnessMapContent": "rbxassetid://79301910631171",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "fx_scrap_heap_3",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://122069536381355",
+        "NormalMapContent": "rbxassetid://137487548058173",
+        "RoughnessMapContent": "rbxassetid://77325243490124",
+        "MetalnessMapContent": "rbxassetid://77694788984623",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "fx_scrap_heap_4",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://127767736617101",
+        "NormalMapContent": "rbxassetid://127294580518062",
+        "RoughnessMapContent": "rbxassetid://76816497488844",
+        "MetalnessMapContent": "rbxassetid://89189920628824",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "fx_shield_emitter",
       "ClassName": "SurfaceAppearance",
       "Properties": {

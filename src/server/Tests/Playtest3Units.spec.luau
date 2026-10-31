@@ -100,6 +100,7 @@ return function(t: RunAll.Context)
 		end
 		local alone = solarProgress(false)
 		local helped, sim, nano = solarProgress(true)
+		sim.autoheal.off = true -- (S-226) only the turret repairs here
 		t.expect(helped > alone * 1.5, `the nano helped build the Commander's solar ({helped} against {alone})`)
 
 		local w = sim.world

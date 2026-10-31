@@ -12,7 +12,7 @@ return Templates.extend(Templates.Structure, {
 	health = 12000,
 	footprint = 7, -- size shows tech level (S-104)
 	buildPower = 400,
-	buildOptions = { "chs_juggernaut" },
+	buildOptions = { "chs_juggernaut", "chs_typhon" },
 	icon = "factory",
 	model = "chs_gantry",
 })

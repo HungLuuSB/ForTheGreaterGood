@@ -46,6 +46,7 @@
 local Air = require("./Air")
 local Build = require("./Build")
 local BuildState = require("./BuildState")
+local Combat = require("./Combat/Combat")
 local ContactGrid = require("./Combat/ContactGrid")
 local Defs = require("@shared/Defs/Defs")
 local Hash = require("@shared/Util/Hash")
@@ -410,10 +411,13 @@ function Orders.areaTarget(sim: Types.Sim, id: number, op: number, cx: number, c
 		if (wx - cx) ^ 2 + (wz - cz) ^ 2 <= r2 then
 			local ok = true
 			if op == AREA.RESURRECT then
-				ok = c.wreckKind[wid] == nil and not table.find(sim.defs.unitByIndex[c.wreckDef[wid]].categories, "COMMANDER") -- (no map features, S-197)
+				ok = c.wreckKind[wid] == nil and not Combat.isHeap(c, wid) and not table.find(sim.defs.unitByIndex[c.wreckDef[wid]].categories, "COMMANDER") -- (no map features, S-197)
 			end
 			if ok then
 				local d = (wx - ux) ^ 2 + (wz - uz) ^ 2
+				if op == AREA.RECLAIM and Combat.isHeap(c, wid) then
+					d /= 4 -- a scrap heap first, up to twice as far: it's going (S-227)
+				end
 				if d < bestD or (d == bestD and wid < (best :: number)) then
 					best, bestD = wid, d
 				end
