@@ -311,7 +311,7 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
     });
     // unit panel (B): health bar with the cross, then a stat strip at 16 px, then a tooltip
     m += `<rect x="0" y="210" width="560" height="190" fill="#2d3a2c"/><rect x="0" y="210" width="560" height="190" fill="url(#grid)"/>`;
-    m += `<rect x="10" y="222" width="540" height="96" rx="3" fill="${B.panel}" fill-opacity=".92"/>` + txt(20, 240, "Paladin", 12, B.text, "start", 600) + txt(540, 240, "T2 · Main Battle Tank", 10, B.dim, "end");
+    m += `<rect x="10" y="222" width="540" height="96" rx="3" fill="${B.panel}" fill-opacity=".92"/>` + txt(20, 240, "Vindicator", 12, B.text, "start", 600) + txt(540, 240, "T2 · Main Battle Tank", 10, B.dim, "end");
     m += place(uiSVG(byKey("health"), "#50D648", 16), 20, 250, 16) + `<rect x="42" y="254" width="500" height="8" fill="#3a3f48"/><rect x="42" y="254" width="${500 * .68}" height="8" fill="#50D648"/>`;
     [["armor", "#A9B6C4", "Heavy"], ["speed", "#60AAEC", "42"], ["sight", "#D6DAE2", "260"], ["radar", "#78CED6", "—"], ["value", "#E2C878", "310"]].forEach(([k, col, v], i) => { const x = 20 + i * 104; m += place(uiSVG(byKey(k), col, 16), x, 272, 16) + txt(x + 22, 284, v, 11, B.text, "start", 600); });
     [["dps", "#E22824", "186"], ["range", "#C42222", "420"], ["build", "#EEBA5C", "—"]].forEach(([k, col, v], i) => { const x = 20 + i * 104; m += place(uiSVG(byKey(k), col, 16), x, 294, 16) + txt(x + 22, 306, v, 11, B.text, "start", 600); });
@@ -328,7 +328,7 @@ h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 
     });
     // weapon card (D) and a unit panel's sensor and defence row (B)
     m += `<rect x="0" y="410" width="560" height="190" fill="#2d3a2c"/><rect x="0" y="410" width="560" height="190" fill="url(#grid)"/>`;
-    m += `<rect x="10" y="422" width="540" height="70" rx="3" fill="${B.panel}" fill-opacity=".92"/>` + txt(20, 440, "Corsair · sensors and defence", 11, B.text, "start", 600);
+    m += `<rect x="10" y="422" width="540" height="70" rx="3" fill="${B.panel}" fill-opacity=".92"/>` + txt(20, 440, "Cutthroat · sensors and defence", 11, B.text, "start", 600);
     [["sonar", "#5AA8E0", "320"], ["jam", "#B08CF0", "180"], ["countermeasures", "#F0B060", "2 / 4"], ["ammo", "#C4C8D0", "12"], ["stock", "#D6DAE2", "3"]].forEach(([k, col, v], i) => { const x = 20 + i * 104; m += place(uiSVG(byKey(k), col, 16), x, 456, 16) + txt(x + 22, 468, v, 11, B.text, "start", 600); });
     m += `<rect x="10" y="502" width="540" height="88" rx="3" fill="${B.panel}" fill-opacity=".92"/>` + txt(20, 520, "Build tile tooltip", 10, B.dim);
     m += place(uiSVG(byKey("guidance"), "#F2D45C", 16), 20, 532, 16) + txt(42, 544, "Radar guided", 11, B.text) + place(uiSVG(byKey("lock"), "#F2D45C", 16), 170, 532, 16) + txt(192, 544, "Lock 900", 11, B.text);
