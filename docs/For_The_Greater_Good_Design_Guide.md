@@ -1109,6 +1109,8 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - Collision volumes are cylinders (radius 0.45 × footprint × 8, height 6 × footprint).
 - Projectile flight is exact, with a swept chord test. AoE is measured to the cylinder surface.
 - Damage is queued and applied in order. Deaths leave a wreck worth 50% of supply when overkill ≤ 50% of max health.
+- **Wrecks wear down to scrap (S-227, the user; BAR's feature damage):** a wreck has 0.54 × its unit's max health, and what it holds follows its health (supply = full × health fraction): blasts (splash, or a shell landing on it) and reclaim wear the same bar. Below 40% it is a **scrap heap**: a pile of scattered metal bars that can only be reclaimed, never resurrected. At 0 it's gone. Smart Reclaim takes heaps first (up to twice as far as a wreck). Map trees and rocks don't take damage.
+- **Idle autoheal (S-226, the user):** a finished unit or structure that has taken no damage for 10 s heals 1% of its max health a second, up to full (BAR's idle autoheal). Any damage, friendly included, restarts the wait. It is applied once a second, so health moves in 1% steps; units carried in a transport don't heal.
 - Per-tick events are in `sim.combat.events`.
 - Not yet: target leading, salvos, focus fire. Line of fire (10.8, S-32), guidance (11.5) and overkill (10.2, S-29) are built.
 

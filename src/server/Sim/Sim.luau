@@ -32,6 +32,7 @@ local Features = require("./Features")
 local SensorsState = require("./SensorsState")
 local Stats = require("./Stats")
 local Alerts = require("./Alerts")
+local AutoHeal = require("./AutoHeal")
 local Nav = require("./Nav")
 local NetOut = require("./NetOut")
 local Pregame = require("./Pregame")
@@ -75,6 +76,7 @@ local SYSTEMS: { System } = {
 	{ name = "Sim.Projectiles", every = 1, run = require("./Systems/Projectiles") },
 	{ name = "Sim.Damage", every = 1, run = require("./Systems/Damage") },
 	{ name = "Sim.Construction", every = 1, run = require("./Systems/Construction") },
+	{ name = "Sim.AutoHeal", every = AutoHeal.EVERY, run = AutoHeal.step }, -- idle units heal (S-226)
 	{ name = "Sim.Match", every = 1, run = require("./Systems/Match") },
 	{ name = "Sim.NetOut", every = 1, run = require("./Systems/NetOut") },
 }
@@ -229,6 +231,7 @@ function Sim.new(config: Config): Sim
 		playerStats = Stats.new(order),
 		statSeries = Stats.newSeries(0),
 		alerts = Alerts.new(order),
+		autoheal = AutoHeal.new(),
 		share = Share.new(),
 		cheats = CheatsState.new(cheats, offline),
 		net = nil :: any,
@@ -324,6 +327,7 @@ function Sim.step(sim: Sim)
 	local tick = sim.tick + 1
 	sim.tick = tick
 	table.clear(sim.combat.events) -- events describe one tick (NetOut sends them)
+	sim.combat.tick = tick
 	local timing = timings[sim]
 	if timing then
 		timing.lastTotal = 0

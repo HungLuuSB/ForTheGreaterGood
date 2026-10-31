@@ -3239,3 +3239,46 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Other streams:** lobby-D renames the Codex entries, clients-B checks tooltips and any text that names a unit, 2d-E checks pictures with a name on them. The Juggernaut stays a mech (no model change).
 - **Kept as they are** (§1.1): Edict, Cataclysm, Cyclops (now Demolisher) and Glint are FTGG-only roles, re-labelled in the plan rather than changed; the fighters, scouts, radars and AA towers are deliberate (S-62, S-179).
 - **Tests:** the fast and client suites pass unchanged; no test pinned these prices or names.
+
+## S-226 — Idle autoheal (the user) (2026-10-31)
+
+- **Asked (the user):** "idle auto heal is important, add it" (the BAR roster plan, §1.2).
+- **Rule:** a finished unit or structure that has taken no damage for **10 s** heals **1% of its max health a second**, up to full. Any damage restarts the wait, a friendly hit included. Unfinished structures and units carried in a transport don't heal. BAR's units heal while idle too (`idleautoheal`, `idletime`); our numbers are simpler: a flat share of max health, so every unit is back to full in at most 110 s after a fight.
+- **Sim:** `Sim/AutoHeal` keeps the tick each unit last took damage (Damage marks it; not hashed, health is) and runs as the system `Sim.AutoHeal` once a second (every 15 ticks), after Construction. Health moves in 1% steps, so the wire's u8 health changes at most once a second per unit.
+- **The AI:** unchanged. S-222's repair pull-back (below 50% health, to a Construction Turret) still pays: a turret repairs far faster than 1% a second.
+- **Other streams:** no wire change; the client sees health rise through the usual updates. D: a Codex line on autoheal.
+- **Tests:** `AutoHeal.spec` (fast): no healing for 10 s, then at most 1% a second, up to full and never above; a new hit restarts the wait; an unfinished structure doesn't heal. `Sim.spec`'s system order includes `Sim.AutoHeal`.
+
+## S-227 — Wrecks wear down to scrap heaps (the user) (2026-10-31)
+
+- **Asked (the user):** the BAR roster program's part 4 (`docs/design/bar-roster-plan.md` §4), approved with the 40% threshold: "wrecks take damage and wear down to scrap".
+- **Rules:**
+  - A unit's wreck has **health 0.54 × its unit's max health**: BAR's median `featuredefs.dead.damage` / unit health over 260 units.
+  - **What it holds follows its health:** supply = full × health fraction. Supply stays the one stored value (`wreckSupply`), so health is derived: `Combat.wreckHealth`. Damage takes the same share of supply; reclaim takes supply and so health. Resurrect's refill (S-168) raises both.
+  - **Damage:** `Combat.explode` hits wrecks after units: splash with the weapon's falloff, measured to the wreck's edge (its unit's radius), at the weapon's STRUCTURE damage. A shell with no splash hits a wreck only if it lands on it; a direct hit on a unit with no splash leaves wrecks alone. Death blasts and nukes count. Units never target wrecks.
+  - **Scrap heap below 40%** of full supply (BAR's median heap / wreck metal, 0.40). A heap refuses RESURRECT (`Build.commandResurrect`, area resurrect) and stops one under way. Supply only rises through resurrect, so a heap stays a heap. It can only be reclaimed.
+  - **At 0 it's gone:** removed, with a RECLAIMED event with no reclaimer, so every team's map forgets it like a reclaimed wreck.
+  - Map features (trees, rocks, S-197) don't take damage.
+  - A wreck made this tick is left alone by this tick's blasts: the death blast of the unit that left it (or of units dying beside it) doesn't wear it down at birth.
+- **Sim:**
+  - `Combat`: `WRECK_HEALTH`, `WRECK_HEAP`, `wreckMaxHp`, `wreckRadius`, `wreckFull` (now also for unit wrecks), and a 64-stud wreck grid (`blastWrecks` looks up only the cells a blast reaches; map features stay out of it).
+  - `isHeap`, `wreckHealth`, `damageWreck`; `combat.tick` (set by `Sim.step`) for events raised inside Combat.
+- **Protocol 45:**
+  - WRECK and WRECK_STATE carry `heap u8`;
+  - new event WRECK_HIT 36 (`wreckId u16`), to players who have the wreck while its spot is in sight, for sparks.
+  - `docs/contracts/net.md` section 7a.
+- **The AI:** Smart Reclaim (`Orders.areaTarget`) takes a heap first, up to twice as far as a wreck. Area and AI resurrect skip heaps. The Construction Turret's auto-reclaim stays nearest-first.
+- **Other streams:**
+  - C: generic heap meshes, 4 sizes by footprint;
+  - B: the wreck → heap swap with sparks and dust, WRECK_HIT sparks, the current reclaim value in the tooltip, Resurrect greyed out on heaps;
+  - E: a scrap mark if B wants one;
+  - D: a Codex line.
+- **Tests:** `Wrecks.spec` (fast):
+  - health 0.54 × the unit's; a blast's damage takes the same share of supply; a WRECK_HIT event;
+  - splash falls off to the wreck's edge; a shell with no splash hits only the wreck it lands on;
+  - 41% is a wreck, 39% a heap: the resurrect under way stops, a new one and area resurrect are refused; at 0 it's gone with a RECLAIMED event;
+  - reclaim lowers health with supply; Smart Reclaim takes a heap before a nearer wreck;
+  - map trees don't take damage.
+  - `Resurrect.spec`'s refill case starts from a half-reclaimed wreck (a quarter left would now be a heap).
+  `Schema.spec`: protocol 45 golden bytes (WRECK 16 B, WRECK_STATE 7 B, WRECK_HIT 3 B), round trips, a heap flag of 2 rejected. The test client (`Tests/Support/Client`) keeps `heap` and shows WRECK_HIT sparks.
+- **S-226 in tests:** `AutoHeal.State.off` turns autoheal off for tests that set health by hand and check it holds (NetOut's OWN_STATUS counts, the turret's repair reach, a transport's cargo health).

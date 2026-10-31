@@ -250,6 +250,9 @@ function Build.commandResurrect(sim: Types.Sim, ids: { number }, wreckId: number
 	if c.wreckKind[wreckId] then
 		return -- a map feature: nothing to bring back (S-197)
 	end
+	if Combat.isHeap(c, wreckId) then
+		return -- a scrap heap: reclaim only (S-227)
+	end
 	local wd = sim.defs.unitByIndex[c.wreckDef[wreckId]]
 	if table.find(wd.categories, "COMMANDER") then
 		return
@@ -748,6 +751,8 @@ function Build.step(sim: Types.Sim)
 			local wx = c.wreckX[rezWreck]
 			if wx == nil then
 				b.resurrect[id] = 0 -- gone (reclaimed away, or another builder finished it)
+			elseif Combat.isHeap(c, rezWreck) then
+				b.resurrect[id] = 0 -- worn down to a scrap heap: nothing to bring back (S-227)
 			elseif inRange(sim, id, wx, c.wreckZ[rezWreck], Grid.CELL_SIZE / 2) then
 				halt(sim, id)
 				resurrectStep(sim, id, rezWreck, bp)
