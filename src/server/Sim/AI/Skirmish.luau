@@ -893,15 +893,37 @@ end
 -- The BUILD facing (Schema.Facing) nearest the enemy start (S-160, the
 -- user's BAR reference #7): factories face their pad and exit lane that
 -- way. East / west wins a tie, as before on the mirrored 1v1 maps.
-function Skirmish.enemyFacing(brain: Brain): number
-	if math.abs(brain.dirX) >= math.abs(brain.dirZ) then
-		return if brain.dirX >= 0 then Schema.Facing.EAST else Schema.Facing.WEST
+local function facingOf(dx: number, dz: number): number
+	if math.abs(dx) >= math.abs(dz) then
+		return if dx >= 0 then Schema.Facing.EAST else Schema.Facing.WEST
 	end
-	return if brain.dirZ > 0 then Schema.Facing.NORTH else Schema.Facing.SOUTH
+	return if dz > 0 then Schema.Facing.NORTH else Schema.Facing.SOUTH
+end
+
+function Skirmish.enemyFacing(brain: Brain): number
+	return facingOf(brain.dirX, brain.dirZ)
+end
+
+-- Every factory faces the enemy, whatever placed it (FTGG-FEEDBACK-4, the
+-- user: airfields, gantries and the job list's plants still faced north). A
+-- shipyard faces out to sea, away from home, so its ships launch into open
+-- water.
+function Skirmish.factoryFacing(brain: Brain, d: Defs.UnitDef, x: number, z: number, facing: number): number
+	if d.domain ~= "structure" or not d.buildOptions or #(d.buildOptions :: { string }) == 0 then
+		return facing
+	end
+	if d.placement == "water" then
+		local dx, dz = x - brain.homeX, z - brain.homeZ
+		if dx * dx + dz * dz > 1 then
+			return facingOf(dx, dz)
+		end
+	end
+	return Skirmish.enemyFacing(brain)
 end
 
 local function build(brain: Brain, builder: number, defId: string, x: number, z: number, facing: number)
 	local g = (brain.sim.map :: Passability.PassMap).grid
+	facing = Skirmish.factoryFacing(brain, brain.sim.defs.units[defId], x, z, facing)
 	local cell, ox, oz = g:encode(x, z)
 	submit(brain.sim, brain.player, {
 		cmdType = CT.BUILD,

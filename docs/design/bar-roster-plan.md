@@ -2,7 +2,7 @@
 
 Owner: sim-A (lead and integrator). Streams: clients-B, models-C, lobby-D, 2d-E.
 Status: **approved by the user on 2026-10-31**, with these answers:
-- Part 1: the four stat changes (the Juggernaut priced up to take on two Titans, S-225); cloak and EMP in batch 1; no minelayers for now; spy bots without capture; **idle autoheal: yes**; no veterancy. Renames: sim-A picks names that fit each unit's role (S-225's table).
+- Part 1: the four stat changes (the Juggernaut priced up to take on two Titans, S-225); cloak and EMP in batch 1; no minelayers for now; spy bots without capture; **idle autoheal: yes**; veterancy deferred, to discuss later (the user, 2026-10-31). Renames: sim-A picks names that fit each unit's role (S-225's table).
 - Parts 2, 3 and 4 approved as written, the 40% heap threshold included.
 - Models: every unit C finishes is shown to the user as a preview, saved where the user can open it easily.
 
@@ -70,7 +70,7 @@ Method: our 207 defs (dumped from `sim.defs`) against their BAR counterparts (RE
 | **Decoy Commander and decoy fusion** | Look like the real thing even in sight | S: our `spoof` (S-109) extended to sight, not only radar | Low–medium: 4 units | B2 (decoy Commanders), B5 (decoy fusion; Chaos's Advanced Exploiter decoy). |
 | **Perimeter camera** | A tiny cloaked structure that only gives sight | S once cloak exists | Low: 2 units | B5 (Beholder). |
 | **Pop-up turrets** | Hidden and armored until an enemy comes close, then open and fire | S: our switch-off shell (S-96) made automatic | Medium: 5 units | B5: Dragon's Claw / Maw, Ferret, Rattlesnake, Persecutor. |
-| **Veterancy (XP)** | Units gain health and reload from damage dealt | S in the sim, but it touches every balance number | Low for now | None need it. **Proposal: not now.** |
+| **Veterancy (XP)** | Units gain health and reload from damage dealt | S in the sim, but it touches every balance number | Low for now | None need it. **Deferred: the user will discuss it later (2026-10-31).** |
 | **Autoheal** | Units slowly heal when idle | S | Medium for flow: fewer dead-but-alive stragglers | None need it, but BAR has it on almost everything. **Proposal: a global idle autoheal at 1% of max health per second after 10 s out of combat**, its own S-number, playtest first. |
 | **Drones** | Carriers spawn short-lived attack drones | M–L | Reserved units only (part 3) | None in the buildable roster. |
 | **Sonar stealth** | Hidden from sonar | S: we have radar stealth (`STEALTH`, `EW`) | Low: 4 units | B2 spies, B5 naval mines. |
@@ -347,7 +347,7 @@ No stream edits another's files; changes go as requests.
    - cloak and EMP in batch 1;
    - the minelayers moved to batch 5;
    - spies without capture;
-   - no veterancy;
+   - veterancy deferred, to discuss later;
    - a global idle autoheal, yes or no.
 3. **Renames (1.4):** all, some or none of the 28.
 4. **Batch 1 list and names (2.2).**

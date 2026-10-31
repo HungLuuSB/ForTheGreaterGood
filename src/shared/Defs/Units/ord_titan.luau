@@ -9,7 +9,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "ord_titan",
 	name = "Titan",
-	description = "Experimental assault mech. A tachyon beam, heat-seeking missiles and close blasters; walks under water, and its reactor powers your base.",
+	description = "Experimental assault mech. A tachyon beam, a heat-seeking missile against ground and air, and close blasters; walks under water, and its reactor powers your base.",
 	faction = "order",
 	tier = 3,
 	domain = "ground",
