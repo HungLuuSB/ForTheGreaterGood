@@ -7,7 +7,7 @@ local Templates = require("../Templates")
 -- fires, can't move, and takes damage / 1.5. Stats to balance.
 return Templates.extend(Templates.TankT1, {
 	id = "ord_warden",
-	name = "Warden",
+	name = "Steadfast", -- Warden until S-225: BAR's Warden is a different unit
 	description = "Deployable gun. Unpacks in 4 s into a fortified long-range emplacement; can't fire while packed.",
 	faction = "order",
 	tier = 2,

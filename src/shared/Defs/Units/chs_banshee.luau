@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.3 "Support aircraft", T2); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_banshee",
-	name = "Banshee",
+	name = "Smother", -- Banshee until S-225: BAR's Banshee is a different unit
 	description = "Jammer aircraft. Hides friendly units from enemy radar over a wide area.",
 	faction = "chaos",
 	tier = 2,

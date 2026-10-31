@@ -8,7 +8,7 @@ return Templates.extend(Templates.Unit, {
 	domain = "ground",
 	footprint = 1,
 	pieces = { "base", "dish" },
-	name = "Arbiter",
+	name = "Assessor", -- Arbiter until S-225: BAR's Arbiter is a different unit
 	description = "Mobile fire-control radar. Tracks radar contacts for the guns; unarmed, drains power.",
 	faction = "order",
 	categories = { "GROUND", "LIGHT", "RADAR_EMITTER" },

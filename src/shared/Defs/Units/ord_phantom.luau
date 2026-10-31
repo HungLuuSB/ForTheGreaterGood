@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.3 "Strategic bomber", T2); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "ord_phantom",
-	name = "Phantom",
+	name = "Eclipse", -- Phantom until S-225: BAR's Phantom is a different unit
 	description = "Strategic bomber. A stealthy heavy bomber.",
 	faction = "order",
 	tier = 2,

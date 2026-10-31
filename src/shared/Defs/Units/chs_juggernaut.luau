@@ -7,7 +7,8 @@
 -- size: focused long-range fire takes it down. Walks under water.
 -- Self-destructed or killed, it goes up in a
 -- blast a third of a nuke's that can't kill a Commander (S-217, the user;
--- it was almost a nuke, 220 studs, H40).
+-- it was almost a nuke, 220 studs, H40). (S-225, the user) A big mech that
+-- takes on two Titans: 1.5× the Titan's price, 1.8× its health, 2.2× its DPS.
 local Templates = require("../Templates")
 
 return Templates.extend(Templates.Unit, {
@@ -21,8 +22,8 @@ return Templates.extend(Templates.Unit, {
 	footprint = 3,
 	categories = { "GROUND", "ARMORED" },
 	armorClass = "ARMORED",
-	cost = { supply = 3600, power = 52000, buildTime = 120000 },
-	health = 36000,
+	cost = { supply = 5400, power = 78000, buildTime = 180000 }, -- (S-225) 1.5× the Titan, as in BAR: it takes on two Titans
+	health = 54000,
 	movement = { maxSpeed = 7.2, accel = 5, brake = 12, turnRate = 100 },
 	sensors = { sight = 240 },
 	weapons = {

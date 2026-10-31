@@ -4,6 +4,20 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
+## The BAR roster program (approved 2026-10-31, branch `m-sim-2`)
+
+Plan: `docs/design/bar-roster-plan.md` (the user's answers at the top). sim-A leads; requests to the other streams are in the sections below ("For the models stream (C)", "For the lobby stream (D)", "For the 2D stream (E)", "For the client stream").
+
+| Step | What | State |
+|---|---|---|
+| Part 1 | S-225: four price fixes (the Juggernaut priced to take on two Titans), 28 renames by role | done (sim) · D: Codex names · B: tooltips |
+| Autoheal | Idle units heal (the user: "important, add it") | next (S-226) |
+| Part 3 | `docs/design/reserved-units.md`: the 65 unreachable units, drafted only | next |
+| Part 4 | Wrecks take damage, resources follow health, scrap heaps below 40%, protocol 45 | after autoheal · C: heap meshes · B: swap and sparks · E: scrap mark · D: note |
+| Batch 1 | 29 vehicles and hovercraft + 2 hover factories; mechanics first: hovercraft check, cloak, EMP | after part 4 · C: blockouts → meshes → wrecks, a preview for the user per unit · E: icons, pictures · B: cloak, EMP, hover effects · D: Codex |
+| Batches 2–5 | Bots, air, naval, structures | the next batch's defs are drafted while C models the current one |
+
+
 ## Summary (latest: playtest feedback 3, 2026-10-29, branch `m-sim-2`)
 
 **After the round (2026-10-29, the user):**
@@ -562,12 +576,35 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - Side effects through shared weapons: Lancer vs Mire 1.36 / 1.57 → 2.39 / 2.04 (the Mire got the Chaos cannon's spread); Tideguard vs Ravager 0.27 → 0.53; Paladin vs Ravager 0.37 → 0.84 / 1.11.
 - **AI tuning numbers** (S-7, S-17): placeholders, as agreed.
 
+## For the models stream (C)
+
+Requests from the sim stream to session C (models, `FTGG-models`, branch `m-models`). C reads this section; the sim stream doesn't edit C's files.
+
+1. **The BAR roster program (2026-10-31), the user's rule for every model:** with each unit you finish (blockout, mesh or wreck), **show the user a preview, or save it where they can open it easily.** For example: a PNG per unit and view (three-quarter, side, top) in `C:\Workspace\Projects\FTGG-models\previews\<batch>\<unitId>.png`, sent to the user with SendUserFile, and the folder path in your report. Uploads and publishing still only with the user's approval. BAR's pictures and models are CC BY-NC-ND: look only, nothing traced or copied; `assets/reference/` stays out of git.
+2. **Scrap heaps (part 4, S-227 coming):** generic heap meshes, a pile of scattered metal bars, in **4 sizes by footprint (1, 2, 3, 4+)**, faction-neutral, our own design. A wreck turns into one when its health falls below 40%. Each with a preview for the user.
+3. **Batch 1, vehicles and hovercraft (approved by the user):** blockouts first, then meshes, then wrecks, each step shown to the user. Ids below are final; footprints and pieces come with the defs (I'll add them here when they're in, S-228+). Until then, silhouettes can start from the role:
+   - **Order:** `ord_courser` Courser (fast light assault tank, T1) · `ord_gemini` Gemini (twin rocket-launcher tank, T1) · `ord_wader` Wader (light amphibious tank, T1) · `ord_pontifex` Pontifex (amphibious constructor, T1) · `ord_magistrate` Magistrate (combat engineer, T2) · `ord_whisper` Whisper (cloaked tank, T2) · `ord_fulgur` Fulgur (lightning tank with an AA missile, T2) · `ord_mandate` Mandate (mobile artillery, T2) · `ord_luminary` Luminary (mobile tachyon-beam tank, heavy, T2) · `ord_thunderer` Thunderer (huge lightning and EMP tank, T3) · `ord_skimwright` Skimwright (hover constructor) · `ord_skimmer` Skimmer (hover tank) · `ord_volley` Volley (hover rocket artillery) · `ord_dart` Dart (fast light hover raider) · `ord_halcyon` Halcyon (hover anti-air) · `ord_tempest` Tempest (heavy hovertank, T3) · `ord_hoverdock` Hover Dock (hovercraft factory, stands on land or water).
+   - **Chaos:** `chs_cleaver` Cleaver (riot tank, T1) · `chs_mudskipper` Mudskipper (light amphibious tank, T1) · `chs_dredger` Dredger (amphibious constructor, T1) · `chs_hellfire` Hellfire (heavy missile tank, T2) · `chs_grendel` Grendel (very heavy amphibious tank, T2) · `chs_hurler` Hurler (mobile artillery, T2) · `chs_drifter` Drifter (hover constructor) · `chs_snapjaw` Snapjaw (hover tank) · `chs_sling` Sling (hover rocket artillery) · `chs_gnat` Gnat (fast light hover raider) · `chs_skua` Skua (hover anti-air) · `chs_glaive` Glaive (assault hovertank with a heavy laser) · `chs_typhon` Typhon (heavy laser hovertank, T3) · `chs_skimyard` Skim Yard (hovercraft factory, land or water).
+4. **No model changes from the audit (S-225).** The renames are display names only; ids and model keys stay.
+
+## For the lobby stream (D)
+
+Requests from the sim stream to session D (lobby and Codex, `FTGG-lobby`, branch `m-lobby`).
+
+1. **S-225 (2026-10-31): 28 display-name renames** (ids unchanged): the table is in `docs/decisions/sim.md` S-225. New prices: Juggernaut 5,400 / 78,000 / 180,000, health 54,000; Bulwark health 4,800; Dragon 1,600 / 28,000 / 50,000; Wyvern 540 / 6,800 / 15,000; Aegis 580 / 7,600 / 16,000. If the Codex reads names and stats from the defs, only text that names a unit needs a look.
+2. **Coming:** autoheal (S-226), wrecks and scrap heaps (S-227), then batch 1's 31 entries. Each one gets a line here when its defs land.
+
 ## For the 2D stream (E)
 
 Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E reads this section; the sim stream doesn't edit E's files.
 
 1. **S-213 (2026-10-29):** the Chaos T3 bot's id is now `chs_juggernaut` (was `chs_korgoth`); the retired T2 tank is `chs_goliath` (was `chs_juggernaut`). Its unit picture and icon sheet entry should follow the new ids. The T3 walker still borrows the T2 tank's tile in B's `IconAtlas`; it needs its own art, with the Titan's. B swaps the `IconAtlas` keys.
 2. **S-219 (2026-10-30): four transports** need unit icons (style B) and build-menu pictures once C has models: `ord_courier` (Courier, Order T1 light air transport), `chs_buzzard` (Buzzard, Chaos T1), `ord_ark` (Ark, Order T2 heavy air transport, up to 4 units), `chs_charon` (Charon, Chaos T2). Def icon key `transport`. B also needs Load and Unload command-button icons (E-10 style).
+
+3. **The BAR roster program (2026-10-31):**
+   - **S-225 renames** (28 display names, ids unchanged; `docs/decisions/sim.md`): only a picture or sheet with a name drawn on it needs a change.
+   - **Scrap mark** (part 4): a small scrap-heap mark for the wreck tooltip and the reclaim cursor, if B asks for one.
+   - **Batch 1:** unit icons and build-menu pictures for the 31 ids in "For the models stream (C)" item 3, once the user has approved C's models. Draw from C's models only, never from BAR's pictures.
 
 ## For the client stream
 
@@ -677,6 +714,13 @@ Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E
 - **Done (request 5: icon numbering in Shared):** `Shared/Net/Icons`: `Icons.names(defs)`, `Icons.byDef(defs)`, `Icons.MAX`. `NetOut.iconIndex` is `Icons.byDef`, and a test checks the server sends exactly those numbers, so `Core/Icons` can call it instead of its copy (S-10). Contract section 3 points to it.
 - **Done (request 4: placement rules in Shared):** `Shared/Grid/PlacementRules` has `snap`, `terrainOk(passMap, cell, placement)` and `LAND_MAX_SLOPE`, `WATER_MIN_DEPTH`, `RADIUS_PER_FOOTPRINT`. The server's `Placement`, `Nav` and `Combat` use it, and a test checks the server's terrain verdict equals it, so the client copy (C-14) can go (S-9). Occupancy and units in the way stay server-side.
 - **Done (request: bomber weapon pieces):** all 14 defs with a weapon piece missing from `pieces` are fixed (not only the bombers), and `Defs` validation now rejects such defs (S-3). On `main`.
+
+- **2026-10-31, for B (the BAR roster program, `docs/design/bar-roster-plan.md`):**
+  - **S-225 renames:** 28 display names (ids unchanged; table in `docs/decisions/sim.md`). Anything in `src/client` that writes a unit's name as text needs a look.
+  - **Coming, with their wire contracts when they land:**
+    - S-226 idle autoheal (no wire change: health rises through the usual updates);
+    - S-227 wrecks and scrap heaps (protocol 45): the wreck → heap swap with a spark and dust burst, sparks where a wreck is hit (a WRECK_HIT event), the current reclaim value in the wreck tooltip, Resurrect greyed out on heaps (and on the cursor);
+    - batch 1: cloak (own units shown translucent, enemies hidden), EMP stun (a crackle on paralysed units), hover wakes, the Hover Dock on water; rigs and piece scripts for the 31 new units once C's models are in.
 
 ## Integration notes
 
