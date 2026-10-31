@@ -293,6 +293,9 @@ function CommandCard.step(ui: UI, api: Api.Api)
 	end
 	ui.buttons["repeat"].TextTransparency = if #factories > 0 then 0 else 0.5
 	ui.buttons.toggle.TextTransparency = if switchable then 0 else 0.5
+	-- over a scrap heap Resurrect has nothing to do (S-227, C-278)
+	local hw = api.state.hoverWreck and api.world.wrecks[api.state.hoverWreck]
+	ui.buttons.resurrect.TextTransparency = if hw and hw.heap then 0.5 else 0
 end
 
 return CommandCard

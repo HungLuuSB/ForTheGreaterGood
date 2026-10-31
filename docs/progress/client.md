@@ -57,6 +57,16 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-31, scrap heaps: C-278)
+
+- **Scrap heaps (C-278, S-227, protocol 45):**
+  - A wreck worn below 40% gives way to a scrap pile with a burst of sparks and dust; blasts throw sparks off wrecks (WRECK_HIT).
+  - The tooltip names a heap with what's left to reclaim.
+  - Resurrect is refused, and greyed in the card, on heaps.
+  - The pile is a stand-in until models-C's `scrap_heap` meshes are approved.
+- Carries sim fbfc8d95 (S-226 autoheal, S-227).
+- S-225's renames: no client text names a unit; every screen reads `def.name`.
+
 ## Summary (2026-10-30, the Goliath's picture: C-277)
 
 - **The Goliath's picture (C-277):** E's build-menu picture for the returning Goliath (S-224, request E2), on sheet 4. Sheet 4 was re-uploaded with the user's approval (120576950340042); all 202 units have a picture.

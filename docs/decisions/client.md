@@ -2566,3 +2566,25 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - 2D-E added it to sheet 4 at (128, 128), from models-C's render of the new model (2d b11a39ae, merged through c83c4477). No other slot moved; only sheet 4 changed.
 - The user approved the upload: sheet 4 is 120576950340042 (sha256 84c984c4…) in `tools/icons/assets.json`. `UI/UnitPictures` is regenerated: 202 of 202 units on uploaded sheets.
 - Studio: an Advanced Foundry's build menu shows the Goliath's picture as its second tile, and the image loads (`debug_out/screens/c277_goliath_menu.jpg`).
+
+### C-278 — Scrap heaps: the wreck→heap swap, sparks on wrecks, Resurrect refused on heaps (2026-10-31)
+
+- S-227 (protocol 45; merged from sim fbfc8d95 with S-226): wrecks take damage, what they hold follows their health, and below 40% a wreck is a scrap heap (reclaim only). WRECK and WRECK_STATE carry `heap`; WRECK_HIT 36 comes in the tick a blast hits a wreck in sight.
+- `Core/NetIn`: `heap` on `World.Wreck`. A WRECK_STATE turning it on queues the swap once (`world.wreckHeaped`; heaps never turn back). WRECK_HIT queues sparks (`world.wreckHits`). A join clears both queues.
+- `Render/Deaths`:
+  - A placed wreck gives way to a scrap pile sized by its unit's footprint (1, 2, 3, 4+), with a burst (`Vfx` kind `scrapCollapse`: sparks, flung scrap, a dust ring, a cloud).
+  - A wreck first seen as a heap is placed as one, with no burst. One whose death is still playing gives way once it's placed.
+  - WRECK_HIT throws sparks off the wreck (`scrapHit`). Both play through `RenderDeaths.onFx` on the effects' clock.
+  - The pile is models-C's `Meshes.fx.scrap_heap` (variant = size) once approved and built (C named them so, a0e7b315). Until then, a stand-in: charred and rusty bars over a scorched patch.
+- Text:
+  - The hover label and the unit panel name a heap "<unit> scrap heap" with what's left to reclaim (WRECK_STATE's supply).
+  - The panel's role line reads "Reclaim only: too far gone to resurrect".
+- Resurrect: a resurrect click skips heaps ("a scrap heap can't be resurrected"; the server refuses it anyway). The command card greys Resurrect while the mouse is over a heap.
+- Tests: `tests/client/ScrapHeaps.spec` covers:
+  - the flags, the queues, the label and the refused resurrect, from encoded events;
+  - from the server, a blast wearing a wreck's supply down and the heap below 40%.
+  - WRECK_HIT is checked from bytes only: a blast set off between `Sim.step` calls is cleared before NetOut sends it.
+- Studio:
+  - Death blasts next to a Paladin wreck threw sparks off it (45 `scrapHit`).
+  - Reclaiming it wore it to a heap, with one `scrapCollapse` (`debug_out/screens/c278_scrap_heap.jpg`).
+  - A first try drew the stand-in's disc upright: `PivotTo` places a model by its primary part's frame, so the disc now carries a pivot offset.

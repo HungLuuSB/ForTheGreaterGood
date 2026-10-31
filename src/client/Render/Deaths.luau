@@ -11,6 +11,12 @@
 -- MAX_WRECKS. Hidden at strategic zoom. Looks are placeholders. Units with
 -- an approved wreck mesh (models-C, C-115) leave that instead, with the same
 -- knocked-askew joints and no charring (its maps are the damage).
+-- A wreck worn below 40% is a scrap heap (protocol 45, S-227; C-278): its
+-- model gives way to a pile of scrap sized by the unit's footprint, with a
+-- burst of sparks and dust (`onFx`); a blast that hits a wreck throws
+-- sparks off it. The pile is models-C's heap mesh (Meshes.fx.scrap_heap,
+-- variant = size 1..4) once approved and built, else a stand-in of
+-- scattered charred bars.
 -- Aircraft that die in the air fall out of the sky instead (C-48,
 -- Core/Deaths.crash), burning and trailing smoke, and leave nothing: the
 -- ground explosion comes from Effects when they hit.
@@ -46,7 +52,7 @@ type Playing = {
 	wreckId: number,
 }
 
-export type Wreck = { id: number, defId: string, model: Model, wreckId: number }
+export type Wreck = { id: number, defId: string, model: Model, wreckId: number, heap: boolean? } -- defId "heap_<size>" for a scrap heap
 
 export type State = {
 	playing: { Playing },
@@ -56,6 +62,7 @@ export type State = {
 	reclaimed: { [number]: boolean }, -- WRECK_GONE before its death finished playing
 	free: { [string]: { Model } },
 	features: { [number]: { model: Model, kind: number, real: boolean } }, -- map features by wreck ID (S-197): uncapped, apart from the wrecks
+	toHeap: { [number]: boolean }, -- wrecks that became scrap heaps before their wreck was placed (S-227)
 	featureVersion: number, -- MeshModels.fxVersion when the placeholders were last checked
 	folder: Folder,
 	stats: { shakes: number, flings: number, wrecks: number, crashes: number },
@@ -65,7 +72,7 @@ function RenderDeaths.new(): State
 	local folder = Instance.new("Folder")
 	folder.Name = "Wrecks"
 	folder.Parent = workspace
-	return { playing = {}, wrecks = {}, byWreck = {}, pending = {}, reclaimed = {}, free = {}, features = {}, featureVersion = -1, folder = folder, stats = { shakes = 0, flings = 0, wrecks = 0, crashes = 0 } }
+	return { playing = {}, wrecks = {}, byWreck = {}, pending = {}, reclaimed = {}, free = {}, features = {}, toHeap = {}, featureVersion = -1, folder = folder, stats = { shakes = 0, flings = 0, wrecks = 0, crashes = 0 } }
 end
 
 local function wreckModel(s: State, def: any, id: number): Model
@@ -123,6 +130,100 @@ local function placeWreck(s: State, id: number, def: any, base: CFrame, wreckId:
 		pool(s, table.remove(s.wrecks, 1) :: Wreck)
 	end
 	s.stats.wrecks = #s.wrecks
+end
+
+-- Scrap heaps (S-227, C-278).
+RenderDeaths.onFx = nil :: ((kind: string, x: number, y: number, z: number, scale: number) -> ())? -- Main plays it on the effects' Vfx
+RenderDeaths.HEAP_SIZES = 4
+local RUST = Color3.fromRGB(92, 58, 38)
+
+-- A unit's heap size: 1, 2, 3 by footprint, 4 for anything bigger.
+function RenderDeaths.heapSize(def: any?): number
+	return math.clamp(if def then def.footprint or 1 else 1, 1, RenderDeaths.HEAP_SIZES)
+end
+
+-- The stand-in pile: charred bars and plates heaped in a low mound over a
+-- disc of dark scrap, about the unit's footprint across (`seed`: the look).
+local function standInHeap(size: number, seed: number): Model
+	local m = Instance.new("Model")
+	m.Name = `ScrapHeap{size}`
+	local rng = Prng.new(seed * 7 + size)
+	local r = size * 8 * 0.42 -- studs: most of its cells
+	local h = 0.9 + size * 0.55 -- the mound's height in the middle
+	local base = Instance.new("Part")
+	base.Name = "base"
+	base.Shape = Enum.PartType.Cylinder
+	base.Anchored, base.CanCollide, base.CanTouch, base.CanQuery = true, false, false, false
+	base.Size = Vector3.new(0.15, r * 2, r * 2)
+	base.CFrame = CFrame.new(0, 0.05, 0) * CFrame.Angles(0, 0, math.pi / 2)
+	base.Color, base.Material = Color3.fromRGB(74, 64, 52), Enum.Material.Ground -- a scorched patch of spilled scrap and dirt
+	base.PivotOffset = base.CFrame:ToObjectSpace(CFrame.identity) -- the model's pivot: upright on the ground, not the disc's turned frame
+	base.Parent = m
+	m.PrimaryPart = base
+	for i = 1, 7 + size * 5 do
+		local d = r * math.sqrt(rng:nextNumber(0, 1))
+		local a = rng:nextNumber(0, math.pi * 2)
+		local y = h * (1 - (d / r) ^ 2) * rng:nextNumber(0.4, 1)
+		local plate = rng:nextNumber(0, 1) < 0.3
+		local p = Instance.new("Part")
+		p.Name = `scrap{i}`
+		p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery = true, false, false, false
+		local len = rng:nextNumber(1.2, 2.2 + size * 0.8)
+		p.Size = if plate then Vector3.new(len * 0.7, 0.2, rng:nextNumber(0.8, 1.6)) else Vector3.new(rng:nextNumber(0.25, 0.5), rng:nextNumber(0.25, 0.5), len)
+		p.CFrame = CFrame.new(math.cos(a) * d, y + 0.2, math.sin(a) * d)
+			* CFrame.Angles(rng:nextNumber(-0.7, 0.7), rng:nextNumber(0, math.pi * 2), rng:nextNumber(-0.5, 0.5))
+		p.Color = RenderDeaths.CHAR:Lerp(RUST, rng:nextNumber(0, 0.6))
+		p.Material = Enum.Material.CorrodedMetal
+		p.Parent = m
+	end
+	return m
+end
+
+local function heapModel(s: State, size: number, wid: number): Model
+	local list = s.free[`heap_{size}`]
+	if list and #list > 0 then
+		return table.remove(list) :: Model
+	end
+	if MeshModels.fxVariants("scrap_heap") >= size then
+		local template = MeshModels.fxVariant("scrap_heap", size)
+		if template then
+			return template:Clone()
+		end
+	end
+	return standInHeap(size, wid)
+end
+
+-- A scrap heap for wreck `wid` where its wreck lay (`x`, `z`, its heading).
+local function placeHeap(s: State, world: any, wid: number, def: any?, x: number, z: number, heading: number)
+	local size = RenderDeaths.heapSize(def)
+	local model = heapModel(s, size, wid)
+	model:PivotTo(CFrame.new(x, World.groundY(world, x, z), z) * CFrame.Angles(0, heading, 0))
+	model.Parent = s.folder
+	local w = { id = wid, defId = `heap_{size}`, model = model, wreckId = wid, heap = true }
+	table.insert(s.wrecks, w)
+	s.byWreck[wid] = w
+	s.pending[wid] = nil
+	s.toHeap[wid] = nil
+	if #s.wrecks > RenderDeaths.MAX_WRECKS then
+		pool(s, table.remove(s.wrecks, 1) :: Wreck)
+	end
+	s.stats.wrecks = #s.wrecks
+end
+
+-- Wreck `w` (placed) gives way to a scrap heap, with a burst.
+local function collapse(s: State, world: any, w: Wreck, rec: any)
+	local i = table.find(s.wrecks, w)
+	if i then
+		table.remove(s.wrecks, i)
+	end
+	pool(s, w)
+	local def = world.defs.unitByIndex[rec.defIndex]
+	placeHeap(s, world, rec.id, def, rec.x, rec.z, rec.heading)
+	local onFx = RenderDeaths.onFx
+	if onFx then
+		local size = RenderDeaths.heapSize(def)
+		onFx("scrapCollapse", rec.x, World.groundY(world, rec.x, rec.z) + 1, rec.z, size)
+	end
 end
 
 -- Flames and a smoke trail on a falling aircraft (world-space particles).
@@ -366,13 +467,40 @@ function RenderDeaths.syncWrecks(s: State, world: any, t: number)
 			continue
 		end
 		local def = world.defs.unitByIndex[rec.defIndex]
-		if def then
+		if rec.heap then
+			placeHeap(s, world, wid, def, rec.x, rec.z, rec.heading) -- first seen as a heap: no burst
+		elseif def then
 			local offset = (Models.template(def):GetAttribute("RootOffset") :: CFrame?) or CFrame.identity
 			local y = World.groundY(world, rec.x, rec.z)
 			placeWreck(s, wid, def, CFrame.new(rec.x, y, rec.z) * CFrame.Angles(0, rec.heading + math.pi, 0) * offset, wid)
 		end
 		s.pending[wid] = nil
 	end
+	-- worn to scrap heaps (S-227): a placed wreck gives way now; one whose
+	-- death still plays gives way when it's placed
+	for _, wid in world.wreckHeaped do
+		s.toHeap[wid] = true
+	end
+	table.clear(world.wreckHeaped)
+	for wid in s.toHeap do
+		local rec = world.wrecks[wid]
+		local w = s.byWreck[wid]
+		if rec == nil or (w and w.heap) then
+			s.toHeap[wid] = nil
+		elseif w then
+			collapse(s, world, w, rec)
+		end
+	end
+	-- WRECK_HIT: sparks off the wreck
+	local onFx = RenderDeaths.onFx
+	for _, wid in world.wreckHits do
+		local rec = world.wrecks[wid]
+		if onFx and rec and rec.feature == nil then
+			local size = RenderDeaths.heapSize(world.defs.unitByIndex[rec.defIndex])
+			onFx("scrapHit", rec.x, World.groundY(world, rec.x, rec.z) + 0.8 + size * 0.6, rec.z, 0.7 + size * 0.3)
+		end
+	end
+	table.clear(world.wreckHits)
 end
 
 function RenderDeaths.setVisible(s: State, visible: boolean)
@@ -397,6 +525,7 @@ function RenderDeaths.clear(s: State)
 	table.clear(s.byWreck)
 	table.clear(s.pending)
 	table.clear(s.reclaimed)
+	table.clear(s.toHeap)
 	for _, f in s.features do
 		f.model:Destroy()
 	end
