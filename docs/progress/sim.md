@@ -727,6 +727,16 @@ Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E
 
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
 
+- **2026-10-31, the roster program's first merges:**
+  - **C-278 failed:** client 3ce46fa1, carrying sim fbfc8d95 (S-226, S-227), failed only the slow suite's 192×192 AI match. It didn't end in 60 minutes on that tree. On m-sim-2 with S-228..S-230 the same match ends at 20.8 minutes (seed 1), so the outcome hangs on the seed's path. Watch it: autoheal makes damaged armies last longer.
+  - **A race:** stopping a queued `integrate.sh` wrapper (TaskStop) didn't stop the script once it had started. C-279's run went on and merged in the worktree, and D's run started over it, so two runs tested at once. C's 4f4edffb, tried alone between them, conflicted in `.gitignore`. All were stopped and the worktree reset to origin/main; nothing unpushed survived.
+  - **Re-run one at a time, in one command:** C-280 e7e6c6bc (it contains C-278, C-279, S-226..S-230, C's blockouts and heaps, and E's icons), then D's dfd6ecfb, then C's 893f4e82 (heaps approved).
+  - **Results:**
+    - C-280 alone (on b4dbed0c) passed fast 651, slow 13, client 356 and build, but failed 1 lobby test: the Codex had no batch 1 roles until D's dfd6ecfb landed.
+    - D's dfd6ecfb pushed as e0393c35.
+    - C's 893f4e82 alone failed AIUnits, 1 slow test and 3 client tests: its batch 1 sim is older than the fixes.
+    - B's C-281 (535b597e) carries C-280 and 893f4e82. It passed everything (fast 651, slow 13, client 356, lobby 68, build 996 scripts) and is pushed as 1bae0fcc.
+  - **Lesson:** to drop a queued run, kill its bash processes (Get-CimInstance on `integrate.sh`), not only the task.
 - **2026-10-30, S-224 (the Goliath back):** the first try of sim 8f60b2a6 failed only the lobby suite (66/68): main's `Codex.spec` still expected the Goliath retired. Lobby 35f61044, which checks both states, went in next as e1e51407. Then the S-224 retry, models 997cfa7a (the new Goliath), 2d c83c4477 (its picture) and client 1d5dfab4 (C-277), in that order.
 
 - **2026-10-29, after the handover (all pushed, one integrate.sh each, in order):** sim 9ddcd870 (sync launcher) → 8e96e9b8; lobby eb326446 (L-27) → c3860618; client 95ad71d6 (C-254, C-255) → 5dec7e28; client 240444b3 (S-213 across streams: sim 748ddf25, models bfded620, lobby 5b2a078d, client C-256) → b3992f45; sim 27224945 → 7ac4df3f. Last checks: test 616/616, slow 11/11, client 335/335, lobby 67/67, build 877 scripts / 2,457 requires. S-213 renames ids every stream keys on, so C and D worked on the sim commit, B merged both with its own swap, and main took B's tip once.
