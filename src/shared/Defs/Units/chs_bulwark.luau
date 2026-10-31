@@ -13,7 +13,7 @@ return Templates.extend(Templates.Structure, {
 	tier = 2,
 	categories = { "STRUCTURE" },
 	cost = { supply = 420, power = 5000, buildTime = 13000 },
-	health = 2600,
+	health = 4800, -- (S-225) the tougher of the two beam towers, as in BAR: the Radiance's factor
 	footprint = 3, -- size shows tech level (S-104)
 	sensors = { sight = 200 },
 	retract = { armor = 4 },

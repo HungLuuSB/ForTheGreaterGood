@@ -13,7 +13,7 @@ return Templates.extend(Templates.Unit, {
 	armorClass = "AIR",
 	moveClass = "HELI",
 	footprint = 3,
-	cost = { supply = 900, power = 16000, buildTime = 30000 },
+	cost = { supply = 1600, power = 28000, buildTime = 50000 }, -- (S-225) was 900 / 16,000 / 30,000: cheap for its punch
 	health = 9000,
 	movement = { maxSpeed = 42, accel = 24, brake = 30, turnRate = 90 },
 	sensors = { sight = 220, airSight = 260 },

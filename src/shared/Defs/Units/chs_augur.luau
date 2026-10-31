@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Pinpointer (guide 11.4, 13.5, T2; S-59, client request 34). Stats to balance.
 return Templates.extend(Templates.Structure, {
 	id = "chs_augur",
-	name = "Augur",
+	name = "Haruspex", -- Augur until S-225: BAR's Augur is a different unit
 	description = "Pinpointer. Each one sharpens the team's radar: contacts wobble less and radar missiles hold their lock; full effect at 7.",
 	faction = "chaos",
 	tier = 2,

@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.2 "Mobile radar SAM", T2); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_gorgon",
-	name = "Gorgon",
+	name = "Medusa", -- Gorgon until S-225: BAR's Gorgon is a different unit
 	description = "Mobile radar SAM. Long-range missiles against aircraft, guided by its own radar.",
 	faction = "chaos",
 	tier = 2,

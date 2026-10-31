@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.5 "Floating turret", T1); stats to balance in M8.
 return Templates.extend(Templates.Structure, {
 	id = "chs_riptide",
-	name = "Riptide",
+	name = "Whirlpool", -- Riptide until S-225: BAR's Riptide is a different unit
 	description = "Floating turret. A gun emplacement on the water.",
 	faction = "chaos",
 	tier = 1,

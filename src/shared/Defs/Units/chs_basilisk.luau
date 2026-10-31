@@ -6,7 +6,7 @@ local Templates = require("../Templates")
 -- own short radar spots them. Placeholder numbers.
 return Templates.extend(Templates.Structure, {
 	id = "chs_basilisk",
-	name = "Basilisk",
+	name = "Flytrap", -- Basilisk until S-225: BAR's Basilisk is a different unit
 	description = "Point defence. Shoots down enemy missiles and rockets over its cover; never fires at units.",
 	faction = "chaos",
 	tier = 2,

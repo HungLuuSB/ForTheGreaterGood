@@ -45,3 +45,6 @@ node_modules/
 /assets/maps/*/export/*.fbx
 /assets/maps/*/export/preview_*.png
 /assets/maps/materials/*/preview_tile.png
+
+# BAR reference (CC BY-NC-ND pictures; look only, never committed)
+assets/reference/
