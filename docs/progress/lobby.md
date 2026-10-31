@@ -8,6 +8,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - S-231's Titan missiles (one a volley, now also anti-air), Overwatch and Steadfast changes come from the defs; nothing in the lobby hard-codes them. Checked on a scratch copy before S-231 landed: 69 / 69.
 - **Studio** (`debug_out/screens/`): `lobby_batch1_pictures_list` (Courser, Gemini, Wader, Mandate, Whisper and Fulgur rows with their pictures), `lobby_batch1_skimmer` (the Skimmer's article, its Snapjaw card with its picture). The Courser, Whisper, Thunderer and Skimmer rows read sheet 4's new ID at their own rects. No script errors.
 - Lobby specs 69 / 69; the build check passes (748 scripts, 1216 requires).
+- Ready to merge: `6834b013` (progress only: the Studio check; touches only the lobby progress)
 
 ## Summary (2026-10-31: autoheal, wrecks, cloak and EMP in the Codex, S-226..S-229)
 
