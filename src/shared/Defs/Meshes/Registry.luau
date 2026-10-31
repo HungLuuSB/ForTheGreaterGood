@@ -926,6 +926,134 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			triangles = 360,
 		},
+		scrap_heap = {
+			attachments = {},
+			glow = {  },
+			glowShare = 0,
+			maps = {
+				ALB = "rbxassetid://117746792019620",
+				EMI = "rbxassetid://125286321455185",
+				MTL = "rbxassetid://73205195218888",
+				NOR = "rbxassetid://79898601453398",
+				RGH = "rbxassetid://110564206528674",
+			},
+			model = "rbxassetid://93214233720267",
+			note = "scrap heaps (S-227): what a wreck becomes below 40% health, variants 1..4 by footprint 1, 2, 3, 4+ (fx.md); waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0.2074, 0.659, 0.0094 },
+					mesh = "rbxassetid://106093147181871",
+					size = { 6.7895, 1.4765, 7.0947 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+			},
+			triangles = 1036,
+			variants = {
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://117746792019620",
+						EMI = "rbxassetid://125286321455185",
+						MTL = "rbxassetid://73205195218888",
+						NOR = "rbxassetid://79898601453398",
+						RGH = "rbxassetid://110564206528674",
+					},
+					model = "rbxassetid://93214233720267",
+					pieces = {
+						base = {
+							center = { 0.2074, 0.659, 0.0094 },
+							mesh = "rbxassetid://106093147181871",
+							size = { 6.7895, 1.4765, 7.0947 },
+						},
+					},
+					status = "review",
+					teamPieces = {
+						"base",
+					},
+					triangles = 1036,
+				},
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://89737145882231",
+						EMI = "rbxassetid://95489287178303",
+						MTL = "rbxassetid://79301910631171",
+						NOR = "rbxassetid://72766751592604",
+						RGH = "rbxassetid://91762529627502",
+					},
+					model = "rbxassetid://71371079443455",
+					pieces = {
+						base = {
+							center = { 0.4972, 1.4023, 0.0357 },
+							mesh = "rbxassetid://137559990059969",
+							size = { 13.5944, 3.0853, 14.3303 },
+						},
+					},
+					status = "review",
+					teamPieces = {
+						"base",
+					},
+					triangles = 1444,
+				},
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://122069536381355",
+						EMI = "rbxassetid://88975252758938",
+						MTL = "rbxassetid://77694788984623",
+						NOR = "rbxassetid://137487548058173",
+						RGH = "rbxassetid://77325243490124",
+					},
+					model = "rbxassetid://136965048432274",
+					pieces = {
+						base = {
+							center = { 0.3391, 2.0642, -0.1173 },
+							mesh = "rbxassetid://108685938714240",
+							size = { 21.1016, 4.9569, 21.1513 },
+						},
+					},
+					status = "review",
+					teamPieces = {
+						"base",
+					},
+					triangles = 2032,
+				},
+				{
+					attachments = {},
+					glow = {  },
+					glowShare = 0,
+					maps = {
+						ALB = "rbxassetid://127767736617101",
+						EMI = "rbxassetid://140114419982034",
+						MTL = "rbxassetid://89189920628824",
+						NOR = "rbxassetid://127294580518062",
+						RGH = "rbxassetid://76816497488844",
+					},
+					model = "rbxassetid://73174854914127",
+					pieces = {
+						base = {
+							center = { 0.6284, 2.6171, -0.0226 },
+							mesh = "rbxassetid://77585373511359",
+							size = { 27.2511, 5.8201, 28.6882 },
+						},
+					},
+					status = "review",
+					teamPieces = {
+						"base",
+					},
+					triangles = 2524,
+				},
+			},
+		},
 		shield_emitter = {
 			attachments = {
 				core = {
