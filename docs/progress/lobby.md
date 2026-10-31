@@ -15,6 +15,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - Checked against sim-A's S-230 defs (a scratch copy with m-sim-2's `src/shared` and `src/server`): 68 / 68, every batch-1 unit has a role of its own faction.
 - **Request 2 (Codex lines for S-226 autoheal, S-227 wrecks and heaps, S-228 cloak, S-229 EMP): next, once they're on main.** Their numbers are the sim's (`AutoHeal`, `Combat.WRECK_*`, `Cloak`, `Combat.PARALYZE_SECONDS`), so the lobby's copies get a spec that checks them against those modules.
 - Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+- Ready to merge: `dfd6ecfb` (batch 1's Codex roles; can merge before or after S-230; touches only `src/lobby` and the lobby progress)
 
 ## Summary (2026-10-31: S-225's renames and prices)
 
