@@ -2,6 +2,13 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-31: batch 1's pictures in the Codex)
+
+- Merged main `cc6ac628` (my `e08e0969` as `43cb60f2`, S-231's FEEDBACK-4 fixes, E's sheet 4), then `dbe607ba` (B's C-283: `UnitPictures` with sheet 4 `rbxassetid://77607112363466` and the batch 1 entries). No lobby change was needed for either.
+- S-231's Titan missiles (one a volley, now also anti-air), Overwatch and Steadfast changes come from the defs; nothing in the lobby hard-codes them. Checked on a scratch copy before S-231 landed: 69 / 69.
+- **Studio** (`debug_out/screens/`): `lobby_batch1_pictures_list` (Courser, Gemini, Wader, Mandate, Whisper and Fulgur rows with their pictures), `lobby_batch1_skimmer` (the Skimmer's article, its Snapjaw card with its picture). The Courser, Whisper, Thunderer and Skimmer rows read sheet 4's new ID at their own rects. No script errors.
+- Lobby specs 69 / 69; the build check passes (748 scripts, 1216 requires).
+
 ## Summary (2026-10-31: autoheal, wrecks, cloak and EMP in the Codex, S-226..S-229)
 
 - Merged main `916ff795`, then `810ad24c` (S-226..S-230, B's C-278..C-281, C's batch 1 groups 1-2). Before the 20:00 playtest, at sim-A's request: the lobby place synced at that tip, and Quick play's handoff worked on the Studio stand-in (`lobby_handoff_standin`, `lobby_handoff_results`). The real teleport between published places isn't covered.
