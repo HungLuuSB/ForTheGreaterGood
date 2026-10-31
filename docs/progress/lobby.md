@@ -8,6 +8,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **`Codex.spec`** now runs the Goliath's restored case: the Paladin and Goliath are each other's counterparts.
 - **Studio** (`debug_out/screens/`): `lobby_goliath_paladin_card` (the Paladin's Chaos counterpart card is the Goliath, with its picture), `lobby_goliath_article` (the Goliath opened from that card: C's new model, the Paladin card), `lobby_transport_buzzard` (the Buzzard's row, model and Courier card). The Goliath, Buzzard and Charon rows take their pictures from sheet 4. No script errors; the console's only failures are two assets that aren't the lobby's (`203785492`, place content per client.md; `100010822937708`, an HTTP 502).
 - Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+- Ready to merge: `5da27d4a` (progress only: the Studio check; touches only the lobby progress)
 
 ## Summary (2026-10-30: S-219's transports on main)
 
