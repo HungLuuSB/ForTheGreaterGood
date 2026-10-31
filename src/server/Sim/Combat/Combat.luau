@@ -201,6 +201,7 @@ export type Combat = {
 	dmgAmount: { number },
 	dmgAttacker: { number },
 	dmgPlayer: { number }, -- the attacker's player (0 = none), for Stats (S-63)
+	dmgPara: { number }, -- EMP (S-229): the stun's seconds; 0 = ordinary damage
 	dmgCount: number,
 
 	-- wrecks
@@ -316,6 +317,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		dmgAmount = {},
 		dmgAttacker = {},
 		dmgPlayer = {},
+		dmgPara = {},
 		dmgCount = 0,
 		wreckIds = {},
 		wreckX = {},
@@ -434,14 +436,19 @@ function Combat.addEvent(c: Combat, e: Event)
 	table.insert(c.events, e)
 end
 
-function Combat.queueDamage(c: Combat, target: number, amount: number, attacker: number, player: number?)
+-- `para` (EMP, S-229): the amount fills the target's stun bar instead,
+-- stunning for up to `para` seconds after the bar overflows.
+function Combat.queueDamage(c: Combat, target: number, amount: number, attacker: number, player: number?, para: number?)
 	local n = c.dmgCount + 1
 	c.dmgCount = n
 	c.dmgTarget[n] = target
 	c.dmgAmount[n] = amount
 	c.dmgAttacker[n] = attacker
 	c.dmgPlayer[n] = player or 0
-	c.queued[target] = (c.queued[target] or 0) + amount
+	c.dmgPara[n] = para or 0
+	if not para then
+		c.queued[target] = (c.queued[target] or 0) + amount
+	end
 end
 
 --------------------------------------------------------------------------------
@@ -624,6 +631,7 @@ Combat.COMMANDER_BIT = COMMANDER_BIT
 Combat.STRATEGIC_COMMANDER = 0.33 -- strategic blasts (nukes) do a third to Commanders (S-178, F16)
 Combat.BOLT_COMMANDER = 0.5 -- a D-Gun bolt takes this share of a Commander's max health (S-194)
 Combat.BOLT_HEIGHT = 5 -- studs above the ground a D-Gun bolt rides
+Combat.PARALYZE_SECONDS = 8 -- an EMP weapon's stun after the bar overflows, unless it says (S-229)
 
 -- Explosion at (x, y, z) from `weapon` fired by `attacker` of ally team `team`.
 -- `direct` (0 = none) is the unit the projectile struck: it takes full
@@ -648,15 +656,16 @@ function Combat.explode(
 	local edge = weapon.edgeEffectiveness or 0
 	local m = mult or 1
 	local strategic = weapon.strategic == true
+	local para = if weapon.paralyzer then weapon.paralyzeSeconds or Combat.PARALYZE_SECONDS else nil -- EMP (S-229)
 	player = player or (if attacker ~= 0 then w.owner[attacker] else 0)
 	if direct ~= 0 and w.slot[direct] ~= nil then
 		local p = c.profiles[w.defIndex[direct]]
 		local cm = if strategic and bit32.band(p.categoryMask, COMMANDER_BIT) ~= 0 then Combat.STRATEGIC_COMMANDER else 1
-		Combat.queueDamage(c, direct, weapon.damage[Combat.armorOf(w, direct, p)] * m * cm, attacker, player)
+		Combat.queueDamage(c, direct, weapon.damage[Combat.armorOf(w, direct, p)] * m * cm, attacker, player, para)
 	end
 	-- wrecks (S-227): a blast's splash, or a shell that lands on one; a
-	-- direct hit on a unit with no splash leaves them alone
-	if aoe > 0 or direct == 0 then
+	-- direct hit on a unit with no splash leaves them alone; EMP never
+	if (aoe > 0 or direct == 0) and not para then
 		Combat.blastWrecks(c, x, z, aoe, edge, (weapon.damage.STRUCTURE or 0) * m)
 	end
 	if aoe <= 0 then
@@ -681,7 +690,7 @@ function Combat.explode(
 			if strategic and bit32.band(p.categoryMask, COMMANDER_BIT) ~= 0 then
 				f *= Combat.STRATEGIC_COMMANDER
 			end
-			Combat.queueDamage(c, id, weapon.damage[Combat.armorOf(w, id, p)] * f * m, attacker, player)
+			Combat.queueDamage(c, id, weapon.damage[Combat.armorOf(w, id, p)] * f * m, attacker, player, para)
 		end
 	end
 end

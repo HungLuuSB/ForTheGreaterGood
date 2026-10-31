@@ -76,6 +76,7 @@ export type World = {
 	lastAttacker: { [number]: number }, -- unit that last damaged this one, 0 = none
 	lastAttackerGen: { [number]: number }, -- its generation (D109)
 	deploy: { [number]: number }, -- deployable units only: 0 packed .. 1 deployed (Deploy, S-64)
+	paralyze: { [number]: number }, -- EMP damage it carries (Paralyze, S-229); nil = none
 	deployIds: { number }, -- deployable units, in the order they entered
 	wYaw: { [number]: number }, -- turret yaw relative to the hull, radians
 	wHull: { [number]: number }, -- the hull heading wYaw was last set against: an aiming turret counter-turns with the hull (S-194, G9)
@@ -136,6 +137,7 @@ function World.new(): World
 		lastAttacker = {},
 		lastAttackerGen = {},
 		deploy = {},
+		paralyze = {},
 		deployIds = {},
 		wYaw = {},
 		wHull = {},
@@ -379,6 +381,7 @@ function World.despawn(w: World, tick: number, id: number)
 	w.heading[id] = nil
 	w.health[id] = nil
 	w.buildProgress[id] = nil
+	w.paralyze[id] = nil
 	w.state[id] = nil
 	w.fireState[id] = nil
 	w.moveState[id] = nil
@@ -439,6 +442,11 @@ end
 function World.setAltitude(w: World, id: number, alt: number)
 	w.alt[id] = alt
 	w.dirty[id] = bor(w.dirty[id], D.ALTITUDE)
+end
+
+-- Stunned by EMP (S-229): neither moves, fires nor builds.
+function World.isParalyzed(w: World, id: number): boolean
+	return bit32.band(w.state[id] or 0, World.State.PARALYZED) ~= 0
 end
 
 function World.setHealth(w: World, id: number, health: number)
@@ -513,6 +521,10 @@ function World.hash(w: World, h: number?): number
 		local deploy = w.deploy[id]
 		if deploy ~= nil then
 			hv = Hash.number(hv, deploy) -- only deployable units: other units' hashes are as before (S-64)
+		end
+		local para = w.paralyze[id]
+		if para ~= nil then
+			hv = Hash.number(hv, para) -- only units carrying EMP damage (S-229)
 		end
 		for slot = 1, w.weaponCount[id] do
 			local key = id * 8 + slot - 1

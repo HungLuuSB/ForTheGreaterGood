@@ -14,6 +14,6 @@ return Templates.extend(Templates.Structure, {
 	footprint = 6, -- size shows tech level (S-104)
 	icon = "factory",
 	buildPower = 200,
-	buildOptions = { "ord_architect", "ord_paladin", "ord_judgement", "ord_seraph", "ord_veil", "ord_tideguard", "ord_arbiter", "ord_warden", "ord_custodian", "ord_shepherd" },
+	buildOptions = { "ord_architect", "ord_paladin", "ord_whisper", "ord_judgement", "ord_seraph", "ord_veil", "ord_tideguard", "ord_arbiter", "ord_warden", "ord_custodian", "ord_shepherd" },
 	model = "ord_advvehplant",
 })

@@ -33,6 +33,8 @@ local SensorsState = require("./SensorsState")
 local Stats = require("./Stats")
 local Alerts = require("./Alerts")
 local AutoHeal = require("./AutoHeal")
+local Cloak = require("./Cloak")
+local Paralyze = require("./Paralyze")
 local Nav = require("./Nav")
 local NetOut = require("./NetOut")
 local Pregame = require("./Pregame")
@@ -74,9 +76,11 @@ local SYSTEMS: { System } = {
 	{ name = "Sim.Movement", every = 1, run = require("./Systems/Movement") },
 	{ name = "Sim.Weapons", every = 1, run = require("./Systems/Weapons") },
 	{ name = "Sim.Projectiles", every = 1, run = require("./Systems/Projectiles") },
+	{ name = "Sim.Cloak", every = 1, run = Cloak.step }, -- after the shots, before Damage (S-228)
 	{ name = "Sim.Damage", every = 1, run = require("./Systems/Damage") },
 	{ name = "Sim.Construction", every = 1, run = require("./Systems/Construction") },
 	{ name = "Sim.AutoHeal", every = AutoHeal.EVERY, run = AutoHeal.step }, -- idle units heal (S-226)
+	{ name = "Sim.Paralyze", every = Paralyze.EVERY, run = Paralyze.step }, -- EMP stun bars drain (S-229)
 	{ name = "Sim.Match", every = 1, run = require("./Systems/Match") },
 	{ name = "Sim.NetOut", every = 1, run = require("./Systems/NetOut") },
 }
@@ -232,6 +236,7 @@ function Sim.new(config: Config): Sim
 		statSeries = Stats.newSeries(0),
 		alerts = Alerts.new(order),
 		autoheal = AutoHeal.new(),
+		cloak = Cloak.new(),
 		share = Share.new(),
 		cheats = CheatsState.new(cheats, offline),
 		net = nil :: any,

@@ -67,6 +67,7 @@ export type Sim = {
 	stats: { commandsApplied: number, commandsRejected: number },
 	playerStats: { [number]: Stats.PlayerStats }, -- the results screen's numbers (S-63); not hashed
 	statSeries: Stats.Series, -- the same over time (S-88, client request 41); not hashed
+	cloak: any, -- Cloak.State: last shot of each cloaking unit (S-228); not hashed (the CLOAKED bit is)
 	autoheal: any, -- AutoHeal.State: last damage tick per unit (S-226); not hashed (health is)
 	alerts: any, -- Alerts.State: player alerts, last enemy hit per unit (S-68); not hashed
 	share: any, -- Share.State: this tick's gifts and requests between allies (S-176); not hashed

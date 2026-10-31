@@ -3282,3 +3282,40 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `Resurrect.spec`'s refill case starts from a half-reclaimed wreck (a quarter left would now be a heap).
   `Schema.spec`: protocol 45 golden bytes (WRECK 16 B, WRECK_STATE 7 B, WRECK_HIT 3 B), round trips, a heap flag of 2 rejected. The test client (`Tests/Support/Client`) keeps `heap` and shows WRECK_HIT sparks.
 - **S-226 in tests:** `AutoHeal.State.off` turns autoheal off for tests that set health by hand and check it holds (NetOut's OWN_STATUS counts, the turret's repair reach, a transport's cargo health).
+
+## S-228 — Cloak (the BAR roster program, batch 1) (2026-10-31)
+
+- **Asked (the user):** "Add cloak/EMP in batch 1" (`docs/design/bar-roster-plan.md` §1.2).
+- **Rule:**
+  - A unit whose def has `cloak = { drain, decloak }` is cloaked while it is finished, switched on (TOGGLE; it starts on, like converters and shields), fully powered, quiet (no FIRE or SPAWN_PROJ for 2 s), not stunned, and with no enemy unit within `decloak` studs.
+  - Its drain is a Sensors upkeep (power a second while switched on), so a power stall drops the cloak like it shrinks a radar.
+  - Cloaked, it carries the CLOAKED state bit (256), and enemy sight and air sight pass over it in `Sensors.levelFor`. Radar still detects it (stealth shrinks that, guide 11.4), so a cloaked unit is at most a blip. Sonar is unchanged.
+  - BAR's numbers: cloakCost 5 energy a second, mincloakdistance 75 elmos. Ours: Whisper drain 12, decloak 60 studs.
+- **Sim:**
+  - `Sim/Cloak` runs every tick after Projectiles (`Sim.Cloak`). It notes this tick's shots by cloaking units, and every 2nd tick sets each one's bit, looking up enemies in the contact grid.
+  - `Defs`: the `cloak` field. `Schema.UnitState.CLOAKED`; protocol 46.
+- **First unit:** `ord_whisper` (Whisper, Order T2 cloaked tank, BAR's Gremlin), on the advanced vehicle plant: a light gauss gun, stealthy, footprint 2 (C's blockout).
+- **Tests:** `Cloak.spec` (fast):
+  - cloaked when quiet and alone, and the enemy's level isn't VISIBLE;
+  - an enemy within 60 studs shows it;
+  - a shot shows it for 2 s;
+  - switched off, it's shown; on again, cloaked;
+  - short of power, no cloak.
+
+## S-229 — EMP (the BAR roster program, batch 1) (2026-10-31)
+
+- **Asked (the user):** as S-228.
+- **Rule:**
+  - A weapon with `paralyzer = true` puts its damage into the target's stun bar (`World.paralyze`, hashed) instead of its health.
+  - While the bar is above max health the unit is stunned: PARALYZED (512). It holds its spot (Movement treats it as anchored), its weapons don't fire, it does no build, factory, reclaim or resurrect work, and its cloak drops.
+  - The bar drains a tenth of max health a second (`Paralyze.DRAIN_SECONDS` 10). A hit tops it up to at most max × (1 + `paralyzeSeconds` / 10), so a stun ends at most `paralyzeSeconds` after the last hit (default 8, `Combat.PARALYZE_SECONDS`).
+  - EMP doesn't count as queued damage for overkill, never harms wrecks, and doesn't restart autoheal. A weapon's AIR damage of 0 keeps aircraft out of it, as in BAR's ground EMP.
+- **Sim:** `Combat.queueDamage(..., para)`, `Damage` routes it to `Paralyze.add`, `Sim.Paralyze` drains every 3 ticks; `World.isParalyzed`. Protocol 46: the PARALYZED bit.
+- **First unit:** `ord_thunderer` (Thunderer, Order T3 from the gantry, BAR's Thor).
+  - Price: 4,800 / 70,000 / 160,000, health 42,000: compressed like the Titan, about 1.5× its price.
+  - Weapons: a heavy lightning cannon (hitscan, 300 studs, 840 a bolt every 1.2 s) and an EMP projector (260 studs, 1,000 stun a second, 6 s).
+  - Footprint 3 (C's blockout).
+- **Tests:** `Cloak.spec`:
+  - EMP fills the bar, not health; past max it stuns, capped by the weapon's seconds, and it wears off;
+  - the Thunderer's EMP fills a Juggernaut's bar;
+  - a stunned tank neither fires at a tank beside it nor moves.
