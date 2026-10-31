@@ -24,10 +24,11 @@ return {
 		{ name = "coil2Ring2", parent = "barrel", shape = "cylinder", axis = "y", size = { 1.28, 0.15, 1.28 }, at = { 2, 6.25, 0.2 }, color = "glass" },
 		{ name = "coil2Ring3", parent = "barrel", shape = "cylinder", axis = "y", size = { 1.28, 0.15, 1.28 }, at = { 2, 7, 0.2 }, color = "glass" },
 		{ name = "coil2Top", parent = "barrel", shape = "ball", size = { 1.44, 1.44, 1.44 }, at = { 2, 8.08, 0.2 }, color = "glass" },
-		{ name = "emp", parent = "turret", shape = "cylinder", axis = "y", size = { 2.4, 0.3, 2.4 }, at = { 0, 4.9, 2.2 }, rot = { -25, 0, 0 }, color = "glass" },
+		{ name = "empDish", parent = "turret", shape = "cylinder", axis = "y", size = { 2.4, 0.3, 2.4 }, at = { 0, 4.9, 2.2 }, rot = { -25, 0, 0 }, color = "glass" },
 	},
 	attachments = {
 		{ name = "muzzle", parent = "barrel", at = { -2, 8.1, 0.2 } },
 		{ name = "muzzle2", parent = "barrel", at = { 2, 8.1, 0.2 } },
+		{ name = "emp_muzzle", parent = "turret", at = { 0, 5.1, 2.2 } },
 	},
 }

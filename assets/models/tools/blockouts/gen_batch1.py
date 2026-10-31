@@ -286,7 +286,8 @@ def make_all():
     b.part("barrel", "box", (1.2, 0.3, 1.2), (0, d + 1.05, -0.2), "dark", parent="turret", pivot=(0, d + 1.05, -0.2))
     coil(b, 0, d + 1.2, -0.2, 2.0, 0.5, "barrel", 1)
     b.attach("muzzle", "barrel", (0, d + 3.7, -0.2))
-    b.part("missile", "box", (0.8, 0.8, 1.8), (1.9, d + 1.0, 0.4), "hull", parent="turret")  # the AA weapon's muzzle piece
+    b.part("missileBox", "box", (0.8, 0.8, 1.8), (1.9, d + 1.0, 0.4), "hull", parent="turret")
+    b.attach("aa_muzzle", "turret", (1.9, d + 1.0, -0.6))  # the AA weapon (S-157 naming)
     out.append(b)
 
     b = B("ord_mandate", ["Mandate (Order mobile artillery, T2): a long hull with the turret set back and", "a long howitzer with a recoil sleeve; spades at the rear. " + HEADER])
@@ -312,10 +313,10 @@ def make_all():
     b.part("barrel", "box", (5.6, 0.5, 1.8), (0, d + 2.05, 0.2), "dark", parent="turret", pivot=(0, d + 2.05, 0.2))
     coil(b, -2.0, d + 2.3, 0.2, 3.0, 0.8, "barrel", 1)
     coil(b, 2.0, d + 2.3, 0.2, 3.0, 0.8, "barrel", 2)
-    b.part("emp", "cylinder", (2.4, 0.3, 2.4), (0, d + 2.6, 2.2), "glass", parent="turret", axis="y", rot=(-25, 0, 0))
+    b.part("empDish", "cylinder", (2.4, 0.3, 2.4), (0, d + 2.6, 2.2), "glass", parent="turret", axis="y", rot=(-25, 0, 0))
     b.attach("muzzle", "barrel", (-2.0, d + 5.8, 0.2))
     b.attach("muzzle2", "barrel", (2.0, d + 5.8, 0.2))
-    b.attach("emp", "turret", (0, d + 2.8, 2.2))
+    b.attach("emp_muzzle", "turret", (0, d + 2.8, 2.2))
     out.append(b)
 
     b = B("ord_skimwright", ["Skimwright (Order hover constructor): a broad skirted hull with a cab", "and a constructor arm (`nano`). " + HEADER])
