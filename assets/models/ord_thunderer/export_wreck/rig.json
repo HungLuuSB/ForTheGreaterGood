@@ -101,14 +101,6 @@
         0.0
       ]
     },
-    "muzzle2": {
-      "parent": "barrel",
-      "at": [
-        2.1,
-        8.65,
-        0.0
-      ]
-    },
     "emp_muzzle": {
       "parent": "turret",
       "at": [

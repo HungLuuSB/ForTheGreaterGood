@@ -41706,10 +41706,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					at = { -2.1, 8.65, 0 },
 					parent = "barrel",
 				},
-				muzzle2 = {
-					at = { 2.1, 8.65, 0 },
-					parent = "barrel",
-				},
 			},
 			glow = {
 				{

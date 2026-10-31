@@ -5,7 +5,7 @@ blender -b --factory-startup --python-exit-code 1 -P assets/models/ord_thunderer
 A rolling storm: a very wide, long tracked hull on broad tracks with
 generator banks along the deck, a big stepped turret, and on its pitching
 cross-yoke (`barrel`, the def's pitch piece) twin lightning coils with
-glowing rings and crown spheres (`muzzle`, `muzzle2`, weapon channel)
+glowing rings and crown spheres (weapon channel; `muzzle` on the left one)
 joined by an arc bar; an EMP dish raked up at the turret's back
 (`emp_muzzle`); team roof, cheeks and skirts (BAR style, M-15; Order reads
 heavy, M-14). Our own design.
@@ -97,7 +97,6 @@ unit.run(__file__, "ord_thunderer", "order", footprint=3,
                  unit.PieceSpec("turret", "base", TURRET, build_turret, no_details),
                  unit.PieceSpec("barrel", "turret", BARREL, build_barrel, no_details)],
          attachments={"muzzle": {"parent": "barrel", "at": [-COIL_X, COIL_TOP + 0.1, BARREL[2]]},
-                      "muzzle2": {"parent": "barrel", "at": [COIL_X, COIL_TOP + 0.1, BARREL[2]]},
                       "emp_muzzle": {"parent": "turret",
                                      "at": [DISH[0] + DISH_N[0] * 1.1, DISH[1] - 0.2 + DISH_N[1] * 1.1,
                                             DISH[2] + DISH_N[2] * 1.1]}},
