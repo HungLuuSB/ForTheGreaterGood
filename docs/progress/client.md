@@ -66,6 +66,7 @@ Written for a new session (the project is moving to another Claude account). Eve
   - The pile is a stand-in until models-C's `scrap_heap` meshes are approved.
 - Carries sim fbfc8d95 (S-226 autoheal, S-227).
 - S-225's renames: no client text names a unit; every screen reads `def.name`.
+- Ready to merge: `a26e3ae3` (C-278; carries sim fbfc8d95. test_client 354 / 354, build passed (904 scripts, 2564 requires). Studio: sparks off a Paladin wreck, and its heap with the burst after a partial reclaim)
 
 ## Summary (2026-10-30, the Goliath's picture: C-277)
 
