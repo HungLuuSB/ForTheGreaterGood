@@ -80,6 +80,13 @@ return function(t: RunAll.Context)
 		-- S-219's transports
 		t.deepEqual(codex.entries.ord_courier.counterparts, { "chs_buzzard" })
 		t.deepEqual(codex.entries.chs_charon.counterparts, { "ord_ark" })
+		-- batch 1 (S-230), once its defs are on this branch
+		if defs.units.ord_skimmer then
+			t.deepEqual(codex.entries.ord_skimmer.counterparts, { "chs_snapjaw" })
+			t.deepEqual(codex.entries.chs_typhon.counterparts, { "ord_tempest" })
+			t.deepEqual(codex.entries.ord_hoverdock.counterparts, { "chs_skimyard" })
+			t.equal(#codex.entries.chs_glaive.counterparts, 0, "Chaos-only")
+		end
 		t.deepEqual(codex.entries.ord_overwatch.counterparts, { "chs_twin_guard", "chs_geryon" })
 		t.deepEqual(codex.entries.chs_geryon.counterparts, { "ord_overwatch" })
 		t.equal(#codex.entries.ord_warden.counterparts, 0, "faction-only")
