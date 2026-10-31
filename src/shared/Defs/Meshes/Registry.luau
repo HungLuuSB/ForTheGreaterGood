@@ -938,7 +938,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				RGH = "rbxassetid://110564206528674",
 			},
 			model = "rbxassetid://93214233720267",
-			note = "scrap heaps (S-227): what a wreck becomes below 40% health, variants 1..4 by footprint 1, 2, 3, 4+ (fx.md); waiting for the user's review",
 			pieces = {
 				base = {
 					center = { 0.2074, 0.659, 0.0094 },
@@ -946,7 +945,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					size = { 6.7895, 1.4765, 7.0947 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 			},
@@ -971,7 +970,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 6.7895, 1.4765, 7.0947 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
@@ -996,7 +995,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 13.5944, 3.0853, 14.3303 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
@@ -1021,7 +1020,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 21.1016, 4.9569, 21.1513 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
@@ -1046,7 +1045,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 							size = { 27.2511, 5.8201, 28.6882 },
 						},
 					},
-					status = "review",
+					status = "approved",
 					teamPieces = {
 						"base",
 					},
