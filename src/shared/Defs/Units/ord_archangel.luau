@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.3 "Support aircraft", T2); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "ord_archangel",
-	name = "Archangel",
+	name = "Firmament", -- Archangel until S-225: BAR's Archangel is a different unit
 	description = "AWACS. Long-range airborne radar; unarmed.",
 	faction = "order",
 	tier = 2,

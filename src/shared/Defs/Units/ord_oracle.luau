@@ -9,7 +9,7 @@ return Templates.extend(Templates.Unit, {
 	domain = "ground",
 	footprint = 1,
 	pieces = { "base", "dish" },
-	name = "Oracle",
+	name = "Scryer", -- Oracle until S-225: BAR's Oracle is a different unit
 	description = "Mobile radar. Spots enemy units beyond sight; unarmed.",
 	faction = "order",
 	categories = { "GROUND", "LIGHT", "RADAR_EMITTER" },

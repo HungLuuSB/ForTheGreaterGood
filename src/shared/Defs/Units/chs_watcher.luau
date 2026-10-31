@@ -9,7 +9,7 @@ return Templates.extend(Templates.Unit, {
 	domain = "ground",
 	footprint = 1,
 	pieces = { "base", "dish" },
-	name = "Watcher",
+	name = "Gazer", -- Watcher until S-225: BAR's Watcher is a different unit
 	description = "Mobile radar. Spots enemy units beyond sight; unarmed.",
 	faction = "chaos",
 	categories = { "GROUND", "LIGHT", "RADAR_EMITTER" },

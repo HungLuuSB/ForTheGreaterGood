@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.3 "Strategic bomber", T2); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_behemoth",
-	name = "Behemoth",
+	name = "Hecatomb", -- Behemoth until S-225: BAR's Behemoth is a different unit
 	description = "Strategic bomber. An armored heavy bomber that drops chaff against missiles.",
 	faction = "chaos",
 	tier = 2,

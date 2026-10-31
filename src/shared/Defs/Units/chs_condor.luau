@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.1 "Advanced Air Worker", T2); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "chs_condor",
-	name = "Condor",
+	name = "Carrion", -- Condor until S-225: BAR's Condor is a different unit
 	description = "Advanced air worker. Builds and reclaims.",
 	faction = "chaos",
 	tier = 2,

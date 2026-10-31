@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Nuclear missile silo (guide 13.5, T3; S-48, client request 26). Stats to balance.
 return Templates.extend(Templates.Structure, {
 	id = "chs_ragnarok",
-	name = "Ragnarok",
+	name = "Doomsday", -- Ragnarok until S-225: BAR's Ragnarok is a different unit
 	description = "Nuclear missile silo. Builds warheads and launches one at any spot on the map.",
 	faction = "chaos",
 	tier = 3,
