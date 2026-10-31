@@ -2588,3 +2588,21 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - Death blasts next to a Paladin wreck threw sparks off it (45 `scrapHit`).
   - Reclaiming it wore it to a heap, with one `scrapCollapse` (`debug_out/screens/c278_scrap_heap.jpg`).
   - A first try drew the stand-in's disc upright: `PivotTo` places a model by its primary part's frame, so the disc now carries a pivot offset.
+
+### C-279 — Cloak and EMP: own cloaked units see-through, a crackle on stunned ones (2026-10-31)
+
+- S-228 and S-229 (protocol 46; merged from sim 2ecf3802) add no records, only the unit state bits CLOAKED 256 (sent to the own side only; enemies don't get the unit at all) and PARALYZED 512 (stunned).
+- `Render/UnitRenderer`, both on change only:
+  - **CLOAKED:** the model is drawn see-through, `LocalTransparencyModifier` 0.65 on its parts and decals, which leaves their own transparency and the building look alone.
+  - **PARALYZED:** blue sparkle crackle over the hull and a flickering blue light; the flicker is a hash of the render tick and unit, so no randomness.
+  - Studio took three passes on the crackle. From the hull's middle the sparks died inside it. The spark-streak texture read as a haze. The sparkle texture at brightness 4 was one white blob. Now: sparkle at brightness 2, blue, scattered.
+- A cloaker's card offers On / Off, its cloak (`CommandSet`, `CommandCard`: `def.cloak` is switchable, as converters and shields).
+- Icons: the first batch 1 defs (`ord_whisper`, `ord_thunderer`) aren't on the icon sheet yet.
+  - `IconAtlas.spec` and `Icons.spec` now accept a def with no `byDef` entry when its frame has a placeholder tile. That's the sheet's own rule (C-258), which the client already draws by, so a new def lands without editing the generated atlas.
+  - 2D-E draws their real icons from the defs.
+- Debug: `FtggDebug:Invoke("damage", id, amount, emp?)`, where `emp` is the stun's seconds instead of damage.
+- Tests: `tests/client/CloakEmp.spec` covers:
+  - from the sim, an own Whisper shows CLOAKED, a stunned Lancer shows PARALYZED and it wears off;
+  - the Whisper's card has On / Off;
+  - the new units draw their type's placeholder.
+- Studio: a cloaked Whisper drawn see-through beside a stunned Lancer crackling blue (`debug_out/screens/c279_cloak_emp.jpg`).

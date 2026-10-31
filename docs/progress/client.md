@@ -57,6 +57,14 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-31, cloak and EMP: C-279)
+
+- **Cloak and EMP (C-279, S-228 / S-229, protocol 46):**
+  - Own cloaked units are drawn see-through; stunned units crackle blue with a flickering light.
+  - A cloaker's card offers On / Off.
+  - Defs newer than the icon sheet (Whisper, Thunderer) draw their type's placeholder, and the icon specs accept that.
+- Carries sim 2ecf3802.
+
 ## Summary (2026-10-31, scrap heaps: C-278)
 
 - **Scrap heaps (C-278, S-227, protocol 45):**

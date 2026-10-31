@@ -27,7 +27,11 @@ local UnitRenderer = {}
 
 UnitRenderer.AIR_ALT = 35 -- studs: an aircraft out of the camera area never seen close (the sim's helicopter band)
 
+local US = Schema.UnitState
+
 UnitRenderer.BUILD_TRANSPARENCY = 0.6 -- a unit under construction (parts already more see-through stay so)
+UnitRenderer.CLOAK_TRANSPARENCY = 0.65 -- an own or allied unit while cloaked (CLOAKED, S-228; enemies don't get it at all)
+UnitRenderer.STUN_SPARKS = 50 -- sparks a second on a stunned 1-cell unit (PARALYZED, S-229), more for bigger ones
 
 type Drawn = {
 	model: Model,
@@ -43,7 +47,64 @@ type Drawn = {
 	glows: { Glow.Part }?, -- its glow parts (C-103; BAR meshes only)
 	heads: { BasePart }?, -- its headlight glow parts
 	pulses: { Glow.Pulse }?, -- its `pulse` pieces, which swell with their breath (C-257)
+	cloaked: boolean, -- drawn see-through (S-228, C-279)
+	stun: Attachment?, -- its crackle while stunned (S-229, C-279)
 }
+
+-- Cloaked (S-228): see-through on top of whatever it is (LocalTransparencyModifier
+-- leaves the parts' own transparency, and the building look, alone).
+local function setCloaked(d: Drawn, cloaked: boolean)
+	if cloaked == d.cloaked then
+		return
+	end
+	d.cloaked = cloaked
+	local k = if cloaked then UnitRenderer.CLOAK_TRANSPARENCY else 0
+	for _, p in d.model:GetDescendants() do
+		if p:IsA("BasePart") or p:IsA("Decal") then
+			(p :: any).LocalTransparencyModifier = k
+		end
+	end
+end
+
+-- Stunned by EMP (S-229): blue-white sparks crackling over the hull and a
+-- flickering light (`UnitRenderer.step` flickers it).
+local function setStunned(d: Drawn, stunned: boolean)
+	if stunned == (d.stun ~= nil) then
+		return
+	end
+	if not stunned then
+		(d.stun :: Attachment):Destroy()
+		d.stun = nil
+		return
+	end
+	local size = math.max(1, d.def.footprint or 1)
+	local a = Instance.new("Attachment")
+	a.Name = "Stun"
+	a.Position = Vector3.new(0, d.hullHeight * 0.9, 0) -- over the hull: from its middle the sparks die inside it
+	local e = Instance.new("ParticleEmitter")
+	e.Name = "Crackle"
+	e.Texture = "rbxasset://textures/particles/sparkles_main.dds" -- bright points: the spark streaks read as haze at this size
+	e.Rate = UnitRenderer.STUN_SPARKS * size
+	e.Lifetime = NumberRange.new(0.1, 0.28)
+	e.Speed = NumberRange.new(6 * size, 14 * size)
+	e.SpreadAngle = Vector2.new(180, 180)
+	e.Drag = 3
+	e.Brightness = 2
+	e.LightEmission = 1
+	e.LightInfluence = 0
+	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.1 * size), NumberSequenceKeypoint.new(1, 0.2) })
+	e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) })
+	e.Color = ColorSequence.new(Color3.fromRGB(170, 215, 255), Color3.fromRGB(70, 130, 255))
+	e.Parent = a
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(140, 190, 255)
+	light.Range = 6 + 3 * size
+	light.Brightness = 0
+	light.Shadows = false
+	light.Parent = a
+	a.Parent = d.root
+	d.stun = a
+end
 
 -- A unit under construction: see-through; complete: as modelled.
 local function setBuilding(d: Drawn, building: boolean)
@@ -120,6 +181,8 @@ local function show(r: Renderer, world: World.World, id: number)
 		hullHeight = model:GetExtentsSize().Y,
 		building = false,
 		looks = nil,
+		cloaked = false,
+		stun = nil,
 	}
 	local d = r.drawn[id]
 	d.glows, d.heads = Glow.collect(model, def)
@@ -130,6 +193,8 @@ end
 -- Back to the pool with every joint at rest (the next unit starts clean).
 local function release(d: Drawn)
 	setBuilding(d, false)
+	setCloaked(d, false)
+	setStunned(d, false)
 	Glow.reset(d.glows, d.root, d.pulses)
 	for _, motor in d.motors do
 		motor.Transform = CFrame.identity
@@ -296,6 +361,16 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 			continue
 		end
 		setBuilding(d, u.build ~= nil and u.build < 1)
+		local state = u.state or 0
+		setCloaked(d, bit32.band(state, US.CLOAKED) ~= 0)
+		setStunned(d, bit32.band(state, US.PARALYZED) ~= 0)
+		local stun = d.stun
+		if stun then
+			-- the crackle's light flickers: a cheap hash of the render tick and the unit
+			local h = ((math.floor(t * 4) * 7919 + id * 104729) % 1009) / 1009
+			local light = stun:FindFirstChildOfClass("PointLight") :: PointLight
+			light.Brightness = if h < 0.5 then 2 + h * 6 else 0
+		end
 		local au = r.anim.units[id]
 		if au and camera then
 			au.lod = PieceAnim.lodAt((camera - Vector3.new(x, y, z)).Magnitude)

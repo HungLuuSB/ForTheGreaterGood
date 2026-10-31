@@ -49,7 +49,7 @@ local function selected(api: Api.Api): (boolean, boolean, { number }, boolean)
 		local u = api.world.units[id]
 		if u then
 			local d = World.def(api.world, u)
-			switchable = switchable or (d ~= nil and (d.converter ~= nil or d.retract ~= nil or d.shield ~= nil)) -- beam towers retract when off (S-96); shields go down (S-154)
+			switchable = switchable or (d ~= nil and (d.converter ~= nil or d.retract ~= nil or d.shield ~= nil or d.cloak ~= nil)) -- beam towers retract when off (S-96); shields go down (S-154); cloakers decloak (S-228)
 			anyOn = anyOn or bit32.band(u.state or 0, 2) ~= 0
 			anyRepeat = anyRepeat or bit32.band(u.state or 0, 16) ~= 0
 			local def = World.def(api.world, u)
