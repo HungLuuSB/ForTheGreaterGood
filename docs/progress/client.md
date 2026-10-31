@@ -57,6 +57,13 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-31, batch 1 pictures: C-283)
+
+- **Batch 1 build-menu pictures (C-283):** E's sheet 4 is complete, with all 31 batch 1 units. The user approved its single upload: 77607112363466.
+  - All 233 build-menu pictures are now on uploaded sheets.
+  - Carries 2d 94f1b837 (Ready 3dfa2343).
+- Ready to merge: `8a79d3d0` (C-283; carries 2d 94f1b837. test_client 356 / 356, build passed (996 scripts, 2710 requires). Studio, Coastline: the Vehicle Plant's and Hover Dock's batch 1 tiles load from the new sheet; no console errors)
+
 ## Summary (2026-10-31, FEEDBACK-4 item 3: C-282)
 
 - **Explosions and missile launches toned down (C-282):** after the 8v8 on Supreme Strait, the user asked: "The effect of exploding, missile launch is too much, tune them down."
