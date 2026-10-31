@@ -2647,3 +2647,10 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - Studio, Coastline:
   - Four Ravagers killed at once burst at about hull size (`debug_out/screens/c282_deaths_toned.jpg`).
   - Live copies measured against C's templates: Launch smoke 2.5–4 s → 1.5–2.4 s, Death 0.6–0.8 s → 0.45–0.6 s, Impact 0.08–0.12 s → 0.06–0.09 s.
+
+### C-283 — Batch 1 build-menu pictures: sheet 4 complete (2026-10-31)
+
+- E packed the last batch 1 groups (2d 3dfa2343, tip 94f1b837): all 31 batch 1 pictures are on sheet 4, now 1024 × 766. `pictures.json` lists 233 defs, all packed. Sheets 1–3 are unchanged and keep their ids.
+- Held for one upload, as planned at C-277: the user approved it here. Sheet 4 is 77607112363466 (sha256 0d89c565…), replacing 120576950340042.
+- `node tools/icons/pictures.mjs` regenerated `UI/UnitPictures`: all 233 pictures are on uploaded sheets, so no def falls back to a live portrait.
+- Studio, Coastline: the Vehicle Plant's and the Hover Dock's batch 1 tiles draw from the new sheet, and it loaded (`debug_out/screens/c283_sheet4_vehplant.jpg`). No console errors.
