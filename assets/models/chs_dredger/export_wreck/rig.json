@@ -1,0 +1,140 @@
+{
+  "id": "chs_dredger_wreck",
+  "wreckOf": "chs_dredger",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0301,
+        1.9994,
+        -0.3826
+      ],
+      "size": [
+        6.1008,
+        3.202,
+        8.0508
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -1.9042,
+        0.5024,
+        -0.0039
+      ],
+      "size": [
+        0.8603,
+        1.1029,
+        7.026
+      ],
+      "pivot": [
+        -1.9,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        1.9094,
+        0.5009,
+        -0.0132
+      ],
+      "size": [
+        0.8678,
+        1.0542,
+        7.0452
+      ],
+      "pivot": [
+        1.9,
+        0.46,
+        0.0
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        0.7644,
+        2.8939,
+        -0.6149
+      ],
+      "size": [
+        1.5583,
+        2.1564,
+        4.0223
+      ],
+      "pivot": [
+        0.8,
+        1.9,
+        0.6
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.8,
+        3.15,
+        -2.3
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 992,
+    "trackL": 308,
+    "trackR": 308,
+    "nano": 208,
+    "total": 1816
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
