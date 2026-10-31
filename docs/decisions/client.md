@@ -2626,3 +2626,24 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - **Pools and swap:** pool keys now say which model a heap is: `heap_<size>` for C's, `heapstand_<size>` for the stand-in. A stand-in heap is swapped for C's once that variant finishes building (on `MeshModels.fxVersion`, as map features are). A pooled heap is re-tinted wherever it lands.
   - **Early build:** the four variants start building when the wreck renderer is made, so a match's first heap is rarely a stand-in.
 - Studio, Coastline: a Lancer's and a Paladin's wrecks reclaimed to 40% became `scrap_heap_1` and `scrap_heap_2`, their patches the grass colour (`debug_out/screens/c281_heap_close.jpg`).
+
+### C-282 — Explosions and missile launches toned down (2026-10-31)
+
+- FTGG-FEEDBACK-4 item 3, the user after the 8v8 on Supreme Strait: "The effect of exploding, missile launch is too much, tune them down."
+- `Vfx.TONE` holds one tone per effect kind, as fractions of the look as made:
+
+  | Kinds | Size and speed | Particles | Light | Lifetime |
+  |---|---|---|---|---|
+  | `impact`, `death`, `structureDeath` | 0.75 | 0.6 | 0.55 | 0.75 |
+  | `launch` | 0.65 | 0.5 | 0.5 | 0.6 |
+
+  Kinds not listed (muzzle flashes, hits, splashes, the nuke, missile exhaust) play as before.
+- It applies to both kinds of effect:
+  - **Built-in rigs:** the burst's scale, emit counts, emitter lifetimes and the rig's reuse time. The point light and the Neon flash ball are dimmed by the light tone.
+  - **C's saved templates** (`ReplicatedStorage.Vfx.Impact`, `Death`, `Launch`…): each copy's EmitCount, its emitters' lifetimes and its lights' brightness. Size and speed follow the toned burst scale.
+- Unchanged: the ground-burst test and the blast marks keep the burst's true size, so a scorch still matches its blast.
+- `Grade`'s screen flash gets the toned scale, so it fires for fewer deaths.
+- One table now tunes every explosion and launch, with no rework of C's templates.
+- Studio, Coastline:
+  - Four Ravagers killed at once burst at about hull size (`debug_out/screens/c282_deaths_toned.jpg`).
+  - Live copies measured against C's templates: Launch smoke 2.5–4 s → 1.5–2.4 s, Death 0.6–0.8 s → 0.45–0.6 s, Impact 0.08–0.12 s → 0.06–0.09 s.
