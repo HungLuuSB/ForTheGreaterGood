@@ -2,6 +2,20 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-31: autoheal, wrecks, cloak and EMP in the Codex, S-226..S-229)
+
+- Merged main `916ff795`, then `810ad24c` (S-226..S-230, B's C-278..C-281, C's batch 1 groups 1-2). Before the 20:00 playtest, at sim-A's request: the lobby place synced at that tip, and Quick play's handoff worked on the Studio stand-in (`lobby_handoff_standin`, `lobby_handoff_results`). The real teleport between published places isn't covered.
+- **sim-A's request 2: done.** The Units article's Details add:
+  - **Autoheal:** health a second after 10 s without damage, e.g. "+420 health/s" for the Thunderer;
+  - **Wreck:** its supply and health, the supply below which it's a scrap heap (reclaim only, no resurrect), and for aircraft "None when shot down in flight";
+  - **Cloak:** its power drain, and that enemy sight can't see it (radar can) unless an enemy is within its decloak radius or it fired in the last 2 s.
+- **EMP weapon cards:** the stun a second and the longest stun (6 s for the Thunderer) replace DPS and alpha, and the sentence says the hits fill a stun bar instead of taking health. The stun is left out of the unit's DPS, the DPS bar and the comparison.
+- **`Codex.RULES`** copies the sim's constants (the lobby place has no `src/server`); a new `Codex.spec` test checks them against `AutoHeal`, `Combat` and `Cloak`, and the Paladin's, Whisper's and Thunderer's numbers against the defs.
+- **`Codex.ANNOUNCED` is empty:** batch 1's 31 defs are on main. The batch 1 pair checks in `Codex.spec` now always run.
+- **Studio** (`debug_out/screens/`): `lobby_rules_thunderer` (Autoheal and Wreck rows), `lobby_rules_thunderer_emp` (the EMP card), `lobby_rules_whisper_cloak` (the Cloak row). The Courier's Wreck row ends "None when shot down in flight". No script errors.
+- Lobby specs 69 / 69; the build check passes (748 scripts, 1216 requires).
+- Ready to merge: `e08e0969` (touches only `src/lobby` and the lobby progress; needs S-226..S-230 on main, which they are)
+
 ## Summary (2026-10-31: batch 1's Codex roles, S-230)
 
 - Merged main `fde1ba91` (S-225: the new names and prices show from the defs).
@@ -13,7 +27,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
   - **Factories:** Hover factory (Hover Dock / Skim Yard).
 - **`Codex.ANNOUNCED`** holds the 31 ids until their defs are on main, so this merges before or after S-230. `Codex.spec` checks four of the pairs once the defs are there.
 - Checked against sim-A's S-230 defs (a scratch copy with m-sim-2's `src/shared` and `src/server`): 68 / 68, every batch-1 unit has a role of its own faction.
-- **Request 2 (Codex lines for S-226 autoheal, S-227 wrecks and heaps, S-228 cloak, S-229 EMP): next, once they're on main.** Their numbers are the sim's (`AutoHeal`, `Combat.WRECK_*`, `Cloak`, `Combat.PARALYZE_SECONDS`), so the lobby's copies get a spec that checks them against those modules.
+- **Request 2 (Codex lines for S-226 autoheal, S-227 wrecks and heaps, S-228 cloak, S-229 EMP):** done in `e08e0969` (above). Their numbers are the sim's (`AutoHeal`, `Combat.WRECK_*`, `Cloak`, `Combat.PARALYZE_SECONDS`), so the lobby's copies get a spec that checks them against those modules.
 - Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
 - Ready to merge: `dfd6ecfb` (batch 1's Codex roles; can merge before or after S-230; touches only `src/lobby` and the lobby progress)
 
