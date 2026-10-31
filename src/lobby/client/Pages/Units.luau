@@ -637,6 +637,17 @@ function Units.new(frame: Frame, _router: any): any
 		if #s.countermeasures > 0 then
 			row("Countermeasures", table.concat(s.countermeasures, " · "))
 		end
+		local rules = Codex.RULES
+		if s.cloak then
+			row("Cloak", `{n(s.cloak.drain)} power/s while on. Enemy sight can't see it, only radar; an enemy within {n(s.cloak.decloak)} studs reveals it, and so does firing, for {rules.cloakQuiet} s`)
+		end
+		if s.heal > 0 then
+			row("Autoheal", `+{n(s.heal)} health/s after {rules.healDelay} s without damage`)
+		end
+		if s.wreck then
+			row("Wreck", `{n(s.wreck.supply)} supply, {n(s.wreck.health)} health; a scrap heap below {n(s.wreck.heap)} supply (reclaim only, no resurrect)`
+				.. (if s.crashes then ". None when shot down in flight" else ""))
+		end
 		if s.income then
 			local parts = {}
 			if s.income.supply > 0 then
@@ -667,9 +678,16 @@ function Units.new(frame: Frame, _router: any): any
 				if w.stock then
 					line("stock", tostring(w.stock), "stockpile")
 				end
-				line("dps", F(w.dps), "dps", `vs {string.lower(CLASS_NAME[w.class] or w.class)}`)
+				if w.stun then
+					line("dps", F(w.stun), "stun a second", `vs {string.lower(CLASS_NAME[w.class] or w.class)}`)
+					line("time", F(w.stunSeconds or 0), "sec. stunned at most")
+				else
+					line("dps", F(w.dps), "dps", `vs {string.lower(CLASS_NAME[w.class] or w.class)}`)
+				end
 				line("reload", F(w.reload), "reload", Codex.word("reload", w.reload))
-				line("alpha", F(w.alpha), "alpha", Codex.word("alpha", w.alpha))
+				if not w.stun then
+					line("alpha", F(w.alpha), "alpha", Codex.word("alpha", w.alpha))
+				end
 				if w.shots > 1 then
 					line("salvo", tostring(w.shots), "shots a volley")
 				end
@@ -698,9 +716,15 @@ function Units.new(frame: Frame, _router: any): any
 						table.insert(dmg, `{string.lower(CLASS_NAME[cls])} {n(w.damage[cls])}`)
 					end
 				end
+				if w.stun then
+					table.insert(how, "EMP")
+				end
 				local about = `{string.upper(string.sub(kind, 1, 1))}{string.sub(kind, 2)}` .. (if #how > 0 then ", " .. table.concat(how, ", ") else "")
 					.. (if #w.targets > 0 then `; hits {string.lower(table.concat(w.targets, ", "))}.` else ".")
-					.. `\n<font color="#969CA8">Per hit: {table.concat(dmg, " · ")}</font>`
+					.. (if w.stun
+						then ` Its hits fill a stun bar instead of taking health. A full bar stops the target moving, firing and building for up to {n(w.stunSeconds or 0)} s after the last hit.`
+						else "")
+					.. `\n<font color="#969CA8">{if w.stun then "Stun per hit" else "Per hit"}: {table.concat(dmg, " · ")}</font>`
 				StatBars.weapon(article, weaponName(w.id), w.kind, kind, if w.stockPower then n(w.stockPower) else nil, lines, about, nextOrder())
 			end
 		end

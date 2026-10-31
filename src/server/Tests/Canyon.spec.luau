@@ -162,7 +162,8 @@ return function(t: RunAll.Context)
 		for _, id in w.ids do
 			local d = sim.defs.unitByIndex[w.defIndex[id]]
 			local owner = w.owner[id]
-			if d.id:find("vehplant") and (owner == 1 or owner == 2) then
+			-- every land factory, not only the plants (FTGG-FEEDBACK-4)
+			if d.domain == "structure" and d.buildOptions and #(d.buildOptions :: { string }) > 0 and d.placement ~= "water" and (owner == 1 or owner == 2) then
 				local want = if owner == 1 then math.pi else 0 -- facing SOUTH / NORTH (S-160)
 				t.expect(math.abs(math.sin(w.heading[id] - want)) < 1e-6 and math.cos(w.heading[id] - want) > 0, `player {owner}'s {d.id} faces the enemy`)
 			end
