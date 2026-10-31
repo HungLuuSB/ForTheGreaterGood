@@ -1,0 +1,56 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 1540 triangles, glow share 2.2%",
+  "bar": {
+    "model": "rbxassetid://84676782513635",
+    "meshes": {
+      "base": "rbxassetid://116624652976828",
+      "base_glow_head": "rbxassetid://86603513182289",
+      "base_glow_running": "rbxassetid://115429690274262",
+      "fan1": "rbxassetid://77072364236919",
+      "fan2": "rbxassetid://99407103582876",
+      "turret": "rbxassetid://79950388871111",
+      "turret_glow_weapon": "rbxassetid://117067145263018"
+    },
+    "decals": {
+      "ALB": "rbxassetid://85700058288167",
+      "RGH": "rbxassetid://117162476708892",
+      "NOR": "rbxassetid://116949319873312",
+      "MTL": "rbxassetid://84935504898718",
+      "EMI": "rbxassetid://135303405766836"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://106302285776146",
+      "NOR": "rbxassetid://109065542335884",
+      "RGH": "rbxassetid://138752802794788",
+      "MTL": "rbxassetid://139040954508481",
+      "EMI": "rbxassetid://74196458147039"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_volley_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://117721689461531",
+    "meshes": {
+      "base": "rbxassetid://79293552462898",
+      "fan1": "rbxassetid://77942783830080",
+      "fan2": "rbxassetid://115033979393589",
+      "turret": "rbxassetid://73591075447958"
+    },
+    "decals": {
+      "ALB": "rbxassetid://123007725264281",
+      "RGH": "rbxassetid://140449577112403",
+      "NOR": "rbxassetid://107096597954655",
+      "MTL": "rbxassetid://70797407470713",
+      "EMI": "rbxassetid://82700005390273"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://119064966918660",
+      "NOR": "rbxassetid://104082211999045",
+      "RGH": "rbxassetid://137568165381810",
+      "MTL": "rbxassetid://132986095620082",
+      "EMI": "rbxassetid://110699049554550"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_volley_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 1204 triangles"
+  }
+}

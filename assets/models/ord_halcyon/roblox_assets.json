@@ -1,0 +1,56 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 1116 triangles, glow share 2.3%",
+  "bar": {
+    "model": "rbxassetid://117537193311653",
+    "meshes": {
+      "base": "rbxassetid://114418188663466",
+      "base_glow_head": "rbxassetid://112704003375924",
+      "base_glow_running": "rbxassetid://129863712729363",
+      "fan1": "rbxassetid://78570943600601",
+      "fan2": "rbxassetid://134053683875942",
+      "turret": "rbxassetid://132770594461857",
+      "turret_glow_weapon": "rbxassetid://95852372658361"
+    },
+    "decals": {
+      "ALB": "rbxassetid://86982666795764",
+      "RGH": "rbxassetid://123889171354564",
+      "NOR": "rbxassetid://75169925633753",
+      "MTL": "rbxassetid://88383731336856",
+      "EMI": "rbxassetid://85012078563347"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://99124089420290",
+      "NOR": "rbxassetid://90688752597274",
+      "RGH": "rbxassetid://119649763829994",
+      "MTL": "rbxassetid://107015315620048",
+      "EMI": "rbxassetid://85331412125684"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_halcyon_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://137316174227996",
+    "meshes": {
+      "base": "rbxassetid://92945061211203",
+      "fan1": "rbxassetid://135721242394864",
+      "fan2": "rbxassetid://72390994639531",
+      "turret": "rbxassetid://105447255796304"
+    },
+    "decals": {
+      "ALB": "rbxassetid://86838148952518",
+      "RGH": "rbxassetid://117157868461213",
+      "NOR": "rbxassetid://90318153886600",
+      "MTL": "rbxassetid://103450307447633",
+      "EMI": "rbxassetid://126052972305771"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://122302378858671",
+      "NOR": "rbxassetid://80366837715685",
+      "RGH": "rbxassetid://85259726372041",
+      "MTL": "rbxassetid://118538339274768",
+      "EMI": "rbxassetid://87668343706372"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_halcyon_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 1004 triangles"
+  }
+}

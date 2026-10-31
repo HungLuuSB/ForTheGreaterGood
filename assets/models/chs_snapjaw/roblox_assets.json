@@ -1,0 +1,59 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 1128 triangles, glow share 2.7%",
+  "bar": {
+    "model": "rbxassetid://137016916821363",
+    "meshes": {
+      "barrel": "rbxassetid://88404088426020",
+      "barrel_glow_weapon": "rbxassetid://81744425967109",
+      "base": "rbxassetid://123136072078387",
+      "base_glow_head": "rbxassetid://137625019504200",
+      "base_glow_running": "rbxassetid://94155147695512",
+      "fan1": "rbxassetid://94628999448116",
+      "fan2": "rbxassetid://105744547731504",
+      "turret": "rbxassetid://119496791886390",
+      "turret_glow_running": "rbxassetid://103056235715884"
+    },
+    "decals": {
+      "ALB": "rbxassetid://100281188149245",
+      "RGH": "rbxassetid://139783728666638",
+      "NOR": "rbxassetid://70966199335558",
+      "MTL": "rbxassetid://132635355245812",
+      "EMI": "rbxassetid://90529371474806"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://93785110746494",
+      "NOR": "rbxassetid://90750176686154",
+      "RGH": "rbxassetid://83619429563381",
+      "MTL": "rbxassetid://83311730479896",
+      "EMI": "rbxassetid://94278596687881"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_snapjaw_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://88193980927330",
+    "meshes": {
+      "barrel": "rbxassetid://72058940144617",
+      "base": "rbxassetid://113862977566969",
+      "fan1": "rbxassetid://124813665304934",
+      "fan2": "rbxassetid://88320111506579",
+      "turret": "rbxassetid://103816209373822"
+    },
+    "decals": {
+      "ALB": "rbxassetid://90755646988366",
+      "RGH": "rbxassetid://88229900172619",
+      "NOR": "rbxassetid://103348677468619",
+      "MTL": "rbxassetid://109076587228275",
+      "EMI": "rbxassetid://110551228140961"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://135718478965649",
+      "NOR": "rbxassetid://120081556099716",
+      "RGH": "rbxassetid://96930842897052",
+      "MTL": "rbxassetid://88412473027801",
+      "EMI": "rbxassetid://71686899049877"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_snapjaw_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 976 triangles"
+  }
+}

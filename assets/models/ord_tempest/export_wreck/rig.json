@@ -1,0 +1,187 @@
+{
+  "id": "ord_tempest_wreck",
+  "wreckOf": "ord_tempest",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0059,
+        1.6985,
+        -0.2083
+      ],
+      "size": [
+        8.3449,
+        3.2848,
+        11.7384
+      ]
+    },
+    "fan1": {
+      "parent": "base",
+      "center": [
+        -1.8644,
+        2.7255,
+        4.1609
+      ],
+      "size": [
+        1.247,
+        0.2402,
+        1.8952
+      ],
+      "pivot": [
+        -1.85,
+        2.62,
+        4.2
+      ]
+    },
+    "fan2": {
+      "parent": "base",
+      "center": [
+        -0.0677,
+        2.6988,
+        4.1482
+      ],
+      "size": [
+        1.1829,
+        0.2816,
+        1.8567
+      ],
+      "pivot": [
+        0.0,
+        2.62,
+        4.2
+      ]
+    },
+    "fan3": {
+      "parent": "base",
+      "center": [
+        1.7614,
+        2.6891,
+        4.1201
+      ],
+      "size": [
+        1.1595,
+        0.1886,
+        1.901
+      ],
+      "pivot": [
+        1.85,
+        2.62,
+        4.2
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.12,
+        2.9496,
+        0.5797
+      ],
+      "size": [
+        5.3907,
+        2.2052,
+        6.1415
+      ],
+      "pivot": [
+        0.0,
+        2.0,
+        0.4
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0388,
+        2.8102,
+        -5.3408
+      ],
+      "size": [
+        1.0231,
+        0.9377,
+        6.5757
+      ],
+      "pivot": [
+        0.0,
+        2.9,
+        -1.8
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        2.9,
+        -8.6
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "fan1",
+    "fan2",
+    "fan3"
+  ],
+  "anim": {
+    "fan1": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan2": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan3": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 584,
+    "fan1": 52,
+    "fan2": 52,
+    "fan3": 52,
+    "turret": 296,
+    "barrel": 304,
+    "total": 1340
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

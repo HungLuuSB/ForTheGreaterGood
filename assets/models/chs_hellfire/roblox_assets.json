@@ -1,0 +1,57 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 2424 triangles, glow share 3.6%",
+  "bar": {
+    "model": "rbxassetid://134469221355099",
+    "meshes": {
+      "base": "rbxassetid://75404557235548",
+      "base_glow_head": "rbxassetid://100882665157703",
+      "base_glow_running": "rbxassetid://71584425669258",
+      "trackL": "rbxassetid://119901920051526",
+      "trackR": "rbxassetid://89162310945251",
+      "turret": "rbxassetid://119271923195984",
+      "turret_glow_running": "rbxassetid://137614828617077",
+      "turret_glow_weapon": "rbxassetid://133293401602321"
+    },
+    "decals": {
+      "ALB": "rbxassetid://129935840131088",
+      "RGH": "rbxassetid://139004110767884",
+      "NOR": "rbxassetid://73908768918677",
+      "MTL": "rbxassetid://111481201615796",
+      "EMI": "rbxassetid://115721960169957"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://74112673923770",
+      "NOR": "rbxassetid://74810860713481",
+      "RGH": "rbxassetid://134085778480416",
+      "MTL": "rbxassetid://137402536508430",
+      "EMI": "rbxassetid://112429134531506"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hellfire_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://84960057575027",
+    "meshes": {
+      "base": "rbxassetid://97821317558925",
+      "trackL": "rbxassetid://133411266030995",
+      "trackR": "rbxassetid://78244769824068",
+      "turret": "rbxassetid://105246878056042"
+    },
+    "decals": {
+      "ALB": "rbxassetid://103982484705229",
+      "RGH": "rbxassetid://105254548860235",
+      "NOR": "rbxassetid://81812863694197",
+      "MTL": "rbxassetid://132101226225044",
+      "EMI": "rbxassetid://106936230842494"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://128560482537059",
+      "NOR": "rbxassetid://131744790294544",
+      "RGH": "rbxassetid://130354645479306",
+      "MTL": "rbxassetid://77411565185551",
+      "EMI": "rbxassetid://136778549276506"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hellfire_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 1864 triangles"
+  }
+}
