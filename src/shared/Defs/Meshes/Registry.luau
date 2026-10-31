@@ -15324,7 +15324,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://97561490811992",
 				},
 				model = "rbxassetid://103958926132908",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { 0.0139, 2.5057, -1.9458 },
@@ -15352,7 +15351,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 3.0569, 1.166, 2.8992 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1756,
 			},
 		},
@@ -16406,7 +16405,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://130068782961728",
 				},
 				model = "rbxassetid://94289239779352",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0301, 1.9994, -0.3826 },
@@ -16429,7 +16427,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.8678, 1.0542, 7.0452 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1816,
 			},
 		},
@@ -21707,7 +21705,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://98669282981969",
 				},
 				model = "rbxassetid://113475274276728",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { 0.0039, 2.2706, -3.0915 },
@@ -21735,7 +21732,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 3.5595, 0.8986, 2.5994 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1624,
 			},
 		},
@@ -30488,7 +30485,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://131592161866317",
 				},
 				model = "rbxassetid://119446957760692",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { 0.0232, 2.4071, -2.4709 },
@@ -30536,7 +30532,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.7708, 1.5517, 1.4296 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1036,
 			},
 		},
@@ -32452,7 +32448,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://71254101705614",
 				},
 				model = "rbxassetid://115433534813059",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0085, 1.2107, -0.0444 },
@@ -32475,7 +32470,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 3.6363, 2.1996, 3.2903 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1660,
 			},
 		},
@@ -36062,7 +36057,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://83117437963413",
 				},
 				model = "rbxassetid://88139197145760",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0316, 1.9802, -0.3535 },
@@ -36085,7 +36079,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 0.8643, 1.0395, 6.9448 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1740,
 			},
 		},
@@ -40630,7 +40624,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					RGH = "rbxassetid://79442586831374",
 				},
 				model = "rbxassetid://123579721163776",
-				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { 0.0681, 2.4691, -2.0665 },
@@ -40658,7 +40651,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 						size = { 2.9071, 1.408, 2.4326 },
 					},
 				},
-				status = "review",
+				status = "approved",
 				triangles = 1700,
 			},
 		},
