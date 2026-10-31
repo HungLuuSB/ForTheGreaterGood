@@ -731,6 +731,11 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
   - **C-278 failed:** client 3ce46fa1, carrying sim fbfc8d95 (S-226, S-227), failed only the slow suite's 192×192 AI match. It didn't end in 60 minutes on that tree. On m-sim-2 with S-228..S-230 the same match ends at 20.8 minutes (seed 1), so the outcome hangs on the seed's path. Watch it: autoheal makes damaged armies last longer.
   - **A race:** stopping a queued `integrate.sh` wrapper (TaskStop) didn't stop the script once it had started. C-279's run went on and merged in the worktree, and D's run started over it, so two runs tested at once. C's 4f4edffb, tried alone between them, conflicted in `.gitignore`. All were stopped and the worktree reset to origin/main; nothing unpushed survived.
   - **Re-run one at a time, in one command:** C-280 e7e6c6bc (it contains C-278, C-279, S-226..S-230, C's blockouts and heaps, and E's icons), then D's dfd6ecfb, then C's 893f4e82 (heaps approved).
+  - **Results:**
+    - C-280 alone (on b4dbed0c) passed fast 651, slow 13, client 356 and build, but failed 1 lobby test: the Codex had no batch 1 roles until D's dfd6ecfb landed.
+    - D's dfd6ecfb pushed as e0393c35.
+    - C's 893f4e82 alone failed AIUnits, 1 slow test and 3 client tests: its batch 1 sim is older than the fixes.
+    - B's C-281 (535b597e) carries C-280 and 893f4e82. It passed everything (fast 651, slow 13, client 356, lobby 68, build 996 scripts) and is pushed as 1bae0fcc.
   - **Lesson:** to drop a queued run, kill its bash processes (Get-CimInstance on `integrate.sh`), not only the task.
 - **2026-10-30, S-224 (the Goliath back):** the first try of sim 8f60b2a6 failed only the lobby suite (66/68): main's `Codex.spec` still expected the Goliath retired. Lobby 35f61044, which checks both states, went in next as e1e51407. Then the S-224 retry, models 997cfa7a (the new Goliath), 2d c83c4477 (its picture) and client 1d5dfab4 (C-277), in that order.
 
