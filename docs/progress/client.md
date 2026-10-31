@@ -61,6 +61,7 @@ Written for a new session (the project is moving to another Claude account). Eve
 
 - **Scrap heap meshes (C-281):** C's approved heaps (4 sizes) replace the stand-in, their ground patch tinted to the terrain like deposits; a stand-in shown before a mesh is built swaps to it.
 - Carries m-models 893f4e82.
+- Ready to merge: `2945914e` (C-281; carries m-models 893f4e82. test_client 356 / 356, build passed (996 scripts, 2710 requires). Studio, Coastline: C's heaps 1 and 2 with grass-tinted patches)
 
 ## Summary (2026-10-31, batch 1: C-280)
 
