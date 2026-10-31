@@ -16,12 +16,12 @@ return {
 		{ name = "railL", parent = "base", shape = "box", size = { 0.15, 0.4, 6.08 }, at = { -2.5, 1, 0 }, color = "metal" },
 		{ name = "railR", parent = "base", shape = "box", size = { 0.15, 0.4, 6.08 }, at = { 2.5, 1, 0 }, color = "metal" },
 		{ name = "turret", parent = "base", shape = "cylinder", axis = "y", size = { 2.1, 0.5, 2.1 }, at = { 0, 1.85, 0.2 }, color = "dark" },
-		{ name = "launcher", parent = "turret", shape = "box", size = { 3, 1.4, 3.2 }, at = { 0, 2.8, 0.2 }, pivot = { 0, 2.8, 1.16 }, color = "hull" },
-		{ name = "tube1", parent = "launcher", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 0.1 }, at = { -0.8, 2.8, -1.45 }, color = "glass" },
-		{ name = "tube2", parent = "launcher", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 0.1 }, at = { 0, 2.8, -1.45 }, color = "glass" },
-		{ name = "tube3", parent = "launcher", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 0.1 }, at = { 0.8, 2.8, -1.45 }, color = "glass" },
+		{ name = "launcher", parent = "turret", shape = "box", size = { 3, 1.4, 3.2 }, at = { 0, 2.8, 0.2 }, color = "hull" },
+		{ name = "tube1", parent = "turret", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 0.1 }, at = { -0.8, 2.8, -1.45 }, color = "glass" },
+		{ name = "tube2", parent = "turret", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 0.1 }, at = { 0, 2.8, -1.45 }, color = "glass" },
+		{ name = "tube3", parent = "turret", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 0.1 }, at = { 0.8, 2.8, -1.45 }, color = "glass" },
 	},
 	attachments = {
-		{ name = "muzzle", parent = "launcher", at = { 0, 2.8, -1.6 } },
+		{ name = "muzzle", parent = "turret", at = { 0, 2.8, -1.6 } },
 	},
 }

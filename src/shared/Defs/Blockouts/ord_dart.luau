@@ -13,9 +13,9 @@ return {
 		{ name = "stripe", parent = "base", shape = "box", size = { 1.476, 0.06, 1.62 }, at = { 0, 1.53, -0.648 }, color = "team" },
 		{ name = "turret", parent = "base", shape = "box", size = { 1.6, 0.6, 1.6 }, at = { 0, 1.8, -0.6 }, color = "team" },
 		{ name = "turretFront", parent = "turret", shape = "wedge", size = { 1.6, 0.6, 0.48 }, at = { 0, 1.8, -1.64 }, color = "team" },
-		{ name = "barrel", parent = "turret", shape = "cylinder", axis = "z", size = { 0.22, 0.22, 2.2 }, at = { 0, 1.8, -2.5 }, pivot = { 0, 1.8, -1.4 }, color = "metal" },
+		{ name = "barrel", parent = "turret", shape = "cylinder", axis = "z", size = { 0.22, 0.22, 2.2 }, at = { 0, 1.8, -2.5 }, color = "metal" },
 	},
 	attachments = {
-		{ name = "muzzle", parent = "barrel", at = { 0, 1.8, -3.6 } },
+		{ name = "muzzle", parent = "turret", at = { 0, 1.8, -3.6 } },
 	},
 }

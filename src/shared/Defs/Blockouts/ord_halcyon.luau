@@ -15,13 +15,13 @@ return {
 		{ name = "fanGuard2", parent = "base", shape = "cylinder", axis = "y", size = { 1.632, 0.12, 1.632 }, at = { 1.344, 2.04, 2.31 }, color = "dark" },
 		{ name = "stripe", parent = "base", shape = "box", size = { 1.968, 0.06, 2.1 }, at = { 0, 1.73, -0.84 }, color = "team" },
 		{ name = "turret", parent = "base", shape = "cylinder", axis = "y", size = { 2.4, 0.6, 2.4 }, at = { 0, 2, -0.2 }, color = "team" },
-		{ name = "launcher", parent = "turret", shape = "box", size = { 0.5, 0.5, 0.5 }, at = { 0, 2.9, -0.2 }, pivot = { 0, 2.9, -0.2 }, color = "dark" },
-		{ name = "podL", parent = "launcher", shape = "box", size = { 0.9, 0.9, 2 }, at = { -1, 2.9, -0.4 }, color = "hull" },
-		{ name = "podR", parent = "launcher", shape = "box", size = { 0.9, 0.9, 2 }, at = { 1, 2.9, -0.4 }, color = "hull" },
+		{ name = "launcher", parent = "turret", shape = "box", size = { 0.5, 0.5, 0.5 }, at = { 0, 2.9, -0.2 }, color = "dark" },
+		{ name = "podL", parent = "turret", shape = "box", size = { 0.9, 0.9, 2 }, at = { -1, 2.9, -0.4 }, color = "hull" },
+		{ name = "podR", parent = "turret", shape = "box", size = { 0.9, 0.9, 2 }, at = { 1, 2.9, -0.4 }, color = "hull" },
 		{ name = "radar", parent = "turret", shape = "cylinder", axis = "z", size = { 1.2, 0.12, 1.2 }, at = { 0, 3.6, 0.9 }, color = "metal" },
 	},
 	attachments = {
-		{ name = "muzzle", parent = "launcher", at = { -1, 2.9, -1.45 } },
-		{ name = "muzzle2", parent = "launcher", at = { 1, 2.9, -1.45 } },
+		{ name = "muzzle", parent = "turret", at = { -1, 2.9, -1.45 } },
+		{ name = "muzzle2", parent = "turret", at = { 1, 2.9, -1.45 } },
 	},
 }

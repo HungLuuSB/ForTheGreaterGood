@@ -1,6 +1,11 @@
 """Writes the hand-made blockouts of the BAR roster's batch 1 (vehicles and
 hovercraft, the user's approval 2026-10-31; sim-A's list in docs/progress/sim.md
-"For the models stream (C)" item 3): python gen_batch1.py <src/shared/Defs/Blockouts>.
+"For the models stream (C)" item 3):
+
+    python gen_batch1.py <src/shared/Defs/Blockouts> [pieces.json]
+
+pieces.json ({id: [piece, ...]}, dumped from the defs, S-230) fits each rig to
+its def: only def pieces pivot, decorations hang from their nearest piece.
 
 Silhouettes from the roles, ahead of the defs (footprints and pieces come
 with S-228+): the files are written but not registered in Blockouts/Registry
@@ -13,6 +18,7 @@ Order reads clean and heavy (skirts, sloped plates); Chaos angular and open
 fans; amphibious hulls carry a boat bow and flotation sponsons.
 Model space, forward = -Z, ground at y = 0.
 """
+import json
 import os
 import sys
 
@@ -32,35 +38,64 @@ class B:
         self.uid, self.comment, self.parts, self.att, self.visual = uid, comment, [], [], []
 
     def part(self, name, shape, size, at, color, parent="base", rot=None, axis=None, pivot=None, anim=None):
-        s = f'{{ name = "{name}"'
-        if name != "base":
-            s += f', parent = "{parent}"'
-        s += f', shape = "{shape}"'
-        if axis:
-            s += f', axis = "{axis}"'
-        s += f", size = {vec(size)}, at = {vec(at)}"
-        if rot:
-            s += f", rot = {vec(rot)}"
-        if pivot:
-            s += f", pivot = {vec(pivot)}"
-        s += f', color = "{color}"'
-        if anim:
-            s += f', anim = {{ motion = "{anim[0]}", axis = {vec(anim[1])} }}'
-        self.parts.append(s + " }")
+        self.parts.append(dict(name=name, shape=shape, size=size, at=at, color=color, parent=parent, rot=rot,
+                               axis=axis, pivot=pivot, anim=anim))
 
     def attach(self, name, parent, at):
-        self.att.append(f'{{ name = "{name}", parent = "{parent}", at = {vec(at)} }}')
+        self.att.append(dict(name=name, parent=parent, at=at))
+
+    def fit(self, pieces):
+        """Matches the def's pieces (Blockout.validate): only pieces pivot, a
+        decoration's children hang from its nearest piece, and a def piece
+        named as an attachment here becomes a marker part instead."""
+        if pieces is None:
+            return
+        parent = {p["name"]: p["parent"] for p in self.parts}
+
+        def piece_of(name):
+            while name != "base" and name not in pieces:
+                name = parent[name]
+            return name
+
+        for p in self.parts:
+            if p["name"] != "base":
+                p["parent"] = piece_of(p["parent"])
+            if p["pivot"] and p["name"] not in pieces:
+                p["pivot"] = None
+        names = {p["name"] for p in self.parts}
+        for a in list(self.att):
+            a["parent"] = piece_of(a["parent"])
+            muzzle = a["name"].startswith("muzzle") or "_muzzle" in a["name"]
+            if a["name"] in pieces and not muzzle:
+                self.att.remove(a)
+                if a["name"] not in names:
+                    self.part(a["name"], "ball", (0.3, 0.3, 0.3), a["at"], "dark", parent=a["parent"])
 
     def write(self):
         lines = ["--!strict"] + [f"-- {c}" if c else "--" for c in self.comment] + ["", "return {", f'\tid = "{self.uid}",']
         if self.visual:
             lines.append("\tvisualPieces = { " + ", ".join(f'"{v}"' for v in self.visual) + " },")
         lines.append("\tparts = {")
-        lines += [f"\t\t{p}," for p in self.parts]
+        for p in self.parts:
+            s = f'{{ name = "{p["name"]}"'
+            if p["name"] != "base":
+                s += f', parent = "{p["parent"]}"'
+            s += f', shape = "{p["shape"]}"'
+            if p["axis"]:
+                s += f', axis = "{p["axis"]}"'
+            s += f", size = {vec(p['size'])}, at = {vec(p['at'])}"
+            if p["rot"]:
+                s += f", rot = {vec(p['rot'])}"
+            if p["pivot"]:
+                s += f", pivot = {vec(p['pivot'])}"
+            s += f', color = "{p["color"]}"'
+            if p["anim"]:
+                s += f', anim = {{ motion = "{p["anim"][0]}", axis = {vec(p["anim"][1])} }}'
+            lines.append(f"\t\t{s} }},")
         lines.append("\t},")
         if self.att:
             lines.append("\tattachments = {")
-            lines += [f"\t\t{a}," for a in self.att]
+            lines += [f'\t\t{{ name = "{a["name"]}", parent = "{a["parent"]}", at = {vec(a["at"])} }},' for a in self.att]
             lines.append("\t},")
         lines.append("}")
         with open(os.path.join(OUT, f"{self.uid}.luau"), "w", encoding="utf-8", newline="\n") as fh:
@@ -247,10 +282,11 @@ def make_all():
     b = B("ord_fulgur", ["Fulgur (Order lightning tank with an anti-air missile, T2): a turret with a", "lightning coil on top and a small missile box at its side. " + HEADER])
     d = tracked(b, 8.2, 5.4, 1.1, "order")
     b.part("turret", "box", (3.2, 0.9, 3.4), (0, d + 0.45, 0.3), "team")
-    coil(b, 0, d + 0.9, -0.2, 2.0, 0.5, "turret", 1)
-    b.attach("muzzle", "turret", (0, d + 3.4, -0.2))
-    b.part("missileBox", "box", (0.8, 0.8, 1.8), (1.9, d + 1.0, 0.4), "hull", parent="turret")
-    b.attach("missile", "turret", (1.9, d + 1.0, -0.6))
+    # the coil stands on the pitching `barrel` mount, so it tilts to aim
+    b.part("barrel", "box", (1.2, 0.3, 1.2), (0, d + 1.05, -0.2), "dark", parent="turret", pivot=(0, d + 1.05, -0.2))
+    coil(b, 0, d + 1.2, -0.2, 2.0, 0.5, "barrel", 1)
+    b.attach("muzzle", "barrel", (0, d + 3.7, -0.2))
+    b.part("missile", "box", (0.8, 0.8, 1.8), (1.9, d + 1.0, 0.4), "hull", parent="turret")  # the AA weapon's muzzle piece
     out.append(b)
 
     b = B("ord_mandate", ["Mandate (Order mobile artillery, T2): a long hull with the turret set back and", "a long howitzer with a recoil sleeve; spades at the rear. " + HEADER])
@@ -272,11 +308,13 @@ def make_all():
     d = tracked(b, 14.0, 10.0, 1.8, "order", tw=2.0)
     b.part("turret", "box", (6.4, 1.8, 6.2), (0, d + 0.9, 0.8), "team")
     b.part("turretFront", "wedge", (6.4, 1.8, 1.6), (0, d + 0.9, -3.1), "team", parent="turret")
-    coil(b, -2.0, d + 1.8, 0.2, 3.0, 0.8, "turret", 1)
-    coil(b, 2.0, d + 1.8, 0.2, 3.0, 0.8, "turret", 2)
+    # both coils stand on one pitching `barrel` cross-mount
+    b.part("barrel", "box", (5.6, 0.5, 1.8), (0, d + 2.05, 0.2), "dark", parent="turret", pivot=(0, d + 2.05, 0.2))
+    coil(b, -2.0, d + 2.3, 0.2, 3.0, 0.8, "barrel", 1)
+    coil(b, 2.0, d + 2.3, 0.2, 3.0, 0.8, "barrel", 2)
     b.part("emp", "cylinder", (2.4, 0.3, 2.4), (0, d + 2.6, 2.2), "glass", parent="turret", axis="y", rot=(-25, 0, 0))
-    b.attach("muzzle", "turret", (-2.0, d + 5.3, 0.2))
-    b.attach("muzzle2", "turret", (2.0, d + 5.3, 0.2))
+    b.attach("muzzle", "barrel", (-2.0, d + 5.8, 0.2))
+    b.attach("muzzle2", "barrel", (2.0, d + 5.8, 0.2))
     b.attach("emp", "turret", (0, d + 2.8, 2.2))
     out.append(b)
 
@@ -411,7 +449,10 @@ def make_all():
 
 
 if __name__ == "__main__":
+    # optional: each def's pieces as JSON ({id: [piece, ...]}, from the defs), to fit the rigs to them
+    PIECES = json.load(open(sys.argv[2], encoding="utf-8")) if len(sys.argv) > 2 else {}
     units = make_all()
     for b in units:
+        b.fit(PIECES.get(b.uid))
         b.write()
     print(f"{len(units)} blockouts -> {OUT}")

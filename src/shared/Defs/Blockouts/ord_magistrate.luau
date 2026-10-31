@@ -16,11 +16,11 @@ return {
 		{ name = "boom", parent = "nano", shape = "box", size = { 0.5, 0.5, 3.4 }, at = { -1.2, 2.7, -2.5 }, rot = { -20, 0, 0 }, color = "team" },
 		{ name = "emitter", parent = "nano", shape = "ball", size = { 0.7, 0.7, 0.7 }, at = { -1.2, 3.25, -4.2 }, color = "glass" },
 		{ name = "turret", parent = "base", shape = "box", size = { 1.8, 0.7, 1.8 }, at = { 0, 2.05, 2 }, color = "hull" },
-		{ name = "turretFront", parent = "turret", shape = "wedge", size = { 1.8, 0.7, 0.54 }, at = { 0, 2.05, 0.83 }, color = "hull" },
-		{ name = "barrel", parent = "turret", shape = "cylinder", axis = "z", size = { 0.24, 0.24, 2 }, at = { 0, 2.05, 0.1 }, pivot = { 0, 2.05, 1.1 }, color = "metal" },
+		{ name = "turretFront", parent = "base", shape = "wedge", size = { 1.8, 0.7, 0.54 }, at = { 0, 2.05, 0.83 }, color = "hull" },
+		{ name = "barrel", parent = "base", shape = "cylinder", axis = "z", size = { 0.24, 0.24, 2 }, at = { 0, 2.05, 0.1 }, color = "metal" },
 	},
 	attachments = {
 		{ name = "nano1", parent = "nano", at = { -1.2, 3.25, -4.5 } },
-		{ name = "muzzle", parent = "barrel", at = { 0, 2.05, -0.9 } },
+		{ name = "muzzle", parent = "base", at = { 0, 2.05, -0.9 } },
 	},
 }

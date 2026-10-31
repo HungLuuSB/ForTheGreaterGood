@@ -15,9 +15,9 @@ return {
 		{ name = "railR", parent = "base", shape = "box", size = { 0.15, 0.4, 4 }, at = { 1.7, 1, 0 }, color = "metal" },
 		{ name = "turret", parent = "base", shape = "box", size = { 1.4, 0.6, 1.6 }, at = { 0, 1.7, -0.5 }, color = "hull" },
 		{ name = "turretSpike", parent = "turret", shape = "wedge", size = { 0.7, 0.36, 0.64 }, at = { 0, 2.06, -0.82 }, color = "dark" },
-		{ name = "barrel", parent = "turret", shape = "cylinder", axis = "z", size = { 0.2, 0.2, 2.2 }, at = { 0, 1.7, -2.4 }, pivot = { 0, 1.7, -1.3 }, color = "metal" },
+		{ name = "barrel", parent = "turret", shape = "cylinder", axis = "z", size = { 0.2, 0.2, 2.2 }, at = { 0, 1.7, -2.4 }, color = "metal" },
 	},
 	attachments = {
-		{ name = "muzzle", parent = "barrel", at = { 0, 1.7, -3.5 } },
+		{ name = "muzzle", parent = "turret", at = { 0, 1.7, -3.5 } },
 	},
 }
