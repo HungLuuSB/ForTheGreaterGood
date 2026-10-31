@@ -60,6 +60,7 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 - **Batch 1 meshes** (built in groups, previews in `previews/batch1/meshes/<id>_{front,rear,top}.png` and a sheet per group; upload after the user's review). New kits in `hulls.py`: `amphibious` and `hover` (lift fans are spinning sub-pieces `fan<n>`).
   - Group 1, Order T1: Courser (wheeled 6 x 6, its def is WHEELED; its blockout still shows tracks), Gemini, Wader, Pontifex. 1192-1856 tris. Sheet `previews/batch1/meshes_group1_order_t1.png`.
   - Group 2, Chaos T1: Cleaver (dozer blade, flared scatter gun), Mudskipper, Dredger (open cab, hopper, lattice boom with a claw). 1896-1952 tris. Sheet `previews/batch1/meshes_group2_chaos_t1.png`.
+  - **Groups 1-2 approved by the user (2026-10-31, "approve", from the previews):** the seven in `APPROVED` (takes effect once uploaded). Their wrecks are built (`export_wreck/`; sheet `previews/batch1/wrecks_groups1-2.png`, views in `previews/batch1/wrecks/`). Not uploaded: meshes and wrecks go up together on the user's OK.
 
 **Goliath re-model (S-224, 2026-10-30).** sim-A brought `chs_goliath` back as Chaos's T2 main battle tank, and the user asked for a new model ("Scrap the old model, start from something new"). The def is unchanged: footprint 2, pieces `base`, `turret`, `armL`, `armR`, `muzzle`; the arms rest at pitch −65 and raise to fire (`chs_goliath_cannon`, the client's `PieceScripts/chs_goliath`).
 - **The design** (`assets/models/chs_goliath/build.py`, 4372 tris): a hunched giant.
