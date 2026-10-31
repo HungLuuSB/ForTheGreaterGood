@@ -23,9 +23,9 @@ return Templates.extend(Templates.Unit, {
 	sensors = { sight = 260 },
 	weapons = {
 		{ def = "ord_thunderer_lightning", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" },
-		{ def = "ord_thunderer_emp", turretPiece = "turret", muzzle = "emp" },
+		{ def = "ord_thunderer_emp", turretPiece = "turret", muzzle = "emp_muzzle" },
 	},
-	pieces = { "base", "turret", "barrel", "muzzle", "emp" },
+	pieces = { "base", "turret", "barrel", "muzzle", "emp_muzzle" },
 	selfDestructBlast = { damage = 480, aoe = 52, edge = 0.25 }, -- as the Titan's (S-217)
 	deathBlast = { damage = 480, aoe = 52, edge = 0.25 },
 	icon = "experimental",

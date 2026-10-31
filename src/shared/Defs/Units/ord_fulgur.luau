@@ -19,8 +19,8 @@ return Templates.extend(Templates.TankT1, {
 	health = 840,
 	movement = { maxSpeed = 24, accel = 17, brake = 34, turnRate = 80 },
 	sensors = { sight = 195 },
-	weapons = { { def = "ord_fulgur_lightning", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" }, { def = "ord_fulgur_aa", turretPiece = "turret", muzzle = "missile" } },
-	pieces = { "base", "turret", "barrel", "muzzle", "missile" },
+	weapons = { { def = "ord_fulgur_lightning", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" }, { def = "ord_fulgur_aa", turretPiece = "turret", muzzle = "aa_muzzle" } },
+	pieces = { "base", "turret", "barrel", "muzzle", "aa_muzzle" },
 	icon = "tank_light",
 	model = "ord_fulgur",
 })
