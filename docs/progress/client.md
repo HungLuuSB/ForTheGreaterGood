@@ -64,6 +64,7 @@ Written for a new session (the project is moving to another Claude account). Eve
   - Hovercraft trail foam or dust; the hover factories float on water.
   - Every def gets a unique two-letter code.
 - Carries sim 11b13f85, m-models 761d0d72 and 2d c3aa6cb4.
+- Ready to merge: `02df8db7` (C-280; carries sim 11b13f85, m-models 761d0d72, 2d c3aa6cb4. test_client 356 / 356, build passed (996 scripts, 2709 requires). Studio, Coastline: the Hover Dock floats, Skimmers trail foam)
 
 ## Summary (2026-10-31, cloak and EMP: C-279)
 
