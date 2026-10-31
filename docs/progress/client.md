@@ -64,6 +64,7 @@ Written for a new session (the project is moving to another Claude account). Eve
   - A cloaker's card offers On / Off.
   - Defs newer than the icon sheet (Whisper, Thunderer) draw their type's placeholder, and the icon specs accept that.
 - Carries sim 2ecf3802.
+- Ready to merge: `6ebf98cb` (C-279; carries sim 2ecf3802. test_client 356 / 356, build passed (912 scripts, 2588 requires). Studio: a cloaked Whisper see-through, a stunned Lancer crackling)
 
 ## Summary (2026-10-31, scrap heaps: C-278)
 
