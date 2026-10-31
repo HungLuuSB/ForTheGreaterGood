@@ -1,0 +1,56 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 1-2, uploaded with the user's approval 2026-10-31: 1936 triangles, glow share 3.7%",
+  "bar": {
+    "model": "rbxassetid://132446824410533",
+    "meshes": {
+      "base": "rbxassetid://92320749942297",
+      "base_glow_head": "rbxassetid://80237196485835",
+      "base_glow_running": "rbxassetid://112903929185101",
+      "nano": "rbxassetid://113128217704288",
+      "nano_glow_power": "rbxassetid://126268661142339",
+      "trackL": "rbxassetid://126816238480864",
+      "trackR": "rbxassetid://127848615147528"
+    },
+    "decals": {
+      "ALB": "rbxassetid://118079759251843",
+      "RGH": "rbxassetid://110484031737585",
+      "NOR": "rbxassetid://113689124688019",
+      "MTL": "rbxassetid://79925850666458",
+      "EMI": "rbxassetid://122450786050062"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://103376836732862",
+      "NOR": "rbxassetid://93105074236403",
+      "RGH": "rbxassetid://90717685746762",
+      "MTL": "rbxassetid://127600086589035",
+      "EMI": "rbxassetid://73472140696523"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_dredger_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://94289239779352",
+    "meshes": {
+      "base": "rbxassetid://116395152416480",
+      "nano": "rbxassetid://100628168002513",
+      "trackL": "rbxassetid://115456671125140",
+      "trackR": "rbxassetid://75595432449494"
+    },
+    "decals": {
+      "ALB": "rbxassetid://123668994125371",
+      "RGH": "rbxassetid://103451777094230",
+      "NOR": "rbxassetid://70412337380520",
+      "MTL": "rbxassetid://94585070508659",
+      "EMI": "rbxassetid://135002300337442"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://103313735493937",
+      "NOR": "rbxassetid://134801378301037",
+      "RGH": "rbxassetid://130068782961728",
+      "MTL": "rbxassetid://76550761895364",
+      "EMI": "rbxassetid://130988394552114"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_dredger_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 1-2, uploaded with the user's approval 2026-10-31: 1816 triangles"
+  }
+}

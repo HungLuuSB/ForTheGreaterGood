@@ -221,7 +221,10 @@ return function(t: RunAll.Context)
 		run(sim, { brain }, 900 * 8, false)
 		local army = armyOf(sim, 1)
 		t.expect(#owned(sim, 1, "ord_solar") >= 4, `generators keep up with the plant ({#owned(sim, 1, "ord_solar")})`)
-		t.expect(army >= 8, `an army by 8 minutes ({army})`)
+		-- (S-230: what it fielded, the units its waves lost included; batch
+		-- 1's picks moved seed 34's first wave into the enemy Commander)
+		local fielded = army + sim.playerStats[1].unitsLost
+		t.expect(fielded >= 8, `an army by 8 minutes ({army} standing, {fielded} fielded)`)
 		-- (0.5 since S-114: extractors alternate with generators from the
 		-- start, so more is built on about the same power)
 		t.expect(sim.eco.accounts[1].power.ratio >= 0.5, `power no longer badly stalled ({sim.eco.accounts[1].power.ratio})`)

@@ -49,7 +49,7 @@ local function selected(api: Api.Api): (boolean, boolean, { number }, boolean)
 		local u = api.world.units[id]
 		if u then
 			local d = World.def(api.world, u)
-			switchable = switchable or (d ~= nil and (d.converter ~= nil or d.retract ~= nil or d.shield ~= nil)) -- beam towers retract when off (S-96); shields go down (S-154)
+			switchable = switchable or (d ~= nil and (d.converter ~= nil or d.retract ~= nil or d.shield ~= nil or d.cloak ~= nil)) -- beam towers retract when off (S-96); shields go down (S-154); cloakers decloak (S-228)
 			anyOn = anyOn or bit32.band(u.state or 0, 2) ~= 0
 			anyRepeat = anyRepeat or bit32.band(u.state or 0, 16) ~= 0
 			local def = World.def(api.world, u)
@@ -293,6 +293,9 @@ function CommandCard.step(ui: UI, api: Api.Api)
 	end
 	ui.buttons["repeat"].TextTransparency = if #factories > 0 then 0 else 0.5
 	ui.buttons.toggle.TextTransparency = if switchable then 0 else 0.5
+	-- over a scrap heap Resurrect has nothing to do (S-227, C-278)
+	local hw = api.state.hoverWreck and api.world.wrecks[api.state.hoverWreck]
+	ui.buttons.resurrect.TextTransparency = if hw and hw.heap then 0.5 else 0
 end
 
 return CommandCard

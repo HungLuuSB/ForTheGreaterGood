@@ -104,6 +104,11 @@ export type UnitDef = {
 	-- switched off (TOGGLE), it retracts: can't fire, and damage to it is
 	-- divided by `armor` (S-96, client request 43). It starts switched on.
 	retract: { armor: number }?,
+	-- cloak (S-228, BAR's cloakCost / mincloakdistance): while switched on
+	-- (TOGGLE; it starts on), powered and quiet, it can't be seen by sight,
+	-- only by radar. `drain` power a second while on; firing, or an enemy
+	-- within `decloak` studs, shows it.
+	cloak: { drain: number, decloak: number }?,
 	height: number?, -- studs: the body's height (hit cylinder, sight lines); default 6 × footprint (S-184: tall towers)
 	muzzleHeight: number?, -- studs above its base its weapons fire from; default 0.6 × height
 	retired: boolean?, -- no longer built (on no build list); kept so old replays and scenes load (S-157)
@@ -142,6 +147,11 @@ export type WeaponDef = {
 	damage: { [string]: number }, -- every armor class present after build
 	aoe: number?,
 	edgeEffectiveness: number?,
+	-- EMP (S-229, BAR's paralyzer): its damage fills the target's stun bar
+	-- instead of taking health; a bar past max health stuns it, for up to
+	-- `paralyzeSeconds` after the last hit (default Paralyze.DEFAULT_SECONDS)
+	paralyzer: boolean?,
+	paralyzeSeconds: number?,
 	closeDamage: number?, -- lasers (S-178): damage × this at point blank, falling linearly to × 1 at full range
 	targets: { string },
 	targetMask: number, -- derived
@@ -371,6 +381,7 @@ local UNIT_SPEC: Spec = {
 		assistOnly = { kind = "boolean", optional = true },
 		shield = { kind = "record", optional = true, fields = { radius = POSITIVE, capacity = POSITIVE, recharge = POSITIVE, power = NON_NEGATIVE } },
 		retract = { kind = "record", optional = true, fields = { armor = { kind = "number", min = 1 } } },
+		cloak = { kind = "record", optional = true, fields = { drain = NON_NEGATIVE, decloak = POSITIVE } },
 		retired = { kind = "boolean", optional = true },
 		storage = {
 			kind = "record",
@@ -414,6 +425,8 @@ local WEAPON_SPEC: Spec = {
 		damage = { kind = "record", fields = damageFields },
 		aoe = opt(NON_NEGATIVE),
 		edgeEffectiveness = opt(FRACTION),
+		paralyzer = { kind = "boolean", optional = true },
+		paralyzeSeconds = opt(POSITIVE),
 		closeDamage = opt({ kind = "number", min = 1, max = 3 }),
 		targets = { kind = "list", item = CATEGORY, minItems = 1 },
 		priority = { kind = "list", optional = true, item = CATEGORY },

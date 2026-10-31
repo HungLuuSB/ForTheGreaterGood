@@ -36,7 +36,7 @@ return function(t: any)
 		end
 	end)
 
-	t.test("every def draws its catalogue tile, larger for higher tiers", function()
+	t.test("every def draws its catalogue tile (or its type's placeholder till the sheet lists it), larger for higher tiers", function()
 		local defs = Defs.load()
 		local tbl = Icons.table(defs)
 		local world = World.new(defs)
@@ -44,7 +44,9 @@ return function(t: any)
 			local u: any = { id = 1, team = 1, defIndex = def.index, flags = 0, x = 0, z = 0, alt = 0 }
 			local s = Icons.style(tbl, world, u, false)
 			t.equal(s.kind, "unit", def.id)
-			t.equal(s.tile, IconAtlas.byDef[def.id].tile, def.id)
+			local e = IconAtlas.byDef[def.id]
+			-- a def newer than the sheet draws its type's placeholder (C-258)
+			t.equal(s.tile, if e then e.tile else IconAtlas.placeholders[Icons.placeholderFrame(def)], def.id)
 			t.expect(s.size >= Icons.BASE and s.size <= math.floor(Icons.BASE * 1.4 + 0.5), `{def.id}: size {s.size}`) -- up to the experimental mechs' 1.4 (draft 7)
 		end
 		t.expect(Icons.style(tbl, world, { id = 1, team = 1, defIndex = defs.units.ord_paladin.index, flags = 0, x = 0, z = 0, alt = 0 } :: any, false).size > Icons.BASE, "T2 drawn larger")

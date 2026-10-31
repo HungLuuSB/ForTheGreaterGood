@@ -1,0 +1,55 @@
+{
+  "id": "scrap_heap_1",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style scrap heap (S-227)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.2074,
+        0.659,
+        0.0094
+      ],
+      "size": [
+        6.7895,
+        1.4765,
+        7.0947
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      200,
+      200,
+      200
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1036,
+    "total": 1036
+  },
+  "textures": {
+    "size": 512,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

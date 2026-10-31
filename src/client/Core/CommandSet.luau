@@ -135,7 +135,7 @@ function CommandSet.forDef(def: any, all: any?): { [string]: boolean }
 		set["repeat"], set.cancel, set.stop = true, true, true
 		set.move, set.fight, set.patrol, set.guard, set.attack = true, true, true, true, true
 	end
-	if def.converter ~= nil or def.toggle ~= nil or def.retract ~= nil or def.shield ~= nil then
+	if def.converter ~= nil or def.toggle ~= nil or def.retract ~= nil or def.shield ~= nil or def.cloak ~= nil then -- (cloakers: S-228)
 		set.toggle = true
 	end
 	if CommandSet.consumer(def) then

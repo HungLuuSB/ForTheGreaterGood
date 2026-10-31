@@ -17,12 +17,15 @@ local function teamMatch(levels: { string }, mapId: string?): Sim.Sim
 	return Sim.new({ seed = 5, players = players, mapId = mapId or "map:plains", scenario = "standard_start", match = { mode = "TEAM", win = "COMMAND_ENDS", startMode = "choose", ai = ai } })
 end
 
-local function run(sim: Sim.Sim, brains: { any }, ticks: number)
+local function run(sim: Sim.Sim, brains: { any }, ticks: number, each: (() -> ())?)
 	for _ = 1, ticks do
 		for _, b in brains do
 			Skirmish.tick(b)
 		end
 		Sim.step(sim)
+		if each then
+			each()
+		end
 		if sim.match.over then
 			return
 		end
@@ -120,7 +123,20 @@ return function(t: RunAll.Context)
 	t.slow("in a 3v3 the air AI builds an airfield early, the defence AI twice the turrets, and bot labs come into play", function()
 		local sim = teamMatch({ "hard", "hard", "hard", "hard_aggressive", "hard_aggressive", "hard_aggressive" })
 		local brains = Skirmish.forMatch(sim)
-		run(sim, brains, 15 * 60 * 14) -- (14 min: S-193 slowed units and the bot lab waits for an established base)
+		-- every aircraft anyone fielded, by owner (S-230: what an air AI flew,
+		-- not only what survived the air war at minute 14)
+		local flown: { [number]: { [number]: boolean } } = {}
+		run(sim, brains, 15 * 60 * 14, function() -- (14 min: S-193 slowed units and the bot lab waits for an established base)
+			if sim.tick % 15 == 0 then
+				for _, id in sim.world.ids do
+					if sim.defs.unitByIndex[sim.world.defIndex[id]].domain == "air" then
+						local o = sim.world.owner[id]
+						flown[o] = flown[o] or {}
+						flown[o][id * 65536 + (sim.world.gen[id] or 0) % 65536] = true
+					end
+				end
+			end
+		end)
 		-- the roles go by spot (S-207): look them up
 		local byRole: { [string]: { number } } = {}
 		for _, b in brains do
@@ -133,14 +149,12 @@ return function(t: RunAll.Context)
 		local fields, airUnits = 0, 0
 		for _, pid in air do
 			fields += owned(sim, pid, "airfield")
-			for _, id in sim.world.ids do
-				if sim.world.owner[id] == pid and sim.defs.unitByIndex[sim.world.defIndex[id]].domain == "air" then
-					airUnits += 1
-				end
+			for _ in flown[pid] or {} do
+				airUnits += 1
 			end
 		end
 		t.expect(fields >= 1, "an air role built an airfield")
-		t.expect(airUnits >= 2, `and flies aircraft ({airUnits})`)
+		t.expect(airUnits >= 2, `and flew aircraft ({airUnits})`)
 		-- side 1 (Hard: players 1–3): its defence AI and its balanced one
 		local d, bal = 0, 0
 		for _, pid in defense do

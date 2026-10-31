@@ -444,7 +444,13 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			elseif kind == EK.WRECK_STATE then
 				local wreck = view.wrecks[e.wreckId :: number]
 				assert(wreck ~= nil, `WRECK_STATE for wreck {e.wreckId} the client doesn't have`)
-				wreck.supply, wreck.rez = e.supply :: number, e.rez :: number
+				wreck.supply, wreck.rez, wreck.heap = e.supply :: number, e.rez :: number, e.heap == true
+				continue
+			elseif kind == EK.WRECK_HIT then
+				-- sparks on a wreck the client has (protocol 45, S-227)
+				local wreck = view.wrecks[e.wreckId :: number]
+				assert(wreck ~= nil, `WRECK_HIT for wreck {e.wreckId} the client doesn't have`)
+				table.insert(view.effects, { kind = "wreckHit", x = wreck.x, y = 0, z = wreck.z })
 				continue
 			elseif kind == EK.WRECK_GONE then
 				assert(view.wrecks[e.wreckId :: number] ~= nil, `WRECK_GONE for wreck {e.wreckId} the client doesn't have`)
