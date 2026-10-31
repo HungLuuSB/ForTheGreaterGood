@@ -10,11 +10,11 @@ Plan: `docs/design/bar-roster-plan.md` (the user's answers at the top). sim-A le
 
 | Step | What | State |
 |---|---|---|
-| Part 1 | S-225: four price fixes (the Juggernaut priced to take on two Titans), 28 renames by role | done (sim) · D: Codex names · B: tooltips |
-| Autoheal | Idle units heal (the user: "important, add it") | next (S-226) |
-| Part 3 | `docs/design/reserved-units.md`: the 65 unreachable units, drafted only | next |
-| Part 4 | Wrecks take damage, resources follow health, scrap heaps below 40%, protocol 45 | after autoheal · C: heap meshes · B: swap and sparks · E: scrap mark · D: note |
-| Batch 1 | 29 vehicles and hovercraft + 2 hover factories; mechanics first: hovercraft check, cloak, EMP | after part 4 · C: blockouts → meshes → wrecks, a preview for the user per unit · E: icons, pictures · B: cloak, EMP, hover effects · D: Codex |
+| Part 1 | S-225: four price fixes (the Juggernaut priced to take on two Titans), 28 renames by role | done: sim; B and D checked, no change needed (both read names from the defs) |
+| Autoheal | S-226: idle units heal 1% a second after 10 s without damage | done (sim); no wire change |
+| Part 3 | `docs/design/reserved-units.md`: the 65 unreachable units, drafted only (49 new names, 7 modes and events) | done |
+| Part 4 | S-227: wrecks take damage, resources follow health, scrap heaps below 40%, protocol 45 | done (sim) · C: heap meshes · B: swap and sparks (contract in net.md 7a) · E: scrap mark · D: note |
+| Batch 1 | 29 vehicles and hovercraft + 2 hover factories; S-228 cloak, S-229 EMP (protocol 46), S-230 all 31 defs, hovercraft checked, AI picks (hover factories on water maps still to do) | defs done (sim), lands through B's and C's branches · C: blockouts → meshes → wrecks, a preview for the user per unit · E: icons, pictures · B: cloak, EMP, hover effects · D: Codex |
 | Batches 2–5 | Bots, air, naval, structures | the next batch's defs are drafted while C models the current one |
 
 
@@ -592,7 +592,8 @@ Requests from the sim stream to session C (models, `FTGG-models`, branch `m-mode
 Requests from the sim stream to session D (lobby and Codex, `FTGG-lobby`, branch `m-lobby`).
 
 1. **S-225 (2026-10-31): 28 display-name renames** (ids unchanged): the table is in `docs/decisions/sim.md` S-225. New prices: Juggernaut 5,400 / 78,000 / 180,000, health 54,000; Bulwark health 4,800; Dragon 1,600 / 28,000 / 50,000; Wyvern 540 / 6,800 / 15,000; Aegis 580 / 7,600 / 16,000. If the Codex reads names and stats from the defs, only text that names a unit needs a look.
-2. **Coming:** autoheal (S-226), wrecks and scrap heaps (S-227), then batch 1's 31 entries. Each one gets a line here when its defs land.
+2. **Codex lines:** S-226 idle autoheal (1% of max health a second after 10 s without damage); S-227 wrecks and scrap heaps (a wreck's resources fall with its health, below 40% a heap that can only be reclaimed); S-228 cloak (the Whisper); S-229 EMP (the Thunderer).
+3. **Batch 1 (S-230), 31 Codex entries:** the table in `docs/decisions/sim.md` S-230 (names, roles, factories). Counterpart rows: Order/Chaos pairs where both have one (Courser/Gnat-class raiders are not pairs; the README's BAR ids are in each def's header comment).
 
 ## For the 2D stream (E)
 
@@ -719,7 +720,7 @@ Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E
   - **S-225 renames:** 28 display names (ids unchanged; table in `docs/decisions/sim.md`). Anything in `src/client` that writes a unit's name as text needs a look.
   - **Coming, with their wire contracts when they land:**
     - S-226 idle autoheal (no wire change: health rises through the usual updates);
-    - S-227 wrecks and scrap heaps (protocol 45): the wreck → heap swap with a spark and dust burst, sparks where a wreck is hit (a WRECK_HIT event), the current reclaim value in the wreck tooltip, Resurrect greyed out on heaps (and on the cursor);
+    - **S-227 wrecks and scrap heaps (protocol 45), now in `docs/contracts/net.md` section 7a:** WRECK (16 B) and WRECK_STATE (7 B) carry `heap` (0 / 1); a new event **WRECK_HIT 36** (`wreckId u16`, 3 B) comes in the tick a blast hits a wreck you have, in sight. Please: the wreck → heap model swap with a spark and dust burst (C's heap meshes, 4 sizes by footprint), sparks on WRECK_HIT, the current reclaim value (`supply`) in the wreck tooltip, Resurrect greyed out on heaps (the server refuses it anyway). **`src/client/Core/NetIn.luau` must at least ignore event kind 36 before the protocol 45 merge reaches a playtest;**
     - batch 1: cloak (own units shown translucent, enemies hidden), EMP stun (a crackle on paralysed units), hover wakes, the Hover Dock on water; rigs and piece scripts for the 31 new units once C's models are in.
 
 ## Integration notes

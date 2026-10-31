@@ -998,8 +998,9 @@ startMatch()
 
 -- Studio inspection through execute_luau (its VM doesn't share `shared`):
 -- game.ServerStorage.FtggDebug:Invoke() returns a summary of the live sim;
--- Invoke("damage", unitId, amount) queues damage through the sim's own
--- damage step (as a hit with no attacker), for testing what the client shows;
+-- Invoke("damage", unitId, amount, emp?) queues damage through the sim's own
+-- damage step (as a hit with no attacker; `emp`: its seconds, a stun instead,
+-- S-229), for testing what the client shows;
 -- Invoke("spawn", defId, playerId, x, z, heading, count?, spacing?) adds
 -- units in a row along x (the sim's own Spawn), for playtests of what the
 -- client draws; Invoke("build", builderId, defId, x, z) orders a builder to
@@ -1011,8 +1012,8 @@ if RunService:IsStudio() then
 	debugFn.Name = "FtggDebug"
 	debugFn.OnInvoke = function(query: string?, ...: any)
 		if query == "damage" then
-			local id, amount = ...
-			Combat.queueDamage(sim.combat, id, amount, 0)
+			local id, amount, para = ... -- para: EMP seconds, a stun instead of damage (S-229)
+			Combat.queueDamage(sim.combat, id, amount, 0, nil, para)
 			return true
 		elseif query == "spawn" then
 			local defId, playerId, x, z, heading, count, spacing = ...

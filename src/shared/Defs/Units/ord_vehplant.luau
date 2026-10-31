@@ -10,7 +10,7 @@ return Templates.extend(Templates.Structure, {
 	health = 3000,
 	footprint = 4, -- size shows tech level (S-104)
 	buildPower = 200, -- doubled: T1 units in about half the time (S-94, client request 42b)
-	buildOptions = { "ord_mason", "ord_herald", "ord_lancer", "ord_verdict", "ord_halo", "ord_oracle" },
+	buildOptions = { "ord_mason", "ord_herald", "ord_lancer", "ord_verdict", "ord_halo", "ord_oracle", "ord_courser", "ord_gemini", "ord_wader", "ord_pontifex" },
 	model = "ord_vehplant",
 	icon = "factory",
 })

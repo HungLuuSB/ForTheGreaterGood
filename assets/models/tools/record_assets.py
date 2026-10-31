@@ -61,7 +61,7 @@ def main():
             continue
         d = os.path.join(ROOT, "assets", "models", uid)
         if not os.path.isdir(d):  # missiles, deposits and map features live under assets/fx
-            for family in ("missiles", "deposit", "features"):
+            for family in ("missiles", "deposit", "features", "scrap"):
                 d = os.path.join(ROOT, "assets", "fx", family, uid)
                 if os.path.isdir(d):
                     break

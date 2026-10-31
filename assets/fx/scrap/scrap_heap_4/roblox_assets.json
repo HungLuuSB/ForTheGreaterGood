@@ -1,0 +1,25 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Scrap heaps (S-227), uploaded with the user's approval 2026-10-31: 2524 triangles, glow share 0.0%",
+  "bar": {
+    "model": "rbxassetid://73174854914127",
+    "meshes": {
+      "base": "rbxassetid://77585373511359"
+    },
+    "decals": {
+      "ALB": "rbxassetid://94910683943368",
+      "RGH": "rbxassetid://120555042608699",
+      "NOR": "rbxassetid://124441047638617",
+      "MTL": "rbxassetid://116236260608231",
+      "EMI": "rbxassetid://132963060372196"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://127767736617101",
+      "NOR": "rbxassetid://127294580518062",
+      "RGH": "rbxassetid://76816497488844",
+      "MTL": "rbxassetid://89189920628824",
+      "EMI": "rbxassetid://140114419982034"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.scrap_heap_4_bar in FTGG Art"
+  }
+}

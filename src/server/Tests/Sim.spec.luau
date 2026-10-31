@@ -66,8 +66,11 @@ return function(t: RunAll.Context)
 			"Sim.Movement",
 			"Sim.Weapons",
 			"Sim.Projectiles",
+			"Sim.Cloak",
 			"Sim.Damage",
 			"Sim.Construction",
+			"Sim.AutoHeal",
+			"Sim.Paralyze",
 			"Sim.Match",
 			"Sim.NetOut",
 		})

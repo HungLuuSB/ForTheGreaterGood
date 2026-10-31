@@ -101,7 +101,7 @@ export type Sight = { width: number, depth: number, cells: buffer, version: numb
 -- A known wreck (C-65). Supply and resurrect progress (protocol 35, S-168;
 -- C-216): `supply` left in it and `fullSupply` it held at the death (whole
 -- units), `rez` 0..1; out of sight they keep their last values.
-export type Wreck = { id: number, defIndex: number, x: number, z: number, heading: number, supply: number, fullSupply: number, rez: number, feature: number? } -- feature: a map feature's kind (Features.BY_ID, protocol 40, S-197): a tree's supply / fullSupply are power
+export type Wreck = { id: number, defIndex: number, x: number, z: number, heading: number, supply: number, fullSupply: number, rez: number, feature: number?, heap: boolean? } -- feature: a map feature's kind (Features.BY_ID, protocol 40, S-197): a tree's supply / fullSupply are power; heap: worn below 40% to a scrap heap, reclaim only (protocol 45, S-227)
 
 -- An own unit's status off camera (OWN_STATUS, S-158): health and build
 -- 0..1, the factory queue's head (unit def index, 0 = none), its progress
@@ -197,6 +197,8 @@ export type World = {
 	wrecks: { [number]: Wreck }, -- known wrecks by wreck ID (C-65)
 	wreckAdded: { number }, -- queues the wreck renderer drains: WRECK
 	wreckGone: { number }, -- WRECK_GONE (reclaimed or gone)
+	wreckHeaped: { number }, -- known wrecks that just became scrap heaps (WRECK_STATE heap, S-227)
+	wreckHits: { number }, -- WRECK_HIT: a blast hit the wreck (S-227)
 	alertQueue: { { kind: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT events (protocol 23, S-68) Core/Alerts drains
 	cheatResults: { any }, -- CHEAT_RESULT events (protocol 27, S-102) the cheat command line drains (C-119)
 	lastShot: { [number]: { [number]: number } }, -- unit → weapon slot → sim tick of its last shot seen (FIRE, a launch; the reload bar, C-170)
@@ -245,6 +247,8 @@ function World.new(defs: Defs.DefSet): World
 		wrecks = {},
 		wreckAdded = {},
 		wreckGone = {},
+		wreckHeaped = {},
+		wreckHits = {},
 		alertQueue = {},
 		cheatResults = {},
 		shields = {},
@@ -287,6 +291,8 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.wrecks)
 	table.clear(world.wreckAdded)
 	table.clear(world.wreckGone)
+	table.clear(world.wreckHeaped)
+	table.clear(world.wreckHits)
 	table.clear(world.alertQueue)
 	table.clear(world.shields)
 	table.clear(world.remoteDomes)
@@ -376,12 +382,13 @@ end
 -- that float.
 -- Whether a unit is drawn on the water surface rather than the bed (C-192,
 -- the user: each on its terrain): ships, structures built on water (their
--- models float), and amphibious or hover units, which ride the surface.
+-- models float, as do those that stand on land or water where there's
+-- water), and amphibious or hover units, which ride the surface.
 -- Amphibious walkers (the Commanders, Titan, Juggernaut: AMPHIB_WALKER,
 -- S-210) share the amphibious surface but walk the seafloor (C-254, H18).
 function World.floats(def: any): boolean
-	if def.domain == "naval" or def.placement == "water" then
-		return true
+	if def.domain == "naval" or def.placement == "water" or def.placement == "either" then
+		return true -- ("either": the hover factories, S-230; on land the ground is higher than any water)
 	end
 	local mc = def.moveClass and (MoveClasses :: any)[def.moveClass]
 	return mc ~= nil and mc.id ~= "AMPHIB_WALKER" and (mc.surface == "amphib" or mc.surface == "hover")

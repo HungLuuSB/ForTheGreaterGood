@@ -102,7 +102,7 @@ return function(t: RunAll.Context)
 		local c = sim.combat
 		local wreck = wreckOf(sim, "chs_ravager", 0, 0)
 		local full = c.wreckSupply[wreck]
-		c.wreckSupply[wreck] = full * 0.25 -- three quarters reclaimed
+		c.wreckSupply[wreck] = full * 0.5 -- half reclaimed (below 40% it would be a heap, S-227)
 		local mason = Spawn.unit(sim, "ord_mason", 1, 40, 0)
 		fund(sim, 1, 1000, 5000)
 		resurrect(sim, 1, { mason }, wreck)
@@ -119,9 +119,9 @@ return function(t: RunAll.Context)
 		end)
 		t.expect(unit ~= 0, "resurrected")
 		t.expect(refilledAt ~= nil and rezStarted ~= nil and rezStarted >= refilledAt, `refilled at {refilledAt}, then resurrect from {rezStarted}`)
-		-- the refill runs at the reclaim rate: 0.75 × 65 supply at 11 supply/s ≈ 4.4 s
+		-- the refill runs at the reclaim rate: 0.5 × 65 supply at 11 supply/s ≈ 3 s
 		local rate = (sim.defs.units.ord_mason.buildPower :: number) * 0.1
-		t.expect(math.abs((refilledAt :: number) - 2 - full * 0.75 / rate * 15) <= 3, `refill took {(refilledAt :: number) - 2} ticks`)
+		t.expect(math.abs((refilledAt :: number) - 2 - full * 0.5 / rate * 15) <= 3, `refill took {(refilledAt :: number) - 2} ticks`)
 	end)
 
 	t.test("reclaiming a wreck being resurrected sets it back: it must be refilled again", function()

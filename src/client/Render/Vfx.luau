@@ -232,6 +232,21 @@ local SPLASH: { Spec } = {
 	{ name = "Foam", texture = TEX.smoke, life = { 1.2, 2 }, speed = { 8, 14 }, size = { { 0, 1.5 }, { 1, 4.5 } }, transparency = { { 0, 0.35 }, { 1, 1 } }, color = colors({ { 0, FOAM }, { 1, FOAM } }), count = 8, drag = 4, spread = Vector2.new(10, 10), direction = Enum.NormalId.Front, ground = true, ring = true },
 }
 
+-- Wrecks wearing down (S-227, C-278): sparks off metal where a blast hits a
+-- wreck, and when one gives way to a scrap heap a burst of sparks, flung
+-- scrap and dust thrown out along the ground. Scale 1 = a 1-cell wreck.
+local SCRAP = Color3.fromRGB(70, 64, 58)
+local SCRAP_HIT: { Spec } = {
+	{ name = "Sparks", texture = TEX.sparks, life = { 0.3, 0.7 }, speed = { 14, 32 }, size = { { 0, 0.6 }, { 1, 0.08 } }, transparency = { { 0, 0 }, { 1, 1 } }, color = colors({ { 0, Color3.new(1, 1, 0.85) }, { 1, ORANGE } }), count = 12, light = 1, drag = 1, spread = Vector2.new(70, 70), direction = Enum.NormalId.Top, accel = Vector3.new(0, -40, 0) },
+	{ name = "Puff", texture = TEX.smoke, life = { 0.8, 1.3 }, speed = { 2, 5 }, size = { { 0, 1 }, { 1, 3 } }, transparency = { { 0, 0.5 }, { 1, 1 } }, color = colors({ { 0, GREY }, { 1, LIGHT_GREY } }), count = 2, drag = 2, accel = Vector3.new(0, 1.5, 0) },
+}
+local SCRAP_COLLAPSE: { Spec } = {
+	{ name = "Sparks", texture = TEX.sparks, life = { 0.5, 1.1 }, speed = { 16, 38 }, size = { { 0, 0.7 }, { 1, 0.1 } }, transparency = { { 0, 0 }, { 1, 1 } }, color = colors({ { 0, Color3.new(1, 1, 0.85) }, { 1, ORANGE } }), count = 22, light = 1, drag = 1, spread = Vector2.new(75, 75), direction = Enum.NormalId.Top, accel = Vector3.new(0, -40, 0) },
+	{ name = "Scrap", texture = TEX.square, life = { 0.7, 1.2 }, speed = { 8, 18 }, size = { { 0, 0.5 }, { 1, 0.35 } }, transparency = { { 0, 0 }, { 0.8, 0 }, { 1, 1 } }, color = colors({ { 0, SCRAP }, { 1, Color3.fromRGB(40, 37, 34) } }), count = 10, accel = Vector3.new(0, -45, 0), rotSpeed = 300, spread = Vector2.new(60, 60), direction = Enum.NormalId.Top },
+	{ name = "Dust", texture = TEX.smoke, life = { 1.4, 2.4 }, speed = { 8, 16 }, size = { { 0, 2 }, { 1, 6.5 } }, transparency = { { 0, 0.35 }, { 1, 1 } }, color = colors({ { 0, DUST }, { 1, LIGHT_GREY } }), count = 12, drag = 5, spread = Vector2.new(12, 12), direction = Enum.NormalId.Front, ground = true, ring = true },
+	{ name = "Cloud", texture = TEX.smoke, life = { 2, 3.2 }, speed = { 1.5, 4 }, size = { { 0, 2.5 }, { 1, 7 } }, transparency = { { 0, 0.45 }, { 0.5, 0.7 }, { 1, 1 } }, color = colors({ { 0, DUST }, { 1, LIGHT_GREY } }), count = 5, drag = 1.5, accel = Vector3.new(0, 2, 0), rotSpeed = 20 },
+}
+
 local KINDS: { [string]: Kind } = {
 	nuke = { specs = NUKE, cap = 4, life = longest(NUKE), light = { color = Color3.fromRGB(255, 230, 190), range = 60, brightness = 12, seconds = 1.5 }, flash = { color = Color3.new(1, 1, 0.9), size = 120, seconds = 0.6 }, ring = true, ringSize = 450, ringSeconds = 1.6 }, -- no scorch decal: a ground burst digs a crater (Render/Crater, C-82)
 	impact = { specs = EXPLOSION, cap = 32, life = longest(EXPLOSION), light = { color = ORANGE, range = 12, brightness = 3, seconds = 0.25 }, flash = { color = YELLOW, size = 6, seconds = 0.12 }, ring = true, scorch = true },
@@ -243,6 +258,8 @@ local KINDS: { [string]: Kind } = {
 	flare = { specs = DECOY, cap = 6, life = 3, flares = 4 },
 	chaff = { specs = CHAFF, cap = 6, life = longest(CHAFF) },
 	dircm = { specs = JAM, cap = 6, life = longest(JAM), laser = true },
+	scrapHit = { specs = SCRAP_HIT, cap = 16, life = longest(SCRAP_HIT), light = { color = YELLOW, range = 6, brightness = 1.5, seconds = 0.08 } },
+	scrapCollapse = { specs = SCRAP_COLLAPSE, cap = 8, life = longest(SCRAP_COLLAPSE), light = { color = ORANGE, range = 8, brightness = 1.5, seconds = 0.15 } },
 	splash = { specs = SPLASH, cap = 24, life = longest(SPLASH), flash = { color = FOAM, size = 3, seconds = 0.08 } },
 }
 

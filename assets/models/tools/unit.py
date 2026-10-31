@@ -109,6 +109,26 @@ FACTIONS["neutral"] = {
               },
 }
 
+# Scrap heaps (S-227, part 4 of the BAR roster plan): what a wreck becomes below 40% health
+# (assets/fx/scrap/). Faction-neutral, no glow: `paint` soot-stained metal, `trim` rust,
+# `steel` bare scraped steel, `dark` charred debris, `rubber` burnt rubber, `team` the
+# scorched ground patch, tinted to the terrain like the deposits' scrape.
+FACTIONS["scrap"] = {
+    "label": "BAR-style scrap heap (S-227)",
+    "paint": (84, 78, 70),
+    "accent": (200, 200, 200),
+    "team_preview": (78, 96, 58),
+    "glow": _NEUTRAL_GLOW,
+    "variants": {"bar": {"type": "plain", "base": (84, 78, 70), "mottle": 0.35, "chip": (112, 106, 98), "grime": (52, 47, 42)}},
+    "specs": {**FACTIONS["neutral"]["specs"],
+              "paint": {"base": None, "roughness": 0.7, "metallic": 0.55, "edge_wear": 0.4, "ao": 0.55},  # sooty metal
+              "trim": {"base": (118, 66, 38), "roughness": 0.85, "metallic": 0.25, "edge_wear": 0.3, "ao": 0.55},  # rust
+              "steel": {"base": (138, 134, 126), "roughness": 0.38, "metallic": 0.9, "edge_mode": "highlight", "edge_wear": 0.45, "ao": 0.6},  # scraped steel
+              "dark": {"base": (44, 40, 36), "roughness": 0.9, "metallic": 0.15, "edge_wear": 0.15, "ao": 0.5},  # charred debris
+              "rubber": {"base": (34, 32, 30), "roughness": 0.95, "metallic": 0.0, "edge_wear": 0.05, "ao": 0.5},  # burnt rubber
+              },
+}
+
 # Map features (S-197): trees and rocks, reclaimable scenery (assets/fx/features/). No
 # faction, no glow, no team. Trees: `paint` bark, `trim` foliage, `dark` its shade, `era`
 # its sunlit tips; rocks: `steel` stone (not metal here), `rubber` its shade, `radome` the
