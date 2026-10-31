@@ -2,6 +2,13 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-31: S-225's renames and prices)
+
+- Merged main `31bc0078` (fast-forward).
+- **sim-A's request 1 (S-225: 28 display-name renames, five price changes): no lobby change needed.** The Codex and the Units tab read names, descriptions, prices and stats from the defs, and key everything on ids, which S-225 keeps. No lobby source names a renamed unit. The articles show the new names and prices once S-225 is on main.
+- **`Codex.spec`:** the main battle tanks' check no longer allows a retired Goliath (S-224 is on main): the two ids must be each other's counterparts. Its comments name units by id only.
+- Lobby specs 68 / 68; the build check passes (660 scripts, 1097 requires).
+
 ## Summary (2026-10-31: the Goliath and the transports checked in Studio)
 
 - `m-lobby` holds main `85292c93` (fast-forward: S-224's Goliath def, C's new Goliath model, B's C-276 / C-277 with picture sheet 4 `rbxassetid://120576950340042`).

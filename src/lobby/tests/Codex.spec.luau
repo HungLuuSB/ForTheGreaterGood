@@ -74,15 +74,9 @@ return function(t: RunAll.Context)
 	t.test("counterparts point at each other", function()
 		t.deepEqual(codex.entries.ord_titan.counterparts, { "chs_juggernaut" })
 		t.deepEqual(codex.entries.chs_juggernaut.counterparts, { "ord_titan" })
-		-- S-224 brings the Goliath back; until its def is on this branch it's
-		-- still retired (S-213), hidden, and the Paladin has no counterpart
-		if defs.units.chs_goliath.retired then
-			t.equal(codex.entries.chs_goliath, nil, "the retired Goliath")
-			t.equal(#codex.entries.ord_paladin.counterparts, 0, "no Chaos main battle tank while it's retired")
-		else
-			t.deepEqual(codex.entries.ord_paladin.counterparts, { "chs_goliath" })
-			t.deepEqual(codex.entries.chs_goliath.counterparts, { "ord_paladin" })
-		end
+		-- the main battle tanks (S-224 brought chs_goliath back)
+		t.deepEqual(codex.entries.ord_paladin.counterparts, { "chs_goliath" })
+		t.deepEqual(codex.entries.chs_goliath.counterparts, { "ord_paladin" })
 		-- S-219's transports
 		t.deepEqual(codex.entries.ord_courier.counterparts, { "chs_buzzard" })
 		t.deepEqual(codex.entries.chs_charon.counterparts, { "ord_ark" })
