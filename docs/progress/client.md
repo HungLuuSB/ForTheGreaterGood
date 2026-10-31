@@ -57,6 +57,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-10-31, scrap heap meshes: C-281)
+
+- **Scrap heap meshes (C-281):** C's approved heaps (4 sizes) replace the stand-in, their ground patch tinted to the terrain like deposits; a stand-in shown before a mesh is built swaps to it.
+- Carries m-models 893f4e82.
+
 ## Summary (2026-10-31, batch 1: C-280)
 
 - **Batch 1 (C-280, S-230):**

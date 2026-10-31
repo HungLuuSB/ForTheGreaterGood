@@ -15,8 +15,9 @@
 -- model gives way to a pile of scrap sized by the unit's footprint, with a
 -- burst of sparks and dust (`onFx`); a blast that hits a wreck throws
 -- sparks off it. The pile is models-C's heap mesh (Meshes.fx.scrap_heap,
--- variant = size 1..4) once approved and built, else a stand-in of
--- scattered charred bars.
+-- variant = size 1..4) once approved and built, its ground patch tinted to
+-- the terrain (C-281); else a stand-in of scattered charred bars, swapped
+-- for C's when it's built.
 -- Aircraft that die in the air fall out of the sky instead (C-48,
 -- Core/Deaths.crash), burning and trailing smoke, and leave nothing: the
 -- ground explosion comes from Effects when they hit.
@@ -24,9 +25,12 @@
 local Deaths = require("../Core/Deaths")
 local World = require("../Core/World")
 local MeshModels = require("./MeshModels")
+local RenderTerrain = require("./Terrain")
 local Models = require("./Models")
 local Features = require("@shared/Defs/Features")
 local Prng = require("@shared/Util/Prng")
+
+local CollectionService = game:GetService("CollectionService")
 
 local RenderDeaths = {}
 
@@ -72,6 +76,9 @@ function RenderDeaths.new(): State
 	local folder = Instance.new("Folder")
 	folder.Name = "Wrecks"
 	folder.Parent = workspace
+	for i = 1, RenderDeaths.HEAP_SIZES do
+		MeshModels.fxVariant("scrap_heap", i) -- start building C's heaps now: the first one is then rarely a stand-in
+	end
 	return { playing = {}, wrecks = {}, byWreck = {}, pending = {}, reclaimed = {}, free = {}, features = {}, toHeap = {}, featureVersion = -1, folder = folder, stats = { shakes = 0, flings = 0, wrecks = 0, crashes = 0 } }
 end
 
@@ -179,27 +186,35 @@ local function standInHeap(size: number, seed: number): Model
 	return m
 end
 
-local function heapModel(s: State, size: number, wid: number): Model
-	local list = s.free[`heap_{size}`]
+-- C's heap of `size` once built, else the stand-in; the pool key says
+-- which ("heap_<size>" for C's, "heapstand_<size>" for the stand-in).
+local function heapModel(s: State, size: number, wid: number): (Model, string)
+	local real = if MeshModels.fxVariants("scrap_heap") >= size then MeshModels.fxVariant("scrap_heap", size) else nil
+	local key = if real then `heap_{size}` else `heapstand_{size}`
+	local list = s.free[key]
 	if list and #list > 0 then
-		return table.remove(list) :: Model
+		return table.remove(list) :: Model, key
 	end
-	if MeshModels.fxVariants("scrap_heap") >= size then
-		local template = MeshModels.fxVariant("scrap_heap", size)
-		if template then
-			return template:Clone()
-		end
-	end
-	return standInHeap(size, wid)
+	return if real then real:Clone() else standInHeap(size, wid), key
 end
 
 -- A scrap heap for wreck `wid` where its wreck lay (`x`, `z`, its heading).
+-- C's heap: its team-masked ground patch takes the terrain's color there,
+-- as a deposit's does (C-281).
 local function placeHeap(s: State, world: any, wid: number, def: any?, x: number, z: number, heading: number)
 	local size = RenderDeaths.heapSize(def)
-	local model = heapModel(s, size, wid)
+	local model, key = heapModel(s, size, wid)
+	if key == `heap_{size}` and world.layers then
+		local tint = RenderTerrain.tintAt(world.layers, x, z)
+		for _, p in model:GetDescendants() do
+			if p:IsA("BasePart") and CollectionService:HasTag(p, MeshModels.TEAM_TAG) then
+				p.Color = tint
+			end
+		end
+	end
 	model:PivotTo(CFrame.new(x, World.groundY(world, x, z), z) * CFrame.Angles(0, heading, 0))
 	model.Parent = s.folder
-	local w = { id = wid, defId = `heap_{size}`, model = model, wreckId = wid, heap = true }
+	local w = { id = wid, defId = key, model = model, wreckId = wid, heap = true }
 	table.insert(s.wrecks, w)
 	s.byWreck[wid] = w
 	s.pending[wid] = nil
@@ -418,6 +433,20 @@ function RenderDeaths.syncWrecks(s: State, world: any, t: number)
 				if real then
 					f.model:Destroy()
 					placeFeature(s, world, wid, rec)
+				end
+			end
+		end
+		-- and stand-in scrap heaps become C's (C-281)
+		for i = #s.wrecks, 1, -1 do
+			local w = s.wrecks[i]
+			local rec = world.wrecks[w.wreckId]
+			if w.heap and rec and string.sub(w.defId, 1, 10) == "heapstand_" then
+				local def = world.defs.unitByIndex[rec.defIndex]
+				local size = RenderDeaths.heapSize(def)
+				if MeshModels.fxVariants("scrap_heap") >= size and MeshModels.fxVariant("scrap_heap", size) then
+					table.remove(s.wrecks, i)
+					pool(s, w)
+					placeHeap(s, world, rec.id, def, rec.x, rec.z, rec.heading)
 				end
 			end
 		end

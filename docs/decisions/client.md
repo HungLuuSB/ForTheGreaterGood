@@ -2617,3 +2617,12 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - Foam over water, dust over land, switched when the surface under it changes.
 - **Icons:** `render.mjs` mapped all 238 defs to 142 catalogue items; only sheet 2 changed. The user approved the upload here: sheet 2 is 125202931406059 (sha256 69f8b0d9…), and sheet 1 keeps its id.
 - Studio, Coastline: a Hover Dock floating on the water and two Skimmers trailing foam across it (`debug_out/screens/c280_hover_wake.jpg`).
+
+### C-281 — C's scrap heap meshes, their ground patch tinted to the terrain (2026-10-31)
+
+- The user approved models-C's scrap heaps: `Meshes.fx.scrap_heap`, variants 1..4 by footprint (m-models 893f4e82, merged with C's batch 1 group 1 meshes).
+- `Render/Deaths` draws them as C-278 planned, with three additions:
+  - **Tint:** the team-masked `base` takes the terrain's colour where the heap lies, as a deposit's patch does. `RenderTerrain.tintAt` moved out of `Render/Deposits`, which now uses it too.
+  - **Pools and swap:** pool keys now say which model a heap is: `heap_<size>` for C's, `heapstand_<size>` for the stand-in. A stand-in heap is swapped for C's once that variant finishes building (on `MeshModels.fxVersion`, as map features are). A pooled heap is re-tinted wherever it lands.
+  - **Early build:** the four variants start building when the wreck renderer is made, so a match's first heap is rarely a stand-in.
+- Studio, Coastline: a Lancer's and a Paladin's wrecks reclaimed to 40% became `scrap_heap_1` and `scrap_heap_2`, their patches the grass colour (`debug_out/screens/c281_heap_close.jpg`).
