@@ -1,0 +1,159 @@
+{
+  "id": "chs_snapjaw_wreck",
+  "wreckOf": "chs_snapjaw",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0257,
+        1.4039,
+        -0.2714
+      ],
+      "size": [
+        4.794,
+        2.7392,
+        7.8815
+      ]
+    },
+    "fan1": {
+      "parent": "base",
+      "center": [
+        -1.1042,
+        2.1087,
+        2.316
+      ],
+      "size": [
+        1.6804,
+        0.1797,
+        1.5722
+      ],
+      "pivot": [
+        -1.15,
+        2.12,
+        2.3259999999999996
+      ]
+    },
+    "fan2": {
+      "parent": "base",
+      "center": [
+        1.1867,
+        2.1068,
+        2.334
+      ],
+      "size": [
+        1.6577,
+        0.26,
+        1.5757
+      ],
+      "pivot": [
+        1.15,
+        2.12,
+        2.3259999999999996
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0375,
+        2.1398,
+        -0.0847
+      ],
+      "size": [
+        2.7402,
+        1.3313,
+        2.7219
+      ],
+      "pivot": [
+        0.0,
+        1.5,
+        0.0
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0021,
+        2.0636,
+        -1.7023
+      ],
+      "size": [
+        0.8708,
+        0.9778,
+        1.9113
+      ],
+      "pivot": [
+        0.0,
+        1.95,
+        -1.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        1.95,
+        -2.6
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "fan1",
+    "fan2"
+  ],
+  "anim": {
+    "fan1": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan2": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 564,
+    "fan1": 64,
+    "fan2": 64,
+    "turret": 124,
+    "barrel": 160,
+    "total": 976
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

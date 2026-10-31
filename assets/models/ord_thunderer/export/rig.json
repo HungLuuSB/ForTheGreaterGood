@@ -1,0 +1,286 @@
+{
+  "id": "ord_thunderer",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.925,
+        -0.1
+      ],
+      "size": [
+        10.56,
+        2.95,
+        13.6
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -4.0,
+        0.5,
+        0.0011
+      ],
+      "size": [
+        2.0,
+        1.0,
+        13.3978
+      ],
+      "pivot": [
+        -4.0,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        4.0,
+        0.5,
+        0.0011
+      ],
+      "size": [
+        2.0,
+        1.0,
+        13.3978
+      ],
+      "pivot": [
+        4.0,
+        0.46,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.1406,
+        0.5007
+      ],
+      "size": [
+        6.7668,
+        3.0812,
+        6.9658
+      ],
+      "pivot": [
+        0.0,
+        2.6,
+        0.6
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        6.39,
+        0.0
+      ],
+      "size": [
+        5.76,
+        3.92,
+        1.56
+      ],
+      "pivot": [
+        0.0,
+        4.85,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        -2.1,
+        8.65,
+        0.0
+      ]
+    },
+    "muzzle2": {
+      "parent": "barrel",
+      "at": [
+        2.1,
+        8.65,
+        0.0
+      ]
+    },
+    "emp_muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        5.451067248717891,
+        2.369065920013849
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "trackL",
+    "trackR",
+    "turret",
+    "barrel"
+  ],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.515,
+        -0.075
+      ],
+      "size": [
+        10.56,
+        1.45,
+        13.67
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        2.25,
+        -6.75
+      ],
+      "size": [
+        9.0,
+        0.2,
+        0.1
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.245,
+        1.3689
+      ],
+      "size": [
+        6.88,
+        1.83,
+        4.7378
+      ]
+    },
+    {
+      "name": "turret_glow_weapon",
+      "piece": "turret",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        4.9227,
+        2.739
+      ],
+      "size": [
+        2.4,
+        1.3802,
+        1.9533
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        7.415,
+        0.0
+      ],
+      "size": [
+        5.56,
+        2.87,
+        1.36
+      ]
+    }
+  ],
+  "glowShare": 0.0583,
+  "triangles": {
+    "base": 936,
+    "trackL": 452,
+    "trackR": 452,
+    "turret": 912,
+    "barrel": 1356,
+    "total": 4108
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

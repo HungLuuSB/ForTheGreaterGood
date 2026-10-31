@@ -1,0 +1,140 @@
+{
+  "id": "ord_halcyon_wreck",
+  "wreckOf": "ord_halcyon",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0074,
+        1.9469,
+        -0.0593
+      ],
+      "size": [
+        4.6769,
+        3.7817,
+        7.5474
+      ]
+    },
+    "fan1": {
+      "parent": "base",
+      "center": [
+        -1.118,
+        2.2003,
+        2.3598
+      ],
+      "size": [
+        1.5831,
+        0.2128,
+        1.5579
+      ],
+      "pivot": [
+        -1.15,
+        2.22,
+        2.3259999999999996
+      ]
+    },
+    "fan2": {
+      "parent": "base",
+      "center": [
+        1.1482,
+        2.1693,
+        2.3372
+      ],
+      "size": [
+        1.7123,
+        0.2236,
+        1.6088
+      ],
+      "pivot": [
+        1.15,
+        2.22,
+        2.3259999999999996
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.0195,
+        2.3944,
+        -0.0984
+      ],
+      "size": [
+        2.6594,
+        1.9083,
+        2.118
+      ],
+      "pivot": [
+        0.0,
+        1.6,
+        -0.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0,
+        3.1414912265733954,
+        -0.7441458618106276
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "fan1",
+    "fan2"
+  ],
+  "anim": {
+    "fan1": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan2": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 540,
+    "fan1": 64,
+    "fan2": 36,
+    "turret": 364,
+    "total": 1004
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
