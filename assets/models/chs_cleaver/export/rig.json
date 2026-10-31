@@ -1,0 +1,249 @@
+{
+  "id": "chs_cleaver",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.0688,
+        -0.6203
+      ],
+      "size": [
+        4.8,
+        1.7525,
+        7.6407
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -1.9,
+        0.5,
+        0.0011
+      ],
+      "size": [
+        0.8,
+        1.0,
+        6.3978
+      ],
+      "pivot": [
+        -1.9,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        1.9,
+        0.5,
+        0.0011
+      ],
+      "size": [
+        0.8,
+        1.0,
+        6.3978
+      ],
+      "pivot": [
+        1.9,
+        0.46,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.605,
+        0.3391
+      ],
+      "size": [
+        2.9726,
+        1.41,
+        2.6982
+      ],
+      "pivot": [
+        0.0,
+        1.9,
+        0.4
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        2.5,
+        -1.96
+      ],
+      "size": [
+        1.12,
+        1.12,
+        2.72
+      ],
+      "pivot": [
+        0.0,
+        2.5,
+        -0.8
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        2.5,
+        -3.3499999999999996
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "trackL",
+    "trackR",
+    "turret",
+    "barrel"
+  ],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.525,
+        -0.075
+      ],
+      "size": [
+        4.84,
+        0.87,
+        6.67
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.55,
+        -3.25
+      ],
+      "size": [
+        3.6,
+        0.2,
+        0.1
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.5469,
+        0.1015
+      ],
+      "size": [
+        3.08,
+        0.4139,
+        1.9971
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        2.5,
+        -3.27
+      ],
+      "size": [
+        0.84,
+        0.84,
+        0.06
+      ]
+    }
+  ],
+  "glowShare": 0.0451,
+  "triangles": {
+    "base": 652,
+    "trackL": 344,
+    "trackR": 344,
+    "turret": 388,
+    "barrel": 268,
+    "total": 1996
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
