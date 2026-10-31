@@ -34,7 +34,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:64" })
 		local w = sim.world
 		local warden = Spawn.unit(sim, "ord_warden", 1, -100, 0, math.pi / 2)
-		local target = Spawn.unit(sim, "chs_goliath", 2, 150, 0, -math.pi / 2) -- 250 studs: in the gun's range
+		local target = Spawn.unit(sim, "chs_goliath", 2, 100, 0, -math.pi / 2) -- 200 studs: in the gun's range (210 since S-231)
 		World.setFireState(w, target, World.FireState.HOLD_FIRE)
 		World.setHealth(w, target, 1e6)
 		local firstShot, deployedAt = nil, nil

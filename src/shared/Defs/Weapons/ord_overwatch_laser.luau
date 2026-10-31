@@ -6,7 +6,7 @@
 return {
 	id = "ord_overwatch_laser",
 	type = "HITSCAN",
-	range = 240,
+	range = 180, -- 240 less 25% (FTGG-FEEDBACK-4, the user)
 	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.4,
 	shotCost = { power = 15 }, -- lasers cost energy per shot (S-187, the user)

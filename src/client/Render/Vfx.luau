@@ -82,6 +82,21 @@ Vfx.TEMPLATE_NAMES = table.freeze({
 -- the built-in effect a kind falls back to while the place has no template for it
 Vfx.FALLBACK = table.freeze({ dgunMuzzle = "muzzle", dgunHit = "hit", dgunEnd = "impact", structureDeath = "death" } :: { [string]: string })
 Vfx.TEMPLATE_CAP = 24 -- copies of one template at once
+-- Each kind's tone (C-282, FEEDBACK-4 item 3, the user: "The effect of
+-- exploding, missile launch is too much, tune them down"): its sizes and
+-- speeds, particle counts, light brightness and particle lifetimes, as
+-- fractions of the built-in look or the saved template's. Kinds not listed
+-- play as made.
+Vfx.TONE = table.freeze({
+	impact = table.freeze({ size = 0.75, count = 0.6, light = 0.55, life = 0.75 }),
+	death = table.freeze({ size = 0.75, count = 0.6, light = 0.55, life = 0.75 }),
+	structureDeath = table.freeze({ size = 0.75, count = 0.6, light = 0.55, life = 0.75 }),
+	launch = table.freeze({ size = 0.65, count = 0.5, light = 0.5, life = 0.6 }),
+}) :: { [string]: { size: number, count: number, light: number, life: number } }
+local NO_TONE = table.freeze({ size = 1, count = 1, light = 1, life = 1 })
+local function toneOf(kind: string): { size: number, count: number, light: number, life: number }
+	return Vfx.TONE[kind] or NO_TONE
+end
 local RING_DIRECTIONS = 8
 
 local function seq(points: { { number } }, scale: number?): NumberSequence
@@ -331,13 +346,13 @@ local function newPart(name: string): Part
 	return p
 end
 
-local function newEmitter(spec: Spec, parent: Instance): ParticleEmitter
+local function newEmitter(spec: Spec, parent: Instance, life: number): ParticleEmitter
 	local e = Instance.new("ParticleEmitter")
 	e.Name = spec.name
 	e.Enabled = false
 	e.Rate = 0
 	e.Texture = spec.texture
-	e.Lifetime = NumberRange.new(spec.life[1], spec.life[2])
+	e.Lifetime = NumberRange.new(spec.life[1] * life, spec.life[2] * life)
 	e.Transparency = seq(spec.transparency)
 	e.Color = spec.color
 	e.LightEmission = spec.light or 0
@@ -364,8 +379,9 @@ local function newRig(v: State, kind: string): Rig
 	local attachment = Instance.new("Attachment")
 	attachment.Parent = carrier
 	local emitters = {}
+	local life = toneOf(kind).life
 	for _, spec in k.specs do
-		local e = newEmitter(spec, attachment)
+		local e = newEmitter(spec, attachment, life)
 		e.TimeScale = v.timeScale
 		table.insert(emitters, { spec = spec, emitter = e, scale = -1 })
 	end
@@ -531,7 +547,8 @@ local function attr(inst: Instance, template: Instance, name: string): any
 	return value
 end
 
-local function newCopy(v: State, template: Instance): TRig
+local function newCopy(v: State, kind: string, template: Instance): TRig
+	local tone = toneOf(kind)
 	local root = template:Clone()
 	local carrier: BasePart? = nil
 	if root:IsA("BasePart") or root:IsA("Model") then
@@ -569,6 +586,12 @@ local function newCopy(v: State, template: Instance): TRig
 			if count == nil and duration == 0 and not held then
 				count = 10
 			end
+			if count then
+				count *= tone.count
+			end
+			if tone.life ~= 1 then
+				d.Lifetime = NumberRange.new(d.Lifetime.Min * tone.life, d.Lifetime.Max * tone.life)
+			end
 			d.Enabled = false
 			d.TimeScale = v.timeScale
 			table.insert(emitters, { emitter = d, size = d.Size, speed = d.Speed, accel = d.Acceleration, count = count, delay = delay, duration = duration, emitted = true, continuous = held, groundOnly = attr(d, template, "GroundOnly") == true, skip = false })
@@ -576,7 +599,7 @@ local function newCopy(v: State, template: Instance): TRig
 		elseif d:IsA("PointLight") then
 			local seconds = attr(d, template, "LightSeconds") :: number?
 			local steady = continuous and seconds == nil -- lit while held
-			table.insert(lights, { light = d, brightness = d.Brightness, range = d.Range, seconds = if steady then nil else seconds or 0.25, continuous = steady })
+			table.insert(lights, { light = d, brightness = d.Brightness * tone.light, range = d.Range, seconds = if steady then nil else seconds or 0.25, continuous = steady })
 			d.Enabled = false
 		end
 	end
@@ -612,7 +635,7 @@ local function spawnTemplate(v: State, kind: string, template: Instance, frame: 
 	end
 	if copy == nil then
 		if #pool < Vfx.TEMPLATE_CAP then
-			copy = newCopy(v, template)
+			copy = newCopy(v, kind, template)
 			table.insert(pool, copy :: TRig)
 		else
 			v.stats.stolen += 1
@@ -751,7 +774,9 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 	if k == nil and template == nil then
 		return
 	end
-	local s = math.clamp(scale, 0.3, Vfx.MAX_SCALE)
+	local tone = toneOf(kind)
+	local raw = math.clamp(scale, 0.3, Vfx.MAX_SCALE) -- the blast's own size: ground test, marks
+	local s = raw * tone.size
 	local onSpawn = Vfx.onSpawn
 	if onSpawn then
 		onSpawn(kind, x, y, z, s)
@@ -759,21 +784,21 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 	if template then
 		local at = Vector3.new(x, y, z)
 		local dir = if dx then Vector3.new(dx, dy :: number, dz :: number) else Vector3.zero
-		local groundBurst = ground ~= nil and y - ground <= Vfx.GROUND_BURST * math.max(1, s * 0.5)
+		local groundBurst = ground ~= nil and y - ground <= Vfx.GROUND_BURST * math.max(1, raw * 0.5)
 		spawnTemplate(v, kind, template, if dir.Magnitude > 1e-3 then CFrame.lookAt(at, at + dir) else CFrame.new(at), s, now, groundBurst)
 		-- the lasting mark is ours, not the template's (models-C)
 		local marks = KINDS[kind] or KINDS[Vfx.FALLBACK[kind] or ""]
 		if marks and marks.scorch and groundBurst then
-			scorch(v, x, ground :: number, z, (marks.scorchSize or 5.6) * s, now)
+			scorch(v, x, ground :: number, z, (marks.scorchSize or 5.6) * raw, now)
 		end
 		return
 	end
 	k = k :: any
 	local rig = rigFor(v, kind, now)
-	rig.born, rig.freeAt, rig.scale, rig.live = now, now + k.life, s, true
+	rig.born, rig.freeAt, rig.scale, rig.live = now, now + k.life * tone.life, s, true
 	rig.x, rig.y, rig.z = x, y, z
 	rig.tx, rig.ty, rig.tz = tx or x, ty or y, tz or z
-	rig.ground = ground ~= nil and y - ground <= Vfx.GROUND_BURST * math.max(1, s * 0.5)
+	rig.ground = ground ~= nil and y - ground <= Vfx.GROUND_BURST * math.max(1, raw * 0.5)
 	local at = Vector3.new(x, y, z)
 	local dir = if dx then Vector3.new(dx, dy :: number, dz :: number) else Vector3.zero
 	local frame = if dir.Magnitude > 1e-3 then CFrame.lookAt(at, at + dir) else CFrame.new(at)
@@ -781,7 +806,7 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 		frame = CFrame.new(rig.tx, rig.ty, rig.tz) -- the glint plays on the jammed missile
 	end
 	rig.carrier.CFrame = frame
-	local countScale = math.clamp(s, 1, 2.5)
+	local countScale = math.clamp(s, 1, 2.5) * tone.count
 	for _, em in rig.emitters do
 		local spec = em.spec
 		if (spec.ground and not rig.ground) or (spec.air and rig.ground) then
@@ -812,7 +837,7 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 		rig.ring.Transparency = 1
 	end
 	if k.scorch and rig.ground and ground then
-		scorch(v, x, ground, z, (k.scorchSize or 5.6) * s, now)
+		scorch(v, x, ground, z, (k.scorchSize or 5.6) * raw, now)
 	end
 	for i, f in rig.flares do
 		-- flares pop out of the aircraft, fan out toward the decoy point the
@@ -836,6 +861,7 @@ function Vfx.step(v: State, now: number, dt: number)
 	local lights, live = 0, 0
 	for kind, pool in v.rigs do
 		local k = KINDS[kind]
+		local glow = toneOf(kind).light
 		for _, rig in pool do
 			if not rig.live then
 				continue
@@ -849,7 +875,7 @@ function Vfx.step(v: State, now: number, dt: number)
 					lights += 1
 					rig.light.Enabled = true
 					rig.light.Range = k.light.range * math.sqrt(rig.scale)
-					rig.light.Brightness = k.light.brightness * (1 - t) ^ 2
+					rig.light.Brightness = k.light.brightness * glow * (1 - t) ^ 2
 					done = false
 				else
 					rig.light.Enabled = false
@@ -861,7 +887,7 @@ function Vfx.step(v: State, now: number, dt: number)
 					local d = k.flash.size * rig.scale * (0.4 + 0.6 * t)
 					rig.flash.Size = Vector3.new(d, d, d)
 					rig.flash.CFrame = CFrame.new(rig.x, rig.y, rig.z)
-					rig.flash.Transparency = 0.1 + 0.9 * t * t
+					rig.flash.Transparency = 1 - 0.9 * glow * (1 - t * t)
 					done = false
 				elseif rig.flash.Transparency < 1 then
 					rig.flash.Transparency = 1

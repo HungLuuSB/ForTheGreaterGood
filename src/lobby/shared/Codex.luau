@@ -15,6 +15,8 @@
 -- The numbers follow the in-game unit panel (client-B's Core/UnitStats):
 -- damage per second = damage per shot × shots per reload ÷ reload, against
 -- the weapon's main armor class (the first armor class in its priority).
+-- An EMP weapon (`paralyzer`) takes no health, so it adds nothing to a
+-- unit's DPS or the comparison; its card shows its stun instead.
 
 local ArmorClasses = require("@shared/Defs/ArmorClasses")
 
@@ -49,19 +51,22 @@ end
 
 -- Units the sim stream announced ahead of their defs (the decision that
 -- adds them): the roles may name them before the defs reach this branch.
--- Remove each once its def is on main.
+-- Remove each once its def is on main (batch 1's 31, S-230, are).
 local ANNOUNCED: { [string]: string } = {}
--- batch 1 of the BAR roster program (S-228..S-230): vehicles and hovercraft
-for _, id in {
-	"ord_courser", "ord_gemini", "ord_wader", "ord_pontifex", "ord_magistrate", "ord_whisper", "ord_fulgur",
-	"ord_mandate", "ord_luminary", "ord_thunderer", "ord_tempest", "ord_hoverdock", "ord_skimwright",
-	"ord_skimmer", "ord_volley", "ord_dart", "ord_halcyon",
-	"chs_cleaver", "chs_mudskipper", "chs_dredger", "chs_hellfire", "chs_grendel", "chs_hurler", "chs_typhon",
-	"chs_skimyard", "chs_drifter", "chs_snapjaw", "chs_sling", "chs_gnat", "chs_skua", "chs_glaive",
-} do
-	ANNOUNCED[id] = "S-230"
-end
 Codex.ANNOUNCED = table.freeze(ANNOUNCED)
+
+-- The sim's rules the articles describe. The lobby place has no
+-- src/server, so these are copies; Codex.spec checks them against the
+-- sim's modules.
+Codex.RULES = table.freeze({
+	healDelay = 10, -- AutoHeal.DELAY_SECONDS: seconds without damage before it heals (S-226)
+	healRate = 0.01, -- AutoHeal.RATE: of max health, a second
+	wreckSupply = 0.5, -- Combat.WRECK_SUPPLY_FRACTION: of the supply cost (S-227)
+	wreckHealth = 0.54, -- Combat.WRECK_HEALTH: of max health
+	wreckHeap = 0.4, -- Combat.WRECK_HEAP: below this share of its supply a wreck is a scrap heap
+	cloakQuiet = 2, -- Cloak.FIRE_QUIET_SECONDS: seen this long after firing (S-228)
+	stunSeconds = 8, -- Combat.PARALYZE_SECONDS: an EMP weapon's stun unless it says (S-229)
+})
 
 -- Guide 13.1-13.5 plus the economy, factories and the units added since.
 Codex.ROLES = {
@@ -371,6 +376,10 @@ export type Weapon = {
 	speed: number?, -- projectile speed (studs/s)
 	launch: string?, -- "vertical": straight up, then over
 	alpha: number, -- the most one hit does (its best armor class)
+	-- EMP (S-229): its hits fill a stun bar instead of taking health, so
+	-- dps and alpha are 0 and these say what it does instead
+	stun: number?, -- stun a second, against its main class
+	stunSeconds: number?, -- the longest a stun lasts after the last hit
 }
 
 local function weapon(w: any): Weapon
@@ -382,11 +391,13 @@ local function weapon(w: any): Weapon
 		end
 	end
 	local class = Codex.mainClass(w)
+	local dps = Codex.dps(w, class)
+	local emp = w.paralyzer == true
 	return {
 		id = w.id,
 		kind = w.type or "?",
 		class = class,
-		dps = Codex.dps(w, class),
+		dps = if emp then 0 else dps,
 		damage = damage,
 		shots = Codex.shots(w),
 		range = w.range or 0,
@@ -401,7 +412,9 @@ local function weapon(w: any): Weapon
 		stockPower = if w.stockpile and w.stockpile.cost then w.stockpile.cost.power else nil,
 		speed = if w.type ~= "HITSCAN" and w.type ~= "BEAM" then w.projectileSpeed else nil,
 		launch = w.launch,
-		alpha = (w.damage or {})[class] or 0,
+		alpha = if emp then 0 else (w.damage or {})[class] or 0,
+		stun = if emp then dps else nil,
+		stunSeconds = if emp then w.paralyzeSeconds or Codex.RULES.stunSeconds else nil,
 	}
 end
 
@@ -484,8 +497,12 @@ export type Stats = {
 	buildPower: number?,
 	ammo: number?,
 	countermeasures: { string },
+	heal: number, -- autoheal: health a second once undamaged for RULES.healDelay
+	wreck: { supply: number, health: number, heap: number }?, -- what its wreck holds; heap: the supply below which it's a scrap heap
+	crashes: boolean, -- an aircraft: shot down in flight, it leaves no wreck
+	cloak: { drain: number, decloak: number }?, -- power a second while on; an enemy this close reveals it
 	weapons: { Weapon },
-	dps: number, -- every weapon's main-class DPS added up
+	dps: number, -- every weapon's main-class DPS added up (EMP's stun left out)
 	range: number, -- the longest weapon
 	income: { supply: number, power: number }?,
 	storage: { supply: number, power: number }?,
@@ -534,6 +551,8 @@ function Codex.stats(c: Codex, id: string): Stats
 	end
 	local p = def.production
 	local signature = s.radarSignature
+	local health = def.health or 0
+	local wreckSupply = supply * Codex.RULES.wreckSupply
 	return {
 		supply = supply,
 		power = power,
@@ -541,7 +560,7 @@ function Codex.stats(c: Codex, id: string): Stats
 		work = cost.buildTime or 0,
 		buildSeconds = seconds,
 		builder = builder,
-		health = def.health or 0,
+		health = health,
 		armor = def.armorClass or "?",
 		move = def.moveClass,
 		speed = positive(def.movement and def.movement.maxSpeed),
@@ -557,6 +576,12 @@ function Codex.stats(c: Codex, id: string): Stats
 		buildPower = positive(def.buildPower),
 		ammo = positive(def.ammo),
 		countermeasures = cm,
+		heal = health * Codex.RULES.healRate,
+		wreck = if wreckSupply > 0
+			then { supply = wreckSupply, health = health * Codex.RULES.wreckHealth, heap = wreckSupply * Codex.RULES.wreckHeap }
+			else nil,
+		crashes = def.domain == "air",
+		cloak = if def.cloak then { drain = def.cloak.drain or 0, decloak = def.cloak.decloak or 0 } else nil,
 		weapons = weapons,
 		dps = dps,
 		range = range,

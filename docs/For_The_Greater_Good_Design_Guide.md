@@ -1385,13 +1385,13 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Mobile IR SAM | T1 | **Halo** | **Gadfly** (was Hornet, S-225) |
 | Mobile radar | T1 | **Scryer** (was Oracle, S-225) | **Gazer** (was Watcher, S-225) |
 | Main battle tank | T2 | **Vindicator** (was Paladin, S-225) | **Goliath** (`chs_goliath`, raises arms to fire; retired by S-213, back since S-224, new model to come) |
-| Experimental assault walker (S-209) | T3 | **Titan** (`ord_titan`; beam 320, missiles 390, S-213) | **Juggernaut** (`chs_juggernaut`, was `chs_korgoth`; heat ray 230, missiles 520, S-213) |
+| Experimental assault walker (S-209) | T3 | **Titan** (`ord_titan`; beam 320, one small heat-seeking missile 390 against ground and air but not submarines, S-213, S-231) | **Juggernaut** (`chs_juggernaut`, was `chs_korgoth`; heat ray 230, missiles 520, S-213) |
 | MLRS | T2 | **Judgement** (precise) | **Hydra** (large salvo) |
 | Mobile radar SAM | T2 | **Seraph** | **Medusa** (was Gorgon, S-225) |
 | Mobile jammer | T2 | **Mantle** (was Veil, S-225) (short range) | **Murk** (was Shroud, S-225) (long range) |
 | Mobile fire-control radar | T2 | **Assessor** (was Arbiter, S-225) (precise) | **Stalker** (cheaper, weaker) |
 | Amphibious tank | T2 | **Tideguard** | **Mire** |
-| Deployable gun (faction-only) | T2 | **Steadfast** (was Warden, S-225): unpacks in 4 s whenever it stands still; deployed it fires (range 280), can't move and takes damage / 1.5; packed it can't fire (S-64) | — |
+| Deployable gun (faction-only) | T2 | **Steadfast** (was Warden, S-225): unpacks in 4 s whenever it stands still; deployed it fires (range 210, sight 210: 25% off, S-231), can't move and takes damage / 1.5; packed it can't fire (S-64) | — |
 | Siege ram (faction-only) | T2 | — | **Minotaur**: +50% gun damage to structures and a 30-stud demolition charge (3,000 to a structure, every 20 s) (S-64) |
 | Swarm tank (faction-only) | T1 | — | **Locust**: very cheap (value 150) and fast (45), a 120-stud autocannon (S-75) |
 | Siege mortar (faction-only) | T2 | — | **Demolisher** (was Cyclops, S-225): structures only, range 520, 1,200 a shell every 8 s; can't fire at units (S-75) |
@@ -1425,7 +1425,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 |---|---|---|---|---|
 | Laser tower (S-157) | T1 | **Sentry** (`ord_sentry_tower`, red) | **Guard** (red) | Command, Ground |
 | Ramping beam tower (S-157) | T1 | **Beamer** (blue; 10 → 50 a hit over 4 s on one target) | — | Ground |
-| Heavy laser tower (S-157) | T1 | **Overwatch** (2 green barrels in turn) | **Twin Guard** (2 red barrels) and **Geryon** (3-barrel drum, green; more damage, less range than Overwatch) | Ground |
+| Heavy laser tower (S-157) | T1 | **Overwatch** (2 green barrels in turn; range 180, sight 166 since S-231) | **Twin Guard** (2 red barrels) and **Geryon** (3-barrel drum, green; more damage, less range than Overwatch) | Ground |
 | Lobbing gun (S-157) | T1 | **Gauntlet** (high arc, 420) | **Talos** (high arc, 360) | Ground |
 | ~~Gun turret~~ (retired, S-157) | T1 | ~~Bulwark~~ (`ord_bulwark`) | ~~Spike~~ (`chs_spike`) | — |
 | Heavy turret | T2 | **Bastion** | **Maw** | Adv. Ground |

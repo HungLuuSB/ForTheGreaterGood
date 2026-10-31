@@ -7,6 +7,10 @@
 local Codex = require("../shared/Codex")
 local Defs = require("@shared/Defs/Defs")
 local RunAll = require("../../server/Tests/RunAll")
+-- the sim's rules the articles copy (Codex.RULES)
+local AutoHeal = require("../../server/Sim/AutoHeal")
+local Cloak = require("../../server/Sim/Cloak")
+local Combat = require("../../server/Sim/Combat/Combat")
 
 local defs = Defs.load()
 local codex = Codex.build(defs)
@@ -80,13 +84,11 @@ return function(t: RunAll.Context)
 		-- S-219's transports
 		t.deepEqual(codex.entries.ord_courier.counterparts, { "chs_buzzard" })
 		t.deepEqual(codex.entries.chs_charon.counterparts, { "ord_ark" })
-		-- batch 1 (S-230), once its defs are on this branch
-		if defs.units.ord_skimmer then
-			t.deepEqual(codex.entries.ord_skimmer.counterparts, { "chs_snapjaw" })
-			t.deepEqual(codex.entries.chs_typhon.counterparts, { "ord_tempest" })
-			t.deepEqual(codex.entries.ord_hoverdock.counterparts, { "chs_skimyard" })
-			t.equal(#codex.entries.chs_glaive.counterparts, 0, "Chaos-only")
-		end
+		-- batch 1 (S-230)
+		t.deepEqual(codex.entries.ord_skimmer.counterparts, { "chs_snapjaw" })
+		t.deepEqual(codex.entries.chs_typhon.counterparts, { "ord_tempest" })
+		t.deepEqual(codex.entries.ord_hoverdock.counterparts, { "chs_skimyard" })
+		t.equal(#codex.entries.chs_glaive.counterparts, 0, "Chaos-only")
 		t.deepEqual(codex.entries.ord_overwatch.counterparts, { "chs_twin_guard", "chs_geryon" })
 		t.deepEqual(codex.entries.chs_geryon.counterparts, { "ord_overwatch" })
 		t.equal(#codex.entries.ord_warden.counterparts, 0, "faction-only")
@@ -133,6 +135,55 @@ return function(t: RunAll.Context)
 		t.expect(s.buildSeconds ~= nil and s.builder ~= nil, "built by a factory with build power")
 		t.equal(Codex.stats(codex, "ord_archon").stealth, defs.units.ord_archon.sensors.radarSignature)
 		t.expect(#Codex.stats(codex, "ord_vehplant").builds > 0)
+	end)
+
+	t.test("autoheal, wrecks, cloak and EMP: the sim's rules (S-226..S-229)", function()
+		local rules = Codex.RULES
+		t.equal(rules.healDelay, AutoHeal.DELAY_SECONDS)
+		t.equal(rules.healRate, AutoHeal.RATE)
+		t.equal(rules.wreckSupply, Combat.WRECK_SUPPLY_FRACTION)
+		t.equal(rules.wreckHealth, Combat.WRECK_HEALTH)
+		t.equal(rules.wreckHeap, Combat.WRECK_HEAP)
+		t.equal(rules.cloakQuiet, Cloak.FIRE_QUIET_SECONDS)
+		t.equal(rules.stunSeconds, Combat.PARALYZE_SECONDS)
+
+		local paladin = defs.units.ord_paladin
+		local s = Codex.stats(codex, "ord_paladin")
+		t.equal(s.heal, paladin.health * AutoHeal.RATE)
+		local wreck = s.wreck :: any
+		t.equal(wreck.supply, Combat.fullWreckSupply(paladin))
+		t.equal(wreck.health, paladin.health * Combat.WRECK_HEALTH)
+		t.equal(wreck.heap, Combat.fullWreckSupply(paladin) * Combat.WRECK_HEAP)
+		t.equal(s.crashes, false)
+		t.equal(s.cloak, nil)
+		t.equal(Codex.stats(codex, "ord_seraph").crashes, false, "a ground SAM")
+		for id, e in codex.entries do
+			if e.def.domain == "air" then
+				t.equal(Codex.stats(codex, id).crashes, true, id)
+			end
+		end
+
+		local whisper = Codex.stats(codex, "ord_whisper")
+		t.deepEqual(whisper.cloak, { drain = defs.units.ord_whisper.cloak.drain, decloak = defs.units.ord_whisper.cloak.decloak })
+
+		-- the Thunderer's EMP stuns: no DPS, no alpha, out of the unit's DPS
+		local thunderer = Codex.stats(codex, "ord_thunderer")
+		local emp, other
+		for _, w in thunderer.weapons do
+			if w.id == "ord_thunderer_emp" then
+				emp = w
+			else
+				other = w
+			end
+		end
+		t.expect(emp ~= nil and other ~= nil, "both weapons")
+		local empDef = defs.weapons.ord_thunderer_emp
+		t.equal(emp.dps, 0)
+		t.equal(emp.alpha, 0)
+		t.equal(emp.stun, Codex.dps(empDef))
+		t.equal(emp.stunSeconds, empDef.paralyzeSeconds)
+		t.equal(thunderer.dps, other.dps, "the EMP adds nothing to the DPS")
+		t.equal(other.stun, nil)
 	end)
 
 	t.test("the firing range has a target for every weapon but anti-missile and strategic ones", function()
