@@ -1,7 +1,7 @@
 """Scrap heap (S-227, part 4 of the BAR roster plan, the user's approval
 2026-10-31): what a wreck becomes when its health falls below 40%. Shared
-builder for the sizes in assets/fx/scrap/<scrap_N>/build.py, one per
-footprint (1, 2, 3, 4+; the client scales scrap_4 up for bigger units).
+builder for the sizes in assets/fx/scrap/<scrap_heap_N>/build.py, one per
+footprint (1, 2, 3, 4+; the client scales scrap_heap_4 up for bigger units).
 
 Faction-neutral, our own design, no glow: a scorched ground patch (`team`,
 tinted to the terrain like the deposits' scrape), a low mound of charred
