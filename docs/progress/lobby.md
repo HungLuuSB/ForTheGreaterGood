@@ -2,6 +2,35 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-11-01: batch 2's bots in the Codex, ahead of their defs)
+
+- **sim-A's request 4 (batch 2, 43 bots), first part:** all 43 ids are in `Codex.ANNOUNCED` (22 Order, 21 Chaos) and named by roles from `bar-roster-plan.md` 2.3. Each shows once its def lands; stats come from the defs.
+  - **Pairs (BAR's Armada/Cortex counterparts):**
+    - Combat engineer: Magistrate–Scrounger
+    - Advanced bot constructor: Draftsman–Taskmaster
+    - Decoy Commander: Effigy–Changeling
+    - Rocket bot: Petard–Firebrand
+    - Mortar bot: Culverin–Spitter
+    - Amphibious bot: Mariner–Newt
+    - Amphibious AA bot: Skyguard–Gargoyle
+    - All-terrain spider: Scaler–Ravener
+    - Radar bot: Sextant–Portent
+    - Jammer bot: Hush–Gloom
+    - Spy bot: Informant–Snitch
+    - Crawling bomb: Martyr–Blister
+    - Amphibious assault mech: Paragon–Abyssal
+  - **Faction-only:**
+    - Order: Picket, Squire, Steward, Outrider, Marshal, Stormcaller, Marksman, Snare, Champion, Monolith
+    - Chaos: Cutpurse, Pyre, Wrath, Pustule, Widowmaker, Pandemonium, Infernal, Colossus
+- **Mechanics in the article's Details:**
+  - **Decoy** (from `spoof`): the Wraith's radar contacts "pass for a Hecatomb until tracked". A decoy Commander "looks like the Sovereign on radar and up close", with its share of the Commander's health.
+  - **Stealth:** "invisible to radar" at signature 0 (spies).
+  - **Movement:** names `SPIDER` ("All-terrain spider: climbs any slope, cliffs included"). The walkers now read "Walker" and "Amphibious walker" instead of their raw ids. The Commanders, Titan and Juggernaut showed "AMPHIB_WALKER" before.
+  - **Not yet:** the crawling bombs' explode-on-contact and the spies' self-destruct EMP need their def fields. sim-A was asked for the field names.
+- **Studio** (`debug_out/screens/lobby_batch2_wraith_decoy.jpg`): the Wraith's Decoy row and the Sovereign's "Amphibious walker" row. No script errors.
+- Lobby specs 72 / 72; the build check passes (748 scripts, 1216 requires).
+- Ready to merge: `09a1703e` (touches only `src/lobby`)
+
 ## Summary (2026-11-01: batch 1's models in the showroom; a / an in the Codex)
 
 - Merged main `184ec356` (my `6834b013`, C's batch 1 meshes in `Defs/Meshes/Registry`) as `cacec4f4`. No lobby change was needed.
