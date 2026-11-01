@@ -1,4 +1,5 @@
 --!strict
+--!native
 -- Procedural skirmish maps (guide 5.5, S-15): pure Luau, deterministic, in
 -- the same layer format as every other map (Layers: height, water, supply,
 -- starts), so the server and the client build the same map from its ID.
@@ -42,6 +43,7 @@ export type Options = {
 	layout: Layout,
 	symmetry: Symmetry?, -- default: mirror for 1v1 and 2v2 (mirror4), rotate4 for ffa4
 	water: Water?, -- default "none"
+	attempt: number?, -- the candidate known to pass the checks: skips them (S-235; the named maps record theirs, a test confirms it)
 }
 
 export type Info = {
@@ -59,6 +61,7 @@ MapGen.MIN_GAP = 3 -- cells (guide 5.5)
 MapGen.MIN_DEPOSIT_GAP = 3 -- cells between deposits (Chebyshev): a footprint-3 T2 extractor on each (S-104)
 local PLATEAU = 9 -- cells: flat building ground around a start
 local CHECK_CLASSES = { "TRACKED", "HEAVY_TRACKED" } -- land classes with footprint-2 and -3 units
+local CHECK_PASS = { "TRACKED", "HEAVY_TRACKED", "SHIP" } -- the clearance layers check reads
 
 local function smoothstep(t: number): number
 	t = math.clamp(t, 0, 1)
@@ -477,41 +480,75 @@ end
 -- Terrain types (S-37): sand on land within SHORE cells of water, rock
 -- where the ground is steeper than ROCK_SLOPE degrees; grass elsewhere.
 -- Derived from the (symmetric) heights and water, so it is symmetric too.
+local NEIGHBORS = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
+
 local SHORE = 2
 local ROCK_SLOPE = 15
 local function paintTerrain(layers: Layers.Layers)
+	-- (S-235: two sliding-window passes over the raw layers instead of a
+	-- 5 × 5 scan a cell; same result, a tenth of the time on a 512-cell map)
 	local g = layers.grid
-	local n = g.cellsX
-	local rockRise = math.tan(math.rad(ROCK_SLOPE)) * Grid.CELL_SIZE
-	for cz = 0, g.cellsZ - 1 do
+	local n, rows = g.cellsX, g.cellsZ
+	local water, height = layers.waterDepth, layers.height
+	local readi16, readu8, writeu8 = buffer.readi16, buffer.readu8, buffer.writeu8
+	local rockRise = math.tan(math.rad(ROCK_SLOPE)) * Grid.CELL_SIZE / Layers.HEIGHT_STEP -- in raw height steps
+	-- wet within SHORE cells along the row, then along the column
+	local across = buffer.create(n * rows)
+	for cz = 0, rows - 1 do
+		local base = cz * n
+		local count = 0 -- wet cells in [cx - SHORE, cx + SHORE]
+		for x = 0, math.min(SHORE, n - 1) do
+			if readi16(water, (base + x) * 2) > 0 then
+				count += 1
+			end
+		end
 		for cx = 0, n - 1 do
+			writeu8(across, base + cx, if count > 0 then 1 else 0)
+			local out, enter = cx - SHORE, cx + SHORE + 1
+			if out >= 0 and readi16(water, (base + out) * 2) > 0 then
+				count -= 1
+			end
+			if enter < n and readi16(water, (base + enter) * 2) > 0 then
+				count += 1
+			end
+		end
+	end
+	for cx = 0, n - 1 do
+		local count = 0
+		for z = 0, math.min(SHORE, rows - 1) do
+			count += readu8(across, z * n + cx)
+		end
+		for cz = 0, rows - 1 do
 			local i = cz * n + cx
-			if Layers.getWater(layers, i) > 0 then
-				continue
-			end
-			local shore = false
-			for dz = -SHORE, SHORE do
-				for dx = -SHORE, SHORE do
-					local x, z = cx + dx, cz + dz
-					if x >= 0 and z >= 0 and x < n and z < g.cellsZ and Layers.getWater(layers, z * n + x) > 0 then
-						shore = true
+			local out, enter = cz - SHORE, cz + SHORE + 1
+			if readi16(water, i * 2) <= 0 then
+				if count > 0 then
+					Layers.setTerrain(layers, i, Layers.Terrain.SAND)
+				else
+					local h = readi16(height, i * 2)
+					local rise = 0
+					if cx + 1 < n then
+						rise = math.max(rise, math.abs(readi16(height, (i + 1) * 2) - h))
+					end
+					if cx > 0 then
+						rise = math.max(rise, math.abs(readi16(height, (i - 1) * 2) - h))
+					end
+					if cz + 1 < rows then
+						rise = math.max(rise, math.abs(readi16(height, (i + n) * 2) - h))
+					end
+					if cz > 0 then
+						rise = math.max(rise, math.abs(readi16(height, (i - n) * 2) - h))
+					end
+					if rise > rockRise then
+						Layers.setTerrain(layers, i, Layers.Terrain.ROCK)
 					end
 				end
 			end
-			if shore then
-				Layers.setTerrain(layers, i, Layers.Terrain.SAND)
-			else
-				local h = Layers.getHeight(layers, i)
-				local rise = 0
-				for _, d in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
-					local x, z = cx + d[1], cz + d[2]
-					if x >= 0 and z >= 0 and x < n and z < g.cellsZ then
-						rise = math.max(rise, math.abs(Layers.getHeight(layers, z * n + x) - h))
-					end
-				end
-				if rise > rockRise then
-					Layers.setTerrain(layers, i, Layers.Terrain.ROCK)
-				end
+			if out >= 0 then
+				count -= readu8(across, out * n + cx)
+			end
+			if enter < rows then
+				count += readu8(across, enter * n + cx)
 			end
 		end
 	end
@@ -546,8 +583,6 @@ local function buildLayers(plan: Plan): Layers.Layers
 	end
 	return layers
 end
-
-local NEIGHBORS = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
 
 -- 4-connected components of the cells with clearance >= need for `mc`.
 -- Returns the component per cell (0 = not open) and the component sizes.
@@ -591,7 +626,7 @@ end
 -- ships (footprint 3) reach the coast near at least two starts.
 function MapGen.check(layers: Layers.Layers, water: Water): { string }
 	local problems = {}
-	local pm = Passability.build(layers)
+	local pm = Passability.build(layers, CHECK_PASS) -- (only the classes it reads, S-235)
 	local g = layers.grid
 	local big = Passability.requiredClearance(MapGen.MIN_GAP) -- 2: a 3 × 3 square
 	local function startCell(s: { number }): number
@@ -680,7 +715,10 @@ function MapGen.generate(options: Options): (Layers.Layers, Info)
 		error(`MapGen: cells must be even, 64..{Grid.MAX_CELLS}, got {n}`, 2)
 	end
 	local key = `{options.seed}:{n}:{layout}:{symmetry}:{water}`
-	local known = winning[key]
+	local known = options.attempt or winning[key]
+	if known and (known < 1 or known > MapGen.MAX_ATTEMPTS or known % 1 ~= 0) then
+		error(`MapGen: attempt must be a whole number 1..{MapGen.MAX_ATTEMPTS}, got {known}`, 2)
+	end
 	local info: Info = {
 		layout = layout,
 		symmetry = symmetry,
