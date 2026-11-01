@@ -45,11 +45,11 @@ local MapRegistry = {}
 -- are in player order; on 2v2 maps players 1-2 and 3-4 are the teams.
 export type Named = { name: string, options: MapGen.Options }
 MapRegistry.NAMED = table.freeze({
-	ridgeline = { name = "Ridgeline", options = { seed = 11, cells = 128, layout = "1v1", symmetry = "mirror", water = "none" } },
-	coastline = { name = "Coastline", options = { seed = 12, cells = 128, layout = "1v1", symmetry = "mirror", water = "sea" } },
-	twin_lakes = { name = "Twin Lakes", options = { seed = 13, cells = 192, layout = "2v2", water = "lakes" } },
-	crossroads = { name = "Crossroads", options = { seed = 14, cells = 192, layout = "ffa4", water = "sea" } },
-	lakelands = { name = "The Lakelands", options = { seed = 15, cells = 512, layout = "2v2", water = "lakes" } }, -- the first medium map (S-189, F4)
+	ridgeline = { name = "Ridgeline", options = { seed = 11, cells = 128, layout = "1v1", symmetry = "mirror", water = "none", attempt = 1 } },
+	coastline = { name = "Coastline", options = { seed = 12, cells = 128, layout = "1v1", symmetry = "mirror", water = "sea", attempt = 1 } },
+	twin_lakes = { name = "Twin Lakes", options = { seed = 13, cells = 192, layout = "2v2", water = "lakes", attempt = 1 } },
+	crossroads = { name = "Crossroads", options = { seed = 14, cells = 192, layout = "ffa4", water = "sea", attempt = 1 } },
+	lakelands = { name = "The Lakelands", options = { seed = 15, cells = 512, layout = "2v2", water = "lakes", attempt = 1 } }, -- the first medium map (S-189, F4)
 } :: { [string]: Named })
 
 -- Hand-made maps (S-53): built by their own module, not MapGen.
@@ -219,7 +219,25 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 	return layers
 end
 
+-- The named and hand-made maps are built once per server and cloned after
+-- (S-235): the lobby's list, its details panel and every match on the map
+-- all load it, and The Lakelands takes seconds to generate.
+local buildRaw: (string) -> Layers.Layers?
+local rawCache: { [string]: Layers.Layers } = {}
+
 function loadRaw(mapId: string): Layers.Layers?
+	if string.match(mapId, "^map:") == nil then
+		return buildRaw(mapId)
+	end
+	local built = rawCache[mapId]
+	if built == nil then
+		built = buildRaw(mapId) :: Layers.Layers
+		rawCache[mapId] = built
+	end
+	return Layers.clone(built)
+end
+
+function buildRaw(mapId: string): Layers.Layers?
 	if mapId == "none" then
 		return nil
 	end

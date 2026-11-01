@@ -485,7 +485,7 @@ Ground units don't send height: the client looks it up from its own copy of the 
 - **Elevation:** hills give sight range bonus (optional); slopes limit wheeled units.
 - **Air lanes:** keep some areas without SAM-friendly terrain so air play is viable.
 - Tag maps with supported modes (`Team`, `FFA`, `Naval`).
-- Implementation (S-15): `Shared/Grid/MapGen` generates maps that follow these rules (1v1, 2v2, 4-player FFA; mirror or rotational symmetry; safe, expansion and contested deposits; ridges with passes at least 3 cells wide; optional lakes or a sea) and checks each candidate; `MapRegistry` has `mapgen:` IDs and the named maps `map:ridgeline`, `map:coastline`, `map:twin_lakes`, `map:crossroads`.
+- Implementation (S-15): `Shared/Grid/MapGen` generates maps that follow these rules (1v1, 2v2, 4-player FFA; mirror or rotational symmetry; safe, expansion and contested deposits; ridges with passes at least 3 cells wide; optional lakes or a sea) and checks each candidate; `MapRegistry` has `mapgen:` IDs and the named maps `map:ridgeline`, `map:coastline`, `map:twin_lakes`, `map:crossroads`, `map:lakelands`. A named map records the candidate that passed (`options.attempt`), so loading it skips the checks; `MapRegistry` builds each named or hand-made map once per server and hands out clones (S-235: The Lakelands' load passed Roblox's script timeout).
 - **Hand-made maps** (S-53, S-54): `map:normandy` (`Shared/Grid/Normandy`), a 256 × 256-cell (2048-stud) large-battle test map. The armies fight **west (player 1) against east (player 2)**, the user's choice (S-54).
   - **Coast:** a north flank both sides share. Sea north of z 760 (surface 10, ~25 deep; scenery), a sand beach at z 640–760, and bluffs at z 560–640: a 3-cell cliff to the plateau (34) that no land unit climbs, with three 48-stud draws, with roads, at x = −560, 0 and 560.
   - **South of the bluffs, mirrored about x = 0:**
@@ -538,7 +538,7 @@ Amphibious and hover units (S-39): an `AMPHIB` unit drives on the sea floor and 
 
 **Prefer odd footprints (1, 3) for ground units.** The clearance rule treats an even footprint like the next odd one, so a 2×2 unit costs as much passage width as a 3×3 one.
 
-A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell] ≥ floor(F / 2) + 1`. Clearance is the Chebyshev distance to the nearest cell the class can't enter (a blocked cell is 0; outside the map counts as blocked). It is computed with a two-pass distance transform at map load, and updated locally when a structure is placed or destroyed.
+A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell] ≥ floor(F / 2) + 1`. Clearance is the Chebyshev distance to the nearest cell the class can't enter (a blocked cell is 0; outside the map counts as blocked). It is computed with a two-pass distance transform at map load, and updated locally when a structure is placed or destroyed. Air classes need no transform: they enter every cell, so their clearance is the distance to the map's edge (S-235).
 
 The rule requires the (2r+1)² square around the cell to be free, with r = floor(F/2). Even footprints count as the next odd size, so a 2×2 unit needs a 3-wide gap. The earlier `ceil(F/2)` let a 2×2 unit into a 1-cell gap (DECISIONS D21).
 

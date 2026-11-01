@@ -3481,3 +3481,25 @@ The user's list: "Range includes both the vision and the weapon range."
   - RadarTargets: the Talos's target point moves from 300 to 240 studs, inside its 270.
   - Air (three tests of bombing a ghost or a radar contact) and Tracking (bombing a tracked moving tank): a slower bomber's release point now falls inside its own sight, so it sees the target before it lets go. These tests use `Support/BlindBombers` (Absolution and Plague with sight 40) to keep testing the unseen case. In a match the bomber simply sees what it bombs.
 - No balance report (the user hasn't asked for the checkpoint).
+
+## S-235 — The Lakelands loads in 1.5 s, not 10: no checks on load, one build per server (2026-11-01, B's and D's blocker)
+
+After S-233, Studio's lobby servers (B's match place with `lobby = true`, D's lobby place) never came up: "Script timeout: exhausted allowed execution time" in `Passability.transform`. Both load every named map at startup, and The Lakelands (512 × 512, generated) took 10.3 s in one go in Lune. SPIDER's clearance layer was the last straw.
+
+- **Where the time went** (Lune, `MapRegistry.load("map:lakelands")`):
+  - terrain generation: 5.8 s, of which painting sand and rock took 2.5 s;
+  - `MapGen.check`: about 4 s, building every passability layer and running flood fills;
+  - `details` then rebuilt it all again.
+- **Fixes:**
+  - **Recorded attempts.** The named maps record the candidate that passed (`options.attempt = 1` for all five), and `MapGen.generate` skips the checks for a known attempt. MapGen.spec confirms the recorded attempts pass: the small maps in the fast suite, The Lakelands in the slow suite.
+  - **One build per server.** `MapRegistry` builds each `map:` map once and hands out clones (`Layers.clone` copies every buffer and table). The lobby list, `details` and every match share the work.
+  - **Only the layers a check reads.** `Passability.build(layers, only?)`: `MapGen.check` builds TRACKED, HEAVY_TRACKED and SHIP only.
+  - **Air clearance** is the distance to the map's edge, with no transform.
+  - **Dry-cell masks** are cached by slope (a dry cell's mask depends only on its slope).
+  - **`paintTerrain`** now uses two sliding-window passes over the raw buffers, not a 5 × 5 scan of function calls per cell. Its output is byte-identical: heights, water and terrain checked equal on every named map and two generated ones.
+  - `--!native` on Passability and MapGen, like the sim's hot files.
+- **Result** (Lune):
+  - The Lakelands' cold load: 10.3 s → 1.5 s;
+  - details plus a second load: 0.2 s;
+  - a full passability build, as in `Sim.new`: 4.5 s → 1.25 s.
+  - No layer or gameplay changed.

@@ -1,4 +1,5 @@
 --!strict
+--!native
 -- Slope, passMask and per-move-class clearance layers (guide 5.2, 6.1, 6.2),
 -- derived from the height and water layers.
 --
@@ -213,22 +214,57 @@ local function cellMask(slopeU8: number, water: number, occupied: boolean): numb
 	return mask
 end
 
+-- An air class enters every cell (no structure blocks it), so its clearance
+-- is the distance to the map's edge: no transform needed (S-235).
+local function edgeClearance(grid: Grid.Grid, out: buffer)
+	local w, h = grid.cellsX, grid.cellsZ
+	local min = math.min
+	for z = 0, h - 1 do
+		local dz = min(z + 1, h - z, CAP)
+		for x = 0, w - 1 do
+			writeu8(out, z * w + x, min(x + 1, w - x, dz))
+		end
+	end
+end
+
 -- Derives slope, passMask and clearance for every move class. Pure function
 -- of the layers; run once at map load. Structures change it locally through
--- setOccupied / clearOccupied.
-function Passability.build(layers: Layers.Layers): PassMap
+-- setOccupied / clearOccupied. `only` (MapGen.check) limits the clearance
+-- layers to those classes: on a 512-cell map each one costs a whole-map
+-- transform (S-235). A map built that way is for checks, not for a sim.
+function Passability.build(layers: Layers.Layers, only: { string }?): PassMap
 	local grid = layers.grid
 	local n = grid.cellCount
 	local slope = computeSlope(grid, layers)
 	local passMask = buffer.create(n * 2)
+	local dry: { number } = {} -- a dry cell's mask depends only on its slope (S-235)
+	local waterDepth = layers.waterDepth
 	for i = 0, n - 1 do
-		writeu16(passMask, i * 2, cellMask(readu8(slope, i), Layers.getWater(layers, i), false))
+		local s = readu8(slope, i)
+		local mask
+		if buffer.readi16(waterDepth, i * 2) <= 0 then
+			mask = dry[s + 1]
+			if mask == nil then
+				mask = cellMask(s, 0, false)
+				dry[s + 1] = mask
+			end
+		else
+			mask = cellMask(s, Layers.getWater(layers, i), false)
+		end
+		writeu16(passMask, i * 2, mask)
 	end
 	local clearance = {}
 	local mx, mz = grid.cellsX - 1, grid.cellsZ - 1
 	for _, mc in CLASS_ORDER do
+		if only and not table.find(only, mc.id) then
+			continue
+		end
 		local out = buffer.create(n)
-		transform(grid, passMask, 2 ^ mc.bit, out, 0, 0, mx, mz, 0, 0, mx, mz)
+		if mc.surface == "air" then
+			edgeClearance(grid, out)
+		else
+			transform(grid, passMask, 2 ^ mc.bit, out, 0, 0, mx, mz, 0, 0, mx, mz)
+		end
 		clearance[mc.id] = out
 	end
 	return {

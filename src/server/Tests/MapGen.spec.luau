@@ -212,4 +212,34 @@ return function(t: RunAll.Context)
 			t.equal(#sim.world.ids, info.players, `{mapId}: a commander per player`)
 		end
 	end)
+
+	t.test("every named map records the attempt that passed, so loading skips the checks (S-235)", function()
+		-- (that attempt passes them: the small maps in "the checker finds
+		-- gaps…" above, The Lakelands in the slow test below)
+		for name, named in MapRegistry.NAMED do
+			t.expect(named.options.attempt ~= nil, `{name} records its attempt`)
+			if named.options.cells <= 192 then
+				t.expect(table.find(MAPS, `map:{name}`) ~= nil, `{name} is checked above`)
+			end
+		end
+		t.expect(not pcall(MapGen.generate, { seed = 1, cells = 64, layout = "1v1", attempt = 0 }), "attempt 0 is refused")
+	end)
+
+	t.slow("The Lakelands' recorded attempt passes every check (S-235)", function()
+		local layers = MapRegistry.load("map:lakelands") :: Layers.Layers
+		t.deepEqual(MapGen.check(layers, "lakes"), {}, "map:lakelands passes every check")
+	end)
+
+	t.test("loaded maps are clones: changing one leaves the next load alone (S-235)", function()
+		local a = MapRegistry.load("map:ridgeline") :: Layers.Layers
+		local b = MapRegistry.load("map:ridgeline") :: Layers.Layers
+		t.expect(a.height ~= b.height and a.supply ~= b.supply and a.starts ~= b.starts, "no shared buffers or tables")
+		t.equal(buffer.tostring(a.height), buffer.tostring(b.height), "the same heights")
+		t.deepEqual(a.deposits, b.deposits, "the same deposits")
+		Layers.setHeight(a, 0, 99)
+		table.insert(a.starts, { 0, 0 })
+		local c = MapRegistry.load("map:ridgeline") :: Layers.Layers
+		t.equal(buffer.tostring(c.height), buffer.tostring(b.height), "a later load is untouched")
+		t.equal(#c.starts, #b.starts, "starts too")
+	end)
 end

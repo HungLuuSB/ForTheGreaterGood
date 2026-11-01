@@ -78,6 +78,24 @@ return function(t: RunAll.Context)
 		end
 	end)
 
+	t.test("a check's build has only the classes it asks for, the same layers; air clearance is the distance to the edge (S-235)", function()
+		local layers = TestMap.generate({ seed = 7, cellsX = 64 })
+		local full = Passability.build(layers)
+		local some = Passability.build(layers, { "TRACKED", "SHIP" })
+		t.equal(buffer.tostring(some.clearance.TRACKED), buffer.tostring(full.clearance.TRACKED), "TRACKED")
+		t.equal(buffer.tostring(some.clearance.SHIP), buffer.tostring(full.clearance.SHIP), "SHIP")
+		t.equal(some.clearance.WALKER, nil, "no WALKER layer")
+		t.equal(buffer.tostring(some.passMask), buffer.tostring(full.passMask), "the same passMask")
+		local g = layers.grid
+		local cap = Passability.CLEARANCE_CAP
+		for _, i in { 0, 5, 64 * 30 + 31, 64 * 63 + 62, 64 * 20 + 2 } do
+			local x, z = i % 64, i // 64
+			local want = math.min(x + 1, g.cellsX - x, z + 1, g.cellsZ - z, cap)
+			t.equal(buffer.readu8(full.clearance.HELI, i), want, `HELI clearance at {x}, {z}`)
+			t.equal(buffer.readu8(full.clearance.JET, i), want, `JET clearance at {x}, {z}`)
+		end
+	end)
+
 	t.test("WALKER climbs 40° (S-159): a 37° ramp is open to it, not to TRACKED; 45° is closed", function()
 		local steep = Passability.build(TestMap.build(6, 1, function(cx)
 			return cx * 6 -- atan(0.75) = 36.9°
