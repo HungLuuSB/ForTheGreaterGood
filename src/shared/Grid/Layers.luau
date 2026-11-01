@@ -102,6 +102,32 @@ end
 -- symmetric, and lists the patches (`layers.deposits`: centre x, z on the
 -- shared cell corner, and the value). A cell next to another deposit is
 -- left alone. MapRegistry.load runs it once per map.
+-- A copy that shares nothing mutable with `layers`: its buffers and tables
+-- are copied, the (immutable) grid is shared. MapRegistry keeps one built
+-- copy per map and hands out clones (S-235).
+local function copy(v: any): any
+	if type(v) == "buffer" then
+		local b = buffer.create(buffer.len(v))
+		buffer.copy(b, 0, v)
+		return b
+	elseif type(v) == "table" then
+		local out = {}
+		for k, x in v do
+			out[k] = copy(x)
+		end
+		return out
+	end
+	return v
+end
+
+function Layers.clone(layers: Layers): Layers
+	local out = {}
+	for k, v in layers :: any do
+		out[k] = if k == "grid" then v else copy(v)
+	end
+	return out :: any
+end
+
 function Layers.expandDeposits(layers: Layers)
 	local g = layers.grid
 	local midX, midZ = (g.cellsX - 1) / 2, (g.cellsZ - 1) / 2

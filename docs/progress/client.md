@@ -57,6 +57,27 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-11-01, fallen-hulk wreck meshes: C-289)
+
+- **Fallen-hulk wrecks lie as modelled (C-289, models-C request 17):** a manifest wreck with `fallen = true` keeps its joints at rest and is placed by its own `RootOffset` on the ground slope. Other wrecks are placed as before. Checked in Studio with a temporary flag on the Lancer's wreck (`debug_out/screens/c289_fallen_mesh_rest_rootoffset.jpg`); C's 13 hulks are still `review`, so the C-286 stopgap draws those wrecks until the user approves them.
+- Suites: `lune run test_client` 360 / 360, `lune run build` passed (1082 scripts, 2860 requires).
+- Ready to merge: `525af7c7` (C-289; contains C-288)
+
+## Summary (2026-11-01, batch 2 icons: C-288)
+
+- **E's batch 2 icons are in (C-288, E-15):** all 281 units have a drawn icon (174 catalogue icons; the 11 placeholder tiles are fallbacks no def uses) over three sheets. Sheet 2 re-uploaded and sheet 3 new, with the user's approval; ids and hashes in `tools/icons/assets.json`. Decoy Commanders share their Commander's icon. `debug_out/screens/c288_batch2_icons_sheets_2_3.jpg`.
+- Suites: `lune run test_client` 360 / 360, `lune run build` passed (1082 scripts, 2860 requires).
+- Ready to merge: `7a6b1623` (C-288)
+
+## Summary (2026-11-01, heavy wrecks lie down, decoys: C-286, C-287)
+
+- **Merged main f3bd9014:** S-233 batch 2 (protocol 48), S-234 balance. The client decodes through the shared Schema, so the 8-byte strategic records needed no client change; client tests pass.
+- **Heavy T3 wrecks lie on the ground (C-286, the user's S-234 request):** until C's fallen-hulk meshes land, the 13 heavy T3 wrecks lie down along the slope. Walkers fall onto their front, back or side, whichever leaves them lowest; tanks, hovers and spiders slump and sink in. A manifest wreck with `fallen = true` (C's meshes) is drawn as modelled. `debug_out/screens/c286_heavy_wrecks_lying.jpg`, `c286_titan_fallen_side.jpg`.
+- **Decoy Commanders (C-287, S-233):** your own and allied Effigies and Changelings draw as the Commander; the panel keeps the decoy's name and stats. Crawling bombs needed nothing new. `debug_out/screens/c287_effigy_as_sovereign.jpg`.
+- **Studio blocker, reported to sim-A:** after S-233, Lakelands took 10.3 s to build (6.9 s before), so a lobby profile (`skirmish`) hit Studio's script timeout and the server never came up. Fixed as S-235 (1.5 s), on its way to main; check the lobby profile once it lands.
+- **Still to come for batch 2:** E's icons are Ready (render.mjs re-export, 174 tile keys; the sheet upload needs your approval); rigs and piece scripts once C's models land.
+- Ready to merge: `35cec3c5` (C-286, C-287)
+
 ## Summary (2026-11-01, wreck supply bars: C-285)
 
 - **Wreck supply bars only where you reclaim (C-285, your request):** a wreck's supply bar shows once one of your workers starts reclaiming it, and stays until the wreck is gone, even if the worker stops. Wrecks worn by blasts no longer all show one. Wrecks reclaimed by allies or enemies show none; resurrect bars are unchanged. `debug_out/screens/c285_one_wreck_bar.jpg`.

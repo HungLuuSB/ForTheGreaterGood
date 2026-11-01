@@ -42,6 +42,7 @@ return function(t: any)
 		t.equal(Icons.ofDef({ id = "ord_new_mech", domain = "ground", moveClass = "AMPHIB_WALKER" }, 1).tile, ph.walker)
 		t.equal(Icons.ofDef({ id = "ord_new_amphib", domain = "ground", moveClass = "AMPHIB" }, 1).tile, ph.amphib)
 		t.equal(Icons.ofDef({ id = "ord_new_hover", domain = "ground", moveClass = "HOVER" }, 1).tile, ph.hover)
+		t.equal(Icons.ofDef({ id = "ord_new_spider", domain = "ground", moveClass = "SPIDER" }, 1).tile, ph.spider) -- (S-233, E-15)
 		t.equal(Icons.ofDef({ id = "ord_new_tank", domain = "ground", moveClass = "TRACKED" }, 1).tile, ph.vehicle)
 		t.equal(Icons.entry({ id = "ord_new_bot", domain = "ground", moveClass = "WALKER" }).frame, "walker", "its radar contact is its type's frame")
 	end)
@@ -51,6 +52,11 @@ return function(t: any)
 			local e = IconAtlas.byDef[id]
 			t.expect(e ~= nil and e.frame == "walker", `{id}: frame {e and e.frame}`)
 		end
+	end)
+
+	t.test("the decoy Commanders share the Commanders' heads (E-15)", function()
+		t.equal(IconAtlas.byDef.ord_effigy.tile, IconAtlas.byDef.ord_sovereign.tile)
+		t.equal(IconAtlas.byDef.chs_changeling.tile, IconAtlas.byDef.chs_warlord.tile)
 	end)
 
 	t.test("contacts have a tile per frame", function()
