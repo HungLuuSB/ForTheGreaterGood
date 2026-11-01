@@ -249,4 +249,63 @@ return function(t: any)
 		t.expect(math.abs(angle(s, 1, "nano", 1)) < math.rad(0.5), "done, the head lifts level")
 		t.expect(math.abs(math.deg(angle(s, 1, "turret", 2)) - yaw) < 0.5, "and the turret stays where it looked")
 	end)
+
+	t.test("batch 2 walks: every unit on swinging legs gets Bot, spiders step in tripods, the Martyr rolls (S-233, C-290)", function()
+		local MOVING = World.State.MOVING
+		local legged = 0
+		for id, def in defs.units do
+			if Bot.walks(def) then
+				legged += 1
+				t.expect(Registry.forDef(def) == Bot or Registry.SCRIPTS[id] ~= nil, `{id} walks`)
+			end
+		end
+		t.expect(legged > 50, `plenty of legged units ({legged})`)
+		for _, id in { "ord_champion", "chs_firebrand", "ord_mariner", "chs_abyssal" } do
+			t.equal(Bot.gait(defs.units[id]), "biped", id)
+		end
+		t.equal(Bot.gait(defs.units.chs_colossus), "trunks")
+		for _, id in { "ord_scaler", "chs_widowmaker", "ord_monolith", "ord_snare", "chs_ravener", "chs_pustule", "chs_blister" } do
+			t.equal(Bot.gait(defs.units[id]), "spider", id)
+		end
+		t.equal(Bot.gait(defs.units.chs_skitter), "quad", "the Skitter keeps its gait")
+		t.equal(Bot.hip(defs.units.ord_scaler), 2.2, "the hip height comes from the blockout")
+		t.expect(Bot.scale(defs.units.chs_colossus) == Bot.HEAVY_SCALE and Bot.scale(defs.units.ord_scaler) == 1, "the heavy walkers swing less")
+		do -- six legs: FL MR BL lift together while FR ML BR stay down
+			local world = World.new(defs)
+			world.me.team = 1
+			local u = unit(world, 1, "ord_scaler", { state = MOVING })
+			local s = PieceAnim.new(defs.weaponByIndex)
+			PieceAnim.add(s, 1, defs.units.ord_scaler, Registry.forDef(defs.units.ord_scaler))
+			run(s, world, 0.04)
+			local function lift(tag: string): number
+				return math.abs(angle(s, 1, "thigh" .. tag, 1)) + math.abs(angle(s, 1, "thigh" .. tag, 3))
+			end
+			for _, tag in { "FL", "MR", "BL" } do
+				t.expect(lift(tag) > math.rad(5), `{tag} lifts ({math.deg(lift(tag))}°)`)
+			end
+			for _, tag in { "FR", "ML", "BR" } do
+				t.expect(lift(tag) < 1e-6, `{tag} stays down`)
+			end
+			t.expect(math.abs(angle(s, 1, "thighFL", 2)) > math.rad(5), "the legs sweep about the hip")
+			u.state = 0
+			run(s, world, 1.5)
+			for _, tag in { "FL", "ML", "BL", "FR", "MR", "BR" } do
+				t.expect(lift(tag) + math.abs(angle(s, 1, "thigh" .. tag, 2)) < math.rad(0.5), `{tag} at rest when stopped`)
+			end
+		end
+		do -- the Martyr's shell rolls only while it moves
+			local world = World.new(defs)
+			world.me.team = 1
+			local u = unit(world, 1, "ord_martyr")
+			local s = PieceAnim.new(defs.weaponByIndex)
+			PieceAnim.add(s, 1, defs.units.ord_martyr, Registry.forDef(defs.units.ord_martyr))
+			run(s, world, 0.5)
+			local a0 = angle(s, 1, "shell", 1)
+			run(s, world, 0.5)
+			t.equal(angle(s, 1, "shell", 1), a0, "standing: the shell is still")
+			u.state = MOVING
+			run(s, world, 0.5)
+			t.expect(angle(s, 1, "shell", 1) ~= a0, "moving: the shell rolls")
+		end
+	end)
 end

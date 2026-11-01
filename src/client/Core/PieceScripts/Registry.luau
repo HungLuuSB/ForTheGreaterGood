@@ -1,5 +1,6 @@
 --!strict
--- Piece scripts by unit def ID (C-30); every other unit runs Default.
+-- Piece scripts by unit def ID (C-30); any other unit on swinging legs
+-- walks with Bot (C-290), and every other unit runs Default.
 -- Register new files by hand (neither runtime can list a folder portably).
 
 local Default = require("./Default")
@@ -40,7 +41,7 @@ Registry.SCRIPTS = table.freeze({
 }) :: { [string]: any }
 
 function Registry.forDef(def: any): any
-	return Registry.SCRIPTS[def.id] or Default
+	return Registry.SCRIPTS[def.id] or (if Bot.walks(def) then Bot else Default)
 end
 
 return Registry

@@ -1,7 +1,8 @@
 --!strict
 -- The animated pieces every unit has besides its own script (C-156; rig.md
 -- section 9, Core/PieceMotion), re-planned whenever its state changes:
---   spin    wheels roll while the unit moves; windmill rotors always turn;
+--   spin    wheels roll while the unit moves, and so does a rolling bomb's
+--           `shell` (S-233, C-290); windmill rotors always turn;
 --           a helicopter's tail rotor runs with the main rotor (Default
 --           owns `rotor`); jammer emitters spin while powered
 --   turn    radars, dishes, arrays and sonar drums sweep round while
@@ -21,6 +22,7 @@ local Ambient = {}
 
 Ambient.SIGNAL = 2 ^ 20 -- signal bit of Ambient's loops (scripts use the low bits)
 Ambient.WHEEL = 400 -- degrees per second while moving
+Ambient.ROLL = 720 -- a rolling bomb's shell (Martyr: a 2.6-stud ball)
 Ambient.WINDMILL = 90
 Ambient.RADAR = 60
 Ambient.DRUM = 40
@@ -54,11 +56,12 @@ function Ambient.apply(u: any, motions: { any }, mode: any)
 	for _, m in motions do
 		local name = m.piece
 		if m.motion == "spin" then
-			if string.sub(name, 1, 5) == "wheel" then
+			if string.sub(name, 1, 5) == "wheel" or name == "shell" then
+				local speed = if name == "shell" then Ambient.ROLL else Ambient.WHEEL
 				if mode.moving then
-					u:Spin(name, m.axis, Ambient.WHEEL * m.sign)
+					u:Spin(name, m.axis, speed * m.sign)
 				else
-					u:StopSpin(name, m.axis, Ambient.WHEEL * 2)
+					u:StopSpin(name, m.axis, speed * 2)
 				end
 			elseif name == "rotor" and heli then
 				-- Default's
