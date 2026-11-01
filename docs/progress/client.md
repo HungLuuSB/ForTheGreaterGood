@@ -57,9 +57,15 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-11-01, fallen-hulk wreck meshes: C-289)
+
+- **Fallen-hulk wrecks lie as modelled (C-289, models-C request 17):** a manifest wreck with `fallen = true` keeps its joints at rest and is placed by its own `RootOffset` on the ground slope. Other wrecks are placed as before. Checked in Studio with a temporary flag on the Lancer's wreck (`debug_out/screens/c289_fallen_mesh_rest_rootoffset.jpg`); C's 13 hulks are still `review`, so the C-286 stopgap draws those wrecks until the user approves them.
+- Suites: `lune run test_client` 360 / 360, `lune run build` passed (1082 scripts, 2860 requires).
+- Ready to merge: `525af7c7` (C-289; contains C-288)
+
 ## Summary (2026-11-01, batch 2 icons: C-288)
 
-- **E's batch 2 icons are in (C-288, E-15):** all 281 units have an icon (174 catalogue icons, 11 placeholders) over three sheets. Sheet 2 re-uploaded and sheet 3 new, with the user's approval; ids and hashes in `tools/icons/assets.json`. Spiders get a placeholder frame; decoy Commanders share their Commander's icon. `debug_out/screens/c288_batch2_icons_sheets_2_3.jpg`.
+- **E's batch 2 icons are in (C-288, E-15):** all 281 units have a drawn icon (174 catalogue icons; the 11 placeholder tiles are fallbacks no def uses) over three sheets. Sheet 2 re-uploaded and sheet 3 new, with the user's approval; ids and hashes in `tools/icons/assets.json`. Decoy Commanders share their Commander's icon. `debug_out/screens/c288_batch2_icons_sheets_2_3.jpg`.
 - Suites: `lune run test_client` 360 / 360, `lune run build` passed (1082 scripts, 2860 requires).
 - Ready to merge: `7a6b1623` (C-288)
 
