@@ -70,22 +70,38 @@ return function(t: any)
 		local wa, wb = world.wrecks[a], world.wrecks[b]
 		t.expect(wa ~= nil and wa.supply < wa.fullSupply, "reclaiming lowers the supply the client shows")
 		t.expect(wb ~= nil and wb.rez > 0, "resurrecting raises the progress the client shows")
+		-- the Mason's WORK (owner field) marks the wreck it reclaims; the bar stays after it stops
+		local list = Bars.wreckList(world)
+		t.expect(wa ~= nil and wa.reclaimed == true and list[1] ~= nil and list[1].id == a and list[1].supplyShare ~= nil, "the reclaimed wreck shows its supply bar")
+		assert(Sim.submit(sim, 1, command(CT.STOP, mason, 0)))
+		step(10)
+		local after = world.wrecks[a]
+		t.expect(after ~= nil and after.reclaimed == true and Bars.wreckList(world)[1].id == a, "still shown after the Mason stops")
 	end)
 
-	t.test("bars: partly reclaimed (dark green) and being resurrected (purple)", function()
+	t.test("bars: reclaimed by an own worker (dark green) and being resurrected (purple)", function()
 		local sim = Sim.new({ seed = 5, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "start:64", scenario = "empty" })
 		local world = World.new(sim.defs)
 		world.me = { player = 1, team = 1, allyTeam = 1 }
 		local lancer = sim.defs.units.ord_lancer.index
+		local mason = sim.defs.units.ord_mason.index
 		wreck(world, 1, lancer, 0, 0, 40, 40) -- untouched: no bar
-		wreck(world, 2, lancer, 50, 0, 10, 40) -- a quarter left
+		wreck(world, 2, lancer, 50, 0, 10, 40) -- a quarter left, an own Mason reclaiming it
 		wreck(world, 3, lancer, 100, 0, 40, 40, 0.5) -- full, half resurrected
-		wreck(world, 4, lancer, 150, 0, 20, 40, 0.25)
+		wreck(world, 4, lancer, 150, 0, 20, 40, 0.25) -- reclaimed before (the worker stopped), being resurrected
+		world.wrecks[4].reclaimed = true
+		wreck(world, 5, lancer, 200, 0, 25, 40) -- worn by blasts, never reclaimed: no bar (C-285)
+		wreck(world, 6, lancer, 250, 0, 30, 40) -- an enemy worker's target: not ours, no bar
+		world.units[10] = { id = 10, tier = "tactical", team = 1, defIndex = mason, x = 50, z = 10, alt = 0, state = 0, workKind = Schema.WorkKind.RECLAIM, workTarget = 2 } :: any
+		world.units[11] = { id = 11, tier = "tactical", team = 2, defIndex = mason, x = 250, z = 10, alt = 0, state = 0, workKind = Schema.WorkKind.RECLAIM, workTarget = 6 } :: any
 		local list = Bars.wreckList(world)
-		t.equal(#list, 3, "only touched wrecks")
-		t.expect(list[1].wreck and math.abs((list[1].supplyShare :: number) - 0.25) < 1e-9 and list[1].rez == nil, "supply only")
-		t.expect(list[2].supplyShare == nil and list[2].rez == 0.5 and list[2].health == 0.5, "resurrect only")
-		t.expect(list[3].supplyShare == 0.5 and list[3].rez == 0.25, "both")
+		t.equal(#list, 3, "only wrecks reclaimed by us or being resurrected")
+		t.expect(list[1].id == 2 and math.abs((list[1].supplyShare :: number) - 0.25) < 1e-9 and list[1].rez == nil, "supply only")
+		t.expect(list[2].id == 3 and list[2].supplyShare == nil and list[2].rez == 0.5 and list[2].health == 0.5, "resurrect only")
+		t.expect(list[3].id == 4 and list[3].supplyShare == 0.5 and list[3].rez == 0.25, "both")
+		-- the Mason moves on: wreck 2 keeps its bar until it's gone
+		world.units[10].workKind = Schema.WorkKind.NONE
+		t.equal(#Bars.wreckList(world), 3, "the bar stays after the worker stops")
 		local d = Bars.draws(world, list, function(x: number, _y: number, z: number)
 			return x + 200, z + 200, true
 		end, 1000, 1000, 1, 0)
