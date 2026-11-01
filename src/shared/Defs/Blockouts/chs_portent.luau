@@ -18,7 +18,7 @@ for _, p in {
 	{ name = "rung1", parent = "torso", shape = "box", size = { 0.7, 0.08, 0.08 }, at = { 0, 4.6, 0.6 }, color = "dark" },
 	{ name = "rung2", parent = "torso", shape = "box", size = { 0.58, 0.08, 0.08 }, at = { 0, 5.35, 0.6 }, color = "dark" },
 	{ name = "rung3", parent = "torso", shape = "box", size = { 0.46, 0.08, 0.08 }, at = { 0, 6.1, 0.6 }, color = "dark" },
-	{ name = "radar", parent = "torso", shape = "box", size = { 3, 0.6, 0.3 }, at = { 0, 6.8, 0.6 }, pivot = { 0, 6.8, 0.6 }, color = "dark", anim = { motion = "spin", axis = { 0, 1, 0 } } },
+	{ name = "radar", parent = "torso", shape = "box", size = { 3, 0.6, 0.3 }, at = { 0, 6.8, 0.6 }, pivot = { 0, 6.8, 0.6 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "radarFace", parent = "radar", shape = "box", size = { 2.55, 0.36, 0.08 }, at = { 0, 6.8, 0.42 }, color = "glass" },
 	{ name = "spike1", parent = "torso", shape = "wedge", size = { 0.3, 0.5, 0.5 }, at = { -0.6, 4.35, 0.2 }, color = "metal" },
 	{ name = "spike2", parent = "torso", shape = "wedge", size = { 0.3, 0.5, 0.5 }, at = { 0.6, 4.35, 0.2 }, color = "metal" },

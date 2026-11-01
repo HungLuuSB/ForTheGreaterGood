@@ -36,6 +36,7 @@ HELI = {"rotor": a("spin", Y)}
 # the S-181 walking bots (rig.md 10 without the hip yokes; tools/bots.py): every leg segment swings
 BOT = {f"{j}{s}": a("swing", X) for j in ("thigh", "shin", "foot") for s in "LR"}
 BOT4 = {f"{j}{s}": a("swing", X) for j in ("thigh", "shin") for s in ("FL", "FR", "BL", "BR")}  # the Skitter
+BOT6 = {f"{j}{s}": a("swing", X) for j in ("thigh", "shin") for s in ("FL", "ML", "BL", "FR", "MR", "BR")}  # six-legged spiders
 # the Commander mechs (M-31, rig.md 10): torso and head turn, every limb swings
 WALKER = {"torso": a("turn", Y), "head": a("turn", Y), "armL": a("swing", X), "armR": a("swing", X),
           "forearmR": a("swing", X), **{f"{j}{s}": a("swing", X) for j in ("hip", "thigh", "shin", "foot") for s in "LR"}}
@@ -68,6 +69,18 @@ ANIM = {
     "chs_skitter": BOT4,
     "ord_titan": BOT, "chs_juggernaut": BOT,  # the T3 mechs (S-209): the leg kit's pieces are def pieces
     "chs_mammoth": {f"leg{s}": a("swing", X) for s in ("FL", "FR", "BL", "BR")},  # whole legs swing at the hip
+    # batch 2 bots (2026-11-01): bipeds on the leg kit, spiders on botkit.spider
+    **{u: BOT for u in ("ord_picket", "ord_squire", "ord_petard", "ord_draftsman", "ord_skyguard", "ord_steward",
+                        "ord_informant", "ord_marshal", "ord_culverin", "ord_mariner", "ord_marksman", "ord_hush",
+                        "ord_outrider", "ord_stormcaller", "ord_paragon", "ord_champion", "chs_firebrand",
+                        "chs_taskmaster", "chs_wrath", "chs_cutpurse", "chs_gloom", "chs_newt", "chs_pyre",
+                        "chs_gargoyle", "chs_spitter", "chs_snitch", "chs_scrounger", "chs_pandemonium", "chs_infernal",
+                        "chs_abyssal")},
+    "ord_sextant": {**BOT, "radar": a("turn", Y)}, "chs_portent": {**BOT, "radar": a("turn", Y)},
+    **{u: BOT4 for u in ("ord_snare", "ord_monolith", "chs_ravener", "chs_blister", "chs_pustule")},
+    **{u: BOT6 for u in ("ord_scaler", "chs_widowmaker")},
+    "ord_martyr": {"shell": a("spin", X)},
+    "chs_colossus": {f"leg{s}": a("swing", X) for s in ("FL", "FR", "BL", "BR")},
     "chs_dragon": {"fanL": a("spin", Y), "fanR": a("spin", Y)},
     "ord_radiance": {"shellL": a("open", (0, 0, -1), 90), "shellR": a("open", Z, 90)},
     "chs_inferno": {"shellL": a("open", (0, 0, -1), 90), "shellR": a("open", Z, 90)},

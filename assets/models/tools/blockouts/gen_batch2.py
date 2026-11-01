@@ -218,7 +218,7 @@ def nano_arm(u, x, y, z, length, faction, parent="torso", rise=0.0):
 
 def radar(u, x, y, z, w, h, parent="torso"):
     """A spinning `radar` (client piece) on a mast top."""
-    u.part("radar", "box", (w, h, 0.3), (x, y, z), "dark", parent=parent, anim=("spin", (0, 1, 0)), pivot=(x, y, z))
+    u.part("radar", "box", (w, h, 0.3), (x, y, z), "dark", parent=parent, anim=("turn", (0, 1, 0)), pivot=(x, y, z))
     u.part("radarFace", "box", (w * 0.85, h * 0.6, 0.08), (x, y, z - 0.18), "glass", parent="radar")
     u.visual.append("radar")
 
@@ -314,7 +314,7 @@ def order():
     u.part("chestTeam", "box", (0.9, 0.45, 0.08), (0, y + 0.7, -0.73), "team")
     u.part("mast", "cylinder", (0.2, 2.0, 0.2), (0, t + 1.0, 0.6), "metal", axis="y")
     u.part("radar", "cylinder", (2.6, 0.15, 2.6), (0, t + 2.1, 0.6), "dark", axis="y", rot=(25, 0, 0),
-           anim=("spin", (0, 1, 0)), pivot=(0, t + 2.0, 0.6))
+           anim=("turn", (0, 1, 0)), pivot=(0, t + 2.0, 0.6))
     u.part("radarFace", "cylinder", (2.3, 0.06, 2.3), (0, t + 2.2, 0.55), "team", parent="radar", axis="y", rot=(25, 0, 0))
     u.part("feed", "ball", (0.35, 0.35, 0.35), (0, t + 2.6, 0.35), "glass", parent="radar")
     u.visual.append("radar")
