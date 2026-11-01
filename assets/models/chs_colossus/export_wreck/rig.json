@@ -1,0 +1,208 @@
+{
+  "id": "chs_colossus_wreck",
+  "wreckOf": "chs_colossus",
+  "fallen": true,
+  "footprintStuds": 32,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -1.2822,
+        6.0069,
+        -0.5778
+      ],
+      "size": [
+        17.8608,
+        15.9964,
+        20.3666
+      ]
+    },
+    "legFL": {
+      "parent": "base",
+      "center": [
+        -9.6864,
+        2.7684,
+        -7.6663
+      ],
+      "size": [
+        8.8028,
+        7.561,
+        8.7301
+      ],
+      "pivot": [
+        -7.3224,
+        1.8233,
+        -5.5135
+      ]
+    },
+    "legFR": {
+      "parent": "base",
+      "center": [
+        7.3044,
+        5.7169,
+        -7.3315
+      ],
+      "size": [
+        8.2965,
+        9.5008,
+        8.591
+      ],
+      "pivot": [
+        5.32,
+        3.8181,
+        -5.339
+      ]
+    },
+    "legBL": {
+      "parent": "base",
+      "center": [
+        -9.552,
+        -0.2487,
+        8.622
+      ],
+      "size": [
+        8.9613,
+        7.6212,
+        8.6673
+      ],
+      "pivot": [
+        -7.3224,
+        0.7774,
+        6.4408
+      ]
+    },
+    "legBR": {
+      "parent": "base",
+      "center": [
+        7.6128,
+        3.4492,
+        8.9167
+      ],
+      "size": [
+        9.0629,
+        7.0435,
+        9.017
+      ],
+      "pivot": [
+        5.32,
+        2.7722,
+        6.6154
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        -2.4181,
+        12.2102,
+        0.1164
+      ],
+      "size": [
+        9.4234,
+        6.5796,
+        14.3473
+      ],
+      "pivot": [
+        -2.1901,
+        9.671,
+        2.4006
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "torso",
+      "at": [
+        0.0,
+        16.0,
+        -8.8
+      ]
+    },
+    "muzzle2": {
+      "parent": "base",
+      "at": [
+        -5.8,
+        15.2,
+        -10.0
+      ]
+    },
+    "muzzle3": {
+      "parent": "base",
+      "at": [
+        5.8,
+        15.2,
+        -10.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "legFL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "legFR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "legBL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "legBR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1188,
+    "legFL": 316,
+    "legFR": 240,
+    "legBL": 172,
+    "legBR": 384,
+    "torso": 308,
+    "total": 2608
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

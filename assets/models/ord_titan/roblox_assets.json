@@ -51,6 +51,38 @@
     "modelPath": "ReplicatedStorage.ModelReview.ord_titan_bar in FTGG Art"
   },
   "wreck": {
+    "model": "rbxassetid://83501927358590",
+    "meshes": {
+      "base": "rbxassetid://77332358994664",
+      "beam_arm": "rbxassetid://134040596741133",
+      "blaster_arm": "rbxassetid://124531302498524",
+      "footL": "rbxassetid://102224990230601",
+      "footR": "rbxassetid://79736042764990",
+      "missile_pod": "rbxassetid://95374488961705",
+      "shinL": "rbxassetid://133117941388053",
+      "shinR": "rbxassetid://105608148255625",
+      "thighL": "rbxassetid://122461472663482",
+      "thighR": "rbxassetid://104423900442485",
+      "torso": "rbxassetid://95267761497080"
+    },
+    "decals": {
+      "ALB": "rbxassetid://122726813506972",
+      "RGH": "rbxassetid://74982833614551",
+      "NOR": "rbxassetid://131637024781066",
+      "MTL": "rbxassetid://84204592883548",
+      "EMI": "rbxassetid://105146310336853"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://76234106691607",
+      "NOR": "rbxassetid://118030879245343",
+      "RGH": "rbxassetid://91430555148160",
+      "MTL": "rbxassetid://84487807900780",
+      "EMI": "rbxassetid://132128532166847"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_titan_wreck_bar in FTGG Art",
+    "revision": "Fallen-hulk wreck (S-234), uploaded with the user's approval 2026-11-01: 4300 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://114327209091795",
     "meshes": {
       "base": "rbxassetid://82972937895299",

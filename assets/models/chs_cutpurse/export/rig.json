@@ -1,0 +1,408 @@
+{
+  "id": "chs_cutpurse",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.8125,
+        0.0
+      ],
+      "size": [
+        1.4,
+        0.775,
+        1.2
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0116,
+        5.0,
+        -0.2475
+      ],
+      "size": [
+        2.5268,
+        3.6,
+        2.385
+      ],
+      "pivot": [
+        0.0,
+        3.2,
+        0.0
+      ]
+    },
+    "nano": {
+      "parent": "torso",
+      "center": [
+        -1.05,
+        3.6441,
+        -1.1273
+      ],
+      "size": [
+        0.6,
+        0.7118,
+        2.4454
+      ],
+      "pivot": [
+        -1.05,
+        3.7,
+        -0.2
+      ]
+    },
+    "thighL": {
+      "parent": "base",
+      "center": [
+        -0.6128,
+        1.9885,
+        -0.1
+      ],
+      "size": [
+        0.6005,
+        1.773,
+        0.75
+      ],
+      "pivot": [
+        -0.6,
+        2.6,
+        0.0
+      ]
+    },
+    "shinL": {
+      "parent": "thighL",
+      "center": [
+        -0.6,
+        0.8498,
+        -0.0325
+      ],
+      "size": [
+        0.475,
+        1.1796,
+        0.7361
+      ],
+      "pivot": [
+        -0.6,
+        1.352,
+        -0.225
+      ]
+    },
+    "footL": {
+      "parent": "shinL",
+      "center": [
+        -0.6,
+        0.24,
+        -0.1159
+      ],
+      "size": [
+        0.625,
+        0.48,
+        1.3319
+      ],
+      "pivot": [
+        -0.6,
+        0.45,
+        0.1
+      ]
+    },
+    "thighR": {
+      "parent": "base",
+      "center": [
+        0.6128,
+        1.9885,
+        -0.1
+      ],
+      "size": [
+        0.6005,
+        1.773,
+        0.75
+      ],
+      "pivot": [
+        0.6,
+        2.6,
+        0.0
+      ]
+    },
+    "shinR": {
+      "parent": "thighR",
+      "center": [
+        0.6,
+        0.8498,
+        -0.0325
+      ],
+      "size": [
+        0.475,
+        1.1796,
+        0.7361
+      ],
+      "pivot": [
+        0.6,
+        1.352,
+        -0.225
+      ]
+    },
+    "footR": {
+      "parent": "shinR",
+      "center": [
+        0.6,
+        0.24,
+        -0.1159
+      ],
+      "size": [
+        0.625,
+        0.48,
+        1.3319
+      ],
+      "pivot": [
+        0.6,
+        0.45,
+        0.1
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "torso",
+      "at": [
+        1.05,
+        3.7,
+        -1.5
+      ]
+    },
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        -1.05,
+        3.7,
+        -2.2
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "torso",
+    "nano",
+    "thighL",
+    "shinL",
+    "footL",
+    "thighR",
+    "shinR",
+    "footR"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "thighL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "torso_glow_running",
+      "piece": "torso",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        6.85,
+        0.6
+      ],
+      "size": [
+        1.08,
+        0.1,
+        0.08
+      ]
+    },
+    {
+      "name": "torso_glow_head",
+      "piece": "torso",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.82,
+        -0.68
+      ],
+      "size": [
+        0.26,
+        0.26,
+        0.04
+      ]
+    },
+    {
+      "name": "torso_glow_weapon",
+      "piece": "torso",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        1.05,
+        3.7,
+        -1.445
+      ],
+      "size": [
+        0.168,
+        0.168,
+        0.03
+      ]
+    },
+    {
+      "name": "nano_glow_power",
+      "piece": "nano",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -1.05,
+        3.7,
+        -1.99
+      ],
+      "size": [
+        0.3,
+        0.2854,
+        0.08
+      ]
+    },
+    {
+      "name": "shinL_glow_running",
+      "piece": "shinL",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -0.6,
+        1.052,
+        -0.435
+      ],
+      "size": [
+        0.25,
+        0.12,
+        0.04
+      ]
+    },
+    {
+      "name": "shinR_glow_running",
+      "piece": "shinR",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.6,
+        1.052,
+        -0.435
+      ],
+      "size": [
+        0.25,
+        0.12,
+        0.04
+      ]
+    }
+  ],
+  "glowShare": 0.0098,
+  "triangles": {
+    "base": 216,
+    "torso": 732,
+    "nano": 428,
+    "thighL": 400,
+    "shinL": 236,
+    "footL": 152,
+    "thighR": 400,
+    "shinR": 236,
+    "footR": 152,
+    "total": 2952
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
