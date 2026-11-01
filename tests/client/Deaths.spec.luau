@@ -82,6 +82,40 @@ return function(t: any)
 		t.expect(deaths > 5, "plenty of deaths")
 	end)
 
+	t.test("heavy T3 wrecks lie down: walkers on a side, the rest slumped; others stand (S-234, C-286)", function()
+		for id in Deaths.FALLEN do
+			t.expect(defs.units[id] ~= nil, `{id} is a unit`)
+		end
+		local titan = Deaths.fall(5, defs.units.ord_titan) :: Deaths.Fall
+		t.expect(titan ~= nil and math.abs(titan.roll) == Deaths.TOPPLE and titan.center, "the Titan topples onto a side")
+		local monolith = Deaths.fall(5, defs.units.ord_monolith) :: Deaths.Fall
+		t.expect(monolith ~= nil and math.abs(monolith.roll) <= Deaths.SLUMP_TILT and monolith.sinkShare == Deaths.SPIDER_SINK, "a spider slumps, legs folded under")
+		local typhon = Deaths.fall(5, defs.units.chs_typhon) :: Deaths.Fall
+		t.expect(typhon ~= nil and math.abs(typhon.roll) <= Deaths.SLUMP_TILT and typhon.sinkShare == 0 and not typhon.center, "a hovertank slumps flat")
+		t.deepEqual(Deaths.fall(5, defs.units.ord_titan), titan, "the same wreck lies the same way on every client")
+		t.expect(Deaths.fall(5, defs.units.ord_lancer) == nil, "a Lancer's wreck stands")
+		t.expect(Deaths.fall(5, defs.units.ord_titan, true) == nil, "a fallen-hulk mesh lies down by itself")
+		t.deepEqual(Deaths.fall(5, defs.units.ord_titan, false, 26, 12, 20), titan, "a tall, narrow walker topples onto a side")
+		local front = Deaths.fall(5, defs.units.ord_titan, false, 26, 26, 20) :: Deaths.Fall
+		t.expect(math.abs(front.pitch) == Deaths.TOPPLE and math.abs(front.roll) < Deaths.TOPPLE and front.center, "a broad-shouldered walker falls onto its front or back (20 studs high, not 26)")
+		local squat = Deaths.fall(5, defs.units.chs_colossus, false, 9, 28, 29) :: Deaths.Fall
+		t.expect(math.abs(squat.roll) <= Deaths.SLUMP_TILT and not squat.center, "a walker wider than tall slumps instead of standing on its edge")
+		local sides = {}
+		for id = 1, 40 do
+			sides[math.sign((Deaths.fall(id, defs.units.chs_colossus) :: Deaths.Fall).roll)] = true
+		end
+		t.expect(sides[1] and sides[-1], "walkers fall to either side")
+		-- the slope under it: a 30° ramp rising toward +x
+		local nx, ny, nz = Deaths.groundNormal(function(x: number, _z: number): number
+			return x * math.tan(math.rad(30))
+		end, 0, 0, 6)
+		t.expect(math.abs(math.deg(math.acos(ny)) - 30) < 1e-6 and nx < 0 and math.abs(nz) < 1e-9, `the normal leans 30° away from the rise ({nx}, {ny}, {nz})`)
+		local _, cy = Deaths.groundNormal(function(x: number, _z: number): number
+			return x * 3
+		end, 0, 0, 6)
+		t.expect(math.abs(math.acos(cy) - Deaths.MAX_LEAN) < 1e-9, `on a 72° cliff it leans only MAX_LEAN ({math.deg(math.acos(cy))}°)`)
+	end)
+
 	local function flat(_x: number, _z: number): number
 		return 10
 	end

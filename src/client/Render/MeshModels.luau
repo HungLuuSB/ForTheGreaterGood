@@ -337,6 +337,13 @@ end
 
 -- The meshed wreck template for def `def` (clone it), or nil (none, not
 -- approved, or still building: the build starts on the first ask).
+-- The wreck mesh lies on the ground already: models-C's fallen hulks (S-234)
+-- carry `fallen = true` in their manifest wreck entry (C-286).
+function MeshModels.wreckFallen(def: any): boolean
+	local e = Meshes.units[def.id] :: any
+	return e ~= nil and e.wreck ~= nil and e.wreck.fallen == true
+end
+
 function MeshModels.wreck(def: any): Model?
 	local ready = wrecks[def.id]
 	if ready then

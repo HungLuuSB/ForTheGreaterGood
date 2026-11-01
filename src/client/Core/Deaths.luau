@@ -205,4 +205,85 @@ function Deaths.shakeAt(id: number, t: number): (number, number)
 	return a * math.sin(t * 61 + id), a * math.cos(t * 53 + id * 2)
 end
 
+-- Heavy T3 wrecks lie on the ground (S-234, the user: "laying on the ground,
+-- not a standing still piece of metal wrecks"; C-286). Until models-C's
+-- fallen-hulk wreck meshes land (a manifest wreck with `fallen = true`), the
+-- client lays these down itself: walkers topple onto a side, tanks, hovers
+-- and spiders slump flat along the ground's slope, sunk in (a spider's legs
+-- folded under it). The rest keep standing as they died.
+Deaths.FALLEN = table.freeze({
+	ord_titan = true,
+	chs_juggernaut = true,
+	ord_thunderer = true,
+	ord_tempest = true,
+	chs_typhon = true,
+	ord_paragon = true,
+	ord_champion = true,
+	ord_monolith = true,
+	chs_colossus = true,
+	chs_pandemonium = true,
+	chs_infernal = true,
+	chs_widowmaker = true,
+	chs_abyssal = true,
+})
+Deaths.TOPPLE = math.rad(84) -- a toppled walker's roll: on its side, resting on its shoulder
+Deaths.SLUMP_TILT = math.rad(5) -- a slumped hull's skew either way
+Deaths.SLUMP_SINK = 0.6 -- studs into the ground
+Deaths.SPIDER_SINK = 0.3 -- of its height: the legs folded under it
+
+-- `roll` / `pitch`: radians on top of the ground's slope; `sink`: studs below
+-- the ground for the lowest point, plus `sinkShare` of the model's height;
+-- `center`: shift the toppled model back over where it died.
+export type Fall = { roll: number, pitch: number, sink: number, sinkShare: number, center: boolean }
+
+-- How unit `id`'s wreck lies, or nil (it stands as it died). `fallenMesh`:
+-- its wreck mesh lies down already; `height`, `width`, `depth`: its model's
+-- size (studs), when known. A walker falls the way that leaves it lowest:
+-- onto its front or back when it's shallower than it is wide (the Titan's
+-- shoulders), else onto a side; one no taller than that (a squat blockout)
+-- slumps instead, since toppling would stand it on its edge like a wall.
+function Deaths.fall(id: number, def: any, fallenMesh: boolean?, height: number?, width: number?, depth: number?): Fall?
+	if not Deaths.FALLEN[def.id] or fallenMesh then
+		return nil
+	end
+	local rng = Prng.new(id * 7 + 3)
+	local side = if rng:nextNumber(0, 1) < 0.5 then -1 else 1
+	local forward = width ~= nil and depth ~= nil and depth < width
+	local lying = if forward then depth else width
+	local tall = height == nil or lying == nil or height > lying
+	if tall and (def.moveClass == "WALKER" or def.moveClass == "AMPHIB_WALKER") then
+		local skew = math.rad(rng:nextNumber(-8, 8))
+		return {
+			roll = if forward then skew else side * Deaths.TOPPLE,
+			pitch = if forward then side * Deaths.TOPPLE else skew,
+			sink = Deaths.SLUMP_SINK,
+			sinkShare = 0,
+			center = true,
+		}
+	end
+	local m = Deaths.SLUMP_TILT
+	return {
+		roll = side * rng:nextNumber(0.4, 1) * m,
+		pitch = rng:nextNumber(-m, m),
+		sink = Deaths.SLUMP_SINK,
+		sinkShare = if def.moveClass == "SPIDER" then Deaths.SPIDER_SINK else 0,
+		center = false,
+	}
+end
+
+Deaths.MAX_LEAN = math.rad(35) -- a wreck on a cliff leans no further (it doesn't cling to the rock face)
+
+-- The ground's unit normal at (`x`, `z`), from heights `reach` studs away,
+-- leaning at most MAX_LEAN from straight up.
+function Deaths.groundNormal(ground: (number, number) -> number, x: number, z: number, reach: number): (number, number, number)
+	local dx = (ground(x + reach, z) - ground(x - reach, z)) / (2 * reach)
+	local dz = (ground(x, z + reach) - ground(x, z - reach)) / (2 * reach)
+	local grade, most = math.sqrt(dx * dx + dz * dz), math.tan(Deaths.MAX_LEAN)
+	if grade > most then
+		dx, dz = dx * most / grade, dz * most / grade
+	end
+	local len = math.sqrt(dx * dx + 1 + dz * dz)
+	return -dx / len, 1 / len, -dz / len
+end
+
 return Deaths
