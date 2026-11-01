@@ -240,4 +240,13 @@ return function(t: RunAll.Context)
 		t.equal(Codex.word("aoe", 20), "large")
 		t.equal(Codex.word("range", 1100), "very long")
 	end)
+
+	t.test("a role in a sentence takes a or an and keeps its acronym", function()
+		t.equal(Codex.aRole("Experimental lightning tank"), "an experimental lightning tank")
+		t.equal(Codex.aRole("Hover tank"), "a hover tank")
+		t.equal(Codex.aRole("AA bot"), "an AA bot")
+		t.equal(Codex.aRole("MLRS"), "an MLRS")
+		t.equal(Codex.aRole("IR SAM site"), "an IR SAM site")
+		t.equal(Codex.aRole("Underwater supply extractor"), "an underwater supply extractor")
+	end)
 end
