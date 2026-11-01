@@ -5,7 +5,7 @@
 return {
 	id = "ord_titan_missiles",
 	type = "HOMING",
-	range = 390, -- shorter T3 range (S-213, the user): was 520
+	range = 351, -- shorter T3 range (S-213, the user): was 520; -10% (S-234): was 390
 	reload = 6,
 	projectileSpeed = 300,
 	accuracy = 1,
@@ -13,7 +13,7 @@ return {
 	launch = "vertical",
 	climbHeight = 50,
 	guidance = "IR",
-	lockRange = 520,
+	lockRange = 468, -- -10% (S-234): was 520
 	terminalRange = 40,
 	damage = { LIGHT = 220, ARMORED = 180, STRUCTURE = 150, SHIP = 160, AIR = 180, SUB = 0 },
 	aoe = 10,

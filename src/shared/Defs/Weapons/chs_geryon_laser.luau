@@ -6,7 +6,7 @@
 return {
 	id = "chs_geryon_laser",
 	type = "HITSCAN",
-	range = 215,
+	range = 161, -- -25% (S-234, the user; was 215)
 	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.5,
 	shotCost = { power = 20 }, -- lasers cost energy per shot (S-187, the user)

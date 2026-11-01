@@ -3,7 +3,7 @@
 return {
 	id = "chs_fortress_mortar",
 	type = "BALLISTIC",
-	range = 400,
+	range = 300, -- -25% (S-234, the user; was 400)
 	reload = 3, -- faction pass (S-62)
 	projectileSpeed = 210,
 	gravity = 60,

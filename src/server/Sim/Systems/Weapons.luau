@@ -157,6 +157,14 @@ local function fire(
 )
 	local c = sim.combat
 	local w = sim.world
+	if weapon.kamikaze then
+		-- a crawling bomb detonates (S-233): it dies now, no wreck; Damage
+		-- sets off its deathBlast
+		c.noWreck[id] = true
+		sim.cheats.killing[id] = true -- (through god mode too)
+		Combat.queueDamage(c, id, w.health[id] * 100 + 1, 0, w.owner[id])
+		return
+	end
 	local acc = rad(weapon.accuracy or 0)
 	local yawErr = if acc > 0 then sim.rng:nextNumber(-acc, acc) else 0
 	local pitchErr = if acc > 0 then sim.rng:nextNumber(-acc, acc) else 0

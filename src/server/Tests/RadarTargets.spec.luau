@@ -27,14 +27,14 @@ local function shots(sim: Sim.Sim, id: number, ticks: number): number
 	return n
 end
 
--- A Talos (range 360, sight 220) of player 2 at the origin; `radar`: a Chaos
--- Eye 200 studs off the target point, out of sight of it (160) but its radar
--- (280) covers it.
+-- A Talos (range 270, sight 165 since S-234) of player 2 at the origin; the
+-- target point is 240 studs out. `radar`: a Chaos Eye 200 studs off it, out
+-- of sight of it (160) but its radar (280) covers it.
 local function setup(seed: number, radar: boolean): (Sim.Sim, number)
 	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
 	local talos = Spawn.unit(sim, "chs_talos", 2, 0, 0)
 	if radar then
-		Spawn.unit(sim, "chs_eye", 2, 200, 300)
+		Spawn.unit(sim, "chs_eye", 2, 200, 240)
 	end
 	return sim, talos
 end
@@ -43,7 +43,7 @@ return function(t: RunAll.Context)
 	t.test("a weapon without canTargetRadar in its def fires at a radar blip beyond its sight (S-202)", function()
 		t.expect(require("@shared/Defs/Registry").weapons.chs_talos_shell.canTargetRadar == nil, "(the def doesn't ask for it)")
 		local sim, talos = setup(1, true)
-		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 300, math.pi)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 240, math.pi)
 		World.setFireState(sim.world, tank, World.FireState.HOLD_FIRE)
 		World.setMoveState(sim.world, tank, World.MoveState.HOLD_POSITION)
 		World.setHealth(sim.world, tank, 1e6)
@@ -51,7 +51,7 @@ return function(t: RunAll.Context)
 		t.expect(n >= 3, `it shells the blip ({n} shots in 20 s)`)
 		-- no radar: nothing to shoot at
 		local sim2, talos2 = setup(1, false)
-		local tank2 = Spawn.unit(sim2, "ord_lancer", 1, 0, 300, math.pi)
+		local tank2 = Spawn.unit(sim2, "ord_lancer", 1, 0, 240, math.pi)
 		World.setFireState(sim2.world, tank2, World.FireState.HOLD_FIRE)
 		World.setMoveState(sim2.world, tank2, World.MoveState.HOLD_POSITION)
 		t.equal(shots(sim2, talos2, 15 * 10), 0, "unseen and off radar: no shot")
@@ -61,10 +61,10 @@ return function(t: RunAll.Context)
 		local function run(radar: boolean): number
 			local sim, talos = setup(2, radar)
 			local w = sim.world
-			local gen = Spawn.unit(sim, "ord_solar", 1, 0, 300)
+			local gen = Spawn.unit(sim, "ord_solar", 1, 0, 240)
 			World.setHealth(w, gen, 1e6)
 			-- a scout sees it for a moment, then dies: the team remembers a ghost
-			local scout = Spawn.unit(sim, "chs_scrapper", 2, 30, 300)
+			local scout = Spawn.unit(sim, "chs_scrapper", 2, 30, 240)
 			World.setFireState(w, scout, World.FireState.HOLD_FIRE)
 			shots(sim, talos, 6)
 			Combat.queueDamage(sim.combat, scout, w.health[scout] + 1, 0)

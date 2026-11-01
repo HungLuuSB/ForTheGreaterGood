@@ -52,6 +52,7 @@ local function blastOf(sim: Types.Sim, def: any, selfDestructed: boolean?): any
 			aoe = (if own then own.aoe else d.aoe) * k,
 			edgeEffectiveness = if own then own.edge else d.edge,
 			onlyDefs = only,
+			paralyzer = if own and own.paralyzer then true else nil, -- a spy's EMP burst (S-233)
 		}
 		cache[def] = b
 	end
@@ -157,7 +158,7 @@ return function(sim: Types.Sim)
 		local selfDestructed = c.selfDestructed[id] == true
 		local carried = sim.transport.carrier[id] ~= nil -- died on board a transport (S-219)
 		-- (S-194) no wreck from a self-destruct or a D-Gun bolt
-		if severity <= Combat.WRECK_MAX_SEVERITY and not airborne and not frame and not selfDestructed and not carried and not c.noWreck[id] then
+		if severity <= Combat.WRECK_MAX_SEVERITY and not airborne and not frame and not selfDestructed and not carried and not c.noWreck[id] and def.disguise == nil then -- (a decoy Commander leaves none: its wreck would give it away, S-233)
 			wreck = Combat.addWreck(c, w.posX[id], w.posZ[id], def, w.heading[id])
 		end
 		Combat.addEvent(c, {

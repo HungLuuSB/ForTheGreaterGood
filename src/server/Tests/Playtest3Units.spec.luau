@@ -217,7 +217,7 @@ return function(t: RunAll.Context)
 		t.equal(u.chs_goliath.tier, 2, "chs_goliath: the T2 tank")
 		t.expect(u.chs_goliath.retired ~= true, "chs_goliath: not retired (S-224, the user)")
 		t.expect(table.find(u.chs_advvehplant.buildOptions :: { string }, "chs_goliath") ~= nil, "the Chaos advanced vehicle plant builds it")
-		t.equal(u.ord_titan.maxRange, 390, "Titan: 390 (missiles; was 520)")
+		t.equal(u.ord_titan.maxRange, 351, "Titan: 351 (missiles; 520, 390, then 10% less, S-234)")
 		t.equal(u.chs_juggernaut.maxRange, 520, "Juggernaut: 520 (missiles; was 700)")
 	end)
 end

@@ -17,7 +17,7 @@ return Templates.extend(Templates.Structure, {
 	footprint = 2, -- size shows tech level (S-104)
 	height = 19.6, -- a tall tower (S-184; models-C's F18 blockouts, measured)
 	muzzleHeight = 18.0,
-	sensors = { sight = 240 },
+	sensors = { sight = 180 }, -- T1 laser defences -25% (S-234, the user; was 240)
 	weapons = { { def = "chs_geryon_laser", turretPiece = "turret", pitchPiece = "mount", muzzle = "muzzle1", muzzles = { "muzzle1", "muzzle2", "muzzle3" }, drumPiece = "drum" } },
 	pieces = { "base", "turret", "mount", "drum", "muzzle1", "muzzle2", "muzzle3" }, -- the mount pitches the drum (models-C, the user)
 	icon = "turret",

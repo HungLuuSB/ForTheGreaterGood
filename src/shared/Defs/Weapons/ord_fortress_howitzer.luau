@@ -3,7 +3,7 @@
 return {
 	id = "ord_fortress_howitzer",
 	type = "BALLISTIC",
-	range = 520, -- faction pass (S-62)
+	range = 390, -- faction pass (S-62); -25% (S-234, the user; was 520)
 	reload = 4.4, -- faction pass (S-62)
 	projectileSpeed = 220,
 	gravity = 60,

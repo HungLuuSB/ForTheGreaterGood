@@ -5,7 +5,7 @@
 return {
 	id = "ord_sentry_laser",
 	type = "HITSCAN",
-	range = 190,
+	range = 142, -- -25% (S-234, the user; was 190)
 	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.8,
 	shotCost = { power = 20 }, -- lasers cost energy per shot (S-187, the user)

@@ -15,7 +15,7 @@ return Templates.extend(Templates.Structure, {
 	footprint = 2, -- size shows tech level (S-104)
 	height = 18.7, -- a tall tower (S-184; models-C's F18 blockouts, measured)
 	muzzleHeight = 16.4,
-	sensors = { sight = 166 }, -- 260 less 15% (the user, 2026-10-26), then 25% off (FTGG-FEEDBACK-4)
+	sensors = { sight = 124 }, -- 260 less 15% (the user, 2026-10-26), then 25% off (FTGG-FEEDBACK-4); T1 laser defences -25% (S-234, the user; was 166)
 	weapons = { { def = "ord_overwatch_laser", turretPiece = "turret", pitchPiece = "mount", muzzle = "muzzle1", muzzles = { "muzzle1", "muzzle2" } } },
 	pieces = { "base", "turret", "mount", "muzzle1", "muzzle2" }, -- the mount pitches both barrels (models-C, the user)
 	icon = "turret",
