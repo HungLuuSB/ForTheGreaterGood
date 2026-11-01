@@ -2716,3 +2716,11 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - The redraw checks compare against the same look, so a decoy isn't redrawn every frame.
 - Crawling bombs needed nothing new. Their kamikaze sends no FIRE, and their DEATH (severity 255, no wreck) plays the existing death-blast burst sized from `deathBlast.aoe`.
 - Studio: an own Effigy drew with the Sovereign's model (`debug_out/screens/c287_effigy_as_sovereign.jpg`).
+
+### C-288 — Batch 2 icons: sheets 2 and 3 uploaded (E-15, 2026-11-01)
+
+- Merged E's batch 2 icon branch (054278e0) and re-ran `tools/icons/render.mjs`: all 281 unit defs map to 174 catalogue icons (11 placeholders), 185 tiles over three sheets. Sheet 2 is full (90 tiles); sheet 3 is new (5 tiles).
+- The user approved the upload; the ids and pixel hashes are in `tools/icons/assets.json` (sheet 2 `139572992631212`, sheet 3 `130431554234464`), and `UI/IconAtlas` is regenerated with them. Sheet 1 is unchanged.
+- `Core/Icons.placeholderFrame` gives the S-233 all-terrain spiders (move class `SPIDER`) their own placeholder frame, `spider`, until a spider has its own tile.
+- The decoy Commanders (`ord_effigy`, `chs_changeling`) use the Sovereign's and Warlord's icon tiles, so the icon doesn't give them away either.
+- Studio: all three sheet ids fetch, and 60 tiles from sheets 2 and 3 draw and tint correctly (`debug_out/screens/c288_batch2_icons_sheets_2_3.jpg`).
