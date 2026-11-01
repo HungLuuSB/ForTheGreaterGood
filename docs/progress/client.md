@@ -57,6 +57,12 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-11-01, batch 2 icons: C-288)
+
+- **E's batch 2 icons are in (C-288, E-15):** all 281 units have an icon (174 catalogue icons, 11 placeholders) over three sheets. Sheet 2 re-uploaded and sheet 3 new, with the user's approval; ids and hashes in `tools/icons/assets.json`. Spiders get a placeholder frame; decoy Commanders share their Commander's icon. `debug_out/screens/c288_batch2_icons_sheets_2_3.jpg`.
+- Suites: `lune run test_client` 360 / 360, `lune run build` passed (1082 scripts, 2860 requires).
+- Ready to merge: `7a6b1623` (C-288)
+
 ## Summary (2026-11-01, heavy wrecks lie down, decoys: C-286, C-287)
 
 - **Merged main f3bd9014:** S-233 batch 2 (protocol 48), S-234 balance. The client decodes through the shared Schema, so the 8-byte strategic records needed no client change; client tests pass.
