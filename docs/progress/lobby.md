@@ -2,6 +2,14 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-11-01: batch 1's models in the showroom; a / an in the Codex)
+
+- Merged main `184ec356` (my `6834b013`, C's batch 1 meshes in `Defs/Meshes/Registry`) as `cacec4f4`. No lobby change was needed.
+- **Studio** (`debug_out/screens/`): `lobby_batch1_skimmer_model` (the Skimmer's new mesh on the water stage), `lobby_batch1_thunderer_model` (the Thunderer's new mesh on the pad). No script errors.
+- **Fix:** an article with no counterpart said "only Order has a experimental lightning tank" and lowercased acronym roles ("aa bot", "ir sam site"). New `Codex.aRole` picks a / an and keeps acronyms ("an AA bot", "an MLRS"), with a spec. Checked in Studio: "None: only Order has an experimental lightning tank."
+- Lobby specs 70 / 70; the build check passes (748 scripts, 1216 requires).
+- Ready to merge: `a7a4a318` (touches only `src/lobby`)
+
 ## Summary (2026-10-31: batch 1's pictures in the Codex)
 
 - Merged main `cc6ac628` (my `e08e0969` as `43cb60f2`, S-231's FEEDBACK-4 fixes, E's sheet 4), then `dbe607ba` (B's C-283: `UnitPictures` with sheet 4 `rbxassetid://77607112363466` and the batch 1 entries). No lobby change was needed for either.
