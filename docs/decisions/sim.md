@@ -3357,3 +3357,22 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - E: icons from the defs, then pictures from C's models;
   - B: placeholders through the relaxed IconAtlas rule, then rigs and effects;
   - D: Codex entries.
+
+## S-231 — FTGG-FEEDBACK-4: the 8v8 on Supreme Strait (the user) (2026-10-31)
+- **Error 210, the match ended:**
+  - The cause: `Projectiles.luau`'s torpedo depth clamp, `math.clamp(y, floor + 0.5, surface - 0.5)`, has min > max in water under a stud deep, and Luau raises an error for that. The strait's shallows have such water.
+  - The fix: in water that shallow the torpedo runs midway between the floor and the surface. `Feedback4.spec` reproduces the exact error without the fix.
+- **Titan:**
+  - Its heat-seeking volley is one small missile, not a salvo of 4.
+  - It now hunts aircraft too (AIR 180), but never submarines.
+  - A small launch flash and a thin trail; aoe 10 (was 14).
+  - Range, reload and damage against ground are unchanged.
+- **Overwatch and Steadfast:** sight and range 25% less.
+  - Overwatch: sight 166, laser range 180.
+  - Steadfast: sight 210, gun range 210.
+- **AI factories face the enemy:**
+  - `Skirmish.factoryFacing` applies to every BUILD the AI gives. Before, airfields, gantries and the job list's builds went in facing north; on Supreme Strait that is away from the enemy for the north-west team.
+  - Land factories take `enemyFacing`.
+  - Shipyards face out to sea, away from home.
+- **Explosions and missile launches too strong:** B's (client effects).
+

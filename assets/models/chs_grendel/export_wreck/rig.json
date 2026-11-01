@@ -1,0 +1,159 @@
+{
+  "id": "chs_grendel_wreck",
+  "wreckOf": "chs_grendel",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0022,
+        2.1072,
+        -0.4401
+      ],
+      "size": [
+        7.5886,
+        3.4866,
+        10.5027
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -2.6242,
+        0.5746,
+        -0.0569
+      ],
+      "size": [
+        0.9055,
+        1.0404,
+        9.4207
+      ],
+      "pivot": [
+        -2.6,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        2.565,
+        0.499,
+        -0.0111
+      ],
+      "size": [
+        0.9737,
+        1.2193,
+        9.4893
+      ],
+      "pivot": [
+        2.6,
+        0.46,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0708,
+        3.5103,
+        0.8105
+      ],
+      "size": [
+        5.1853,
+        2.7367,
+        5.6844
+      ],
+      "pivot": [
+        0.0,
+        2.2,
+        0.8
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0133,
+        3.1983,
+        -3.1423
+      ],
+      "size": [
+        1.6991,
+        1.3363,
+        4.0949
+      ],
+      "pivot": [
+        0.0,
+        3.2,
+        -1.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        3.2,
+        -5.15
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 944,
+    "trackL": 236,
+    "trackR": 272,
+    "turret": 360,
+    "barrel": 256,
+    "total": 2068
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

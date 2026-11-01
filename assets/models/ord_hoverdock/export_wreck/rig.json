@@ -1,0 +1,87 @@
+{
+  "id": "ord_hoverdock_wreck",
+  "wreckOf": "ord_hoverdock",
+  "footprintStuds": 32,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0339,
+        4.7958,
+        -1.858
+      ],
+      "size": [
+        30.9341,
+        11.0409,
+        31.5712
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        1.1,
+        -2.2
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -6.82,
+        7.6,
+        -2.75
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        6.82,
+        7.6,
+        -2.75
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        0.0,
+        8.8,
+        0.22
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2768,
+    "total": 2768
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

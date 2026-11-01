@@ -1,0 +1,208 @@
+{
+  "id": "ord_halcyon",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.95,
+        -0.098
+      ],
+      "size": [
+        4.6,
+        3.7,
+        7.5245
+      ]
+    },
+    "fan1": {
+      "parent": "base",
+      "center": [
+        -1.15,
+        2.22,
+        2.326
+      ],
+      "size": [
+        1.6606,
+        0.12,
+        1.5284
+      ],
+      "pivot": [
+        -1.15,
+        2.22,
+        2.3259999999999996
+      ]
+    },
+    "fan2": {
+      "parent": "base",
+      "center": [
+        1.15,
+        2.22,
+        2.326
+      ],
+      "size": [
+        1.6606,
+        0.12,
+        1.5284
+      ],
+      "pivot": [
+        1.15,
+        2.22,
+        2.3259999999999996
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.4556,
+        -0.0995
+      ],
+      "size": [
+        2.5,
+        1.7111,
+        1.9725
+      ],
+      "pivot": [
+        0.0,
+        1.6,
+        -0.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0,
+        3.1414912265733954,
+        -0.7441458618106276
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "fan1",
+    "fan2",
+    "turret"
+  ],
+  "visualPieces": [
+    "fan1",
+    "fan2"
+  ],
+  "anim": {
+    "fan1": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "fan2": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.375,
+        0.2
+      ],
+      "size": [
+        4.12,
+        2.47,
+        4.8
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.2,
+        -3.45
+      ],
+      "size": [
+        3.5,
+        0.18,
+        0.08
+      ]
+    },
+    {
+      "name": "turret_glow_weapon",
+      "piece": "turret",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        3.0391,
+        -0.6724
+      ],
+      "size": [
+        2.4,
+        0.3802,
+        0.5251
+      ]
+    }
+  ],
+  "glowShare": 0.0231,
+  "triangles": {
+    "base": 540,
+    "fan1": 64,
+    "fan2": 64,
+    "turret": 448,
+    "total": 1116
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

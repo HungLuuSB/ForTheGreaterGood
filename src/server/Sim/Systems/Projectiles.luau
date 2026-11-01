@@ -283,7 +283,10 @@ return function(sim: Types.Sim)
 				continue
 			end
 			local surface = Combat.surfaceHeight(c, x1, z1)
-			y1 = math.clamp(y1, Combat.groundHeight(c, x1, z1) + 0.5, surface - 0.5)
+			local floor = Combat.groundHeight(c, x1, z1)
+			-- water under a stud deep: the band is empty, run midway
+			-- (math.clamp errors when min > max; FTGG-FEEDBACK-4)
+			y1 = if surface - floor < 1 then (floor + surface) / 2 else math.clamp(y1, floor + 0.5, surface - 0.5)
 		end
 
 		-- earliest unit contact along the chord

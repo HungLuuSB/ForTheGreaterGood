@@ -1,0 +1,62 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 2244 triangles, glow share 2.9%",
+  "bar": {
+    "model": "rbxassetid://137252976505866",
+    "meshes": {
+      "barrel": "rbxassetid://84154428632405",
+      "barrel_glow_weapon": "rbxassetid://127204579397687",
+      "base": "rbxassetid://75415237371095",
+      "base_glow_head": "rbxassetid://83602795056241",
+      "base_glow_running": "rbxassetid://128217430553115",
+      "fan1": "rbxassetid://97956760071680",
+      "fan2": "rbxassetid://110261096063414",
+      "fan3": "rbxassetid://93984443943157",
+      "turret": "rbxassetid://136545465186386",
+      "turret_glow_running": "rbxassetid://79133413438055",
+      "turret_glow_weapon": "rbxassetid://82823029563910"
+    },
+    "decals": {
+      "ALB": "rbxassetid://115412445750148",
+      "RGH": "rbxassetid://133850669852235",
+      "NOR": "rbxassetid://89526993223397",
+      "MTL": "rbxassetid://95472413911926",
+      "EMI": "rbxassetid://140557138546695"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://79213155376464",
+      "NOR": "rbxassetid://72771987848841",
+      "RGH": "rbxassetid://127014147088476",
+      "MTL": "rbxassetid://81535381280470",
+      "EMI": "rbxassetid://109043102470072"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_typhon_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://119513565913686",
+    "meshes": {
+      "barrel": "rbxassetid://127711382515382",
+      "base": "rbxassetid://140169393399132",
+      "fan1": "rbxassetid://138591357541401",
+      "fan2": "rbxassetid://95945358304887",
+      "fan3": "rbxassetid://121568667981266",
+      "turret": "rbxassetid://87844105709219"
+    },
+    "decals": {
+      "ALB": "rbxassetid://122560118982027",
+      "RGH": "rbxassetid://117102999584582",
+      "NOR": "rbxassetid://128427049184381",
+      "MTL": "rbxassetid://92995896029174",
+      "EMI": "rbxassetid://131533447590163"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://131824721290202",
+      "NOR": "rbxassetid://111308637674521",
+      "RGH": "rbxassetid://128736423112272",
+      "MTL": "rbxassetid://96099079465967",
+      "EMI": "rbxassetid://136626841096915"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_typhon_wreck_bar in FTGG Art",
+    "revision": "Batch 1 of the BAR roster, groups 3-7, uploaded with the user's approval 2026-10-31: 1664 triangles"
+  }
+}
