@@ -57,6 +57,13 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-11-01, batch 2 walks: C-290)
+
+- **Merged main d20a633d** (S-235, C's batch 2 blockouts and fallen hulks, D's Codex rows). Studio check for S-235: the `skirmish` lobby profile starts, and a Lakelands match was playing 1.6 s after Start (`debug_out/screens/s235_lakelands_lobby_match.jpg`).
+- **Batch 2 walks (C-290):** any unit on swinging legs now walks with the Bot script, its gait read from its leg pieces. The six-legged spiders step in tripods and the four-legged ones in diagonal pairs; the Colossus walks on trunks, and the T3 walkers take smaller swings. The Martyr's ball shell rolls while it moves. `debug_out/screens/c290_batch2_walking.jpg`.
+- Suites: `lune run test_client` 361 / 361, `lune run build` passed (1123 scripts, 2950 requires).
+- Ready to merge: `52a47376` (C-290)
+
 ## Summary (2026-11-01, fallen-hulk wreck meshes: C-289)
 
 - **Fallen-hulk wrecks lie as modelled (C-289, models-C request 17):** a manifest wreck with `fallen = true` keeps its joints at rest and is placed by its own `RootOffset` on the ground slope. Other wrecks are placed as before. Checked in Studio with a temporary flag on the Lancer's wreck (`debug_out/screens/c289_fallen_mesh_rest_rootoffset.jpg`); C's 13 hulks are still `review`, so the C-286 stopgap draws those wrecks until the user approves them.

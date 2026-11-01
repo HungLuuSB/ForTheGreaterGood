@@ -2732,3 +2732,12 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - `placeWreck` now takes the unit's frame (position, heading + pi) and the live model's `RootOffset`, not the dying root's frame. A standing or stopgap wreck still takes the dying root's place (`unit * liveOffset`). A fallen hulk is placed by its own `RootOffset`, on the ground's slope under its footprint (the C-286 normal, capped at 35°), with the small random tilt: its base lies lower and off to one side of the live pelvis or hull, and the mesh already sits on the ground with a small sink.
 - Both callers pass the unit frame: a death in view gives `base * rootOffset:Inverse()`, and a wreck first seen in the wreck table gives the record's position and heading.
 - Studio, with a temporary `fallen = true` on the Lancer's approved wreck (reverted): three wrecks had 0 askew joints and lay on the ground at their units' positions (`debug_out/screens/c289_fallen_mesh_rest_rootoffset.jpg`). C's real hulks are still `review` and not on this branch, so they're unchecked in game.
+
+### C-290 — Batch 2 walks: any unit on swinging legs walks, spiders step in tripods, the Martyr rolls (S-233, 2026-11-01)
+
+- C's batch 2 blockouts (main 7a3a096d) bring 41 legged units, none of them in the piece-script registry. Rather than list them, `PieceScripts/Registry.forDef` falls back to Bot for any unit whose blockout or mesh has swinging legs (`thighL`, `thighFL` or `legFL`, via `PieceMotion`), so later walkers walk without a registry line.
+- `Bot.gait` now reads the leg pieces: `legFL` walks on trunks (Mammoth, now also the Colossus), the spider kit's `thighFL` walks as a spider, the Skitter keeps its quad gait, and the rest are bipeds.
+- Spider gait (Blockouts/Bots.spider legs): each thigh sweeps 16° forward or back about its hip, and the stepping set lifts 14° about the horizontal axis across the leg. With six legs, FL MR BL step against FR ML BR; with four, the diagonals step together. The spider kit's leg yaws are copied into Bot.
+- `Bot.hip`: a `HIP` override, else the blockout's hip pivot, else 2.5. `Bot.scale`: a `SCALE` override, else 0.6 for hips of 6 studs or more (the T3 walkers, models-C's advice for heavy, slow strides).
+- `Ambient`: a rolling bomb's `shell` (the Martyr) rolls at 720°/s while it moves, like a wheel. No other unit's shell spins.
+- Studio: Scaler, Widowmaker, Monolith, Colossus, Champion, Martyr and Pustule walked in the lobby preview, legs moving in their sets and the shell rolling (`debug_out/screens/c290_batch2_walking.jpg`).
