@@ -2,6 +2,22 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-11-01: the Lakelands stall is gone; batch 2's rows seen in Studio)
+
+- **Merge:** main `d7e15030` (S-235's map cache, B's C-286 and C-287, E's batch 2 pictures) fast-forwarded into m-lobby.
+- **Studio check, lobby server start (FTGG Testplace):**
+  - The server logs "9 maps ready" with no script timeout, and the client boots.
+  - The Lakelands load, timed on the server with a fresh `MapRegistry` copy: 0.31 s cold, 0.34 s from the cache, 0.06 s for `details`.
+- **Batch 2 rows in Studio:** these all read as the specs say.
+  - Martyr: Detonates; Self-destruct "at once"; Wreck "None when it detonates".
+  - Effigy: Disguise, the Sovereign, 50% health.
+  - Informant: Stealth "invisible to radar"; the EMP Self-destruct over 30 studs.
+  - Scaler: the SPIDER movement row.
+  - Screens: `debug_out/screens/lobby_batch2_{martyr_detonates,effigy_disguise,informant_spy,scaler_spider}.jpg`.
+- **Fix:** the Cloak row said "Enemy sight can't see it, only radar" even for the spies, which have no radar signature. It now says "nor radar" when the unit is invisible to radar.
+- Lobby specs 72 / 72; the build check passes (831 scripts, 1342 requires).
+- Ready to merge: `3a886c25` (touches only `src/lobby`)
+
 ## Summary (2026-11-01: batch 2's defs in the Codex; the lobby stalls on Lakelands)
 
 - **Merge:** main `f3bd9014` (S-233's 43 bot defs, S-234's balance list, B's C-284 and C-285) fast-forwarded into m-lobby.
