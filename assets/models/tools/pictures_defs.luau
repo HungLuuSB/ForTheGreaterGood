@@ -29,7 +29,8 @@ local function setting(d: any): string
 	elseif surface == "amphib" or surface == "hover" then
 		return "shore"
 	end
-	return if d.moveClass == "WALKER" then "bot" else "ground"
+	-- Spiders leave footprints too, not tread lines.
+	return if d.moveClass == "WALKER" or d.moveClass == "SPIDER" then "bot" else "ground"
 end
 
 local set = Defs.load()
