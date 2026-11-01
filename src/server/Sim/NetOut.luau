@@ -336,6 +336,12 @@ function NetOut.headingU8(h: number): number
 	return math.floor((h % TAU) / TAU * 256 + 0.5) % 256
 end
 
+-- A Tactical record's heading: the same 0..256 scale in steps of 1/256 (u16
+-- on the wire, S-232), so a steady turn draws at a steady rate.
+function NetOut.headingFine(h: number): number
+	return (math.floor((h % TAU) / TAU * 65536 + 0.5) % 65536) / 256
+end
+
 local function healthU8(health: number, max: number): number
 	return math.clamp(math.ceil(health / max * 255), 0, 255)
 end
@@ -1145,7 +1151,7 @@ function NetOut.step(sim: Types.Sim)
 					cell = cell,
 					offX = ox,
 					offZ = oz,
-					heading = NetOut.headingU8(w.heading[id]),
+					heading = NetOut.headingFine(w.heading[id]),
 					alt = alt,
 				})
 			end

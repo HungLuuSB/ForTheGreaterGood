@@ -22,8 +22,9 @@
 -- reversible transforms that turn slowly changing records into repeats:
 --   * every message's tick header becomes its difference from the frame's
 --     tick (Tick.toWire), usually 0;
---   * Tactical records: unitId | zigzag varint of the cell's change | offX,
---     offZ, heading and alt changes (mod 256) | flags XOR, each against
+--   * Tactical records: unitId | zigzag varint of the cell's change | offX
+--     and offZ changes (mod 256) | heading change (u16, mod 65536) | flags
+--     XOR | alt change (mod 256), each against
 --     the same unit's previous record in the file;
 --   * State records: unitId | length varint | the record's other bytes XOR
 --     the same unit's previous record when it was as long (else as is);
@@ -143,27 +144,27 @@ local function transformTactical(data: buffer, tick: number, st: TransformState,
 		local prev = tac[uid] or { 0, 0, 0, 0, 0, 0 }
 		local cell, ox, oz, hd, fl, alt
 		if enc then
-			cell, ox, oz, hd, fl = r:readU16(), r:readU8(), r:readU8(), r:readU8(), r:readU8()
+			cell, ox, oz, hd, fl = r:readU16(), r:readU8(), r:readU8(), r:readU16(), r:readU8()
 			alt = if fl % 2 == 1 then r:readU8() else 0
 			w:writeU16(uid)
 			writeVarint(w, zig(cell - prev[1]))
 			w:writeU8((ox - prev[2]) % 256)
 			w:writeU8((oz - prev[3]) % 256)
-			w:writeU8((hd - prev[4]) % 256)
+			w:writeU16((hd - prev[4]) % 65536) -- (protocol 47: 16 bits)
 			w:writeU8(bit32.bxor(fl, prev[5]))
 			if fl % 2 == 1 then
 				w:writeU8((alt - prev[6]) % 256)
 			end
 		else
 			cell = prev[1] + unzig(readVarint(r))
-			ox, oz, hd = (r:readU8() + prev[2]) % 256, (r:readU8() + prev[3]) % 256, (r:readU8() + prev[4]) % 256
+			ox, oz, hd = (r:readU8() + prev[2]) % 256, (r:readU8() + prev[3]) % 256, (r:readU16() + prev[4]) % 65536
 			fl = bit32.bxor(r:readU8(), prev[5])
 			alt = if fl % 2 == 1 then (r:readU8() + prev[6]) % 256 else 0
 			w:writeU16(uid)
 			w:writeU16(cell)
 			w:writeU8(ox)
 			w:writeU8(oz)
-			w:writeU8(hd)
+			w:writeU16(hd)
 			w:writeU8(fl)
 			if fl % 2 == 1 then
 				w:writeU8(alt)
