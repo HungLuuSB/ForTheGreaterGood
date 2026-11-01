@@ -203,9 +203,17 @@ function UnitRenderer.drawable(world: World.World, u: World.Unit): boolean
 	return def.domain ~= "air" or bit32.band(u.state or 0, Schema.UnitState.LANDED) ~= 0
 end
 
+-- The def unit `u` is drawn as: a decoy Commander (S-233, C-287) wears its
+-- disguise's model, piece script and death for its owner and allies too
+-- (enemies are sent the disguise itself); the panel keeps its own def.
+local function look(world: World.World, u: World.Unit): any?
+	local def = World.def(world, u)
+	return if def and def.disguise then world.defs.units[def.disguise] or def else def
+end
+
 local function show(r: Renderer, world: World.World, id: number)
 	local u = world.units[id]
-	local def = u and World.def(world, u)
+	local def = u and look(world, u)
 	if u == nil or def == nil then
 		return
 	end
@@ -309,7 +317,7 @@ UnitRenderer.adjust = nil :: ((u: World.Unit, def: any, t: number, x: number, y:
 function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: number, hidden: boolean?, camera: Vector3?, speed: number?)
 	for _, id in world.entered do
 		local d, u = r.drawn[id], world.units[id]
-		if d == nil or u == nil or d.def ~= World.def(world, u) then
+		if d == nil or u == nil or d.def ~= look(world, u) then
 			hide(r, id) -- an ID can come back after a LEAVE as another unit; start clean
 			show(r, world, id)
 		end -- else: drawn out of the camera area all along; keep the model (C-161)
@@ -360,7 +368,7 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 			end
 		end
 	end
-	RenderDeaths.step(r.deaths, now, speed)
+	RenderDeaths.step(r.deaths, now, speed, world)
 	if t >= 0 then
 		RenderDeaths.syncWrecks(r.deaths, world, t)
 	end
@@ -379,7 +387,7 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 	table.clear(frames)
 	for id, d in r.drawn do
 		local u = world.units[id]
-		if u == nil or not UnitRenderer.drawable(world, u) or d.def ~= World.def(world, u) then
+		if u == nil or not UnitRenderer.drawable(world, u) or d.def ~= look(world, u) then
 			hide(r, id)
 			continue
 		end

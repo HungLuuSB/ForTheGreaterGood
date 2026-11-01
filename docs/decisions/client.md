@@ -2686,3 +2686,33 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - Six Lancers' wrecks, worn by each other's death blasts, showed no bars. A fully reclaimed one gave +425 supply, not 510.
   - A Mason started reclaiming one wreck and was stopped after about a second. Only that wreck shows its bar, and it stays (`debug_out/screens/c285_one_wreck_bar.jpg`).
   - No new console errors.
+
+### C-286 — Heavy T3 wrecks lie on the ground (2026-11-01)
+
+- The user (S-234): "Wreck for heavy T3 should be laying on the ground, not a standing still piece of metal wrecks." C is making fallen-hulk wreck meshes. Until they land, the client lays these 13 wrecks down itself (`Core/Deaths.FALLEN`): Titan, Juggernaut, Thunderer, Tempest, Typhon, Paragon, Champion, Monolith, Colossus, Pandemonium, Infernal, Widowmaker, Abyssal.
+- `Core/Deaths.fall` picks the pose, the same on every client (seeded by the unit id):
+  - **Walkers** (WALKER, AMPHIB_WALKER) topple about 84°. They fall onto their front or back when the model is shallower than it is wide (the Titan's shoulders), else onto a side.
+  - A walker no taller than that slumps instead. Tipping a squat model (the Colossus blockout) would stand it on its edge like a wall.
+  - **Tanks, hovers and spiders** slump: up to 5° of skew, sunk 0.6 studs. A spider sinks a further 30% of its height (legs folded under it).
+- `Render/Deaths.lieDown` places the wreck:
+  - It follows the ground's slope under the footprint (`Deaths.groundNormal`), leaning at most 35° (`MAX_LEAN`), so a wreck on a cliff doesn't cling to the rock face.
+  - The lowest point is found from every part's corners, worked out through the joints as knocked askew. A tipped bounding box reaches far below any part, and a placed model's joints move only on the next physics step. Both errors left the first tries floating.
+  - A toppled wreck is shifted back over where the unit died.
+- A manifest wreck entry with `fallen = true` (C's meshes, `MeshModels.wreckFallen`) is drawn as modelled, not tipped again.
+- The death's shake still plays upright, then the wreck appears lying down.
+- Spec `Deaths`: the poses by move class and model shape, the same pose every time, the fallen-mesh opt-out, the slope normal and the lean cap.
+- Studio, Coastline, a Titan, Colossus, Typhon, Monolith and Juggernaut destroyed with a small overkill:
+  - the Titan lies on its back, resting on the ground;
+  - the Colossus blockout and the Typhon lie flat;
+  - the Monolith slumped into the ridge slope;
+  - `debug_out/screens/c286_heavy_wrecks_lying.jpg`, `c286_titan_fallen_side.jpg`;
+  - no console errors.
+- The Titan's model is about as deep as it is tall, so even lying down it stands 16 studs high. C's fallen hulk will be lower.
+
+### C-287 — Decoy Commanders look like the Commander to their own side too (2026-11-01)
+
+- S-233: enemies are sent the disguise (Sovereign or Warlord) and draw it unchanged. The owner, allies and spectators get the real def (`ord_effigy`, `chs_changeling`).
+- `Render/UnitRenderer.look` draws a unit with `def.disguise`'s model, piece script and death. The panel, stats and icon keep the decoy's own def.
+- The redraw checks compare against the same look, so a decoy isn't redrawn every frame.
+- Crawling bombs needed nothing new. Their kamikaze sends no FIRE, and their DEATH (severity 255, no wreck) plays the existing death-blast burst sized from `deathBlast.aoe`.
+- Studio: an own Effigy drew with the Sovereign's model (`debug_out/screens/c287_effigy_as_sovereign.jpg`).
