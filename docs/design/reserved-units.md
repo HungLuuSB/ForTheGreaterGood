@@ -32,7 +32,7 @@ Part 3 of the BAR roster program (`docs/design/bar-roster-plan.md`), approved by
 | `armhacv` | Experimental combat engineer, vehicle | **Demiurge** (Order) | Builds the T4 plants |
 | `armhaca` | Experimental construction aircraft | **Ascender** (Order) | Builds the T4 plants |
 | `armhacs` | Experimental engineer ship | **Shipwright** (Order) | Builds the T4 shipyard |
-| `armnanotct2` + `armnanotc2plat` | Advanced Construction Turret, land or water (merged) | **Steward** (Order) | A larger assist radius than the Construction Turret (S-211) |
+| `armnanotct2` + `armnanotc2plat` | Advanced Construction Turret, land or water (merged) | **Chamberlain** (Order) | A larger assist radius than the Construction Turret (S-211) |
 | `corhalab` | Experimental Bot Lab | **Spawning Pit** (Chaos) | T4 tier; experimental bots |
 | `corhavp` | Experimental Vehicle Plant | **Siegeworks** (Chaos) | T4 tier; experimental vehicles |
 | `corhaap` + `corhaapuw` | Experimental Aircraft Plant, land or water (merged) | **Wyrmnest** (Chaos) | T4 tier; experimental aircraft |
@@ -41,7 +41,7 @@ Part 3 of the BAR roster program (`docs/design/bar-roster-plan.md`), approved by
 | `corhacv` | Experimental combat engineer, vehicle | **Forgehand** (Chaos) | Builds the T4 plants |
 | `corhaca` | Experimental construction aircraft | **Ossifrage** (Chaos) | Builds the T4 plants |
 | `corhacs` | Experimental engineer ship | **Salvager** (Chaos) | Builds the T4 shipyard |
-| `cornanotct2` + `cornanotc2plat` | Advanced Construction Turret, land or water (merged) | **Taskmaster** (Chaos) | As the Steward |
+| `cornanotct2` + `cornanotc2plat` | Advanced Construction Turret, land or water (merged) | **Foreman** (Chaos) | As the Chamberlain |
 | `leghaap`, `leghaca` | Legion's experimental aircraft plant and engineer | — | Out of scope: Legion isn't one of our factions |
 
 ### Drone warfare
@@ -82,8 +82,8 @@ Part 3 of the BAR roster program (`docs/design/bar-roster-plan.md`), approved by
 | `armfgate` | Floating shield | **Nimbus** (Order) | Shields (S-79) on water |
 | `corfgate` | Floating shield | **Barnacle** (Chaos) | As above |
 | `armfrock` | Floating anti-air missile battery | **Skyward** (Order) | Nothing new |
-| `corfrock` | Floating anti-air missile battery | **Spitter** (Chaos) | Nothing new |
-| `armgplat` | Light plasma gun platform | **Picket** (Order) | Nothing new |
+| `corfrock` | Floating anti-air missile battery | **Bile** (Chaos) | Nothing new |
+| `armgplat` | Light plasma gun platform | **Pavise** (Order) | Nothing new |
 | `corgplat` | Light plasma gun platform | **Spur** (Chaos) | Nothing new |
 | `armsonar` | Sonar station | **Auditor** (Order) | Nothing new: sonar exists on ships; this is the structure |
 | `corsonar` | Sonar station | **Harkener** (Chaos) | As above |

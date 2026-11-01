@@ -200,7 +200,7 @@ While C models batch *n*, sim-A drafts batch *n + 1*'s defs (still a draft). **O
 - **Mechanics first:** a hover pathing check with real hover units (land, shore, water, slopes), cloak (Whisper), and EMP (Thunderer's two EMP lasers).
 - **AI:** the hover factory on water maps (Coastline, Supreme Strait), amphibious tanks on mixed maps, the new roles in `AI/Counters` (the riot tank as `heavy` against light, the rocket hovers as `artillery`, the fast raiders as `raider`).
 
-### 2.3 Batch 2: bots (for your approval)
+### 2.3 Batch 2: bots (approved by the user 2026-11-01)
 
 **43 units, 43 defs.** BAR already has a single decoy Commander per faction, so there's nothing to merge. Order gets 22 and Chaos 21. The first-draft numbers are the README's "FTGG suggested" values; the def drafts tune them. Every proposed name has been checked against all of BAR's names and all 238 of ours. "Built by" is our factory:
 - Order: Bot Lab (T1), Advanced Bot Lab (T2), Experimental Gantry (T3).
@@ -278,7 +278,8 @@ While C models batch *n*, sim-A drafts batch *n + 1*'s defs (still a draft). **O
   - Picket as `heavy`, against light units;
   - Skyguard and Gargoyle as `antiair`.
   The AI also has to learn that the spiders can route over cliffs.
-- **Optional:** `corphantom`, an amphibious stealth scout (part 3), could join Chaos here. Say if you want it.
+- **Optional:** `corphantom`, an amphibious stealth scout (part 3), could join Chaos here. It wasn't asked for, so it stays reserved.
+- **Name clashes with part 3:** four of the reserved drafts used names now taken by batch 2. They are renamed in `reserved-units.md`: Steward → Chamberlain, Taskmaster → Foreman, Spitter → Bile, Picket → Pavise.
 
 ### 2.4 Later batches (outline; each list comes for approval when its turn comes)
 - **Batch 3, air (21):**

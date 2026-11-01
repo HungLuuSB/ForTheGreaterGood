@@ -3388,3 +3388,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - A record is 9 bytes, or 10 with altitude, so about 12% more Tactical bandwidth.
   - Player replays carry the heading change as a u16. Older replays are refused by their protocol number, as before.
 - `NetOut.spec`: a Commander's 180° turn reaches the client within 0.02° per step. With the byte, steps were up to 1° off.
+- **Checked in Studio by client-B (2026-11-01):**
+  - A Commander's 180° turn drew at a mean of 90°/s, each frame between 86 and 94°/s.
+  - The Sanctuary turned at 28–32°/s, a mean of 29.3.
+  - B also ran the client's render clock in Lune at 60 fps with jittery packets. It stayed even. With the old byte, the 30°/s turner swung between 21 and 43°/s. So the byte was the whole cause.
