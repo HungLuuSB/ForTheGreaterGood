@@ -716,10 +716,10 @@ unitId    u16
 cell      u16
 offX      u8
 offZ      u8
-heading   u8      0..255 → 0..360°
+heading   u16     0..65535 → 0..360° (S-232: a byte's 1.4° steps made turns uneven)
 flags     u8      bit0 = has altitude; other bits reserved
 [alt]     u8      only if flag set (air units)
-                  = 8 bytes, 9 with altitude
+                  = 9 bytes, 10 with altitude
 ```
 
 **State record (S → C, reliable), only changed fields**
@@ -811,7 +811,7 @@ Targets per player (measure on real servers):
 
 | Stream | Typical | Peak target |
 |---|---|---|
-| Tactical (≈ 80 moving units × 9 B × 15 Hz) | 5–10 KB/s | 15 KB/s |
+| Tactical (≈ 80 moving units × 10 B × 15 Hz) | 5–10 KB/s | 15 KB/s |
 | Strategic (500 units × 6 B × 3 Hz) | 3–9 KB/s | 10 KB/s |
 | State + Events | 2–5 KB/s | 10 KB/s |
 | **Total** | **10–25 KB/s** | **≤ 35 KB/s** |

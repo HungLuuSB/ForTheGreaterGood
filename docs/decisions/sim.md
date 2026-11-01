@@ -3376,3 +3376,15 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Shipyards face out to sea, away from home.
 - **Explosions and missile launches too strong:** B's (client effects).
 
+## S-232 — Smooth turns: Tactical headings in 16 bits (the user) (2026-11-01)
+- **The report:** the Commander, and maybe other units, looked choppy in a hard turn.
+- **The cause is the wire, not the sim or the client:**
+  - The sim turns at a steady rate: the Commander turns 90°/s, which is 6° a tick at 15 Hz.
+  - The client draws linearly between snapshots.
+  - But a Tactical record carried the heading in one byte, 1.4° steps. A steady 6° a tick arrived as 5.6° and 7.0° steps, so the turn drew at 84 and 105°/s in turn: a surge every fourth tick.
+  - Slower turners were worse. At 45°/s, every eighth tick jumped 50%. At 30°/s, the drawn rate alternated between 21 and 42°/s.
+- **The fix:** the Tactical record's heading is a u16, 1/65536 of a turn (protocol 47).
+  - `Schema.decodeTactical` still returns the 0..256 scale, now in 1/256 steps. So the client's `World.heading` conversion, the ENTER byte and the WRECK byte are unchanged.
+  - A record is 9 bytes, or 10 with altitude, so about 12% more Tactical bandwidth.
+  - Player replays carry the heading change as a u16. Older replays are refused by their protocol number, as before.
+- `NetOut.spec`: a Commander's 180° turn reaches the client within 0.02° per step. With the byte, steps were up to 1° off.

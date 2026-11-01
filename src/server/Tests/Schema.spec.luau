@@ -159,7 +159,7 @@ local function randomTactical(rng: Prng.Prng): Tactical
 		cell = rng:nextInteger(0, 65535),
 		offX = rng:nextInteger(0, 255),
 		offZ = rng:nextInteger(0, 255),
-		heading = rng:nextInteger(0, 255),
+		heading = rng:nextInteger(0, 65535) / 256, -- 1/256 steps (S-232)
 		alt = if rng:chance(0.5) then rng:nextInteger(0, 255) else nil,
 	}
 end
@@ -270,10 +270,10 @@ return function(t: RunAll.Context)
 	t.test("exact byte sizes", function()
 		local base: Tactical = { unitId = 1, cell = 0, offX = 0, offZ = 0, heading = 0 }
 		t.equal(buffer.len(encodeOne(Schema.encodeTactical, base)), Schema.TACTICAL_BYTES)
-		t.equal(Schema.TACTICAL_BYTES, 8)
+		t.equal(Schema.TACTICAL_BYTES, 9) -- u16 heading since protocol 47 (S-232)
 		base.alt = 0
 		t.equal(buffer.len(encodeOne(Schema.encodeTactical, base)), Schema.TACTICAL_ALT_BYTES)
-		t.equal(Schema.TACTICAL_ALT_BYTES, 9)
+		t.equal(Schema.TACTICAL_ALT_BYTES, 10)
 
 		local strategic: Strategic = { unitId = 1, cell = 0, icon = 0, team = 1, flags = 0 }
 		t.equal(buffer.len(encodeOne(Schema.encodeStrategic, strategic)), Schema.STRATEGIC_BYTES)
@@ -311,7 +311,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 46, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 47, "protocol version changed: update the golden bytes below")
 		-- version 41: the Strategic header's part / parts (S-212)
 		local parts = { encodeOne(Schema.encodeStrategicHeader, 0x0102), encodeOne(Schema.encodeStrategicHeader, 0x0102) }
 		Schema.numberStrategicParts(parts)
@@ -490,8 +490,9 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeEvent, answer)), "16 01 00 03 00 05 01")
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, answer), Schema.decodeEvent)[1], answer)
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, emptyQueue), Schema.decodeState)[1], emptyQueue)
-		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
-		t.equal(hex(encodeOne(Schema.encodeTactical, tactical)), "01 02 03 04 05 06 07 01 09")
+		-- version 47: the heading in 1/256 steps, u16 (S-232)
+		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7.25, alt = 9 }
+		t.equal(hex(encodeOne(Schema.encodeTactical, tactical)), "01 02 03 04 05 06 40 07 01 09")
 		local state: State = {
 			unitId = 0x0102,
 			health = 3,
@@ -749,7 +750,7 @@ return function(t: RunAll.Context)
 
 	t.test("tactical layout is byte exact", function()
 		local rec: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
-		t.deepEqual(bytesOf(encodeOne(Schema.encodeTactical, rec)), { 0x01, 0x02, 0x03, 0x04, 5, 6, 7, 1, 9 })
+		t.deepEqual(bytesOf(encodeOne(Schema.encodeTactical, rec)), { 0x01, 0x02, 0x03, 0x04, 5, 6, 0, 7, 1, 9 })
 	end)
 
 	t.test("edge values round-trip for every record type", function()
@@ -769,8 +770,8 @@ return function(t: RunAll.Context)
 
 		roundTrip(t, {
 			{ unitId = 1, cell = 0, offX = 0, offZ = 0, heading = 0 },
-			{ unitId = 65535, cell = 65535, offX = 255, offZ = 255, heading = 255 },
-			{ unitId = 1, cell = 0, offX = 0, offZ = 0, heading = 0, alt = 0 },
+			{ unitId = 65535, cell = 65535, offX = 255, offZ = 255, heading = 65535 / 256 },
+			{ unitId = 1, cell = 0, offX = 0, offZ = 0, heading = 0.00390625, alt = 0 },
 			{ unitId = 65535, cell = 65535, offX = 255, offZ = 255, heading = 255, alt = 255 },
 		}, Schema.encodeTactical, Schema.decodeTactical)
 
@@ -839,8 +840,8 @@ return function(t: RunAll.Context)
 		expectRejected(t, cmd, { CT.BUILD, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4 }, "facing 4 outside 0..3")
 		expectRejected(t, cmd, { CT.BUILD, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0x80 }, "facing 128")
 
-		expectRejected(t, Schema.decodeTactical, { 0, 0, 0, 0, 0, 0, 0, 0 }, "unitId 0 is reserved")
-		expectRejected(t, Schema.decodeTactical, { 1, 0, 0, 0, 0, 0, 0, 2 }, "reserved bits")
+		expectRejected(t, Schema.decodeTactical, { 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "unitId 0 is reserved")
+		expectRejected(t, Schema.decodeTactical, { 1, 0, 0, 0, 0, 0, 0, 0, 2 }, "reserved bits")
 
 		expectRejected(t, Schema.decodeState, { 1, 0, 0 }, "mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 0 }, "owner field mask is empty") -- 128 is OWNER since protocol 20
