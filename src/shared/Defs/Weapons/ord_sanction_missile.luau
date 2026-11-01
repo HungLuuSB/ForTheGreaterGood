@@ -5,7 +5,7 @@
 return {
 	id = "ord_sanction_missile",
 	type = "HOMING",
-	range = 760,
+	range = 570, -- -25% (S-234, the user; was 760)
 	reload = 6,
 	salvo = { count = 2, delay = 0.4 },
 	projectileSpeed = 300,
@@ -14,7 +14,7 @@ return {
 	launch = "vertical", -- straight up, then over (S-42)
 	climbHeight = 60,
 	guidance = "RADAR",
-	lockRange = 760,
+	lockRange = 570, -- -25% (S-234, the user; was 760)
 	burnThrough = 0.35,
 	terminalRange = 40,
 	canTargetRadar = true,

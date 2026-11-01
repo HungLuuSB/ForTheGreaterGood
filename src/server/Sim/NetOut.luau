@@ -131,6 +131,19 @@ local L = Sensors.Level
 -- Spectators (S-18) see through the eyes of "ally 0": everything alive is
 -- visible and every point in sight. Ally teams are 1..8, so 0 is free.
 local SPECTATOR = 0
+
+-- The def index viewers of ally team `ally` are sent for unit `id`: a decoy
+-- Commander (S-233) passes for its `disguise` with enemies; its owner, allies
+-- and spectators see the truth.
+local function shownIndex(sim: Types.Sim, ally: number, id: number): number
+	local w = sim.world
+	local index = w.defIndex[id]
+	local disguise = sim.defs.unitByIndex[index].disguise
+	if disguise ~= nil and ally ~= SPECTATOR and w.ally[id] ~= ally then
+		return sim.defs.units[disguise].index
+	end
+	return index
+end
 local function levelFor(sim: Types.Sim, ally: number, id: number): number
 	if ally == SPECTATOR then
 		return if sim.world.slot[id] ~= nil then L.VISIBLE else L.HIDDEN
@@ -425,14 +438,14 @@ local function wireAlt(sim: Types.Sim, g: Grid.Grid, id: number, cell: number, o
 	return math.clamp(math.floor(y - Combat.groundHeight(c, wx, wz) + 0.5), 0, 255)
 end
 
-local function enterEvent(sim: Types.Sim, g: Grid.Grid, id: number): Schema.Event
+local function enterEvent(sim: Types.Sim, g: Grid.Grid, id: number, ally: number): Schema.Event
 	local w = sim.world
 	local def = sim.defs.unitByIndex[w.defIndex[id]]
 	local cell, ox, oz = g:encode(w.posX[id], w.posZ[id])
 	return {
 		kind = Schema.EventKind.ENTER,
 		unitId = id,
-		defIndex = w.defIndex[id],
+		defIndex = shownIndex(sim, ally, id), -- (a decoy: its disguise, S-233)
 		team = w.team[id],
 		cell = cell,
 		offX = ox,
@@ -1048,7 +1061,7 @@ function NetOut.step(sim: Types.Sim)
 				pn.tactical[id] = w.gen[id]
 				table.insert(pn.tacticalList, id)
 				entered[id] = true
-				table.insert(events, enterEvent(sim, g, id))
+				table.insert(events, enterEvent(sim, g, id, ally))
 			end
 		end
 
@@ -1061,7 +1074,7 @@ function NetOut.step(sim: Types.Sim)
 					kind = Schema.EventKind.TRANSPORT,
 					unitId = e.unit,
 					targetId = e.other,
-					defIndex = w.defIndex[e.other] or 0,
+					defIndex = if w.slot[e.other] then shownIndex(sim, ally, e.other) else 0,
 					action = e.action,
 					actionTicks = Transport.LOAD_TICKS,
 				}
@@ -1078,9 +1091,10 @@ function NetOut.step(sim: Types.Sim)
 			end
 			local cargo = sim.transport.cargo[id]
 			local u = cargo and cargo[1]
-			local sig = if u then w.defIndex[u] * 256 + w.team[u] else 0
+			local shown = if u then shownIndex(sim, ally, u) else 0
+			local sig = if u then shown * 256 + w.team[u] else 0
 			if (entered[id] and sig ~= 0) or (not entered[id] and (sentCarry[id] or 0) ~= sig) then
-				table.insert(events, { kind = Schema.EventKind.CARRY, unitId = id, defIndex = if u then w.defIndex[u] else 0, team = if u then w.team[u] else 0 })
+				table.insert(events, { kind = Schema.EventKind.CARRY, unitId = id, defIndex = shown, team = if u then w.team[u] else 0 })
 			end
 			sentCarry[id] = sig
 		end
@@ -1396,7 +1410,7 @@ function NetOut.step(sim: Types.Sim)
 					cell = cell,
 					offX = ox,
 					offZ = oz,
-					icon = if own or level == L.VISIBLE or level == L.GHOST or tracked then net.iconIndex[w.defIndex[id]] else (if level == L.RADAR and sim.defs.unitByIndex[w.defIndex[id]].spoof then net.iconIndex[sim.defs.units[sim.defs.unitByIndex[w.defIndex[id]].spoof :: string].index] else 0), -- a decoy shows its spoof's icon (S-109)
+					icon = if own or level == L.VISIBLE or level == L.GHOST or tracked then net.iconIndex[shownIndex(sim, ally, id)] else (if level == L.RADAR and sim.defs.unitByIndex[w.defIndex[id]].spoof then net.iconIndex[sim.defs.units[sim.defs.unitByIndex[w.defIndex[id]].spoof :: string].index] else 0), -- a decoy shows its spoof's icon (S-109)
 					team = w.team[id],
 					flags = flags,
 				})

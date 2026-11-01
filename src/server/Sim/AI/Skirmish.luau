@@ -228,6 +228,14 @@ Skirmish.REPAIR_STANDOFF = 60 -- studs from the turret it waits at
 Skirmish.REPAIR_NANO_SHARE = 1 / 3 -- of its Construction Turrets (at least one) repair at once: the rest keep building
 Skirmish.REPAIR_QUEUE = 2 -- units pulled back at most per turret that may repair; the rest fight on
 Skirmish.BATCH1_SHARE = 0.25 -- (S-230) a plant's share of batch 1's units in the roles they share with older ones
+Skirmish.BATCH2_SHARE = 0.25 -- (S-233) the same for batch 2's bots
+-- (S-233) the advanced labs' batch 2 fighters by role; spies, bombs, decoys,
+-- sensors and workers are left to players
+Skirmish.BATCH2_ADV = table.freeze({
+	ord_ = table.freeze({ heavy = { "ord_marshal", "ord_stormcaller", "ord_scaler", "ord_snare" }, artillery = { "ord_culverin" }, raider = { "ord_outrider" }, antiair = { "ord_skyguard" } }),
+	chs_ = table.freeze({ heavy = { "chs_ravener", "chs_newt" }, artillery = { "chs_wrath", "chs_spitter" }, raider = { "chs_pyre" }, antiair = { "chs_gargoyle" } }),
+})
+Skirmish.BATCH2_T3 = table.freeze({ ord_ = { "ord_paragon", "ord_champion", "ord_monolith" }, chs_ = { "chs_pandemonium", "chs_infernal", "chs_widowmaker", "chs_abyssal" } })
 Skirmish.GANTRY_TICKS = 15 * 60 * 15 -- (S-216) hard's gantry also comes after this long with GANTRY_EXTRACTORS extractors
 Skirmish.GANTRY_EXTRACTORS = 8
 Skirmish.ADV_SOLAR_AFTER = 6 -- solars before its power comes from advanced solar (S-216)
@@ -2423,14 +2431,38 @@ local function think(brain: Brain)
 				helpers += 1
 			else
 				item = if brain.rng:chance(scoutChance) then botScout else botLine
+				-- (S-233) batch 2's T1 bots: rockets against defences, Order's
+				-- anti-swarm bot and fast infantry
+				if item == botLine and brain.rng:chance(Skirmish.BATCH2_SHARE + (if demand then demand.artillery * 0.3 elseif c.enemyTurrets >= 3 then 0.2 else 0)) then
+					item = faction(brain, "petard", "firebrand")
+				elseif item == botLine and brain.prefix == "ord_" and brain.rng:chance(Skirmish.BATCH2_SHARE) then
+					item = "ord_picket"
+				elseif item == botScout and brain.prefix == "ord_" and brain.rng:chance(Skirmish.BATCH2_SHARE) then
+					item = "ord_squire"
+				end
 			end
 			queueItem(f, item)
 		end
 	end
+	local adv2 = Skirmish.BATCH2_ADV[brain.prefix]
 	for _, f in c.advBotLabs do
 		local q = sim.build.queue[f] or {}
 		for _ = #q + 1, cfg.queue do
-			queueItem(f, faction(brain, "fatboy", "centurion"))
+			local item = faction(brain, "fatboy", "centurion")
+			-- (S-233) half the picks from batch 2, by the enemy's spending
+			if adv2 and brain.rng:chance(Skirmish.BATCH2_SHARE * 2) then
+				local role = "heavy"
+				if demand and brain.rng:chance(demand.antiair) then
+					role = "antiair"
+				elseif demand and brain.rng:chance(demand.artillery) then
+					role = "artillery"
+				elseif demand and brain.rng:chance(demand.raider) then
+					role = "raider"
+				end
+				local list = adv2[role]
+				item = list[brain.rng:nextInteger(1, #list)]
+			end
+			queueItem(f, item)
 		end
 	end
 	for _, f in c.advAirfields do
@@ -2489,9 +2521,14 @@ local function think(brain: Brain)
 		end
 	end
 	-- (S-216, hard) the gantry builds one walker at a time
+	local t3 = Skirmish.BATCH2_T3[brain.prefix]
 	for _, f in c.gantries do
 		if #(sim.build.queue[f] or {}) == 0 then
-			queueItem(f, faction(brain, "titan", "juggernaut"))
+			local item = faction(brain, "titan", "juggernaut")
+			if t3 and brain.rng:chance(Skirmish.BATCH2_SHARE) then
+				item = t3[brain.rng:nextInteger(1, #t3)] -- (S-233) batch 2's walkers now and then
+			end
+			queueItem(f, item)
 		end
 	end
 

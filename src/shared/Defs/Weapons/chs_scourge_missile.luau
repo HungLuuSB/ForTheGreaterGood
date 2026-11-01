@@ -5,7 +5,7 @@
 return {
 	id = "chs_scourge_missile",
 	type = "HOMING",
-	range = 700,
+	range = 525, -- -25% (S-234, the user; was 700)
 	reload = 5,
 	salvo = { count = 3, delay = 0.4 },
 	projectileSpeed = 320,
@@ -14,7 +14,7 @@ return {
 	launch = "vertical", -- straight up, then over (S-42)
 	climbHeight = 60,
 	guidance = "RADAR",
-	lockRange = 700,
+	lockRange = 525, -- -25% (S-234, the user; was 700)
 	burnThrough = 0.35,
 	terminalRange = 40,
 	canTargetRadar = true,

@@ -3392,3 +3392,92 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - A Commander's 180° turn drew at a mean of 90°/s, each frame between 86 and 94°/s.
   - The Sanctuary turned at 28–32°/s, a mean of 29.3.
   - B also ran the client's render clock in Lune at 60 fps with jittery packets. It stayed even. With the old byte, the 30°/s turner swung between 21 and 43°/s. So the byte was the whole cause.
+
+## S-233 — Batch 2: bots (the user) (2026-11-01)
+- **Asked (the user):** the BAR roster program's batch 2, its list and names approved ("Approve", `docs/design/bar-roster-plan.md` §2.3). `corphantom` wasn't asked for and stays reserved. Four reserved drafts that clashed with the new names were renamed in `reserved-units.md`.
+- **43 defs:**
+
+  | Faction | Bot Lab / Pit (T1) | Advanced Bot Lab / Pit (T2) | Gantry (T3) |
+  |---|---|---|---|
+  | Order | Picket (anti-swarm lasers), Squire (fast infantry), Petard (rockets) | Draftsman (T2 builder), Skyguard (amphibious AA), Steward (assist and repair), Effigy (decoy Commander), Sextant (radar), Informant (spy), Marshal (skirmisher), Culverin (mortar), Mariner (amphibious), Scaler (rocket spider), Marksman (cloaked sniper), Hush (jammer), Outrider (fast raider), Martyr (rolling bomb), Snare (EMP spider), Stormcaller (lightning assault) | Paragon (amphibious assault mech), Champion (battle mech), Monolith (artillery spider) |
+  | Chaos | Firebrand (rockets) | Taskmaster (T2 builder), Wrath (heavy rocket artillery), Portent (radar), Blister (crawling bomb), Changeling (decoy Commander), Cutpurse (jamming combat engineer), Gloom (jammer), Newt (amphibious, torpedo), Pyre (flamethrower), Gargoyle (heavy amphibious AA), Spitter (mortar), Pustule (cloaked crawling bomb), Snitch (spy), Ravener (heat-ray spider), Scrounger (combat engineer) | Colossus (walking fortress), Pandemonium (rocket mech), Infernal (flamethrower mech), Widowmaker (assault spider), Abyssal (amphibious siege mech) |
+
+- **Mechanics:**
+  - **`SPIDER`** (MoveClasses bit 11): land, no slope limit, a 2-stud ford. Passability, the flow fields and the AI's routing pick it up as they do every class.
+  - **Crawling bombs:** a weapon flag `kamikaze`. When the weapon would fire, the unit dies at once with no wreck, and its `deathBlast` does the damage, the same blast as when it is shot. No new event: the client sees a DEATH (severity 255, wreckId 0).
+  - **Spies:** cloak, `radarSignature = 0`, and the new unit field `selfDestructSeconds` (0: at once; the default is the usual countdown). Their `selfDestructBlast.paralyzer` is an EMP burst that stuns and harms nothing. No capture and no sonar stealth (they never submerge).
+  - **Decoy Commanders:** the new unit field `disguise`.
+    - NetOut sends enemies the disguise's def index in ENTER and CARRY and its icon in strategic records. `Sensors.shownDef` and `knownCategories` answer with the disguise, so the enemy AI, its threat map and targeting take the decoy for a Commander.
+    - Owners, allies and spectators see the truth.
+    - A decoy leaves no wreck. It uses the Commander's model, pieces and laser (no D-Gun) and its gait, with half the health, and builds the Commander's list.
+  - **Protocol 48:** strategic icons are 10 bits (1,023 unit types; batch 2 took the count to 281, past a byte's 255). Strategic records are 8 bytes, about 14% more strategic bandwidth.
+- **First-draft numbers:** the README's suggested values, scaled to where our bots sit against their BAR counterparts (Mace, Thug, Skitter, Sunder):
+  - supply ×1.3;
+  - power at least 11× supply (T1) or 12× (T2), or BAR's suggested power if higher, which keeps the spies, bombs and the sniper expensive in power;
+  - build time at least 25× supply;
+  - health ×0.95, speed ×1.4, sight ×1.1;
+  - ranges, reloads and per-shot damage as suggested, bursts folded into one shot.
+  - Exceptions:
+    - Anti-air ranges about 0.75× (to our AA scale).
+    - The long-range artillery is shortened: Monolith 420, Wrath 300.
+    - T3 is compressed like the Titan: Colossus 5,000 supply and 80,000 health, near the Juggernaut.
+    - The decoys cost 450 supply.
+  - Footprints and pieces follow C's blockouts. The balance pass waits for "run the balance checkpoint".
+- **AI** (`Skirmish.BATCH2_SHARE` 0.25):
+  - Bot labs: Petard or Firebrand in a quarter of the line picks, more against defences or artillery demand; Order's Picket and Squire in a quarter of the line and scout picks.
+  - Advanced labs: half the picks from batch 2 by the enemy's spending (heavy, artillery, raider, anti-air; `Skirmish.BATCH2_ADV`).
+  - Gantries: a quarter of the picks are batch 2's walkers.
+  - Not used by the AI: spies, bombs, decoys, sensors, jammers and workers.
+- **Tests:** `Batch2.spec`:
+  - all 43 can be built from a Commander's tree;
+  - every armed one hits a target in its reach;
+  - SPIDER climbs a 60° cliff a WALKER can't;
+  - the bombs detonate on contact and blast friend and foe, with no wreck;
+  - the spies' EMP self-destruct stuns without harm;
+  - the decoy shows as a Sovereign to the enemy's client and sensors and as an Effigy to its owner, and leaves no wreck.
+- **Other streams:**
+  - C: blockouts from the roles, then meshes and wrecks; no models for the decoys.
+  - E: icons approved by the user; pictures from C's models.
+  - B: SPIDER tilt (C-284), decoy drawing from `disguise`, bomb blasts from `deathBlast.aoe`.
+  - D: Codex rows from the new fields.
+
+## S-234 — Balance: Titan, bombers, artillery and T1 laser defences reach less; heavy T3 wrecks lie down (2026-11-01, the user)
+
+The user's list: "Range includes both the vision and the weapon range."
+
+- **Titan: 10% less.** Sight 260 → 234; beam 320 → 288; missile 390 → 351 (lock 520 → 468); blaster 160 → 144.
+- **Bombers: 35% slower** (every bomber; max and min speed):
+
+  | Bomber | Was | Now |
+  |---|---|---|
+  | Absolution (`ord_absolution`) | 120 / 72 | 78 / 47 |
+  | Plague (`chs_plague`) | 114 / 69 | 74 / 45 |
+  | Eclipse (`ord_phantom`) | 132 / 78 | 86 / 51 |
+  | Hecatomb (`chs_behemoth`) | 114 / 72 | 74 / 47 |
+  | Liche (`ord_liche`) | 156 / 96 | 101 / 62 |
+  | Wraith (`chs_wraith`, the bomber decoy) | 120 / 72 | 78 / 47 |
+
+  The Wraith follows the Hecatomb it passes for, so its speed doesn't give it away.
+- **Artillery defences: 25% less** sight and range:
+  - Gauntlet 420 → 315;
+  - Talos 360 → 270;
+  - Edict 520 → 390;
+  - Cataclysm 400 → 300;
+  - Sanction 760 → 570;
+  - Scourge 700 → 525.
+- **T1 laser defences: another 25% less** sight and range:
+  - Sentry 190 → 143;
+  - Beamer 220 → 165;
+  - Overwatch 180 → 135 (sight 166 → 124);
+  - Guard 165 → 124;
+  - Twin Guard 195 → 146;
+  - Geryon 215 → 161.
+- **Heavy T3 wrecks lie on the ground.** The sim keeps no wreck pose: a wreck is a position, a heading and a radius. This is C's wreck meshes and B's placement:
+  - C: fallen-hulk wrecks for the 13 experimental ground units (progress "For the models stream (C)" item 6);
+  - B: laid flat on the terrain until those land.
+- **Tests:**
+  - Feedback4, Playtest3Units: the new numbers.
+  - GroundFire: the Edict shells a spot inside its 390.
+  - RadarTargets: the Talos's target point moves from 300 to 240 studs, inside its 270.
+  - Air (three tests of bombing a ghost or a radar contact) and Tracking (bombing a tracked moving tank): a slower bomber's release point now falls inside its own sight, so it sees the target before it lets go. These tests use `Support/BlindBombers` (Absolution and Plague with sight 40) to keep testing the unseen case. In a match the bomber simply sees what it bombs.
+- No balance report (the user hasn't asked for the checkpoint).

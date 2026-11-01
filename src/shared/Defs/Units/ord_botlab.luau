@@ -11,7 +11,7 @@ return Templates.extend(Templates.Structure, {
 	health = 2800,
 	footprint = 4,
 	buildPower = 200,
-	buildOptions = { "ord_artisan", "ord_glint", "ord_mace", "ord_lazarus", "ord_kestrel" },
+	buildOptions = { "ord_artisan", "ord_glint", "ord_mace", "ord_lazarus", "ord_kestrel", "ord_picket", "ord_squire", "ord_petard" },
 	icon = "factory",
 	model = "ord_botlab",
 })

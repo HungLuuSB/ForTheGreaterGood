@@ -5,7 +5,7 @@
 return {
 	id = "chs_talos_shell",
 	type = "BALLISTIC",
-	range = 360,
+	range = 270, -- -25% (S-234, the user; was 360)
 	reload = 3.4,
 	projectileSpeed = 155,
 	gravity = 60,

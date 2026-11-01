@@ -15,7 +15,7 @@ return Templates.extend(Templates.Unit, {
 	footprint = 1,
 	cost = { supply = 190, power = 3300, buildTime = 6600 },
 	health = 1000,
-	movement = { maxSpeed = 114, minSpeed = 69, accel = 80, brake = 60, turnRate = 72 },
+	movement = { maxSpeed = 74, minSpeed = 45, accel = 80, brake = 60, turnRate = 72 }, -- bombers 35% slower (S-234, the user; was 114 / 69)
 	sensors = { sight = 190 },
 	weapons = { { def = "chs_bomb", muzzle = "muzzle" } },
 	pieces = { "base", "bay", "pylon", "muzzle" },

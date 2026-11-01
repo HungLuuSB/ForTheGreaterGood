@@ -51,7 +51,7 @@ Names and reliability: `Schema.Channel`.
 | Turret yaw / pitch | u8 | Radians in [−π, π] → `round((a + π) / 2π × 255)`; yaw is relative to the hull. |
 | Def index | u16 | `defs.unitByIndex[i]` (1-based, `Defs.load()` order, identical on both sides; the defs hash proves it). |
 | Weapon index | u16 | `defs.weaponByIndex[i]`. |
-| Icon | 8 bits (protocol 19) | 0 = unknown (radar / sonar blip). Else the unit's **def index** (Defs: sorted by ID, from 1): every unit type has its own icon (S-58, client request 35). `Shared/Net/Icons.byDef`, which the server uses too. `def.icon` stays the family name (`Icons.names` lists them) for the shape; the def gives the unique glyph. |
+| Icon | 10 bits (protocol 48, S-233; 8 bits since 19) | 0 = unknown (radar / sonar blip). Else the unit's **def index** (Defs: sorted by ID, from 1): every unit type has its own icon (S-58, client request 35). `Shared/Net/Icons.byDef`, which the server uses too. `def.icon` stays the family name (`Icons.names` lists them) for the shape; the def gives the unique glyph. |
 | Team | 4 bits (strategic; 3 before protocol 36) / u8 (ENTER) | 1..16 (S-169; 1..8 before). Ally teams come from the match config. |
 
 **Unit `state` bits** (u16, `Schema.UnitState` in Shared; the sim's `World.State` is the same table): `MOVING 1` (since S-33: ground and naval units with a movement order or speed, aircraft unless landed, loitering included; it changes in a State record like any bit), `TOGGLED_ON 2` (radar / jammer / converter switched on; a beam tower deployed: clear = retracted into its shell, S-96), `SUBMERGED 4`, `LANDED 8`, `REPEAT 16` (factory repeat on, protocol 7), `DEPLOYED 32` and `DEPLOYING 64` (protocol 22, S-64: a deployable unit, the Warden, unpacked, or unpacking / packing; 4 s each way, the progress isn't sent), `LOW_PRIORITY 128` (protocol 33, S-156: resource priority low; clear = high, the default), `CLOAKED 256` (protocol 46, S-228: cloaked; enemies see it at most as a radar contact, so only its own side gets the bit: draw it translucent), `PARALYZED 512` (protocol 46, S-229: stunned by EMP; neither moves, fires nor builds: a crackle on it). Other bits are reserved (0).
@@ -94,7 +94,7 @@ Per tick, for each player, in this order (the Events message carries them in thi
 4. Combat events (section 7), after the ENTERs: a FIRE's shooter is always already known.
 
 Then:
-- **Tactical** (unreliable): `unitId, cell, offX, offZ, heading, flags (bit0 = has altitude), [alt]`, 8 or 9 B. Sent only for tactical units that moved, turned or changed altitude this tick, and never in the same tick as their ENTER. No record means it didn't move: keep the last value.
+- **Tactical** (unreliable): `unitId, cell, offX, offZ, heading u16, flags (bit0 = has altitude), [alt]`, 9 or 10 B. The heading is 1/65536 of a turn (protocol 47, S-232; a byte before); `Schema.decodeTactical` returns it on the 0..256 scale in 1/256 steps, so `heading / 256 × 2π` still converts it. Sent only for tactical units that moved, turned or changed altitude this tick, and never in the same tick as their ENTER. No record means it didn't move: keep the last value.
 - **State** (reliable): `unitId, mask` plus only the changed fields.
   - Mask bits: health 1, state 2, aim 4, weapon 8, build 16, targets 32 (protocol 8), stock 64 (protocol 15), owner 128 (protocol 20).
   - Aim: `slotMask u8` (bit i−1 = slot i), then `yaw u8, pitch u8` per set bit in slot order.
@@ -118,7 +118,7 @@ A Tactical or State record always refers to a unit the client got an ENTER for. 
 ## 6. Strategic
 
 - Every 5th tick (3 Hz) the server sends a full **snapshot** of every known unit that is not tactical for this player. That includes own units outside the camera and ghosts of structures that died unseen.
-- Record: `unitId u16, cell u16, icon 8 bits | team 4 bits (team − 1) | flags 5 bits | offX 3 bits | offZ 3 bits | 1 reserved bit (0)`, 7 B (protocol 38, S-189: the position is a wire cell plus the offsets' top 3 bits, section 3; protocol 36, S-169: teams 1..16; bits LSB-first: icon 0–7, team 8–11, flags 12–16, offX 17–19, offZ 20–22; before 38 the 7 bits after the flags were reserved and `cell` a map cell; before 36: 6 B with team 8–10, flags 11–15).
+- Record: `unitId u16, cell u16, icon 10 bits | team 4 bits (team − 1) | flags 5 bits | offX 3 bits | offZ 3 bits | 7 reserved bits (0)`, 8 B (protocol 48, S-233: 10-bit icons, bits LSB-first: icon 0–9, team 10–13, flags 14–18, offX 19–21, offZ 22–24; batch 2 passed 255 unit types. Before 48: 7 B, protocol 38, S-189: the position is a wire cell plus the offsets' top 3 bits, section 3; protocol 36, S-169: teams 1..16; bits LSB-first: icon 0–7, team 8–11, flags 12–16, offX 17–19, offZ 20–22; before 38 the 7 bits after the flags were reserved and `cell` a map cell; before 36: 6 B with team 8–10, flags 11–15).
 - Flags:
   - `RADAR_ONLY 1`, `SONAR_ONLY 2`, `UNDER_ATTACK 4` (since protocol 23, S-68: own and allied units an enemy hit in the last 3 s), `GHOST 8`, `TRACKED 16`;
   - all 5 flag bits are in use.
@@ -362,6 +362,8 @@ precision u8        Pinpointer precision, floor(p × 255)  (protocol 32, S-147)
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
 | 34 | Event `OWN_STATUS 26`: own units off camera, health / build / queue head on change, capped per tick (S-158) |
 | 44 | S-220 (client request 40, the user): events TRANSPORT 34 (`unitId u16` transport, `targetId u16` unit, `defIndex u16`, `action u8` = `Schema.TransportAction` PICKUP 1 / DROP 2 / CANCEL 3, `ticks u8`, `cell u16, offX u8, offZ u8`: the pick-up point or the set-down spot, 0 for CANCEL; 13 B) as each pick-up or set-down starts or stops, and CARRY 35 (`unitId u16`, `defIndex u16` of the unit on board, 0 = empty, `team u8`; 6 B) with the transport's ENTER and when it changes; both to every player with the transport tactical. Both transport tiers carry one unit |
+| 48 | S-233 (the BAR roster's batch 2): Strategic icons 10 bits (1,023 unit types), records 8 B; the decoy Commanders' ENTER `defIndex`, strategic icon and CARRY `defIndex` are their disguise's for enemies |
+| 47 | S-232 (the user): Tactical heading u16, records 9 / 10 B |
 | 46 | S-228, S-229 (the BAR roster's batch 1): unit state bits CLOAKED 256 and PARALYZED 512; no record changes |
 | 45 | S-227 (the user): wrecks wear down to scrap heaps. WRECK gains `heap u8` (16 B), WRECK_STATE gains `heap u8` (7 B), new event WRECK_HIT 36 (`wreckId u16`, 3 B) |
 | 43 | S-219 (transports, `docs/design/transports.md`): commands LOAD 32 (`targetId`: transports pick that allied unit up; units told to LOAD one of the sender's transports board it) and UNLOAD 33 (`pos`: the cargo is set down around the point, one unit a second); owner field CARGO 128 (`count u8`, then `u16` per unit on board; OWNER_MASK_ALL is 255). A carried unit leaves every player's view (a LEAVE, its owner's too) and comes back with an ENTER when set down; when a loaded transport dies, its cargo dies with it (no wrecks) |

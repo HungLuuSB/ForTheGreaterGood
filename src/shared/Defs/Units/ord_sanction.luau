@@ -14,7 +14,7 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 380, power = 4200, buildTime = 8000 },
 	health = 2600,
 	footprint = 3, -- size shows tech level (S-104)
-	sensors = { sight = 200 },
+	sensors = { sight = 150 }, -- artillery defences -25% (S-234, the user; was 200)
 	weapons = { { def = "ord_sanction_missile", turretPiece = "launcher", muzzle = "muzzle" } },
 	pieces = { "base", "launcher", "muzzle" },
 	icon = "artillery",

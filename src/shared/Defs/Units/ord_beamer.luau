@@ -16,7 +16,7 @@ return Templates.extend(Templates.Structure, {
 	footprint = 2, -- size shows tech level (S-104)
 	height = 19.1, -- a tall tower (S-184; models-C's F18 blockouts, measured)
 	muzzleHeight = 17.7,
-	sensors = { sight = 250 },
+	sensors = { sight = 188 }, -- T1 laser defences -25% (S-234, the user; was 250)
 	weapons = { { def = "ord_beamer_beam", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "barrel", "muzzle" },
 	icon = "beam",

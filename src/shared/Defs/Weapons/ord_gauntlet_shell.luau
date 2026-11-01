@@ -6,7 +6,7 @@
 return {
 	id = "ord_gauntlet_shell",
 	type = "BALLISTIC",
-	range = 420,
+	range = 315, -- -25% (S-234, the user; was 420)
 	reload = 3.6,
 	projectileSpeed = 165,
 	gravity = 60,
