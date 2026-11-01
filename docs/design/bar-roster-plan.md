@@ -200,12 +200,88 @@ While C models batch *n*, sim-A drafts batch *n + 1*'s defs (still a draft). **O
 - **Mechanics first:** a hover pathing check with real hover units (land, shore, water, slopes), cloak (Whisper), and EMP (Thunderer's two EMP lasers).
 - **AI:** the hover factory on water maps (Coastline, Supreme Strait), amphibious tanks on mixed maps, the new roles in `AI/Counters` (the riot tank as `heavy` against light, the rocket hovers as `artillery`, the fast raiders as `raider`).
 
-### 2.3 Later batches (outline; each list comes for approval when its turn comes)
+### 2.3 Batch 2: bots (approved by the user 2026-11-01)
 
-- **Batch 2, bots (43):**
-  - T1: Centurion, Pawn, Rocketeer, Aggravator.
-  - T2: advanced constructors, both anti-air bots, Butler / Twitcher, the decoy Commanders, Compass / Augur, the spies, Gunslinger, Hound, Platypus / Duck, Recluse, Sharpshooter, Smuggler, Sprinter, Tumbleweed / Bedbug, Webber, Welder / Fiend / Commando, Sheldon, Skuttle, Termite.
-  - T3 walkers from the gantry: Marauder, Razorback, Vanguard, Behemoth, Catapult, Demon, Karganeth, Shiva.
+**43 units, 43 defs.** BAR already has a single decoy Commander per faction, so there's nothing to merge. Order gets 22 and Chaos 21. The first-draft numbers are the README's "FTGG suggested" values; the def drafts tune them. Every proposed name has been checked against all of BAR's names and all 238 of ours. "Built by" is our factory:
+- Order: Bot Lab (T1), Advanced Bot Lab (T2), Experimental Gantry (T3).
+- Chaos: Bot Pit (T1), Advanced Bot Pit (T2), Experimental Gantry (T3).
+
+**Order (Armada):**
+
+| BAR | Role | Tier | Proposed name | First draft: supply / power / health / speed |
+|---|---|---|---|---|
+| `armwar` Centurion | Anti-swarm bot, twin close lasers | T1 | **Picket** | 190 / 1,800 / 1,500 / 14 |
+| `armpw` Pawn | Fast infantry, rapid plasma guns | T1 | **Squire** | 37 / 510 / 350 / 27 |
+| `armrock` Rocketeer | Rocket bot, good against defences | T1 | **Petard** | 83 / 570 / 670 / 16 |
+| `armack` | Advanced constructor | T2 | **Draftsman** | 300 / 3,900 / 870 / 10 |
+| `armaak` Archangel | Amphibious anti-air bot | T2 | **Skyguard** | 360 / 3,200 / 2,100 / 15 |
+| `armfark` Butler | Fast assist and repair bot (builds the radar and jammer bots) | T2 | **Steward** | 140 / 1,700 / 310 / 23 |
+| `armdecom` | Decoy Commander | T2 | **Effigy** | 530 / 6,800 / 3,500 / 12 |
+| `armmark` Compass | Radar bot | T2 | **Sextant** | 69 / 710 / 330 / 13 |
+| `armspy` Ghost | Cloaked, radar-invisible spy | T2 | **Informant** | 93 / 5,100 / 280 / 20 |
+| `armmav` Gunslinger | Skirmisher, gauss guns | T2 | **Marshal** | 450 / 6,300 / 1,700 / 15 |
+| `armfido` Hound | Mortar and skirmish bot | T2 | **Culverin** | 200 / 3,600 / 1,100 / 21 |
+| `armamph` Platypus | Amphibious bot, light laser | T2 | **Mariner** | 180 / 1,500 / 1,100 / 28 |
+| `armsptk` Recluse | All-terrain rocket spider | T2 | **Scaler** | 280 / 2,600 / 1,300 / 15 |
+| `armsnipe` Sharpshooter | Cloaked sniper | T2 | **Marksman** | 470 / 11,000 / 540 / 10 |
+| `armaser` Smuggler | Jammer bot | T2 | **Hush** | 54 / 800 / 320 / 11 |
+| `armfast` Sprinter | Fast raider | T2 | **Outrider** | 110 / 2,200 / 650 / 34 |
+| `armvader` Tumbleweed | Amphibious rolling bomb | T2 | **Martyr** | 45 / 3,300 / 420 / 26 |
+| `armspid` Webber | All-terrain spider: EMP laser, reclaims | T2 | **Snare** | 170 / 2,800 / 1,000 / 22 |
+| `armzeus` Welder | Assault bot, lightning rifle | T2 | **Stormcaller** | 240 / 3,500 / 3,300 / 15 |
+| `armmar` Marauder | Amphibious assault mech, twin gauss | T3 | **Paragon** | 670 / 12,000 / 4,600 / 29 |
+| `armraz` Razorback | Battle mech, rapid armour-piercing laser | T3 | **Champion** | 2,600 / 39,000 / 12,000 / 21 (compressed like the Titan) |
+| `armvang` Vanguard | All-terrain heavy plasma artillery | T3 | **Monolith** | 2,300 / 40,000 / 8,000 / 10 (compressed) |
+
+**Chaos (Cortex):**
+
+| BAR | Role | Tier | Proposed name | First draft: supply / power / health / speed |
+|---|---|---|---|---|
+| `corstorm` Aggravator | Rocket bot, good against defences | T1 | **Firebrand** | 76 / 650 / 690 / 15 |
+| `corack` | Advanced constructor | T2 | **Taskmaster** | 320 / 3,900 / 940 / 10 |
+| `corhrk` Arbiter | Heavy rocket artillery bot | T2 | **Wrath** | 410 / 3,700 / 570 / 17 |
+| `corvoyr` Augur | Radar bot | T2 | **Portent** | 68 / 770 / 360 / 12 |
+| `corroach` Bedbug | Amphibious crawling bomb | T2 | **Blister** | 48 / 3,300 / 580 / 24 |
+| `cordecom` | Decoy Commander | T2 | **Changeling** | 520 / 7,400 / 3,500 / 12 |
+| `cormando` Commando | Stealthy, jamming combat engineer | T2 | **Cutpurse** | 830 / 8,800 / 1,700 / 23 |
+| `corspec` Deceiver | Jammer bot | T2 | **Gloom** | 52 / 740 / 330 / 11 |
+| `coramph` Duck | Amphibious bot: laser, and a torpedo under water | T2 | **Newt** | 230 / 5,400 / 2,200 / 17 |
+| `corpyro` Fiend | Fast flamethrower assault bot | T2 | **Pyre** | 140 / 1,700 / 990 / 26 |
+| `coraak` Manticore | Heavy amphibious anti-air bot | T2 | **Gargoyle** | 450 / 3,500 / 3,000 / 11 |
+| `cormort` Sheldon | Mortar bot | T2 | **Spitter** | 280 / 1,600 / 880 / 15 |
+| `corsktl` Skuttle | Cloaked amphibious crawling bomb, a big blast | T2 | **Pustule** | 520 / 15,000 / 330 / 26 |
+| `corspy` Spectre | Cloaked, radar-invisible spy | T2 | **Snitch** | 100 / 5,100 / 420 / 19 |
+| `cortermite` Termite | Heavy all-terrain spider, heat ray | T2 | **Ravener** | 370 / 4,600 / 2,900 / 15 |
+| `corfast` Twitcher | Combat engineer | T2 | **Scrounger** | 140 / 2,200 / 780 / 28 |
+| `corjugg` Behemoth | Barely mobile heavy turret, three lasers | T3 | **Colossus** | 14,000 / 290,000 / 310,000 / 5.1 (compressed to about the Juggernaut's price) |
+| `corcat` Catapult | Heavy rocket mech | T3 | **Pandemonium** | 3,400 / 46,000 / 5,700 / 15 (compressed) |
+| `cordemon` Demon | Flamethrower mech with anti-air shoulder rockets | T3 | **Infernal** | 4,100 / 51,000 / 17,000 / 20 (compressed) |
+| `corkarg` Karganeth | All-terrain assault mech, missiles | T3 | **Widowmaker** | 1,700 / 32,000 / 12,000 / 14 |
+| `corshiva` Shiva | Amphibious siege mech, heavy cannon | T3 | **Abyssal** | 1,200 / 13,000 / 8,800 / 15 |
+
+**Mechanics first** (the plan's 1.2):
+- **All-terrain spiders:** a new move class, `SPIDER`, with no slope limit, in Passability and the flow fields. It's for Scaler, Snare, Monolith, Ravener and Widowmaker.
+- **Crawling bombs:** our self-destruct (S-194) plus an order to explode on contact. It's for Martyr, Blister and Pustule; Pustule is cloaked too.
+- **Spies without capture:** cloak from batch 1, radar and sonar stealth, and a self-destruct EMP. It's for Informant and Snitch. Marksman also uses cloak.
+- **Decoy Commanders:** `spoof` (S-109) extended to sight, so Effigy and Changeling look like a Commander up close too. They are amphibious builders with the Commander's guns, at a fraction of its health.
+- **Not taken from BAR:** the Gunslinger's range growing with experience (veterancy is deferred). The Commando's paradrop isn't needed either: our transports (S-219) already carry bots.
+
+**Notes on batch 2:**
+- **Asymmetry is BAR's** (S-75):
+  - Order alone has a fast infantry bot, a sniper, a skirmisher and an EMP spider.
+  - Chaos alone has a heavy rocket bot, a flamethrower bot, a stealth engineer and the big crawling bomb.
+- **Amphibious bots** use `AMPHIB`: Skyguard, Effigy, Mariner, Martyr, Paragon, Blister, Changeling, Cutpurse, Newt, Gargoyle, Pustule and Abyssal. Our advanced bot labs build them, as BAR's do. BAR's Amphibious Complex is in batch 5.
+- **Builders that build:** Steward (Sextant, Hush) and Scrounger (its own list). Their lists are drafted with the defs.
+- **AI:** the new units go into the existing roles in `AI/Counters`:
+  - Petard, Firebrand and the mortars as `artillery`, Wrath too;
+  - Squire, Outrider and Pyre as `raider`;
+  - Picket as `heavy`, against light units;
+  - Skyguard and Gargoyle as `antiair`.
+  The AI also has to learn that the spiders can route over cliffs.
+- **Optional:** `corphantom`, an amphibious stealth scout (part 3), could join Chaos here. It wasn't asked for, so it stays reserved.
+- **Name clashes with part 3:** four of the reserved drafts used names now taken by batch 2. They are renamed in `reserved-units.md`: Steward → Chamberlain, Taskmaster → Foreman, Spitter → Bile, Picket → Pavise.
+
+### 2.4 Later batches (outline; each list comes for approval when its turn comes)
 - **Batch 3, air (21):**
   - Blink / Finch scouts;
   - Osprey / Hephaestus heavy transports;

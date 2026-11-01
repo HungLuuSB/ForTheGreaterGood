@@ -68,8 +68,8 @@ return function(t: RunAll.T)
 
 	t.test("Overwatch and Steadfast see and reach 25% less (the user)", function()
 		local u = Sim.new({ seed = 1, players = PLAYERS }).defs.units
-		t.equal(u.ord_overwatch.sensors.sight, 166, "Overwatch sight: 221 → 166")
-		t.equal(u.ord_overwatch.maxRange, 180, "Overwatch range: 240 → 180")
+		t.equal(u.ord_overwatch.sensors.sight, 124, "Overwatch sight: 221 → 166 → 124 (S-234)")
+		t.equal(u.ord_overwatch.maxRange, 135, "Overwatch range: 240 → 180 → 135 (S-234)")
 		t.equal(u.ord_warden.sensors.sight, 210, "Steadfast sight: 280 → 210")
 		t.equal(u.ord_warden.maxRange, 210, "Steadfast range: 280 → 210")
 	end)

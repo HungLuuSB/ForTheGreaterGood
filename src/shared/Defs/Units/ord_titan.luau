@@ -20,7 +20,7 @@ return Templates.extend(Templates.Unit, {
 	cost = { supply = 3200, power = 48000, buildTime = 110000 },
 	health = 30000,
 	movement = { maxSpeed = 8.4, accel = 6, brake = 14, turnRate = 120 },
-	sensors = { sight = 260 },
+	sensors = { sight = 234 }, -- -10% (S-234, the user; was 260)
 	production = { power = 250 },
 	storage = { power = 1000 },
 	weapons = {

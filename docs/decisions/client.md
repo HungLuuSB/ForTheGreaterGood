@@ -2654,3 +2654,35 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - Held for one upload, as planned at C-277: the user approved it here. Sheet 4 is 77607112363466 (sha256 0d89c565…), replacing 120576950340042.
 - `node tools/icons/pictures.mjs` regenerated `UI/UnitPictures`: all 233 pictures are on uploaded sheets, so no def falls back to a live portrait.
 - Studio, Coastline: the Vehicle Plant's and the Hover Dock's batch 1 tiles draw from the new sheet, and it loaded (`debug_out/screens/c283_sheet4_vehplant.jpg`). No console errors.
+
+### C-284 — All-terrain spiders lie along the ground (2026-11-01)
+
+- Batch 2 (approved by the user 2026-11-01) brings `SPIDER`, a move class with no slope limit, for the Scaler, Snare, Monolith, Ravener and Widowmaker (sim-A confirmed the name). Until now no ground unit tilted with the slope, so a spider on a cliff would have stood bolt upright.
+- `Core/Attitude`: a `SPIDER` unit pitches and rolls to the drawn ground under it (`Attitude.slope`).
+  - The ground is sampled ahead, behind and to each side, 0.4 of the footprint's width from the centre (at least 1.5 studs).
+  - Nose up a climb, nose down a descent, downhill side low on a traverse; clamped at 75°.
+  - It eases in at 10/s, twice the aircraft's response. A spider seen for the first time starts on the slope, not upright.
+  - Other ground units are unchanged: bots and vehicles stay upright.
+- `Render/UnitRenderer` passes the drawn ground (`World.groundY`, the mesh ground where there is one), so the body matches what you see.
+- Spec `SpiderTilt` covers the climb, descent, traverse, clamp, first frame, flat ground, and a bot staying upright.
+- Studio, Coastline: no SPIDER def exists yet, so Lancers stood in for spiders through a temporary local edit, reverted before the commit. On the 25° beach slope they lay along the ground (21–25° nose up, 5–10° of roll), with a Paladin beside them level (`debug_out/screens/c284_spider_tilt_standin.jpg`). No console errors.
+- Decoys and crawling bombs, as agreed with sim-A (no protocol change). They're built once the defs land:
+  - **Decoys:** enemies get the disguise's def from the server. Owner and allies get the real def and draw it with `def.disguise`'s model.
+  - **Crawling bombs:** they die through a normal DEATH (severity 255, no wreck), and their blast is sized from `deathBlast.aoe`.
+
+### C-285 — A wreck's supply bar only once you reclaim it (2026-11-01)
+
+- The user: don't show the reclaim supply bar for every wreck. Show it only for a wreck being reclaimed, and keep it until the wreck is gone, even if the reclaiming stops.
+- Before: every wreck below full supply drew a bar. Since S-227, blasts wear wrecks down, so after a fight nearly every wreck had one.
+- `Core/Bars.wreckList` marks a wreck `reclaimed` when an own unit's WORK (the owner field, protocol 39) is RECLAIM on it. It's drawn only once marked, and stays until WRECK_GONE.
+  - A WRECK record sent again for the same wreck (back in sight, a rejoin) keeps the mark (`NetIn`).
+  - A new wreck under a reused id starts unmarked.
+- The client only knows its own workers' targets, so wrecks reclaimed by allies or enemies show no bar.
+- The resurrect bar is unchanged: it shows while a wreck is being resurrected.
+- Spec `ReclaimZones`:
+  - the real path: a Mason's reclaim marks the wreck, and its bar stays after STOP;
+  - the bar list: worn, untouched and enemy-reclaimed wrecks get no bar; a wreck whose worker moved on keeps its bar.
+- Studio, Coastline:
+  - Six Lancers' wrecks, worn by each other's death blasts, showed no bars. A fully reclaimed one gave +425 supply, not 510.
+  - A Mason started reclaiming one wreck and was stopped after about a second. Only that wreck shows its bar, and it stays (`debug_out/screens/c285_one_wreck_bar.jpg`).
+  - No new console errors.

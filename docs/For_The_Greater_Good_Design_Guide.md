@@ -526,6 +526,9 @@ Ground units don't send height: the client looks it up from its own copy of the 
 | `SUB` | submarines | water | — | depth ≥ 12 studs | 2 | flow field |
 | `HELI` | helicopters, air workers | anywhere | — | — | — | steering |
 | `JET` | fighters, bombers | anywhere | — | — | — | steering |
+| `WALKER` | bots (S-159, S-181) | land | 40° | ford ≤ 2 studs | 1–2 | flow field |
+| `AMPHIB_WALKER` | Commanders, T3 walkers, amphibious bots (S-210) | land + sea floor | 40° | any (submerged) | 1–4 | flow field |
+| `SPIDER` | all-terrain spiders (S-233): Scaler, Snare, Monolith, Ravener, Widowmaker | land | none: cliffs and houses too | ford ≤ 2 studs | 1–3 | flow field |
 
 Each move class gets one bit in `passMask` and its own `clearance` layer.
 
@@ -716,10 +719,10 @@ unitId    u16
 cell      u16
 offX      u8
 offZ      u8
-heading   u8      0..255 → 0..360°
+heading   u16     0..65535 → 0..360° (S-232: a byte's 1.4° steps made turns uneven)
 flags     u8      bit0 = has altitude; other bits reserved
 [alt]     u8      only if flag set (air units)
-                  = 8 bytes, 9 with altitude
+                  = 9 bytes, 10 with altitude
 ```
 
 **State record (S → C, reliable), only changed fields**
@@ -745,10 +748,11 @@ Units have at most **8 weapon slots**; defs validation must enforce it. The aim 
 ```
 unitId    u16
 cell      u16
-icon      8 bits  bits 0–7   the unit's def index, one per unit type (v19); radar-only contacts send 0 = unknown blip
-team      3 bits  bits 8–10  team - 1 (teams 1..8)
-flags     5 bits  bits 11–15 bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost, bit4 tracked (v5: real icon)
-                  = 6 bytes per unit
+icon      10 bits bits 0–9   the unit's def index, one per unit type (v19; 10 bits since v48, S-233); radar-only contacts send 0 = unknown blip
+team      4 bits  bits 10–13 team - 1 (teams 1..16)
+flags     5 bits  bits 14–18 bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost, bit4 tracked (v5: real icon)
+offX/offZ 3+3     bits 19–24 the offsets' top 3 bits (v38); bits 25–31 reserved
+                  = 8 bytes per unit
 ```
 
 **Event records (reliable, one batch per tick under the tick header)**
@@ -811,7 +815,7 @@ Targets per player (measure on real servers):
 
 | Stream | Typical | Peak target |
 |---|---|---|
-| Tactical (≈ 80 moving units × 9 B × 15 Hz) | 5–10 KB/s | 15 KB/s |
+| Tactical (≈ 80 moving units × 10 B × 15 Hz) | 5–10 KB/s | 15 KB/s |
 | Strategic (500 units × 6 B × 3 Hz) | 3–9 KB/s | 10 KB/s |
 | State + Events | 2–5 KB/s | 10 KB/s |
 | **Total** | **10–25 KB/s** | **≤ 35 KB/s** |
@@ -1205,6 +1209,10 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 - **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks (implemented in D108: `jamDrain`, the radius scales with the share of upkeep it gets, like tracking radars).
 - **Cloak (S-228, BAR's cloak):** a unit whose def has `cloak = { drain, decloak }` is cloaked while finished, switched on (TOGGLE; it starts on), fully powered (it drains `drain` power a second while on), quiet (no shot for 2 s) and with no enemy within `decloak` studs. Enemy sight passes over a cloaked unit: radar still shows it (stealth shrinks that as usual), so a cloaked unit is at most a blip. First: the Whisper (`ord_whisper`, T2 tank).
 - **EMP (S-229, BAR's paralyzer):** a weapon with `paralyzer = true` fills its target's stun bar instead of taking health. Past the target's max health it is stunned (`PARALYZED`): it neither moves, fires nor builds, and its cloak drops. The bar drains a tenth of max health a second and tops out at max × (1 + `paralyzeSeconds` / 10), so a stun ends at most `paralyzeSeconds` (default 8) after the last hit. EMP never harms wrecks. First: the Thunderer (`ord_thunderer`, T3, its EMP projector).
+- **Spies, crawling bombs and decoy Commanders (S-233, batch 2):**
+  - A spy (Informant, Snitch) cloaks, has `radarSignature = 0` (no radar sees it) and self-destructs at once (`selfDestructSeconds = 0`) in an EMP burst: `selfDestructBlast.paralyzer` stuns everything in reach and harms nothing. Spies capture nothing (the user, 2026-10-31).
+  - A crawling bomb (Martyr, Blister, Pustule) has a weapon with `kamikaze = true`: when it would fire, the bomb dies at once with no wreck and its `deathBlast` goes off, the same blast as when it is shot. The Pustule also cloaks.
+  - A decoy Commander (Effigy, Changeling) has `disguise = "<the Commander>"`: enemies' clients (ENTER, strategic icons, CARRY), sensors, AI and targeting take it for that Commander even in sight. Its owner and allies see the truth. It leaves no wreck, which would give it away. It looks, moves and shoots like the Commander (its laser, no D-Gun) with half the health, builds the Commander's list, and losing it loses nothing.
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
 - **Point defence** (S-149): Sanctum and Flytrap (was Basilisk, S-225) (T2 structures) and Shepherd and Griffin (T2 vehicles) launch interceptors at enemy missiles and rockets flying within their reach that their team detects, one each; a burst destroys it with the interceptor's hit chance. They never fire at units, and a salvo bigger than their stock gets through. Nukes are the anti-nukes' job.
 - **Lost radar missiles** (S-146): a RADAR-guided missile whose target is gone (killed, lock broken, decoy spent) corkscrews about its path, noses over and falls, until it hits the ground or its fuel runs out. If the target died while the missile was still launching (a vertical launch before pitch-over, or its first half second), it flies to the target's last known position and bursts there.
@@ -1385,7 +1393,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Mobile IR SAM | T1 | **Halo** | **Gadfly** (was Hornet, S-225) |
 | Mobile radar | T1 | **Scryer** (was Oracle, S-225) | **Gazer** (was Watcher, S-225) |
 | Main battle tank | T2 | **Vindicator** (was Paladin, S-225) | **Goliath** (`chs_goliath`, raises arms to fire; retired by S-213, back since S-224, new model to come) |
-| Experimental assault walker (S-209) | T3 | **Titan** (`ord_titan`; beam 320, one small heat-seeking missile 390 against ground and air but not submarines, S-213, S-231) | **Juggernaut** (`chs_juggernaut`, was `chs_korgoth`; heat ray 230, missiles 520, S-213) |
+| Experimental assault walker (S-209) | T3 | **Titan** (`ord_titan`; beam 288, one small heat-seeking missile 351 against ground and air but not submarines, sight 234, S-213, S-231, S-234) | **Juggernaut** (`chs_juggernaut`, was `chs_korgoth`; heat ray 230, missiles 520, S-213) |
 | MLRS | T2 | **Judgement** (precise) | **Hydra** (large salvo) |
 | Mobile radar SAM | T2 | **Seraph** | **Medusa** (was Gorgon, S-225) |
 | Mobile jammer | T2 | **Mantle** (was Veil, S-225) (short range) | **Murk** (was Shroud, S-225) (long range) |
@@ -1402,9 +1410,9 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 |---|---|---|---|
 | Fighter | T1 | **Falcon** | **Harpy** |
 | Attack helicopter | T1 | **Guardian** | **Wasp** |
-| Bomber | T1 | **Absolution** | **Plague** |
+| Bomber | T1 | **Absolution** (78 studs/s) | **Plague** (74 studs/s) |
 | Air superiority fighter | T2 | **Archon** (stealth 0.35, DIRCM) | **Strix** (was Manticore, S-225) (heavy missiles, many flares) |
-| Strategic bomber | T2 | **Eclipse** (was Phantom, S-225) (stealth 0.2) | **Hecatomb** (was Behemoth, S-225) (armored, chaff) |
+| Strategic bomber | T2 | **Eclipse** (was Phantom, S-225) (stealth 0.2; 86 studs/s) | **Hecatomb** (was Behemoth, S-225) (armored, chaff; 74 studs/s) |
 | ASW helicopter | T2 | **Tidewatch** | **Leech** |
 | Support aircraft | T2 | **Firmament** (was Archangel, S-225) (AWACS radar) | **Smother** (was Banshee, S-225) (EW jammer) |
 
@@ -1423,15 +1431,15 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 
 | Role | Tier | Order | Chaos | Built by |
 |---|---|---|---|---|
-| Laser tower (S-157) | T1 | **Sentry** (`ord_sentry_tower`, red) | **Guard** (red) | Command, Ground |
-| Ramping beam tower (S-157) | T1 | **Beamer** (blue; 10 → 50 a hit over 4 s on one target) | — | Ground |
-| Heavy laser tower (S-157) | T1 | **Overwatch** (2 green barrels in turn; range 180, sight 166 since S-231) | **Twin Guard** (2 red barrels) and **Geryon** (3-barrel drum, green; more damage, less range than Overwatch) | Ground |
-| Lobbing gun (S-157) | T1 | **Gauntlet** (high arc, 420) | **Talos** (high arc, 360) | Ground |
+| Laser tower (S-157) | T1 | **Sentry** (`ord_sentry_tower`, red; range 143) | **Guard** (red; range 124) | Command, Ground |
+| Ramping beam tower (S-157) | T1 | **Beamer** (blue; 10 → 50 a hit over 4 s on one target; range 165) | — | Ground |
+| Heavy laser tower (S-157) | T1 | **Overwatch** (2 green barrels in turn; range 135, sight 124 since S-234) | **Twin Guard** (2 red barrels; range 146) and **Geryon** (3-barrel drum, green; more damage, range 161) | Ground |
+| Lobbing gun (S-157) | T1 | **Gauntlet** (high arc, 315 since S-234) | **Talos** (high arc, 270 since S-234) | Ground |
 | ~~Gun turret~~ (retired, S-157) | T1 | ~~Bulwark~~ (`ord_bulwark`) | ~~Spike~~ (`chs_spike`) | — |
 | Heavy turret | T2 | **Bastion** | **Maw** | Adv. Ground |
 | IR SAM site | T1 | **Vigil** | **Thorn** | Ground, Air |
 | Radar SAM site (long range) | T2 | **Aegis** | **Wyvern** | Adv. Ground, Adv. Air |
-| Artillery emplacement | T2 | **Edict** | **Cataclysm** | Adv. Ground |
+| Artillery emplacement | T2 | **Edict** (390) | **Cataclysm** (300) | Adv. Ground |
 | Radar tower / long-range radar | T1 / T2 | **Watchtower / Beacon** | **Eye / All-Seer** | All workers |
 | Jammer tower | T1 / T2 | **Curtain / Veilspire** | **Smog / Blackout** | Ground / Adv. Ground |
 | Beam tower (S-96, BAR's Pulsar) | T2 | **Radiance** (488 since S-203, 3,000 over 3 s every 9 s, 700 power a shot) | **Bulwark** (`chs_bulwark`, S-157: 384 since S-203, 1,700 over 1.5 s every 7 s, 500 power a shot, plus Geryon's green laser; Inferno retired) | Adv. Ground |

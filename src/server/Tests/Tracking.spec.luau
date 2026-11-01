@@ -8,6 +8,7 @@ local Sensors = require("../Sim/Sensors")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
+local BlindBombers = require("./Support/BlindBombers") -- (S-234)
 local RunAll = require("./RunAll")
 
 local L = Sensors.Level
@@ -91,7 +92,7 @@ return function(t: RunAll.Context)
 	-- studs off; Order sees it on its Beacon only, with or without a
 	-- Tribunal's track. Counted: bombs that damage it.
 	local function bombing(tracking: boolean): (number, number)
-		local sim = Sim.new({ seed = 42, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BlindBombers.load(), seed = 42, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local bomber = Spawn.unit(sim, "ord_absolution", 1, -450, -300, math.pi / 2)
 		Spawn.unit(sim, "ord_beacon", 1, -450, 300)

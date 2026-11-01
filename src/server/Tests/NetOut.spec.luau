@@ -1161,4 +1161,39 @@ return function(t: RunAll.Context)
 		t.equal(rec.allyTeam, 1)
 		t.deepEqual(rec.teamAllies, { 1, 2, 1, 2 }, "teams 1..4 and their ally teams")
 	end)
+
+	-- S-232 (the user: the Commander looked choppy in a hard turn): a byte of
+	-- heading drew its steady 6° a tick as 5.6° and 7.0° jumps. The wire's
+	-- 1/65536 of a turn keeps every drawn step within 0.02° of the sim's.
+	t.test("a turning Commander's heading reaches the client exactly, so the turn draws evenly", function()
+		local sim = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:64" })
+		local w = sim.world
+		local cmd = Spawn.unit(sim, "ord_sovereign", 1, 0, 0, 0)
+		camera(sim, 1, 0, 0, 63, 63)
+		local view = Client.new((sim.map :: any).grid)
+		moveTo(sim, 1, { cmd }, 0, -100) -- straight behind it: a 180° turn
+		local turning, worst = 0, 0
+		local prevSim, prevWire
+		for _ = 1, 40 do
+			Sim.step(sim)
+			Client.receive(view, sim.net.players[1].outbox)
+			local u = view.units[cmd]
+			local wire = math.rad((u and u.heading or 0) * 360 / 256)
+			local h = w.heading[cmd]
+			if prevSim then
+				local simStep = (h - prevSim + math.pi) % (2 * math.pi) - math.pi
+				local wireStep = (wire - prevWire + math.pi) % (2 * math.pi) - math.pi
+				-- (from the second step: the first starts from ENTER's byte)
+				if math.abs(simStep) > 1e-6 then
+					turning += 1
+				end
+				if math.abs(simStep) > 1e-6 and turning > 1 then
+					worst = math.max(worst, math.abs(math.deg(wireStep - simStep)))
+				end
+			end
+			prevSim, prevWire = h, wire
+		end
+		t.expect(turning >= 20, `it turned for {turning} ticks`)
+		t.expect(worst < 0.02, `drawn steps within 0.02° of the sim's (worst {worst}°)`)
+	end)
 end

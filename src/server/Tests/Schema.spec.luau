@@ -159,7 +159,7 @@ local function randomTactical(rng: Prng.Prng): Tactical
 		cell = rng:nextInteger(0, 65535),
 		offX = rng:nextInteger(0, 255),
 		offZ = rng:nextInteger(0, 255),
-		heading = rng:nextInteger(0, 255),
+		heading = rng:nextInteger(0, 65535) / 256, -- 1/256 steps (S-232)
 		alt = if rng:chance(0.5) then rng:nextInteger(0, 255) else nil,
 	}
 end
@@ -211,7 +211,7 @@ local function randomStrategic(rng: Prng.Prng): Strategic
 		cell = rng:nextInteger(0, 65535),
 		offX = rng:nextInteger(0, 7) * 32 + 16, -- an 8-stud square's centre: what decoding gives (S-189)
 		offZ = rng:nextInteger(0, 7) * 32 + 16,
-		icon = rng:nextInteger(0, 255),
+		icon = rng:nextInteger(0, 1023),
 		team = rng:nextInteger(1, Schema.MAX_TEAMS),
 		flags = rng:nextInteger(0, 15),
 	}
@@ -270,14 +270,14 @@ return function(t: RunAll.Context)
 	t.test("exact byte sizes", function()
 		local base: Tactical = { unitId = 1, cell = 0, offX = 0, offZ = 0, heading = 0 }
 		t.equal(buffer.len(encodeOne(Schema.encodeTactical, base)), Schema.TACTICAL_BYTES)
-		t.equal(Schema.TACTICAL_BYTES, 8)
+		t.equal(Schema.TACTICAL_BYTES, 9) -- u16 heading since protocol 47 (S-232)
 		base.alt = 0
 		t.equal(buffer.len(encodeOne(Schema.encodeTactical, base)), Schema.TACTICAL_ALT_BYTES)
-		t.equal(Schema.TACTICAL_ALT_BYTES, 9)
+		t.equal(Schema.TACTICAL_ALT_BYTES, 10)
 
 		local strategic: Strategic = { unitId = 1, cell = 0, icon = 0, team = 1, flags = 0 }
 		t.equal(buffer.len(encodeOne(Schema.encodeStrategic, strategic)), Schema.STRATEGIC_BYTES)
-		t.equal(Schema.STRATEGIC_BYTES, 7) -- 4-bit team since protocol 36 (S-169)
+		t.equal(Schema.STRATEGIC_BYTES, 8) -- 4-bit team since protocol 36 (S-169), 10-bit icon since 48 (S-233)
 
 		-- command: 4-byte header + 2 per unit + params
 		t.equal(buffer.len(encodeOne(Schema.encodeCommand, { cmdType = CT.STOP, flags = 0, unitIds = { 1 } })), 6)
@@ -295,23 +295,23 @@ return function(t: RunAll.Context)
 		t.equal(buffer.len(encodeOne(Schema.encodeTickHeader, 0)), Schema.TICK_HEADER_BYTES)
 	end)
 
-	t.test("strategic bit layout: icon bits 0-7, team 8-11, flags 12-16, offX 17-19, offZ 20-22, 1 reserved (protocol 38)", function()
+	t.test("strategic bit layout: icon bits 0-9, team 10-13, flags 14-18, offX 19-21, offZ 22-24, 7 reserved (protocol 48)", function()
 		local rec: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = 1 }
-		-- 1 + (2 - 1) * 2^8 + 1 * 2^12 = 0x1101
-		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, rec)), { 0x02, 0x01, 0x04, 0x03, 0x01, 0x11, 0x00 })
-		local top: Strategic = { unitId = 1, cell = 0, offX = 240, offZ = 240, icon = 255, team = 16, flags = 31 }
-		-- offsets' top 3 bits: 7 << 17 and 7 << 20 → byte 3 = 0x01 + 0x0E + 0x70
-		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, top)), { 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x7F })
+		-- 1 + (2 - 1) * 2^10 + 1 * 2^14 = 0x4401
+		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, rec)), { 0x02, 0x01, 0x04, 0x03, 0x01, 0x44, 0x00, 0x00 })
+		local top: Strategic = { unitId = 1, cell = 0, offX = 240, offZ = 240, icon = 1023, team = 16, flags = 31 }
+		-- every field full: bits 0-24 set = 0x1FFFFFF
+		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, top)), { 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0x01 })
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeStrategic, top), Schema.decodeStrategic)[1], top)
 		local corner = Packer.readAll(encodeOne(Schema.encodeStrategic, { unitId = 1, cell = 0, offX = 33, offZ = 0, icon = 0, team = 1, flags = 0 }), Schema.decodeStrategic)[1]
 		t.deepEqual({ corner.offX, corner.offZ }, { 48, 16 }, "decoded to the 8-stud square's centre")
-		expectRejected(t, Schema.decodeStrategic, { 1, 0, 0, 0, 0, 0, 0x80 }, "reserved bits")
+		expectRejected(t, Schema.decodeStrategic, { 1, 0, 0, 0, 0, 0, 0, 0x80 }, "reserved bits")
 	end)
 
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 46, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 48, "protocol version changed: update the golden bytes below")
 		-- version 41: the Strategic header's part / parts (S-212)
 		local parts = { encodeOne(Schema.encodeStrategicHeader, 0x0102), encodeOne(Schema.encodeStrategicHeader, 0x0102) }
 		Schema.numberStrategicParts(parts)
@@ -490,8 +490,9 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeEvent, answer)), "16 01 00 03 00 05 01")
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, answer), Schema.decodeEvent)[1], answer)
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, emptyQueue), Schema.decodeState)[1], emptyQueue)
-		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
-		t.equal(hex(encodeOne(Schema.encodeTactical, tactical)), "01 02 03 04 05 06 07 01 09")
+		-- version 47: the heading in 1/256 steps, u16 (S-232)
+		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7.25, alt = 9 }
+		t.equal(hex(encodeOne(Schema.encodeTactical, tactical)), "01 02 03 04 05 06 40 07 01 09")
 		local state: State = {
 			unitId = 0x0102,
 			health = 3,
@@ -502,7 +503,7 @@ return function(t: RunAll.Context)
 		}
 		t.equal(hex(encodeOne(Schema.encodeState, state)), "02 01 1f 03 05 04 81 06 07 08 09 01 c0 0a")
 		local strategic: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = 1 }
-		t.equal(hex(encodeOne(Schema.encodeStrategic, strategic)), "02 01 04 03 01 11 00") -- version 36 layout
+		t.equal(hex(encodeOne(Schema.encodeStrategic, strategic)), "02 01 04 03 01 44 00 00") -- version 48 layout
 		t.equal(hex(encodeOne(Schema.encodeTickHeader, 0xABCD)), "cd ab")
 		-- version 2: events
 		local enter: Schema.Event = {
@@ -551,8 +552,8 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeProjSync, sync)), "02 01 04 03 05 06 fe ff 01 00 ff ff 03 02")
 		-- version 5: TRACKED strategic flag (16 = flag bit 4 = bit 13 overall)
 		local tracked: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = Schema.StrategicFlag.RADAR_ONLY + Schema.StrategicFlag.TRACKED }
-		-- 1 + (2 - 1) * 2^8 + 17 * 2^12 = 0x11101 (version 36 layout)
-		t.equal(hex(encodeOne(Schema.encodeStrategic, tracked)), "02 01 04 03 01 11 01")
+		-- 1 + (2 - 1) * 2^10 + 17 * 2^14 = 0x44401 (version 48 layout)
+		t.equal(hex(encodeOne(Schema.encodeStrategic, tracked)), "02 01 04 03 01 44 04 00")
 		-- version 6: join handshake and economy
 		local SK = Schema.SnapshotKind
 		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.HELLO, protocol = 0x0102, defsHash = 0x03040506 })), "01 02 01 06 05 04 03")
@@ -749,7 +750,7 @@ return function(t: RunAll.Context)
 
 	t.test("tactical layout is byte exact", function()
 		local rec: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
-		t.deepEqual(bytesOf(encodeOne(Schema.encodeTactical, rec)), { 0x01, 0x02, 0x03, 0x04, 5, 6, 7, 1, 9 })
+		t.deepEqual(bytesOf(encodeOne(Schema.encodeTactical, rec)), { 0x01, 0x02, 0x03, 0x04, 5, 6, 0, 7, 1, 9 })
 	end)
 
 	t.test("edge values round-trip for every record type", function()
@@ -769,8 +770,8 @@ return function(t: RunAll.Context)
 
 		roundTrip(t, {
 			{ unitId = 1, cell = 0, offX = 0, offZ = 0, heading = 0 },
-			{ unitId = 65535, cell = 65535, offX = 255, offZ = 255, heading = 255 },
-			{ unitId = 1, cell = 0, offX = 0, offZ = 0, heading = 0, alt = 0 },
+			{ unitId = 65535, cell = 65535, offX = 255, offZ = 255, heading = 65535 / 256 },
+			{ unitId = 1, cell = 0, offX = 0, offZ = 0, heading = 0.00390625, alt = 0 },
 			{ unitId = 65535, cell = 65535, offX = 255, offZ = 255, heading = 255, alt = 255 },
 		}, Schema.encodeTactical, Schema.decodeTactical)
 
@@ -788,7 +789,7 @@ return function(t: RunAll.Context)
 
 		roundTrip(t, {
 			{ unitId = 1, cell = 0, offX = 16, offZ = 16, icon = 0, team = 1, flags = 0 },
-			{ unitId = 65535, cell = 65535, offX = 240, offZ = 240, icon = 255, team = 8, flags = 31 },
+			{ unitId = 65535, cell = 65535, offX = 240, offZ = 240, icon = 1023, team = 8, flags = 31 },
 			{ unitId = 2, cell = 1, offX = 16, offZ = 112, icon = 126, team = 7, flags = Schema.StrategicFlag.GHOST },
 		}, Schema.encodeStrategic, Schema.decodeStrategic)
 	end)
@@ -839,8 +840,8 @@ return function(t: RunAll.Context)
 		expectRejected(t, cmd, { CT.BUILD, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4 }, "facing 4 outside 0..3")
 		expectRejected(t, cmd, { CT.BUILD, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0x80 }, "facing 128")
 
-		expectRejected(t, Schema.decodeTactical, { 0, 0, 0, 0, 0, 0, 0, 0 }, "unitId 0 is reserved")
-		expectRejected(t, Schema.decodeTactical, { 1, 0, 0, 0, 0, 0, 0, 2 }, "reserved bits")
+		expectRejected(t, Schema.decodeTactical, { 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "unitId 0 is reserved")
+		expectRejected(t, Schema.decodeTactical, { 1, 0, 0, 0, 0, 0, 0, 0, 2 }, "reserved bits")
 
 		expectRejected(t, Schema.decodeState, { 1, 0, 0 }, "mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 0 }, "owner field mask is empty") -- 128 is OWNER since protocol 20
@@ -851,7 +852,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.TARGET, 0 }, "target slot mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.AIM, 0 }, "aim slot mask is empty")
 
-		expectRejected(t, Schema.decodeStrategic, { 0, 0, 0, 0, 0, 0 }, "unitId 0 is reserved")
+		expectRejected(t, Schema.decodeStrategic, { 0, 0, 0, 0, 0, 0, 0, 0 }, "unitId 0 is reserved")
 	end)
 
 	t.test("encoders reject invalid records", function()
@@ -864,7 +865,7 @@ return function(t: RunAll.Context)
 		t.throws(enc(Schema.encodeTactical, { unitId = 1, cell = 0, offX = 256, offZ = 0, heading = 0 }), "u8 out of range")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 0, flags = 0 }), "team 0")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 17, flags = 0 }), "team 17")
-		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 256, team = 1, flags = 0 }), "8%-bit value")
+		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 1024, team = 1, flags = 0 }), "10%-bit value")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 1, flags = 32 }), "reserved bits")
 		t.throws(enc(Schema.encodeState, { unitId = 1 }), "no fields")
 		t.throws(enc(Schema.encodeState, { unitId = 1, aim = {} }), "aim list is empty")
@@ -904,10 +905,10 @@ return function(t: RunAll.Context)
 		end
 		t.deepEqual(recovered, tactical)
 
-		-- 128 strategic records of 7 bytes fill a 900-byte message (896 bytes; protocol 36)
+		-- 112 strategic records of 8 bytes fill a 900-byte message (896 bytes; protocol 48)
 		local strategic = many(SEED + 1, randomStrategic)
 		messages = Packer.chunk(strategic, Schema.encodeStrategic)
-		t.equal(#messages, math.ceil(RANDOM_COUNT / 128))
+		t.equal(#messages, math.ceil(RANDOM_COUNT / 112))
 		t.equal(buffer.len(messages[1]), 896)
 		recovered = {}
 		for _, m in messages do

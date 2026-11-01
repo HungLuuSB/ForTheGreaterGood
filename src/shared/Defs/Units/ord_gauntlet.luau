@@ -14,7 +14,7 @@ return Templates.extend(Templates.Structure, {
 	-- S-179, the playtest's balance notes: health × 2
 	health = 2000,
 	footprint = 2, -- size shows tech level (S-104)
-	sensors = { sight = 240 },
+	sensors = { sight = 180 }, -- artillery defences -25% (S-234, the user; was 240)
 	weapons = { { def = "ord_gauntlet_shell", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "barrel", "muzzle" },
 	icon = "artillery",

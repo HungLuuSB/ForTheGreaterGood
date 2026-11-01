@@ -14,7 +14,7 @@ return Templates.extend(Templates.Structure, {
 	footprint = 3,
 	height = 25.6, -- a tall tower (S-184; models-C's F18 blockouts, measured)
 	muzzleHeight = 25.1,
-	sensors = { sight = 160 },
+	sensors = { sight = 120 }, -- artillery defences -25% (S-234, the user; was 160)
 	weapons = { { def = "chs_fortress_mortar", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "muzzle" },
 	icon = "artillery",

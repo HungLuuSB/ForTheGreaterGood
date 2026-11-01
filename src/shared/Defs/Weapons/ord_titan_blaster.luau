@@ -3,7 +3,7 @@
 return {
 	id = "ord_titan_blaster",
 	type = "BALLISTIC",
-	range = 160,
+	range = 144, -- -10% (S-234, the user): was 160
 	reload = 0.8,
 	projectileSpeed = 260,
 	gravity = 30,

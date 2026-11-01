@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 46 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174); SHARE_UNITS, SHARE_RESOURCE and REQUEST commands, SHARE events (S-176); AREA command: Smart Reclaim / repair / resurrect (S-183); 38: positions on a fixed wire grid (Grid: 64-stud wire cells, quarter-stud offsets, ±8,192 studs whatever the map), strategic records carry 3-bit offsets (8 studs), ALERT a full position, SIGHT_CELLS u24 entries, SIGHT_ROWS firstRow u16, CAMERA u16 cells: maps up to 1,024 cells, aircraft past the edge (S-189); 39: SET_RETREAT, SELF_DESTRUCT and DGUN commands, the STATES byte's retreat bits, the owner fields SELF_DESTRUCT and WORK (kind and target) (S-194); 40: WRECK carries featureKind (map trees and rocks, S-197); ECO_LEVEL command and the Eco record's share / convert levels (S-198); command flag FRONT (S-199); 41: Strategic messages' header carries part u8 and parts u8 after the tick (S-212); 42: WORK kind RECLAIM_UNIT, a live enemy unit (S-218); 43: LOAD and UNLOAD commands, the owner field CARGO (transports, S-219); 44: TRANSPORT and CARRY events (S-220); 45: WRECK and WRECK_STATE carry heap, WRECK_HIT events (wrecks wear down to scrap heaps, S-227); 46: unit state bits CLOAKED 256 (S-228) and PARALYZED 512 (S-229)
+Schema.PROTOCOL_VERSION = 48 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168); 36: up to 16 teams (strategic records 7 bytes), the pre-game: START_POS and READY commands, PREGAME, COUNTDOWN and PREBUILD events (S-169); 37: FACTION and START commands, PREGAME flags CHAOS and HOST, PICK_CLOCK and START_BOXES events, a 3 s countdown (S-174); SHARE_UNITS, SHARE_RESOURCE and REQUEST commands, SHARE events (S-176); AREA command: Smart Reclaim / repair / resurrect (S-183); 38: positions on a fixed wire grid (Grid: 64-stud wire cells, quarter-stud offsets, ±8,192 studs whatever the map), strategic records carry 3-bit offsets (8 studs), ALERT a full position, SIGHT_CELLS u24 entries, SIGHT_ROWS firstRow u16, CAMERA u16 cells: maps up to 1,024 cells, aircraft past the edge (S-189); 39: SET_RETREAT, SELF_DESTRUCT and DGUN commands, the STATES byte's retreat bits, the owner fields SELF_DESTRUCT and WORK (kind and target) (S-194); 40: WRECK carries featureKind (map trees and rocks, S-197); ECO_LEVEL command and the Eco record's share / convert levels (S-198); command flag FRONT (S-199); 41: Strategic messages' header carries part u8 and parts u8 after the tick (S-212); 42: WORK kind RECLAIM_UNIT, a live enemy unit (S-218); 43: LOAD and UNLOAD commands, the owner field CARGO (transports, S-219); 44: TRANSPORT and CARRY events (S-220); 45: WRECK and WRECK_STATE carry heap, WRECK_HIT events (wrecks wear down to scrap heaps, S-227); 46: unit state bits CLOAKED 256 (S-228) and PARALYZED 512 (S-229); 47: Tactical heading u16 (S-232); 48: strategic icons 10 bits, records 8 bytes (S-233)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -511,12 +511,13 @@ end
 
 --------------------------------------------------------------------------------
 -- Tactical (S → C, unreliable): units in camera area that moved this tick
---   unitId u16 | cell u16 | offX u8 | offZ u8 | heading u8 | flags u8 | [alt u8]
---   = 8 bytes, 9 with altitude
+--   unitId u16 | cell u16 | offX u8 | offZ u8 | heading u16 | flags u8 | [alt u8]
+--   = 9 bytes, 10 with altitude. The heading is 1/65536 of a turn (protocol
+--   47, S-232): a byte's 1.4° steps drew a steady turn in uneven jumps.
 --------------------------------------------------------------------------------
 
-Schema.TACTICAL_BYTES = 8
-Schema.TACTICAL_ALT_BYTES = 9
+Schema.TACTICAL_BYTES = 9
+Schema.TACTICAL_ALT_BYTES = 10
 
 local TACTICAL_HAS_ALT = 1
 local TACTICAL_FLAGS_MASK = 1
@@ -526,7 +527,7 @@ export type Tactical = {
 	cell: number,
 	offX: number,
 	offZ: number,
-	heading: number, -- 0..255 → 0..360°
+	heading: number, -- 0..256 → 0..360°, in steps of 1/256 (the u8 scale of ENTER and WRECK, finer)
 	alt: number?, -- air units only: studs above ground, 0..255
 }
 
@@ -535,7 +536,7 @@ function Schema.encodeTactical(w: Writer, rec: Tactical)
 	w:writeU16(rec.cell)
 	w:writeU8(rec.offX)
 	w:writeU8(rec.offZ)
-	w:writeU8(rec.heading)
+	w:writeU16(math.floor(rec.heading * 256 + 0.5) % 65536)
 	if rec.alt ~= nil then
 		w:writeU8(TACTICAL_HAS_ALT)
 		w:writeU8(rec.alt)
@@ -551,7 +552,7 @@ function Schema.decodeTactical(r: Reader): Tactical
 		cell = r:readU16(),
 		offX = r:readU8(),
 		offZ = r:readU8(),
-		heading = r:readU8(),
+		heading = r:readU16() / 256,
 	}
 	local flags = r:readU8()
 	if band(flags, TACTICAL_FLAGS_MASK) ~= flags then
@@ -991,10 +992,11 @@ end
 
 --------------------------------------------------------------------------------
 -- Strategic (S → C, unreliable, 2–4 Hz): every known unit, minimap level
---   unitId u16 | cell u16 | icon 8 bits | team 4 bits | flags 5 bits
---   | offX 3 bits | offZ 3 bits | 1 reserved bit (0)                 = 7 bytes
---   Bits are packed LSB-first: icon = bits 0–7, team = 8–11, flags = 12–16,
---   offX 17–19, offZ 20–22. The position is a wire cell (Grid.encode) and
+--   unitId u16 | cell u16 | icon 10 bits | team 4 bits | flags 5 bits
+--   | offX 3 bits | offZ 3 bits | 7 reserved bits (0)                = 8 bytes
+--   Bits are packed LSB-first: icon = bits 0–9, team = 10–13, flags = 14–18,
+--   offX 19–21, offZ 22–24 (protocol 48, S-233: 10-bit icons, 1,023 unit
+--   types; 8 bits and 255 types before). The position is a wire cell (Grid.encode) and
 --   its offsets' top 3 bits: 8 studs (protocol 38, S-189; a map cell index
 --   before); decoded to the 8-stud square's centre.
 --   (protocol 19, S-58: the icon is the unit's def index, Shared/Net/Icons).
@@ -1002,7 +1004,7 @@ end
 --   protocol 36, S-169).
 --------------------------------------------------------------------------------
 
-Schema.STRATEGIC_BYTES = 7
+Schema.STRATEGIC_BYTES = 8
 
 -- A Strategic message's header (protocol 41, S-212, client-B's H36): the
 -- tick, then which part of that tick's snapshot it is (0-based) and how
@@ -1056,7 +1058,7 @@ export type Strategic = {
 	cell: number,
 	offX: number?, -- 0..255 as Grid.encode gives it; travels as its top 3 bits (S-189)
 	offZ: number?,
-	icon: number, -- 0..255: the unit's def index (Icons), 0 = unknown blip
+	icon: number, -- 0..1023: the unit's def index (Icons), 0 = unknown blip
 	team: number, -- 1..16
 	flags: number,
 }
@@ -1070,12 +1072,12 @@ function Schema.encodeStrategic(w: Writer, rec: Strategic)
 	end
 	writeId(w, rec.unitId, "unitId")
 	w:writeU16(rec.cell)
-	w:writeBits(rec.icon, 8)
+	w:writeBits(rec.icon, 10)
 	w:writeBits(rec.team - 1, 4)
 	w:writeBits(rec.flags, 5)
 	w:writeBits((rec.offX or 0) // 32, 3)
 	w:writeBits((rec.offZ or 0) // 32, 3)
-	w:writeBits(0, 1)
+	w:writeBits(0, 7)
 	w:flushBits()
 end
 
@@ -1083,11 +1085,11 @@ function Schema.decodeStrategic(r: Reader): Strategic
 	r.context = "strategic record"
 	local unitId = readId(r, "unitId")
 	local cell = r:readU16()
-	local icon = r:readBits(8)
+	local icon = r:readBits(10)
 	local team = r:readBits(4) + 1
 	local flags = r:readBits(5)
 	local offX, offZ = r:readBits(3) * 32 + 16, r:readBits(3) * 32 + 16
-	if r:readBits(1) ~= 0 then
+	if r:readBits(7) ~= 0 then
 		fail(r, "reserved bits set")
 	end
 	r:alignBits()

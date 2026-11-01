@@ -12,7 +12,7 @@ return Templates.extend(Templates.Structure, {
 	health = 5500,
 	footprint = 5,
 	buildPower = 200,
-	buildOptions = { "chs_tinker", "chs_centurion", "chs_mammoth" },
+	buildOptions = { "chs_tinker", "chs_centurion", "chs_mammoth", "chs_taskmaster", "chs_wrath", "chs_portent", "chs_blister", "chs_changeling", "chs_cutpurse", "chs_gloom", "chs_newt", "chs_pyre", "chs_gargoyle", "chs_spitter", "chs_pustule", "chs_snitch", "chs_ravener", "chs_scrounger" },
 	icon = "factory",
 	model = "chs_advbotlab",
 })
