@@ -57,6 +57,11 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-11-01, wreck supply bars: C-285)
+
+- **Wreck supply bars only where you reclaim (C-285, your request):** a wreck's supply bar shows once one of your workers starts reclaiming it, and stays until the wreck is gone, even if the worker stops. Wrecks worn by blasts no longer all show one. Wrecks reclaimed by allies or enemies show none; resurrect bars are unchanged. `debug_out/screens/c285_one_wreck_bar.jpg`.
+- Ready to merge: `89947ca5` (C-285)
+
 ## Summary (2026-11-01, batch 2 spiders: C-284)
 
 - **All-terrain spiders lie along the ground (C-284, batch 2):** a `SPIDER` unit pitches and rolls to the drawn ground under it, up to 75°, so one on a cliff clings to it. Other ground units stay upright. Checked in Studio with Lancers standing in for spiders, through a temporary edit not committed: `debug_out/screens/c284_spider_tilt_standin.jpg`.
