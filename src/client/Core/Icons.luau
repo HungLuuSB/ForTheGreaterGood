@@ -122,6 +122,8 @@ function Icons.placeholderFrame(def: any): string
 		return if mc == "SUB" then "sub" else "ship"
 	elseif mc == "WALKER" or mc == "AMPHIB_WALKER" then
 		return "walker"
+	elseif mc == "SPIDER" then
+		return "spider" -- all-terrain spiders (S-233, E-15)
 	elseif mc == "AMPHIB" then
 		return "amphib"
 	elseif mc == "HOVER" then

@@ -2716,3 +2716,19 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - The redraw checks compare against the same look, so a decoy isn't redrawn every frame.
 - Crawling bombs needed nothing new. Their kamikaze sends no FIRE, and their DEATH (severity 255, no wreck) plays the existing death-blast burst sized from `deathBlast.aoe`.
 - Studio: an own Effigy drew with the Sovereign's model (`debug_out/screens/c287_effigy_as_sovereign.jpg`).
+
+### C-288 — Batch 2 icons: sheets 2 and 3 uploaded (E-15, 2026-11-01)
+
+- Merged E's batch 2 icon branch (054278e0) and re-ran `tools/icons/render.mjs`: all 281 unit defs map to 174 catalogue icons (11 placeholders), 185 tiles over three sheets. Sheet 2 is full (90 tiles); sheet 3 is new (5 tiles).
+- The user approved the upload; the ids and pixel hashes are in `tools/icons/assets.json` (sheet 2 `139572992631212`, sheet 3 `130431554234464`), and `UI/IconAtlas` is regenerated with them. Sheet 1 is unchanged.
+- `Core/Icons.placeholderFrame` gets a `spider` fallback frame for move class `SPIDER`. It is only a fallback: all five spiders have drawn tiles (E: `rocket_spider_t2`, `emp_spider_t2`, `heat_ray_spider_t2`, `artillery_spider_t3`, `missile_spider_t3`), and the 11 placeholder tiles are per-frame fallbacks that no def uses.
+- The decoy Commanders (`ord_effigy`, `chs_changeling`) use the Sovereign's and Warlord's icon tiles, so the icon doesn't give them away either.
+- Studio: all three sheet ids fetch, and 60 tiles from sheets 2 and 3 draw and tint correctly (`debug_out/screens/c288_batch2_icons_sheets_2_3.jpg`).
+
+### C-289 — Fallen-hulk wreck meshes lie as modelled (models-C request 17, 2026-11-01)
+
+- C's fallen-hulk wrecks for the 13 heavy T3s (S-234) bake the lying pose into the meshes, and their manifest wreck says `fallen = true` (C-286 already skips its lay-down for them).
+- `Render/Deaths.wreckModel` leaves a fallen hulk's joints at rest: no knocked-askew `Transform`s, which wouldn't fit the baked pieces.
+- `placeWreck` now takes the unit's frame (position, heading + pi) and the live model's `RootOffset`, not the dying root's frame. A standing or stopgap wreck still takes the dying root's place (`unit * liveOffset`). A fallen hulk is placed by its own `RootOffset`, on the ground's slope under its footprint (the C-286 normal, capped at 35°), with the small random tilt: its base lies lower and off to one side of the live pelvis or hull, and the mesh already sits on the ground with a small sink.
+- Both callers pass the unit frame: a death in view gives `base * rootOffset:Inverse()`, and a wreck first seen in the wreck table gives the record's position and heading.
+- Studio, with a temporary `fallen = true` on the Lancer's approved wreck (reverted): three wrecks had 0 askew joints and lay on the ground at their units' positions (`debug_out/screens/c289_fallen_mesh_rest_rootoffset.jpg`). C's real hulks are still `review` and not on this branch, so they're unchecked in game.
