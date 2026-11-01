@@ -215,7 +215,9 @@ return function(sim: Types.Sim)
 		end
 		if weapon.bolt then
 			-- the D-Gun's bolt (S-194, G5): rides the ground in a straight line
-			-- and destroys every unit it passes through, once each
+			-- and destroys every unit it passes through, once each. One that
+			-- fires by itself (the Colossus's cannon, S-236) deals its damage
+			-- instead, to enemies only
 			local hit = c.pHit[id]
 			if hit == nil then
 				hit = {}
@@ -237,8 +239,11 @@ return function(sim: Types.Sim)
 			table.sort(passed) -- (in ID order: deterministic)
 			local dx, dz = x1 - x0, z1 - z0
 			local len2 = dx * dx + dz * dz
+			local dgun = weapon.manualFire == true
+			local shooter = sim.players[c.pPlayer[id]]
+			local shooterAlly = if shooter then shooter.allyTeam else nil
 			for _, u in passed do
-				if u == owner or hit[u] or w.slot[u] == nil then
+				if u == owner or hit[u] or w.slot[u] == nil or (not dgun and w.ally[u] == shooterAlly) then
 					continue
 				end
 				local p = profiles[w.defIndex[u]]
@@ -251,8 +256,10 @@ return function(sim: Types.Sim)
 				if ex * ex + ez * ez <= (reach + p.radius) ^ 2 then
 					hit[u] = true
 					local commander = bit32.band(p.categoryMask, Combat.COMMANDER_BIT) ~= 0
-					local amount = if commander then ud.health * Combat.BOLT_COMMANDER else w.health[u] * 100 + 1
-					if not commander then
+					local amount = if not dgun then weapon.damage[Combat.armorOf(w, u, p)]
+						elseif commander then ud.health * Combat.BOLT_COMMANDER
+						else w.health[u] * 100 + 1
+					if dgun and not commander then
 						c.noWreck[u] = true
 						sim.cheats.killing[u] = true -- (through god mode)
 					end

@@ -186,7 +186,10 @@ export type WeaponDef = {
 	-- the D-Gun (S-194, G5): a bolt that rides the ground (no gravity, no
 	-- terrain contact) for its range and destroys every unit it passes within
 	-- `bolt` studs of, its shooter excepted; they leave no wreck. Commanders
-	-- lose a share of their health instead (Combat.BOLT_COMMANDER).
+	-- lose a share of their health instead (Combat.BOLT_COMMANDER). That is
+	-- with `manualFire` (fired on a DGUN order); without it (the Colossus's
+	-- cannon, S-236) it picks targets as any weapon and deals its `damage` to
+	-- every enemy it passes, sparing its own side.
 	bolt: number?,
 	-- a crawling bomb's trigger (S-233): when it would fire, the unit
 	-- detonates instead: it dies at once, leaves no wreck, and its def's

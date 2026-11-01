@@ -223,7 +223,7 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 			local range = nil
 			for _, slot in sim.defs.unitByIndex[w.defIndex[id]].weapons do
 				local wd = sim.defs.weapons[slot.def]
-				if wd.bolt then
+				if wd.bolt and wd.manualFire then -- (the Colossus's bolt fires by itself, S-236)
 					range = wd.range
 				end
 			end

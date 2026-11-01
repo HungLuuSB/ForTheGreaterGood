@@ -3,7 +3,7 @@
 return {
 	id = "ord_warden_gun",
 	type = "BALLISTIC",
-	range = 210, -- 280 less 25% (FTGG-FEEDBACK-4, the user)
+	range = 252, -- 280 less 10% (S-236, FTGG-FEEDBACK-5; FEEDBACK-4's 25% reverted)
 	reload = 3,
 	salvo = { count = 1, delay = 0 },
 	projectileSpeed = 440,

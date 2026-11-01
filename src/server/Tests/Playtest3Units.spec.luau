@@ -63,7 +63,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a T3 walker's self-destruct reaches 35% of a nuke's radius and can't kill a Commander (S-217, the user)", function()
-		for _, id in { "ord_titan", "chs_juggernaut" } do
+		for _, id in { "ord_titan" } do -- (the Juggernaut's is a nuke's since S-236: Feedback5.spec)
 			local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:96" })
 			local w = sim.world
 			local walker = Spawn.unit(sim, id, 1, 0, 0)

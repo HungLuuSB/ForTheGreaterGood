@@ -3503,3 +3503,27 @@ After S-233, Studio's lobby servers (B's match place with `lobby = true`, D's lo
   - details plus a second load: 0.2 s;
   - a full passability build, as in `Sim.new`: 4.5 s → 1.25 s.
   - No layer or gameplay changed.
+
+## S-236 — FTGG-FEEDBACK-5: Overwatch and Steadfast reach, guarding a factory, unfinished structures, the Juggernaut's nuke, the Colossus (2026-11-01, the user)
+
+- **Overwatch and Steadfast:** the 25% cuts are reverted (S-231 for both, then S-234 for the Overwatch), and both are 10% under their earlier values instead:
+  - Overwatch: laser 240 → 216, sight 221 → 199. It was 135 and 124 after S-234.
+  - Steadfast: gun and sight 280 → 252. It was 210 after S-231.
+- **A worker guarding a factory helps build each unit it makes** (`Orders`, guard):
+  - It walks to the factory, assists while the queue has a unit (the same assist as REPAIR on a factory, S-4), then waits within `GUARD_RADIUS` for the next one, still on its guard order.
+  - It also helps finish an unfinished factory.
+  - Before, guard assisted only a mobile builder (S-128): on a factory the worker just stood by.
+- **A structure killed while it is being built is just gone.** The sim already gave a frame no wreck and no death blast (S-70, `Damage`). This adds a test. The explosion the user saw is the client's death effect, so it is B's (request below).
+- **The Juggernaut goes up like a nuke.** Its `deathBlast` and `selfDestructBlast` are the nuke's (`chs_nuke`): 8000 at the centre, 150 studs, edge 0.05. This replaces S-217, which had cut it to 480 over 52 studs so it couldn't kill a Commander. The Titan keeps S-217's blast. The client's nuke-sized drawing is B's.
+- **The Colossus (`chs_colossus`, BAR's corjugg Behemoth) is a barely mobile heavy turret that takes on a whole army:**
+  - Footprint 4 → 5.
+  - Health 80,000 → 240,000.
+  - Speed 3 → 1.5.
+  - Its main cannon (`chs_colossus_fire`) fires the D-Gun's bolt by itself:
+    - every 2 s, range 300, 10 studs either side of its line, speed 120;
+    - 9000 to every enemy on its path, Commanders included, with wrecks as usual.
+  - **A bolt without `manualFire` aims and fires like any weapon** (`Weapons`, `Projectiles`, `Commands`). It deals its `damage` table instead of the D-Gun's kill, and it spares its own side: an automatic weapon that cut through its own escorts would be useless. With `manualFire` (the Commanders' D-Gun), nothing changes: DGUN orders only, everyone on the line.
+  - The three lasers are unchanged.
+  - **Result** (`Feedback5.spec`, slow): sent at it as an attack-move, 15 Titans leave it with 149,000 health after 1.2 minutes, and 8 Juggernauts with 210,000 after 1.1 minutes. The Juggernauts' nuke blasts set each other off.
+  - Its price is unchanged (5,000 supply / 72,000 power), under one Juggernaut's.
+  - It needs a remodel, bigger (C), and the client must not offer the D-Gun order for it (B).
