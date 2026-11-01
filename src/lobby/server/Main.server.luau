@@ -172,6 +172,10 @@ task.spawn(function()
 			-- MapRegistry has them (cached by the registry; the big maps take a second)
 			local info = nil
 			local details = (MapRegistry :: any).details
+			-- `details` builds the map again: yield between the two, so a big
+			-- generated map (Lakelands, 6-9 s each) doesn't pass Studio's
+			-- 10 s script timeout with both in one go
+			task.wait()
 			if details then
 				local okInfo, d = pcall(details, id)
 				if okInfo and type(d) == "table" then
