@@ -53,6 +53,19 @@ end
 -- adds them): the roles may name them before the defs reach this branch.
 -- Remove each once its def is on main (batch 1's 31, S-230, are).
 local ANNOUNCED: { [string]: string } = {}
+-- batch 2, bots (approved 2026-11-01; bar-roster-plan 2.3)
+for _, id in {
+	"ord_picket", "ord_squire", "ord_petard", "ord_draftsman", "ord_skyguard", "ord_steward",
+	"ord_effigy", "ord_sextant", "ord_informant", "ord_marshal", "ord_culverin", "ord_mariner",
+	"ord_scaler", "ord_marksman", "ord_hush", "ord_outrider", "ord_martyr", "ord_snare",
+	"ord_stormcaller", "ord_paragon", "ord_champion", "ord_monolith",
+	"chs_firebrand", "chs_taskmaster", "chs_wrath", "chs_portent", "chs_blister", "chs_changeling",
+	"chs_cutpurse", "chs_gloom", "chs_newt", "chs_pyre", "chs_gargoyle", "chs_spitter",
+	"chs_pustule", "chs_snitch", "chs_ravener", "chs_scrounger", "chs_colossus", "chs_pandemonium",
+	"chs_infernal", "chs_widowmaker", "chs_abyssal",
+} do
+	ANNOUNCED[id] = "batch 2"
+end
 Codex.ANNOUNCED = table.freeze(ANNOUNCED)
 
 -- The sim's rules the articles describe. The lobby place has no
@@ -81,7 +94,12 @@ Codex.ROLES = {
 	r("command", "Field engineer (repair, resurrect, reclaim)", 1, { "ord_lazarus" }, { "chs_graverobber" }),
 	r("command", "Amphibious worker", 1, { "ord_pontifex" }, { "chs_dredger" }), -- S-230
 	r("command", "Hover worker", 1, { "ord_skimwright" }, { "chs_drifter" }), -- S-230
-	r("command", "Combat engineer", 2, { "ord_magistrate" }, {}), -- S-230
+	r("command", "Combat engineer", 2, { "ord_magistrate" }, { "chs_scrounger" }), -- S-230, batch 2
+	-- batch 2 (bots): BAR's Armada/Cortex pairs where both factions have one
+	r("command", "Advanced bot constructor", 2, { "ord_draftsman" }, { "chs_taskmaster" }),
+	r("command", "Assist and repair bot", 2, { "ord_steward" }, {}),
+	r("command", "Stealth engineer", 2, {}, { "chs_cutpurse" }),
+	r("command", "Decoy Commander", 2, { "ord_effigy" }, { "chs_changeling" }),
 
 	r("ground", "Scout", 1, { "ord_herald" }, { "chs_jackal" }),
 	r("ground", "Light tank", 1, { "ord_lancer" }, { "chs_ravager" }),
@@ -127,6 +145,33 @@ Codex.ROLES = {
 	r("ground", "Heavy laser bot", 2, {}, { "chs_centurion" }),
 	r("ground", "Heavy assault bot", 2, {}, { "chs_mammoth" }),
 	r("ground", "Experimental assault walker", 3, { "ord_titan" }, { "chs_juggernaut" }),
+	-- batch 2 (bots)
+	r("ground", "Anti-swarm bot", 1, { "ord_picket" }, {}),
+	r("ground", "Fast infantry bot", 1, { "ord_squire" }, {}),
+	r("ground", "Rocket bot", 1, { "ord_petard" }, { "chs_firebrand" }),
+	r("ground", "Fast raider bot", 2, { "ord_outrider" }, {}),
+	r("ground", "Flamethrower bot", 2, {}, { "chs_pyre" }),
+	r("ground", "Skirmisher bot", 2, { "ord_marshal" }, {}),
+	r("ground", "Lightning assault bot", 2, { "ord_stormcaller" }, {}),
+	r("ground", "Mortar bot", 2, { "ord_culverin" }, { "chs_spitter" }),
+	r("ground", "Heavy rocket artillery bot", 2, {}, { "chs_wrath" }),
+	r("ground", "Amphibious bot", 2, { "ord_mariner" }, { "chs_newt" }),
+	r("ground", "Amphibious AA bot", 2, { "ord_skyguard" }, { "chs_gargoyle" }),
+	r("ground", "All-terrain spider", 2, { "ord_scaler" }, { "chs_ravener" }),
+	r("ground", "EMP spider", 2, { "ord_snare" }, {}),
+	r("ground", "Sniper bot", 2, { "ord_marksman" }, {}),
+	r("ground", "Radar bot", 2, { "ord_sextant" }, { "chs_portent" }),
+	r("ground", "Jammer bot", 2, { "ord_hush" }, { "chs_gloom" }),
+	r("ground", "Spy bot", 2, { "ord_informant" }, { "chs_snitch" }),
+	r("ground", "Crawling bomb", 2, { "ord_martyr" }, { "chs_blister" }),
+	r("ground", "Cloaked crawling bomb", 2, {}, { "chs_pustule" }),
+	r("ground", "Amphibious assault mech", 3, { "ord_paragon" }, { "chs_abyssal" }),
+	r("ground", "Battle mech", 3, { "ord_champion" }, {}),
+	r("ground", "All-terrain artillery walker", 3, { "ord_monolith" }, {}),
+	r("ground", "All-terrain assault mech", 3, {}, { "chs_widowmaker" }),
+	r("ground", "Heavy rocket mech", 3, {}, { "chs_pandemonium" }),
+	r("ground", "Flamethrower mech", 3, {}, { "chs_infernal" }),
+	r("ground", "Walking fortress", 3, {}, { "chs_colossus" }),
 
 	r("air", "Fighter", 1, { "ord_falcon" }, { "chs_harpy" }),
 	r("air", "Attack helicopter", 1, { "ord_guardian" }, { "chs_wasp" }),
@@ -553,6 +598,9 @@ function Codex.stats(c: Codex, id: string): Stats
 	local signature = s.radarSignature
 	local health = def.health or 0
 	local wreckSupply = supply * Codex.RULES.wreckSupply
+	-- a decoy (`spoof`): the Wraith's radar contacts pass for a bomber; a
+	-- decoy Commander passes for its Commander in sight too (batch 2)
+	local spoofed = def.spoof and c.defs.units[def.spoof]
 	return {
 		supply = supply,
 		power = power,
@@ -582,6 +630,9 @@ function Codex.stats(c: Codex, id: string): Stats
 			else nil,
 		crashes = def.domain == "air",
 		cloak = if def.cloak then { drain = def.cloak.drain or 0, decloak = def.cloak.decloak or 0 } else nil,
+		decoy = if spoofed
+			then { of = def.spoof, commander = spoofed.tier == 0, health = health / math.max(spoofed.health or 1, 1) }
+			else nil,
 		weapons = weapons,
 		dps = dps,
 		range = range,

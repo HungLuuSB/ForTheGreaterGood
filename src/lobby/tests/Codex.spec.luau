@@ -89,6 +89,20 @@ return function(t: RunAll.Context)
 		t.deepEqual(codex.entries.chs_typhon.counterparts, { "ord_tempest" })
 		t.deepEqual(codex.entries.ord_hoverdock.counterparts, { "chs_skimyard" })
 		t.equal(#codex.entries.chs_glaive.counterparts, 0, "Chaos-only")
+		-- batch 2 (bots): both sides of each pair, once the defs land
+		for _, pair in {
+			{ "ord_magistrate", "chs_scrounger" }, { "ord_draftsman", "chs_taskmaster" }, { "ord_effigy", "chs_changeling" },
+			{ "ord_petard", "chs_firebrand" }, { "ord_culverin", "chs_spitter" }, { "ord_mariner", "chs_newt" },
+			{ "ord_skyguard", "chs_gargoyle" }, { "ord_scaler", "chs_ravener" }, { "ord_sextant", "chs_portent" },
+			{ "ord_hush", "chs_gloom" }, { "ord_informant", "chs_snitch" }, { "ord_martyr", "chs_blister" },
+			{ "ord_paragon", "chs_abyssal" },
+		} do
+			local a, b = codex.entries[pair[1]], codex.entries[pair[2]]
+			if a and b then
+				t.deepEqual(a.counterparts, { pair[2] })
+				t.deepEqual(b.counterparts, { pair[1] })
+			end
+		end
 		t.deepEqual(codex.entries.ord_overwatch.counterparts, { "chs_twin_guard", "chs_geryon" })
 		t.deepEqual(codex.entries.chs_geryon.counterparts, { "ord_overwatch" })
 		t.equal(#codex.entries.ord_warden.counterparts, 0, "faction-only")
@@ -184,6 +198,35 @@ return function(t: RunAll.Context)
 		t.equal(emp.stunSeconds, empDef.paralyzeSeconds)
 		t.equal(thunderer.dps, other.dps, "the EMP adds nothing to the DPS")
 		t.equal(other.stun, nil)
+	end)
+
+	t.test("batch 2 announces 43 bots, 22 Order and 21 Chaos, each named by a role", function()
+		local count = { order = 0, chaos = 0 }
+		for id in Codex.ANNOUNCED do
+			local side = if string.sub(id, 1, 4) == "ord_" then "order" else "chaos"
+			count[side] += 1
+		end
+		t.equal(count.order, 22)
+		t.equal(count.chaos, 21)
+	end)
+
+	t.test("a decoy says what it passes for", function()
+		local wraith = Codex.stats(codex, "chs_wraith").decoy :: any
+		t.equal(wraith.of, defs.units.chs_wraith.spoof)
+		t.equal(wraith.commander, false)
+		t.equal(Codex.stats(codex, "ord_paladin").decoy, nil)
+		-- a decoy Commander (batch 2) on a fake def until the real ones land
+		local fake = { units = table.clone(defs.units), weapons = defs.weapons }
+		fake.units.ord_effigy = table.clone(defs.units.ord_mason)
+		fake.units.ord_effigy.spoof = "ord_sovereign"
+		fake.units.ord_effigy.health = defs.units.ord_sovereign.health / 4
+		fake.units.ord_advbotlab = table.clone(defs.units.ord_advbotlab)
+		fake.units.ord_advbotlab.buildOptions = { "ord_effigy" }
+		local c = Codex.build(fake)
+		local d = Codex.stats(c, "ord_effigy").decoy :: any
+		t.equal(d.commander, true)
+		t.equal(d.health, 0.25)
+		t.equal(c.entries.ord_effigy.role.name, "Decoy Commander")
 	end)
 
 	t.test("the firing range has a target for every weapon but anti-missile and strategic ones", function()

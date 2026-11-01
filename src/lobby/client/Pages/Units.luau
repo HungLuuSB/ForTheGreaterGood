@@ -40,6 +40,9 @@ local MOVE_NAME = {
 	HELI = "Helicopter",
 	SHIP = "Ship",
 	SUB = "Submarine",
+	WALKER = "Walker",
+	AMPHIB_WALKER = "Amphibious walker",
+	SPIDER = "All-terrain spider: climbs any slope, cliffs included", -- batch 2
 }
 local KIND_NAME = { BALLISTIC = "ballistic", HOMING = "guided missile", BEAM = "beam", TORPEDO = "torpedo", LASER = "laser", BOMB = "bombs", ROCKET = "rockets" }
 
@@ -632,7 +635,13 @@ function Units.new(frame: Frame, _router: any): any
 		end
 		row("Sensors", table.concat(senses, " · "))
 		if s.stealth then
-			row("Stealth", `radar signature {string.format("%.2f", s.stealth)}`)
+			row("Stealth", if s.stealth == 0 then "invisible to radar" else `radar signature {string.format("%.2f", s.stealth)}`)
+		end
+		if s.decoy then
+			local of = c.defs.units[s.decoy.of]
+			row("Decoy", if s.decoy.commander
+				then `looks like the {of.name} on radar and up close, with {math.round(s.decoy.health * 100)}% of its health`
+				else `its radar contacts pass for {if string.find("AEIOU", string.sub(of.name, 1, 1), 1, true) then "an" else "a"} {of.name} until tracked`)
 		end
 		if #s.countermeasures > 0 then
 			row("Countermeasures", table.concat(s.countermeasures, " · "))
