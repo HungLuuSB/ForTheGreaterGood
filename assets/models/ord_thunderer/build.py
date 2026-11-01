@@ -92,6 +92,10 @@ def no_details(p):
     pass
 
 
+# its wreck lies slumped flat, the turret skewed, the barrel drooping into the dirt (S-234)
+FALLEN = unit.Fallen(body=[("z", -11), ("x", 5)],
+                     joints={"turret": [("y", 55), ("z", 6)], "barrel": [("x", -12)]}, dig=("barrel",), sink=0.6)
+
 unit.run(__file__, "ord_thunderer", "order", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("turret", "base", TURRET, build_turret, no_details),
@@ -100,4 +104,4 @@ unit.run(__file__, "ord_thunderer", "order", footprint=3,
                       "emp_muzzle": {"parent": "turret",
                                      "at": [DISH[0] + DISH_N[0] * 1.1, DISH[1] - 0.2 + DISH_N[1] * 1.1,
                                             DISH[2] + DISH_N[2] * 1.1]}},
-         budget=7000, preview_size=18)
+         budget=7000, preview_size=18, fallen=FALLEN)

@@ -76,9 +76,13 @@ def no_details(p):
     pass
 
 
+# its wreck lies slumped on its skirt, the turret skewed, the barrel drooping (S-234)
+FALLEN = unit.Fallen(body=[("z", -7), ("x", 3)],
+                     joints={"turret": [("y", 50)], "barrel": [("x", -10)]}, dig=("barrel",), sink=0.4)
+
 unit.run(__file__, "chs_typhon", "chaos", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("turret", "base", TURRET, build_turret, no_details),
                  unit.PieceSpec("barrel", "turret", BARREL, build_barrel, no_details)],
          attachments={"muzzle": {"parent": "barrel", "at": [-GUN_X, BARREL[1], BARREL[2] - 4.95]}},
-         budget=6000)
+         budget=6000, fallen=FALLEN)
