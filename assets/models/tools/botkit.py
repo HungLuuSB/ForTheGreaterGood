@@ -204,6 +204,20 @@ def nano_arm(p, x, y, z, length, faction, rise=0.0):
     return (b[0], b[1], b[2] - 0.4)
 
 
+def blob(p, center, r, length, kind, slices=8, sides=16):
+    """A rounded sac along Z: stacked frustums following an ellipse, radius r,
+    `length` long (the crawling bombs' charges)."""
+    x, y, z = center
+    half = length / 2
+    zs = [-half + length * i / slices for i in range(slices + 1)]
+
+    def rad(zz):
+        return r * math.sqrt(max(1 - (zz / half) ** 2, 0.004))
+
+    for z0, z1 in zip(zs, zs[1:]):
+        p.ocyl((x, y, z + z0), (0, 0, 1), rad(z0), z1 - z0, sides, kind, radius2=rad(z1))
+
+
 def previews(height, width=None):
     """bots.previews framed on the bigger of the bot's height and (for the
     wide spiders) its spread."""
