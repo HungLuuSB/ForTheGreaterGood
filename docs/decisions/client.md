@@ -2741,3 +2741,11 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - `Bot.hip`: a `HIP` override, else the blockout's hip pivot, else 2.5. `Bot.scale`: a `SCALE` override, else 0.6 for hips of 6 studs or more (the T3 walkers, models-C's advice for heavy, slow strides).
 - `Ambient`: a rolling bomb's `shell` (the Martyr) rolls at 720°/s while it moves, like a wheel. No other unit's shell spins.
 - Studio: Scaler, Widowmaker, Monolith, Colossus, Champion, Martyr and Pustule walked in the lobby preview, legs moving in their sets and the shell rolling (`debug_out/screens/c290_batch2_walking.jpg`).
+
+### C-291 — The first wreck of a unit type is its wreck mesh too (2026-11-01)
+
+- Wreck meshes were built on demand, starting at a unit type's first death, so the first wreck of every type was the darkened live model (for the heavy T3s, C-286's lay-down stopgap instead of C's fallen hulk). The pool then kept handing out that stand-in after the mesh was ready.
+- `Render/Models.template` now starts the wreck build (`MeshModels.wreck`) the first time a unit type is drawn, before its live mesh is ready.
+- `Render/Deaths.wreckModel` marks each wreck with `WreckMesh`. Once the wreck mesh is ready, pooled stand-ins of that type are destroyed instead of reused.
+- Studio on main 6736ef40 (C's batch 2 meshes): a fresh Titan, Widowmaker and Thunderer destroyed 6 s after spawning all left their fallen hulks on the first death, with joints at rest. Earlier the same check left stand-ins for the Titan and Widowmaker.
+- The fallen hulks lie at their unit's spot: the Titan face down on its hips and thighs (arm guns 4 studs into the ground, as C intends), the Widowmaker belly down with its legs sprawled, the Thunderer slumped on its tracks (`debug_out/screens/c291_fallen_hulks_titan_widowmaker_thunderer.jpg`).

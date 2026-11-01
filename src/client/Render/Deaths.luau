@@ -132,12 +132,20 @@ local function measure(model: Model): Extent
 end
 
 local function wreckModel(s: State, def: any, id: number): Model
+	local meshed = MeshModels.wreck(def)
 	local list = s.free[def.id]
 	if list and #list > 0 then
-		return table.remove(list) :: Model
+		-- darkened stand-ins pooled before the wreck mesh was ready give way to it (C-291)
+		if meshed == nil or list[#list]:GetAttribute("WreckMesh") == true then
+			return table.remove(list) :: Model
+		end
+		for _, old in list do
+			old:Destroy()
+		end
+		table.clear(list)
 	end
-	local meshed = MeshModels.wreck(def)
 	local model = (meshed or Models.template(def)):Clone()
+	model:SetAttribute("WreckMesh", meshed ~= nil)
 	-- a fallen hulk's lying pose is baked into its meshes (C-289): joints stay at rest
 	local fallen = meshed ~= nil and MeshModels.wreckFallen(def)
 	model:SetAttribute("FallenMesh", fallen)
