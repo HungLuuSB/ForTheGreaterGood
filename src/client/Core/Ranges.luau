@@ -176,7 +176,7 @@ local function targetsOnlyAir(weapon: any): boolean
 end
 
 local function isDgun(weapon: any): boolean
-	return weapon.fx ~= nil and weapon.fx.trail == "dgun" -- (as CommandSet.hasDgun)
+	return weapon.fx ~= nil and weapon.fx.trail == "dgun" and weapon.manualFire == true -- (as CommandSet.hasDgun)
 end
 
 -- Circles of one def at (x, z), owned by unit `owner` if given.

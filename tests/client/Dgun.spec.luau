@@ -6,9 +6,11 @@
 
 local Api = require("../../src/client/Api")
 local AttackPreview = require("../../src/client/Core/AttackPreview")
+local CommandSet = require("../../src/client/Core/CommandSet")
 local Commands = require("../../src/client/Core/Commands")
 local Effects = require("../../src/client/Core/Effects")
 local NetIn = require("../../src/client/Core/NetIn")
+local Ranges = require("../../src/client/Core/Ranges")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
 local Sim = require("../../src/server/Sim/Sim")
@@ -223,5 +225,43 @@ return function(t: any)
 		t.equal(fired, 2, "walked into range and fired")
 		t.expect(sim.world.posX[cmd] > -140, `it walked toward the tank ({sim.world.posX[cmd]}; the tank drives in to fight too)`)
 		t.equal(sim.world.slot[tank], nil, "the tank burned")
+	end)
+
+	t.test("the Colossus's self-firing bolt is no D-Gun: no DGUN, no preview, a weapon ring; its effects are 10 studs wide (S-236, C-292)", function()
+		local sim = Sim.new({ seed = 4, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		local g = sim.map.layers.grid
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
+		local colossus = Spawn.unit(sim, "chs_colossus", 1, -80, 0, math.pi / 2)
+		local cmd = Spawn.unit(sim, "ord_sovereign", 1, -80, 60, math.pi / 2)
+		Spawn.unit(sim, "ord_titan", 2, 60, 0, -math.pi / 2)
+		local defs = sim.defs
+		local fire = defs.weapons.chs_colossus_fire
+		t.expect(fire.bolt ~= nil and not fire.manualFire, "its cannon fires a bolt by itself")
+		t.expect(not CommandSet.hasDgun(defs.units.chs_colossus, defs), "no DGUN command for the Colossus")
+		t.expect(CommandSet.hasDgun(defs.units.ord_sovereign, defs), "a Commander keeps its D-Gun")
+		local circles = {}
+		Ranges.circlesOfDef(defs.units.chs_colossus, defs, 0, 0, circles)
+		for _, c in circles do
+			t.expect(c.kind ~= "dgun" and c.kind ~= "blast", `its rings are weapon rings ({c.kind})`)
+		end
+		local fx = Effects.new()
+		local muzzle: number? = nil
+		for tick = 1, 90 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			Effects.update(fx, world, tick, tick * DT, 0, 0)
+			for _, b in fx.bursts do
+				if b.kind == "dgunMuzzle" then
+					muzzle = b.radius
+				end
+			end
+			table.clear(world.died)
+		end
+		t.expect(AttackPreview.boltWeapon(world, world.units[colossus]) == nil, "no D-Gun preview for the Colossus")
+		t.expect(AttackPreview.boltWeapon(world, world.units[cmd]) ~= nil, "the Commander's D-Gun previews")
+		t.expect(muzzle ~= nil, "the Colossus fired its bolt")
+		t.expect(math.abs((muzzle :: number) - 0.8 * fire.bolt / Effects.BOLT_AUTHORED) < 1e-9, `its muzzle flash scaled to its bolt ({muzzle})`)
 	end)
 end
