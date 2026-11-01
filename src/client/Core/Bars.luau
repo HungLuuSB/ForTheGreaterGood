@@ -10,6 +10,7 @@
 -- (Sim/Build), so the client only displays both numbers. Pure Luau (C-7).
 
 local Grid = require("@shared/Grid/Grid")
+local Schema = require("@shared/Net/Schema")
 local World = require("./World")
 
 local Bars = {}
@@ -75,13 +76,24 @@ end
 
 local CORNERS = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }
 
--- Bars for known wrecks that are partly reclaimed or being resurrected
--- (C-216), in wreck ID order.
+-- Bars for known wrecks being resurrected, or partly reclaimed by an own
+-- worker (C-216), in wreck ID order. A wreck's supply bar shows from the
+-- moment an own worker starts reclaiming it until it's gone, even if the
+-- worker stops (C-285, the user): not for every wreck worn by blasts.
 function Bars.wreckList(world: World.World): { Bar }
 	local out = {}
+	local me = world.me.team
+	for _, u in world.units do
+		if u.team == me and u.workKind == Schema.WorkKind.RECLAIM and u.workTarget then
+			local w = world.wrecks[u.workTarget :: number]
+			if w then
+				w.reclaimed = true
+			end
+		end
+	end
 	for id, w in world.wrecks do
 		local share = if w.fullSupply > 0 then math.clamp(w.supply / w.fullSupply, 0, 1) else 1
-		local partly = share < Bars.FULL
+		local partly = w.reclaimed == true and share < Bars.FULL
 		local rezzing = w.rez > 0
 		if partly or rezzing then
 			table.insert(out, {

@@ -101,7 +101,7 @@ export type Sight = { width: number, depth: number, cells: buffer, version: numb
 -- A known wreck (C-65). Supply and resurrect progress (protocol 35, S-168;
 -- C-216): `supply` left in it and `fullSupply` it held at the death (whole
 -- units), `rez` 0..1; out of sight they keep their last values.
-export type Wreck = { id: number, defIndex: number, x: number, z: number, heading: number, supply: number, fullSupply: number, rez: number, feature: number?, heap: boolean? } -- feature: a map feature's kind (Features.BY_ID, protocol 40, S-197): a tree's supply / fullSupply are power; heap: worn below 40% to a scrap heap, reclaim only (protocol 45, S-227)
+export type Wreck = { id: number, defIndex: number, x: number, z: number, heading: number, supply: number, fullSupply: number, rez: number, feature: number?, heap: boolean?, reclaimed: boolean? } -- reclaimed: an own worker has reclaimed it (its supply bar shows from then on, C-285); feature: a map feature's kind (Features.BY_ID, protocol 40, S-197): a tree's supply / fullSupply are power; heap: worn below 40% to a scrap heap, reclaim only (protocol 45, S-227)
 
 -- An own unit's status off camera (OWN_STATUS, S-158): health and build
 -- 0..1, the factory queue's head (unit def index, 0 = none), its progress
