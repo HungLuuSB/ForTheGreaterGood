@@ -70,6 +70,11 @@ def build_barrel(p):
 
 none = lambda p: None  # noqa: E731
 
+# its wreck lies belly down, legs sprawled, the front right shin knocked off (S-234)
+FALLEN = unit.Fallen(body=[("z", 5), ("x", -3)],
+                     joints={"torso": [("y", 25)], "barrel": [("x", -6)], **k.sprawl(4, splay=100, sag=20, vary={"FL": 10, "BR": -8})},
+                     off={"shinFR": (k.outward(4, "FR", 4.0), [])}, rest=("base",))
+
 unit.run(__file__, "ord_monolith", "order", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("torso", "base", TORSO, build_torso, none),
@@ -77,4 +82,4 @@ unit.run(__file__, "ord_monolith", "order", footprint=3,
          + k.spider(4, 1.2, 2.6, 3.0, 4.0, 3.9, 0.5, "order"),
          attachments={"muzzle": {"parent": "barrel", "at": [0.0, BY, -4.7]}},
          budget=5000, tex=2048, scale=(S, S, S),
-         previews=k.previews(4.4 * S, 7.8 * S))
+         previews=k.previews(4.4 * S, 7.8 * S), fallen=FALLEN)

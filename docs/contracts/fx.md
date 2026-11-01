@@ -73,7 +73,12 @@ Every approved meshed unit and structure has a wreck version: `Meshes.units.<id>
 - **no glow parts:** the sockets are dead and dark, so drive no channels on a wreck;
 - **no team color:** the panels are scorched grey; the alpha is 1, so the team tint doesn't show even with `AlphaMode.Overlay`.
 
-To show one, build it like the live model with the wreck's `pieces[name].mesh` / `center` / `size` and `maps`, and skip `glow` and `teamPieces`. Keep the joint pose the death left (turret turned, barrel drooping); no color lerp or `CorrodedMetal` is needed. Aircraft shot down in flight leave no wreck (net.md 5), but a landed one can.
+To show one, build it like the live model with the wreck's `pieces[name].mesh` / `center` / `size` and `maps`, and skip `glow` and `teamPieces`. Keep the joint pose the death left (turret turned, barrel drooping); no color lerp or `CorrodedMetal` is needed.
+
+**Fallen hulks (`wreck.fallen = true`, S-234):** the heavy T3s' wrecks lie on the ground instead of standing: walkers collapsed on a side or face with legs folded or knocked off, tanks and hovertanks slumped with the turret skewed. The pose is baked into the meshes, so:
+- keep every joint at rest (no knocked-askew `Transform`s, no laying flat);
+- place the wreck by its own `pieces.base.center` against the unit's position and heading (the fallen base sits lower and elsewhere than the live one), not by the dying model's root.
+The live pivots don't fit the fallen pieces, so nothing on a fallen wreck moves. Aircraft shot down in flight leave no wreck (net.md 5), but a landed one can.
 
 ## Missiles (BAR-style meshes, the user's request 2026-10-22)
 

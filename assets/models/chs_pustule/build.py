@@ -34,7 +34,12 @@ def build_base(p):
         p.ocyl((0, 2.95, z), (0, 0, 1), 0.16, 0.2, 8, "dark")
     hazard(p, (0, 1.2, -1.12), (1, 0, 0), (0, 0, -1), 1.7, 0.26, stripes=6)
     p.box((0, 1.2, 1.12), (1.7, 0.26, 0.04), "team", bevel=0.01)
-    p.box((0, 1.45, -1.12), (0.5, 0.1, 0.04), "head")
+
+
+def build_torso(p):
+    p.box((0, 1.15, -1.3), (1.0, 0.5, 0.4), "dark", bevel=0.05)
+    p.box((0, 1.27, -1.51), (0.6, 0.1, 0.04), "head")
+    hazard(p, (0, 1.02, -1.51), (1, 0, 0), (0, 0, -1), 0.9, 0.14, stripes=4)
 
 
 def details_base(p):
@@ -44,8 +49,9 @@ def details_base(p):
 none = lambda p: None  # noqa: E731
 
 unit.run(__file__, "chs_pustule", "chaos", footprint=1,
-         pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base)]
+         pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
+                 unit.PieceSpec("torso", "base", (0.0, 1.15, -1.1), build_torso, none)]
          + k.spider(4, 0.85, 1.2, 1.75, 2.2, 2.4, 0.3, "chaos"),
-         attachments={"muzzle": {"parent": "base", "at": [0.0, 1.2, -1.3]}},
+         attachments={"muzzle": {"parent": "torso", "at": [0.0, 1.15, -1.55]}},
          budget=4000,
          previews=k.previews(3.1, 4.6))

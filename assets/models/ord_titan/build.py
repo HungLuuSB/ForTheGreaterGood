@@ -254,6 +254,12 @@ def details_arm(sx):
     return d
 
 
+# its wreck lies face down, its arms thrown forward, one leg kicked up (S-234)
+FALLEN = unit.Fallen(body=[("x", -84), ("y", 15)],
+                     joints={"torso": [("y", 10)], "thighL": [("x", 8)], "shinL": [("x", -70)], "footL": [("x", 25)],
+                             "thighR": [("x", -6)], "shinR": [("x", -12)], "beam_arm": [("x", 80)], "blaster_arm": [("x", 60), ("z", -15)]},
+                     rest=("base", "thighL", "thighR"))
+
 unit.run(__file__, "ord_titan", "order", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base)]
          + leg_specs(-1) + leg_specs(1)
@@ -265,4 +271,4 @@ unit.run(__file__, "ord_titan", "order", footprint=3,
                       "blaster_muzzle1": {"parent": "blaster_arm", "at": [BLAST_X - 0.36, FORE_Y, -4.05]},
                       "blaster_muzzle2": {"parent": "blaster_arm", "at": [BLAST_X + 0.36, FORE_Y, -4.05]}},
          scale=(S, S, S), budget=6000,
-         previews=bots.previews(22.5))
+         previews=bots.previews(22.5), fallen=FALLEN)

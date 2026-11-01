@@ -59,10 +59,15 @@ def details_torso(p):
 
 none = lambda p: None  # noqa: E731
 
+# its wreck lies face down, legs bent (S-234)
+FALLEN = unit.Fallen(body=[("x", -85), ("y", -15)],
+                     joints={"thighL": [("x", 15)], "shinL": [("x", -85)], "thighR": [("x", 5)], "shinR": [("x", -25)]},
+                     rest=("base", "thighL", "thighR"))
+
 unit.run(__file__, "chs_abyssal", "chaos", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, none),
                  unit.PieceSpec("torso", "base", TORSO, build_torso, details_torso)]
          + k.biped(2.8, 1.0, 0.85, "chaos"),
          attachments={"muzzle": {"parent": "torso", "at": [CX, CY, -4.55]}},
          budget=5000, tex=2048, scale=(S, S, S),
-         previews=k.previews(10.8))
+         previews=k.previews(10.8), fallen=FALLEN)

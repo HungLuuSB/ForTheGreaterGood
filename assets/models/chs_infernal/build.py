@@ -66,6 +66,11 @@ def details_torso(p):
 none = lambda p: None  # noqa: E731
 aa = lib.vec(PODS) + lib.vec(POD_N) * 0.85
 
+# its wreck lies face down and twisted, one leg kicked up (S-234)
+FALLEN = unit.Fallen(body=[("x", -80), ("z", -10)],
+                     joints={"thighL": [("x", 5)], "shinL": [("x", -30)], "thighR": [("x", 15)], "shinR": [("x", -95)]},
+                     rest=("base", "thighL", "thighR"))
+
 unit.run(__file__, "chs_infernal", "chaos", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, none),
                  unit.PieceSpec("torso", "base", TORSO, build_torso, details_torso)]
@@ -74,4 +79,4 @@ unit.run(__file__, "chs_infernal", "chaos", footprint=3,
                       "muzzle2": {"parent": "torso", "at": [-FX, FY, -2.45]},
                       "aa_muzzle": {"parent": "torso", "at": [aa.x, aa.y, aa.z]}},
          budget=5000, tex=2048, scale=(S, S, S),
-         previews=k.previews(15.9))
+         previews=k.previews(15.9), fallen=FALLEN)

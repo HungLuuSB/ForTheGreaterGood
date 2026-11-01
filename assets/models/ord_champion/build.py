@@ -68,10 +68,15 @@ def details_torso(p):
 
 none = lambda p: None  # noqa: E731
 
+# its wreck lies face down, knees bent, its guns dug into the dirt (S-234)
+FALLEN = unit.Fallen(body=[("x", -86), ("y", -10)],
+                     joints={"thighL": [("x", 12)], "shinL": [("x", -85)], "thighR": [("x", 4)], "shinR": [("x", -40)]},
+                     rest=("base", "thighL", "thighR"))
+
 unit.run(__file__, "ord_champion", "order", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, none),
                  unit.PieceSpec("torso", "base", TORSO, build_torso, details_torso)]
          + k.biped(3.0, 1.0, 0.85, "order"),
          attachments={"muzzle": {"parent": "torso", "at": [LX, LY, -3.7]}},
          budget=5000, tex=2048, scale=(S, S, S),
-         previews=k.previews(6.6 * S))
+         previews=k.previews(6.6 * S), fallen=FALLEN)

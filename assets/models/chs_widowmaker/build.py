@@ -58,6 +58,11 @@ def build_torso(p):
 
 none = lambda p: None  # noqa: E731
 
+# its wreck lies belly down, six legs sprawled, two knocked off (S-234)
+FALLEN = unit.Fallen(body=[("z", -6)],
+                     joints={"torso": [("y", -30)], **k.sprawl(6, splay=82, sag=35, vary={"FL": 6, "MR": -8, "BL": 10})},
+                     off={"shinML": (k.outward(6, "ML", 4.0), []), "shinBR": (k.outward(6, "BR", 3.5), [])}, rest=("base",))
+
 unit.run(__file__, "chs_widowmaker", "chaos", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("torso", "base", TORSO, build_torso, none)]
@@ -65,4 +70,4 @@ unit.run(__file__, "chs_widowmaker", "chaos", footprint=3,
          attachments={"muzzle": {"parent": "torso", "at": [PX, PY, -1.35]},
                       "muzzle2": {"parent": "torso", "at": [-PX, PY, -1.35]}},
          budget=5600, tex=2048, scale=(S, S, S),
-         previews=k.previews(7.8, 14.8))
+         previews=k.previews(7.8, 14.8), fallen=FALLEN)

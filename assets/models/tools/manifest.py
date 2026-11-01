@@ -357,6 +357,8 @@ def wreck_entry(uid, rig, assets):
         "maps": {k: w["surfaceAppearance"][k] for k in ("ALB", "NOR", "RGH", "MTL")},
         "triangles": rig["triangles"]["total"],
     }
+    if rig.get("fallen"):  # a fallen hulk (S-234): the pose is in the meshes
+        e["fallen"] = True
     if status == "review":
         e["note"] = WRECK_NOTE
     return e

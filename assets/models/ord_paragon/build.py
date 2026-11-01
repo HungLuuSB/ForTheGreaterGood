@@ -59,6 +59,11 @@ def details_torso(p):
 
 none = lambda p: None  # noqa: E731
 
+# its wreck lies face down, one leg kicked up, its guns dug into the dirt (S-234)
+FALLEN = unit.Fallen(body=[("x", -84), ("y", 20)],
+                     joints={"thighL": [("x", 10)], "shinL": [("x", -80)], "thighR": [("x", -5)], "shinR": [("x", -20)]},
+                     rest=("base", "thighL", "thighR"))
+
 unit.run(__file__, "ord_paragon", "order", footprint=2,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, none),
                  unit.PieceSpec("torso", "base", TORSO, build_torso, details_torso)]
@@ -66,4 +71,4 @@ unit.run(__file__, "ord_paragon", "order", footprint=2,
          attachments={"muzzle": {"parent": "torso", "at": [CX, CY, -3.6]},
                       "muzzle2": {"parent": "torso", "at": [-CX, CY, -3.6]}},
          budget=4500, tex=2048, scale=(S, S, S),
-         previews=k.previews(6.0 * S))
+         previews=k.previews(6.0 * S), fallen=FALLEN)

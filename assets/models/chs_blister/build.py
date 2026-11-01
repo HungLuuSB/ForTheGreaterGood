@@ -30,16 +30,21 @@ def build_base(p):
             k.beam(p, (sx * 0.12, 2.12, z), (sx * 0.95, 1.2, z), 0.12, 0.14, "steel", bevel=0.01)
     hazard(p, (0, 1.0, -0.92), (1, 0, 0), (0, 0, -1), 1.3, 0.22, stripes=5)
     p.box((0, 1.0, 0.92), (1.3, 0.22, 0.04), "team", bevel=0.01)
+
+
+def build_torso(p):
+    p.box((0, 0.95, -1.05), (0.9, 0.45, 0.4), "dark", bevel=0.05)
     for sx in (-1, 1):
-        p.prism_x([(-0.85, 0.75), (-0.85, 1.05), (-1.35, 0.85), (-1.3, 0.75)], sx * 0.35 - 0.08, sx * 0.35 + 0.08, "steel", bevel=0.01)
-        p.box((sx * 0.3, 1.2, -0.92), (0.14, 0.08, 0.04), "head")
+        p.prism_x([(-0.85, 0.75), (-0.85, 1.05), (-1.4, 0.85), (-1.35, 0.75)], sx * 0.35 - 0.08, sx * 0.35 + 0.08, "steel", bevel=0.01)
+        p.box((sx * 0.18, 1.06, -1.26), (0.14, 0.08, 0.04), "head")
 
 
 none = lambda p: None  # noqa: E731
 
 unit.run(__file__, "chs_blister", "chaos", footprint=1,
-         pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, none)]
+         pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, none),
+                 unit.PieceSpec("torso", "base", (0.0, 0.95, -0.85), build_torso, none)]
          + k.spider(4, 0.65, 1.0, 1.35, 1.7, 1.8, 0.24, "chaos"),
-         attachments={"muzzle": {"parent": "base", "at": [0.0, 0.9, -1.3]}},
+         attachments={"muzzle": {"parent": "torso", "at": [0.0, 0.9, -1.3]}},
          budget=3400,
          previews=k.previews(2.2, 3.4))

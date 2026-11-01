@@ -222,3 +222,27 @@ def previews(height, width=None):
     """bots.previews framed on the bigger of the bot's height and (for the
     wide spiders) its spread."""
     return bots.previews(max(height, (width or 0) * 0.95))
+
+
+def sprawl(legs, splay=80, sag=30, prefix=("thigh", "shin"), vary=None):
+    """A fallen spider's legs (S-234 wrecks, unit.Fallen `joints`): each
+    thigh sags `sag` degrees, its knee going down, and each shin swings
+    `splay` degrees out from straight down (`vary`: extra degrees by leg
+    tag). With one prefix ("leg",) only that piece swings out, `splay`."""
+    out = {}
+    for tag, yaw in SPIDER_YAWS[legs]:
+        a = math.radians(yaw)
+        axis = (-math.cos(a), 0.0, math.sin(a))  # turning about it swings straight down outwards
+        extra = (vary or {}).get(tag, 0)
+        if len(prefix) == 1:
+            out[prefix[0] + tag] = [(axis, splay + extra)]
+            continue
+        out[prefix[0] + tag] = [(axis, -sag)]
+        out[prefix[1] + tag] = [(axis, splay + extra)]
+    return out
+
+
+def outward(legs, tag, r):
+    """`r` studs out along leg `tag`'s direction (a knocked-off leg's move)."""
+    a = math.radians(dict(SPIDER_YAWS[legs])[tag])
+    return (math.sin(a) * r, 0.0, math.cos(a) * r)

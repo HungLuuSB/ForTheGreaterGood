@@ -56,6 +56,11 @@ def details_torso(p):
 
 none = lambda p: None  # noqa: E731
 
+# its wreck lies face down and twisted, the left shin knocked off (S-234)
+FALLEN = unit.Fallen(body=[("x", -82), ("z", 10), ("y", 25)],
+                     joints={"thighR": [("x", 10)], "shinR": [("x", -60)], "thighL": [("x", -10)]},
+                     off={"shinL": ((3.0, 0.0, 4.0), [("z", 90)])}, rest=("base", "thighL", "thighR"))
+
 unit.run(__file__, "chs_pandemonium", "chaos", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, none),
                  unit.PieceSpec("torso", "base", TORSO, build_torso, details_torso)]
@@ -63,4 +68,4 @@ unit.run(__file__, "chs_pandemonium", "chaos", footprint=3,
          attachments={"muzzle": {"parent": "torso", "at": [BX, BY, -1.3]},
                       "muzzle2": {"parent": "torso", "at": [-BX, BY, -1.3]}},
          budget=5000, tex=2048, scale=(S, S, S),
-         previews=k.previews(14.4))
+         previews=k.previews(14.4), fallen=FALLEN)

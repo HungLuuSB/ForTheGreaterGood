@@ -244,6 +244,11 @@ def gun_muzzles(sx):
             f"gun{n}_muzzle2": {"parent": f"gun{n}", "at": [x + 0.36, FORE_Y, -4.25]}}
 
 
+# its wreck lies face down, the left gun thrown forward, the right gun knocked off beside it (S-234)
+FALLEN = unit.Fallen(body=[("x", -84), ("y", -20)],
+                     joints={"gunL": [("x", 75)], "thighL": [("x", 5)], "shinL": [("x", -30)], "thighR": [("x", 12)], "shinR": [("x", -90)]},
+                     off={"gunR": ((9.0, 0.0, -4.0), [("x", 80)])}, rest=("base", "thighL", "thighR"))
+
 unit.run(__file__, "chs_juggernaut", "chaos", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base)]
          + leg_specs(-1) + leg_specs(1)
@@ -254,4 +259,4 @@ unit.run(__file__, "chs_juggernaut", "chaos", footprint=3,
             unit.PieceSpec("gunR", "torso", (3.35, ARM_Y, 0.0), build_gun(1), details_gun(1))],
          attachments={"ray_muzzle": {"parent": "ray_arm", "at": [0.0, RAY[1], RAY[2]]}, **gun_muzzles(-1), **gun_muzzles(1)},
          scale=(S, S, S), budget=6000,
-         previews=bots.previews(23.5))
+         previews=bots.previews(23.5), fallen=FALLEN)

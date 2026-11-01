@@ -2,7 +2,8 @@
 BAR roster, 2026-11-01): mesh, textures, rig data.
 blender -b --factory-startup --python-exit-code 1 -P assets/models/ord_martyr/build.py
 
-From its blockout: no legs. A small sealed chassis (`base`) under the
+From its blockout: no legs. A small sealed chassis (`base`) and the axle hub (`torso`, which
+carries the trigger) under the
 `shell`, a ball that rolls (a client piece spinning about X): armoured
 segments with a team band round its middle, hazard rings either side and
 lit charge windows at the axle ends. The trigger weapon's `muzzle` (it
@@ -30,6 +31,10 @@ def r_at(x):
 
 def build_base(p):
     p.box((0, 0.35, 0), (1.2, 0.5, 1.2), "dark", bevel=0.06)
+
+
+def build_torso(p):
+    p.box((0, 1.35, 0), (0.6, 0.6, 0.6), "dark", bevel=0.04)
     drum(p, (0, 1.35, 0), 0.18, 2.3, "steel", "trim")
 
 
@@ -52,8 +57,9 @@ none = lambda p: None  # noqa: E731
 
 unit.run(__file__, "ord_martyr", "order", footprint=1,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, none),
+                 unit.PieceSpec("torso", "base", C, build_torso, none),
                  unit.PieceSpec("shell", "base", C, build_shell, none)],
-         attachments={"muzzle": {"parent": "base", "at": [0.0, 1.35, -1.4]}},
+         attachments={"muzzle": {"parent": "torso", "at": [0.0, 1.35, -1.4]}},
          budget=2000,
          previews=[("35", (-5.5, 4.5, -6.5), (0, 1.2, 0), 50), ("side", (7.5, 1.6, 0), (0, 1.2, 0), 50),
                    ("80", (0, 9.0, 1.8), (0, 1.1, 0), 50), ("close", (-2.9, 2.6, -3.4), (0, 1.3, 0), 35)])
