@@ -1,0 +1,65 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 4168 triangles, glow share 2.6%",
+  "bar": {
+    "model": "rbxassetid://119112486298974",
+    "meshes": {
+      "base": "rbxassetid://94939941163857",
+      "footL": "rbxassetid://93168184149883",
+      "footR": "rbxassetid://89933509585328",
+      "shinL": "rbxassetid://122897947828919",
+      "shinL_glow_running": "rbxassetid://130615542005986",
+      "shinR": "rbxassetid://95092434128474",
+      "shinR_glow_running": "rbxassetid://96110220078405",
+      "thighL": "rbxassetid://109979345264522",
+      "thighR": "rbxassetid://123002570980661",
+      "torso": "rbxassetid://75331701322324",
+      "torso_glow_head": "rbxassetid://103872612303337",
+      "torso_glow_weapon": "rbxassetid://132789385731093"
+    },
+    "decals": {
+      "ALB": "rbxassetid://115549899645882",
+      "RGH": "rbxassetid://121219796584390",
+      "NOR": "rbxassetid://71598183523783",
+      "MTL": "rbxassetid://107967676411757",
+      "EMI": "rbxassetid://99630125331421"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://127793639600532",
+      "NOR": "rbxassetid://135546978485309",
+      "RGH": "rbxassetid://114124837667604",
+      "MTL": "rbxassetid://124205186921330",
+      "EMI": "rbxassetid://71849979657438"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_pandemonium_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://77838680426201",
+    "meshes": {
+      "base": "rbxassetid://109779330433278",
+      "footL": "rbxassetid://133738784074421",
+      "footR": "rbxassetid://89143312661686",
+      "shinL": "rbxassetid://94740984204889",
+      "shinR": "rbxassetid://96779538458014",
+      "thighL": "rbxassetid://78675086189063",
+      "thighR": "rbxassetid://118838343681653",
+      "torso": "rbxassetid://122093071751380"
+    },
+    "decals": {
+      "ALB": "rbxassetid://106238046126752",
+      "RGH": "rbxassetid://139380115170427",
+      "NOR": "rbxassetid://81765003264627",
+      "MTL": "rbxassetid://120769477450262",
+      "EMI": "rbxassetid://80312577378982"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://114455987783232",
+      "NOR": "rbxassetid://98620776832725",
+      "RGH": "rbxassetid://99892495812745",
+      "MTL": "rbxassetid://82739146848989",
+      "EMI": "rbxassetid://135086040574574"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_pandemonium_wreck_bar in FTGG Art",
+    "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2144 triangles"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2208 triangles, glow share 1.3%",
+  "bar": {
+    "model": "rbxassetid://107880903787531",
+    "meshes": {
+      "barrel": "rbxassetid://75022119593547",
+      "barrel_glow_weapon": "rbxassetid://125954401441107",
+      "base": "rbxassetid://114681290040200",
+      "footL": "rbxassetid://111983974546742",
+      "footL_glow_running": "rbxassetid://135205136494871",
+      "footR": "rbxassetid://115818032051479",
+      "footR_glow_running": "rbxassetid://109732891056149",
+      "shinL": "rbxassetid://71227492927931",
+      "shinR": "rbxassetid://101347808726139",
+      "thighL": "rbxassetid://104067059432600",
+      "thighL_glow_running": "rbxassetid://91515539223010",
+      "thighR": "rbxassetid://78345600428457",
+      "thighR_glow_running": "rbxassetid://100543039624677",
+      "torso": "rbxassetid://133923519729723",
+      "torso_glow_head": "rbxassetid://72695799725678"
+    },
+    "decals": {
+      "ALB": "rbxassetid://89010333810743",
+      "RGH": "rbxassetid://99072457324183",
+      "NOR": "rbxassetid://131437271899896",
+      "MTL": "rbxassetid://136048327098093",
+      "EMI": "rbxassetid://127532937072759"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://93240221492361",
+      "NOR": "rbxassetid://79465658463145",
+      "RGH": "rbxassetid://101009644463443",
+      "MTL": "rbxassetid://89091229697463",
+      "EMI": "rbxassetid://102222923871306"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_culverin_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://106394692900274",
+    "meshes": {
+      "barrel": "rbxassetid://70687341500912",
+      "base": "rbxassetid://70685032032281",
+      "footL": "rbxassetid://100674514539296",
+      "footR": "rbxassetid://120450206374166",
+      "shinL": "rbxassetid://107492297794082",
+      "shinR": "rbxassetid://78822580834167",
+      "thighL": "rbxassetid://131703599330807",
+      "thighR": "rbxassetid://93439391522029",
+      "torso": "rbxassetid://76758961568887"
+    },
+    "decals": {
+      "ALB": "rbxassetid://128443576593736",
+      "RGH": "rbxassetid://94138298649223",
+      "NOR": "rbxassetid://95640031037617",
+      "MTL": "rbxassetid://91805511400879",
+      "EMI": "rbxassetid://116624490105566"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://124117687209928",
+      "NOR": "rbxassetid://115980495398173",
+      "RGH": "rbxassetid://73226541144494",
+      "MTL": "rbxassetid://95101044062690",
+      "EMI": "rbxassetid://89245750191911"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_culverin_wreck_bar in FTGG Art",
+    "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2132 triangles"
+  }
+}

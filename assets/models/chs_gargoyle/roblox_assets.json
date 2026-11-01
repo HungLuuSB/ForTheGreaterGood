@@ -1,0 +1,67 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 3412 triangles, glow share 1.5%",
+  "bar": {
+    "model": "rbxassetid://105729333834430",
+    "meshes": {
+      "base": "rbxassetid://132566013328026",
+      "footL": "rbxassetid://125276084167156",
+      "footR": "rbxassetid://117379015780722",
+      "launcher": "rbxassetid://87240044979772",
+      "launcher_glow_weapon": "rbxassetid://119775215128389",
+      "shinL": "rbxassetid://136323643322402",
+      "shinL_glow_running": "rbxassetid://109427893068509",
+      "shinR": "rbxassetid://97250885434175",
+      "shinR_glow_running": "rbxassetid://114032800048112",
+      "thighL": "rbxassetid://101014297449881",
+      "thighR": "rbxassetid://77477046248206",
+      "torso": "rbxassetid://132934883716515",
+      "torso_glow_head": "rbxassetid://73151596454551"
+    },
+    "decals": {
+      "ALB": "rbxassetid://72558764270981",
+      "RGH": "rbxassetid://100646225957807",
+      "NOR": "rbxassetid://110003717391479",
+      "MTL": "rbxassetid://138867012819950",
+      "EMI": "rbxassetid://76235943860330"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://109102772422715",
+      "NOR": "rbxassetid://133464472500544",
+      "RGH": "rbxassetid://90655770957032",
+      "MTL": "rbxassetid://140076480770346",
+      "EMI": "rbxassetid://114731609402290"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_gargoyle_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://88266885572139",
+    "meshes": {
+      "base": "rbxassetid://111694809008516",
+      "footL": "rbxassetid://72331506244795",
+      "footR": "rbxassetid://75490645019459",
+      "launcher": "rbxassetid://76661867256869",
+      "shinL": "rbxassetid://92127951493469",
+      "shinR": "rbxassetid://94021347574268",
+      "thighL": "rbxassetid://106297287071649",
+      "thighR": "rbxassetid://72835179547294",
+      "torso": "rbxassetid://74455096550215"
+    },
+    "decals": {
+      "ALB": "rbxassetid://86438784054732",
+      "RGH": "rbxassetid://113148803883610",
+      "NOR": "rbxassetid://79301389281809",
+      "MTL": "rbxassetid://132356970625446",
+      "EMI": "rbxassetid://117460916773278"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://71651340354217",
+      "NOR": "rbxassetid://84243970248220",
+      "RGH": "rbxassetid://96165290775674",
+      "MTL": "rbxassetid://138210930693531",
+      "EMI": "rbxassetid://124458271863170"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_gargoyle_wreck_bar in FTGG Art",
+    "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 3024 triangles"
+  }
+}

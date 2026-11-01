@@ -1,0 +1,69 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2952 triangles, glow share 1.0%",
+  "bar": {
+    "model": "rbxassetid://122590074076251",
+    "meshes": {
+      "base": "rbxassetid://118671714414402",
+      "footL": "rbxassetid://81992842371796",
+      "footR": "rbxassetid://95836645348011",
+      "nano": "rbxassetid://117033147277014",
+      "nano_glow_power": "rbxassetid://106463772786465",
+      "shinL": "rbxassetid://74032215475952",
+      "shinL_glow_running": "rbxassetid://130451135197095",
+      "shinR": "rbxassetid://99759553186536",
+      "shinR_glow_running": "rbxassetid://89693681675394",
+      "thighL": "rbxassetid://89353748015402",
+      "thighR": "rbxassetid://77817603603573",
+      "torso": "rbxassetid://120532502114652",
+      "torso_glow_head": "rbxassetid://101610528622175",
+      "torso_glow_running": "rbxassetid://101067588118359",
+      "torso_glow_weapon": "rbxassetid://115509495192960"
+    },
+    "decals": {
+      "ALB": "rbxassetid://101927702523805",
+      "RGH": "rbxassetid://135751964165742",
+      "NOR": "rbxassetid://127861754176094",
+      "MTL": "rbxassetid://84425445269261",
+      "EMI": "rbxassetid://133610884988092"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://93773016189251",
+      "NOR": "rbxassetid://91341504732594",
+      "RGH": "rbxassetid://109179394874864",
+      "MTL": "rbxassetid://119337287361254",
+      "EMI": "rbxassetid://107160407864221"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_cutpurse_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://114949480199483",
+    "meshes": {
+      "base": "rbxassetid://85750188244544",
+      "footL": "rbxassetid://108644683532462",
+      "footR": "rbxassetid://128487618271747",
+      "nano": "rbxassetid://134202305916248",
+      "shinL": "rbxassetid://84030042713893",
+      "shinR": "rbxassetid://87033836164374",
+      "thighL": "rbxassetid://105002397757066",
+      "thighR": "rbxassetid://76803984508699",
+      "torso": "rbxassetid://117817727360202"
+    },
+    "decals": {
+      "ALB": "rbxassetid://107212773792370",
+      "RGH": "rbxassetid://110511678749453",
+      "NOR": "rbxassetid://80067237504927",
+      "MTL": "rbxassetid://117367137025543",
+      "EMI": "rbxassetid://116915776424026"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://90652668124869",
+      "NOR": "rbxassetid://123986799686136",
+      "RGH": "rbxassetid://106207006743249",
+      "MTL": "rbxassetid://104266145699188",
+      "EMI": "rbxassetid://78003197446634"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_cutpurse_wreck_bar in FTGG Art",
+    "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2120 triangles"
+  }
+}

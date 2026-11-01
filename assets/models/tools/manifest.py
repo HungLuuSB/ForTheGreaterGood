@@ -203,6 +203,14 @@ APPROVED = {
     "chs_hellfire", "chs_grendel", "chs_hurler", "ord_thunderer", "ord_hoverdock", "chs_skimyard",
     "ord_skimwright", "ord_skimmer", "ord_volley", "ord_dart", "ord_halcyon", "ord_tempest",
     "chs_drifter", "chs_snapjaw", "chs_sling", "chs_gnat", "chs_skua", "chs_glaive", "chs_typhon",
+    # 2026-11-01: batch 2, the 41 bots, approved in one round from the previews
+    "ord_picket", "ord_squire", "ord_petard", "ord_draftsman", "ord_skyguard", "ord_steward", "ord_sextant",
+    "ord_informant", "ord_marshal", "ord_culverin", "ord_mariner", "ord_scaler", "ord_marksman", "ord_hush",
+    "ord_outrider", "ord_martyr", "ord_snare", "ord_stormcaller", "ord_paragon", "ord_champion",
+    "ord_monolith", "chs_firebrand", "chs_taskmaster", "chs_wrath", "chs_portent", "chs_blister",
+    "chs_cutpurse", "chs_gloom", "chs_newt", "chs_pyre", "chs_gargoyle", "chs_spitter", "chs_pustule",
+    "chs_snitch", "chs_ravener", "chs_scrounger", "chs_colossus", "chs_pandemonium", "chs_infernal",
+    "chs_widowmaker", "chs_abyssal",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -267,8 +275,22 @@ APPROVED_WRECKS = {
     "chs_hellfire", "chs_grendel", "chs_hurler", "ord_thunderer", "ord_hoverdock", "chs_skimyard",
     "ord_skimwright", "ord_skimmer", "ord_volley", "ord_dart", "ord_halcyon", "ord_tempest",
     "chs_drifter", "chs_snapjaw", "chs_sling", "chs_gnat", "chs_skua", "chs_glaive", "chs_typhon",
+    # 2026-11-01: batch 2's standing wrecks; its eight T3s' fallen hulks are approved too (below)
+    "ord_picket", "ord_squire", "ord_petard", "ord_draftsman", "ord_skyguard", "ord_steward", "ord_sextant",
+    "ord_informant", "ord_marshal", "ord_culverin", "ord_mariner", "ord_scaler", "ord_marksman", "ord_hush",
+    "ord_outrider", "ord_martyr", "ord_snare", "ord_stormcaller", "chs_firebrand", "chs_taskmaster",
+    "chs_wrath", "chs_portent", "chs_blister", "chs_cutpurse", "chs_gloom", "chs_newt", "chs_pyre",
+    "chs_gargoyle", "chs_spitter", "chs_pustule", "chs_snitch", "chs_ravener", "chs_scrounger",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
+# Fallen hulks (S-234) the user approved (2026-11-01). The client keeps their joints at
+# rest and places them by their own base since C-289 (models.md request 17); with
+# FALLEN_READY off they'd all go back to "review".
+FALLEN_APPROVED = {"ord_titan", "chs_juggernaut", "ord_thunderer", "ord_tempest", "chs_typhon", "ord_paragon",
+                   "ord_champion", "ord_monolith", "chs_colossus", "chs_pandemonium", "chs_infernal",
+                   "chs_widowmaker", "chs_abyssal"}
+FALLEN_READY = True
+FALLEN_NOTE = "fallen hulk (S-234), approved by the user; waits for the client to place fallen wrecks (request 17)"
 
 
 def load(path):
@@ -348,7 +370,9 @@ def wreck_entry(uid, rig, assets):
     """The wreck version (M-24, fx.md "Wrecks"): the same pieces and pivots
     as the live mesh, its own meshes and maps, no glow and no team pieces."""
     w = assets["wreck"]
-    status = "approved" if uid in APPROVED_WRECKS else "review"
+    status = "approved" if uid in APPROVED_WRECKS or (uid in FALLEN_APPROVED and FALLEN_READY) else "review"
+    if rig.get("fallen") and not FALLEN_READY:
+        status = "review"
     e = {
         "status": status,
         "model": w.get("model", ""),
@@ -360,7 +384,7 @@ def wreck_entry(uid, rig, assets):
     if rig.get("fallen"):  # a fallen hulk (S-234): the pose is in the meshes
         e["fallen"] = True
     if status == "review":
-        e["note"] = WRECK_NOTE
+        e["note"] = FALLEN_NOTE if rig.get("fallen") and uid in FALLEN_APPROVED else WRECK_NOTE
     return e
 
 

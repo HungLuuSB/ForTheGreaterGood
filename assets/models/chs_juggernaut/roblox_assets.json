@@ -49,6 +49,39 @@
     "modelPath": "ReplicatedStorage.ModelReview.chs_korgoth_bar in FTGG Art"
   },
   "wreck": {
+    "model": "rbxassetid://126889434690128",
+    "meshes": {
+      "base": "rbxassetid://134743267010296",
+      "footL": "rbxassetid://117084978783484",
+      "footR": "rbxassetid://74973803505006",
+      "gunL": "rbxassetid://112410236707599",
+      "gunR": "rbxassetid://94567229217024",
+      "missile_pod": "rbxassetid://126425209508475",
+      "ray_arm": "rbxassetid://105071972561760",
+      "shinL": "rbxassetid://70868225661925",
+      "shinR": "rbxassetid://119409804176939",
+      "thighL": "rbxassetid://78635144142355",
+      "thighR": "rbxassetid://86269863021010",
+      "torso": "rbxassetid://102708496325475"
+    },
+    "decals": {
+      "ALB": "rbxassetid://101865210585323",
+      "RGH": "rbxassetid://127696935198209",
+      "NOR": "rbxassetid://126419949474114",
+      "MTL": "rbxassetid://94096919409368",
+      "EMI": "rbxassetid://90364902993835"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://78881614594340",
+      "NOR": "rbxassetid://130748354591794",
+      "RGH": "rbxassetid://97646429436729",
+      "MTL": "rbxassetid://96401473565455",
+      "EMI": "rbxassetid://126732770347728"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_juggernaut_wreck_bar in FTGG Art",
+    "revision": "Fallen-hulk wreck (S-234), uploaded with the user's approval 2026-11-01: 4232 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://137930038069805",
     "meshes": {
       "base": "rbxassetid://111745116035960",

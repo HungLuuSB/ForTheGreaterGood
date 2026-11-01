@@ -1,0 +1,272 @@
+{
+  "id": "chs_scrounger_wreck",
+  "wreckOf": "chs_scrounger",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0248,
+        2.5947,
+        0.0247
+      ],
+      "size": [
+        1.4414,
+        0.9581,
+        1.32
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0135,
+        4.1795,
+        0.0248
+      ],
+      "size": [
+        2.3053,
+        2.462,
+        2.8731
+      ],
+      "pivot": [
+        0.0,
+        3.0,
+        0.0
+      ]
+    },
+    "nano": {
+      "parent": "torso",
+      "center": [
+        1.0427,
+        3.5767,
+        -0.9392
+      ],
+      "size": [
+        0.4909,
+        0.6194,
+        1.7017
+      ],
+      "pivot": [
+        1.05,
+        3.6,
+        -0.1
+      ]
+    },
+    "thighL": {
+      "parent": "base",
+      "center": [
+        -0.5714,
+        1.8014,
+        -0.0672
+      ],
+      "size": [
+        0.5913,
+        1.6723,
+        0.7794
+      ],
+      "pivot": [
+        -0.6,
+        2.4,
+        0.0
+      ]
+    },
+    "shinL": {
+      "parent": "thighL",
+      "center": [
+        -0.5349,
+        0.7883,
+        -0.026
+      ],
+      "size": [
+        0.4386,
+        1.0655,
+        0.8297
+      ],
+      "pivot": [
+        -0.6,
+        1.248,
+        -0.225
+      ]
+    },
+    "footL": {
+      "parent": "shinL",
+      "center": [
+        -0.593,
+        0.2451,
+        -0.0867
+      ],
+      "size": [
+        0.6127,
+        0.5498,
+        1.4109
+      ],
+      "pivot": [
+        -0.6,
+        0.45,
+        0.1
+      ]
+    },
+    "thighR": {
+      "parent": "base",
+      "center": [
+        0.5889,
+        1.8092,
+        -0.0842
+      ],
+      "size": [
+        0.6325,
+        1.6988,
+        0.7931
+      ],
+      "pivot": [
+        0.6,
+        2.4,
+        0.0
+      ]
+    },
+    "shinR": {
+      "parent": "thighR",
+      "center": [
+        0.5235,
+        0.801,
+        0.0116
+      ],
+      "size": [
+        0.4077,
+        1.087,
+        0.7963
+      ],
+      "pivot": [
+        0.6,
+        1.248,
+        -0.225
+      ]
+    },
+    "footR": {
+      "parent": "shinR",
+      "center": [
+        0.5811,
+        0.2344,
+        -0.0846
+      ],
+      "size": [
+        0.6491,
+        0.5101,
+        1.3988
+      ],
+      "pivot": [
+        0.6,
+        0.45,
+        0.1
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "torso",
+      "at": [
+        -1.05,
+        3.5,
+        -1.5
+      ]
+    },
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        1.05,
+        3.6,
+        -2.1
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "thighL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 248,
+    "torso": 572,
+    "nano": 64,
+    "thighL": 224,
+    "shinL": 180,
+    "footL": 120,
+    "thighR": 420,
+    "shinR": 120,
+    "footR": 120,
+    "total": 2068
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

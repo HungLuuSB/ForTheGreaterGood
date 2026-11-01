@@ -1,0 +1,61 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 3516 triangles, glow share 0.4%",
+  "bar": {
+    "model": "rbxassetid://129189996961795",
+    "meshes": {
+      "base": "rbxassetid://86222643032189",
+      "base_glow_head": "rbxassetid://90992698155035",
+      "base_glow_weapon": "rbxassetid://94590168147620",
+      "legBL": "rbxassetid://109166443107762",
+      "legBR": "rbxassetid://85101612608960",
+      "legFL": "rbxassetid://88205804750505",
+      "legFR": "rbxassetid://126914616428395",
+      "torso": "rbxassetid://118214111286594",
+      "torso_glow_head": "rbxassetid://114332430430160",
+      "torso_glow_weapon": "rbxassetid://127287498463664"
+    },
+    "decals": {
+      "ALB": "rbxassetid://104776559566167",
+      "RGH": "rbxassetid://93762165332349",
+      "NOR": "rbxassetid://111989577090568",
+      "MTL": "rbxassetid://119692834879879",
+      "EMI": "rbxassetid://115403127832309"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://127122547925761",
+      "NOR": "rbxassetid://78874024643010",
+      "RGH": "rbxassetid://140258750191450",
+      "MTL": "rbxassetid://110189323576367",
+      "EMI": "rbxassetid://126234142971649"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_colossus_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://139036583681737",
+    "meshes": {
+      "base": "rbxassetid://85741586704432",
+      "legBL": "rbxassetid://96370940663530",
+      "legBR": "rbxassetid://72517253531125",
+      "legFL": "rbxassetid://124663567786789",
+      "legFR": "rbxassetid://102258870609601",
+      "torso": "rbxassetid://127291710370822"
+    },
+    "decals": {
+      "ALB": "rbxassetid://90842311419731",
+      "RGH": "rbxassetid://115009705789334",
+      "NOR": "rbxassetid://72293419534079",
+      "MTL": "rbxassetid://108195278617225",
+      "EMI": "rbxassetid://85058441704905"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://89043939754783",
+      "NOR": "rbxassetid://137819904716579",
+      "RGH": "rbxassetid://78741679714341",
+      "MTL": "rbxassetid://125634018269956",
+      "EMI": "rbxassetid://82343797898126"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_colossus_wreck_bar in FTGG Art",
+    "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2608 triangles"
+  }
+}

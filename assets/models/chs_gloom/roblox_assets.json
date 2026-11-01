@@ -1,0 +1,65 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2460 triangles, glow share 2.1%",
+  "bar": {
+    "model": "rbxassetid://78558799952670",
+    "meshes": {
+      "base": "rbxassetid://117398583168930",
+      "footL": "rbxassetid://138772339070686",
+      "footR": "rbxassetid://86199774541563",
+      "shinL": "rbxassetid://122287971501380",
+      "shinL_glow_running": "rbxassetid://104509974856949",
+      "shinR": "rbxassetid://115949796096303",
+      "shinR_glow_running": "rbxassetid://102637522309213",
+      "thighL": "rbxassetid://75288565590734",
+      "thighR": "rbxassetid://132008780202173",
+      "torso": "rbxassetid://72219942163596",
+      "torso_glow_head": "rbxassetid://134070200163962",
+      "torso_glow_power": "rbxassetid://134500773912592"
+    },
+    "decals": {
+      "ALB": "rbxassetid://124497116763958",
+      "RGH": "rbxassetid://85773837383467",
+      "NOR": "rbxassetid://88845375090119",
+      "MTL": "rbxassetid://75204702845035",
+      "EMI": "rbxassetid://120414114677197"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://100483573349026",
+      "NOR": "rbxassetid://91560592384703",
+      "RGH": "rbxassetid://125184536967334",
+      "MTL": "rbxassetid://119694370229038",
+      "EMI": "rbxassetid://97035810419894"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_gloom_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://80503400684523",
+    "meshes": {
+      "base": "rbxassetid://85844736769574",
+      "footL": "rbxassetid://99836147165171",
+      "footR": "rbxassetid://73344380389300",
+      "shinL": "rbxassetid://101320158644483",
+      "shinR": "rbxassetid://99082290657835",
+      "thighL": "rbxassetid://98072806972623",
+      "thighR": "rbxassetid://131072941325243",
+      "torso": "rbxassetid://120457575202589"
+    },
+    "decals": {
+      "ALB": "rbxassetid://90657119477281",
+      "RGH": "rbxassetid://129825965988256",
+      "NOR": "rbxassetid://88534791025505",
+      "MTL": "rbxassetid://75859406662020",
+      "EMI": "rbxassetid://103604708268330"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://98192770594467",
+      "NOR": "rbxassetid://121696607045502",
+      "RGH": "rbxassetid://94067092963172",
+      "MTL": "rbxassetid://111422074414568",
+      "EMI": "rbxassetid://117961146285662"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_gloom_wreck_bar in FTGG Art",
+    "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 1944 triangles"
+  }
+}

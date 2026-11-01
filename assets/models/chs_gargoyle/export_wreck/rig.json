@@ -1,0 +1,264 @@
+{
+  "id": "chs_gargoyle_wreck",
+  "wreckOf": "chs_gargoyle",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0109,
+        2.8298,
+        -0.0101
+      ],
+      "size": [
+        2.4596,
+        1.0444,
+        1.9393
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        -0.0107,
+        4.2581,
+        -0.1472
+      ],
+      "size": [
+        2.8669,
+        2.2109,
+        3.5124
+      ],
+      "pivot": [
+        0.0,
+        3.2,
+        0.0
+      ]
+    },
+    "launcher": {
+      "parent": "torso",
+      "center": [
+        0.0337,
+        6.1688,
+        0.3861
+      ],
+      "size": [
+        4.7542,
+        2.8857,
+        1.8413
+      ],
+      "pivot": [
+        0.0,
+        5.2,
+        0.4
+      ]
+    },
+    "thighL": {
+      "parent": "base",
+      "center": [
+        -1.035,
+        2.0132,
+        -0.1303
+      ],
+      "size": [
+        1.0122,
+        2.1066,
+        1.1928
+      ],
+      "pivot": [
+        -1.0,
+        2.6,
+        0.0
+      ]
+    },
+    "shinL": {
+      "parent": "thighL",
+      "center": [
+        -0.9764,
+        0.9162,
+        -0.0742
+      ],
+      "size": [
+        0.6944,
+        1.2645,
+        1.2475
+      ],
+      "pivot": [
+        -1.0,
+        1.352,
+        -0.36000000000000004
+      ]
+    },
+    "footL": {
+      "parent": "shinL",
+      "center": [
+        -1.0357,
+        0.227,
+        -0.1703
+      ],
+      "size": [
+        1.0737,
+        0.6348,
+        2.1588
+      ],
+      "pivot": [
+        -1.0,
+        0.5599999999999999,
+        0.1
+      ]
+    },
+    "thighR": {
+      "parent": "base",
+      "center": [
+        1.0418,
+        2.0373,
+        -0.1732
+      ],
+      "size": [
+        0.9978,
+        2.0515,
+        1.195
+      ],
+      "pivot": [
+        1.0,
+        2.6,
+        0.0
+      ]
+    },
+    "shinR": {
+      "parent": "thighR",
+      "center": [
+        1.0096,
+        0.9201,
+        -0.1564
+      ],
+      "size": [
+        0.8161,
+        1.2977,
+        1.1944
+      ],
+      "pivot": [
+        1.0,
+        1.352,
+        -0.36000000000000004
+      ]
+    },
+    "footR": {
+      "parent": "shinR",
+      "center": [
+        0.9839,
+        0.3038,
+        -0.2004
+      ],
+      "size": [
+        1.0746,
+        0.579,
+        2.1604
+      ],
+      "pivot": [
+        1.0,
+        0.5599999999999999,
+        0.1
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        1.75,
+        5.95,
+        -0.6
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "thighL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 248,
+    "torso": 288,
+    "launcher": 1028,
+    "thighL": 392,
+    "shinL": 160,
+    "footL": 152,
+    "thighR": 420,
+    "shinR": 184,
+    "footR": 152,
+    "total": 3024
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
