@@ -283,6 +283,15 @@
 				126
 			]
 		},
+		"chs_changeling": {
+			"sheet": 2,
+			"rect": [
+				640,
+				384,
+				126,
+				126
+			]
+		},
 		"chs_charon": {
 			"sheet": 4,
 			"rect": [
@@ -1435,6 +1444,15 @@
 				126
 			]
 		},
+		"ord_effigy": {
+			"sheet": 3,
+			"rect": [
+				384,
+				768,
+				126,
+				126
+			]
+		},
 		"ord_empyrean": {
 			"sheet": 3,
 			"rect": [
@@ -2129,5 +2147,47 @@
 			]
 		}
 	},
-	"missing": []
+	"missing": [
+		"chs_abyssal",
+		"chs_blister",
+		"chs_colossus",
+		"chs_cutpurse",
+		"chs_firebrand",
+		"chs_gargoyle",
+		"chs_gloom",
+		"chs_infernal",
+		"chs_newt",
+		"chs_pandemonium",
+		"chs_portent",
+		"chs_pustule",
+		"chs_pyre",
+		"chs_ravener",
+		"chs_scrounger",
+		"chs_snitch",
+		"chs_spitter",
+		"chs_taskmaster",
+		"chs_widowmaker",
+		"chs_wrath",
+		"ord_champion",
+		"ord_culverin",
+		"ord_draftsman",
+		"ord_hush",
+		"ord_informant",
+		"ord_mariner",
+		"ord_marksman",
+		"ord_marshal",
+		"ord_martyr",
+		"ord_monolith",
+		"ord_outrider",
+		"ord_paragon",
+		"ord_petard",
+		"ord_picket",
+		"ord_scaler",
+		"ord_sextant",
+		"ord_skyguard",
+		"ord_snare",
+		"ord_squire",
+		"ord_steward",
+		"ord_stormcaller"
+	]
 }
