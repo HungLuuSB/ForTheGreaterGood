@@ -639,9 +639,18 @@ function Units.new(frame: Frame, _router: any): any
 		end
 		if s.decoy then
 			local of = c.defs.units[s.decoy.of]
-			row("Decoy", if s.decoy.commander
-				then `looks like the {of.name} on radar and up close, with {math.round(s.decoy.health * 100)}% of its health`
-				else `its radar contacts pass for {if string.find("AEIOU", string.sub(of.name, 1, 1), 1, true) then "an" else "a"} {of.name} until tracked`)
+			row("Decoy", `its radar contacts pass for {if string.find("AEIOU", string.sub(of.name, 1, 1), 1, true) then "an" else "a"} {of.name} until tracked`)
+		end
+		if s.disguise then
+			row("Disguise", `enemies take it for the {c.defs.units[s.disguise.of].name}, even up close; it has {math.round(s.disguise.health * 100)}% of its health and leaves no wreck`)
+		end
+		if s.detonate then
+			row("Detonates", `within {n(s.detonate.range)} studs of a target it explodes: {n(s.detonate.damage)} damage over {n(s.detonate.aoe)} studs. The same blast if it's destroyed first`)
+		end
+		if s.selfDestruct then
+			local sd = s.selfDestruct
+			row("Self-destruct", (if sd.instant then "at once, no countdown" else "after the usual countdown")
+				.. (if sd.emp then `: an EMP burst stuns everything within {n(sd.aoe)} studs for up to {Codex.RULES.stunSeconds} s, no damage` else ""))
 		end
 		if #s.countermeasures > 0 then
 			row("Countermeasures", table.concat(s.countermeasures, " · "))
@@ -655,7 +664,7 @@ function Units.new(frame: Frame, _router: any): any
 		end
 		if s.wreck then
 			row("Wreck", `{n(s.wreck.supply)} supply, {n(s.wreck.health)} health; a scrap heap below {n(s.wreck.heap)} supply (reclaim only, no resurrect)`
-				.. (if s.crashes then ". None when shot down in flight" else ""))
+				.. (if s.crashes then ". None when shot down in flight" elseif s.detonate then ". None when it detonates" else ""))
 		end
 		if s.income then
 			local parts = {}

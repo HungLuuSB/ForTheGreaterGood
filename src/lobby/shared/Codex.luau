@@ -546,6 +546,10 @@ export type Stats = {
 	wreck: { supply: number, health: number, heap: number }?, -- what its wreck holds; heap: the supply below which it's a scrap heap
 	crashes: boolean, -- an aircraft: shot down in flight, it leaves no wreck
 	cloak: { drain: number, decloak: number }?, -- power a second while on; an enemy this close reveals it
+	decoy: { of: string }?, -- `spoof`: its untracked radar contacts pass for this def (the Wraith)
+	disguise: { of: string, health: number }?, -- a decoy Commander: enemies take it for `of` even in sight; health: its share of `of`'s
+	detonate: { damage: number, aoe: number, range: number }?, -- a crawling bomb (`kamikaze` weapon): its death blast, and how close it gets
+	selfDestruct: { emp: boolean, aoe: number, instant: boolean }?, -- a self-destruct worth a line: an EMP burst (the spies) or no countdown
 	weapons: { Weapon },
 	dps: number, -- every weapon's main-class DPS added up (EMP's stun left out)
 	range: number, -- the longest weapon
@@ -566,9 +570,12 @@ function Codex.stats(c: Codex, id: string): Stats
 	local s = def.sensors or {}
 	local weapons = {}
 	local dps, range = 0, 0
+	local trigger: number? = nil -- a crawling bomb's kamikaze weapon: its range, no card
 	for _, slot in def.weapons or {} do
 		local w = c.defs.weapons[slot.def]
-		if w then
+		if w and w.kamikaze then
+			trigger = math.max(trigger or 0, w.range or 0)
+		elseif w then
 			local x = weapon(w)
 			table.insert(weapons, x)
 			dps += x.dps
@@ -598,9 +605,12 @@ function Codex.stats(c: Codex, id: string): Stats
 	local signature = s.radarSignature
 	local health = def.health or 0
 	local wreckSupply = supply * Codex.RULES.wreckSupply
-	-- a decoy (`spoof`): the Wraith's radar contacts pass for a bomber; a
-	-- decoy Commander passes for its Commander in sight too (batch 2)
-	local spoofed = def.spoof and c.defs.units[def.spoof]
+	-- decoys (S-233): `spoof` is radar only (the Wraith); `disguise` holds
+	-- in sight too (the decoy Commanders), and leaves no wreck
+	local disguised = def.disguise and c.defs.units[def.disguise]
+	local blast = def.deathBlast
+	local sd = def.selfDestructBlast
+	local instant = def.selfDestructSeconds == 0
 	return {
 		supply = supply,
 		power = power,
@@ -625,13 +635,16 @@ function Codex.stats(c: Codex, id: string): Stats
 		ammo = positive(def.ammo),
 		countermeasures = cm,
 		heal = health * Codex.RULES.healRate,
-		wreck = if wreckSupply > 0
+		wreck = if wreckSupply > 0 and not disguised
 			then { supply = wreckSupply, health = health * Codex.RULES.wreckHealth, heap = wreckSupply * Codex.RULES.wreckHeap }
 			else nil,
 		crashes = def.domain == "air",
 		cloak = if def.cloak then { drain = def.cloak.drain or 0, decloak = def.cloak.decloak or 0 } else nil,
-		decoy = if spoofed
-			then { of = def.spoof, commander = spoofed.tier == 0, health = health / math.max(spoofed.health or 1, 1) }
+		decoy = if def.spoof and c.defs.units[def.spoof] then { of = def.spoof } else nil,
+		disguise = if disguised then { of = def.disguise, health = health / math.max(disguised.health or 1, 1) } else nil,
+		detonate = if trigger and blast then { damage = blast.damage, aoe = blast.aoe, range = trigger } else nil,
+		selfDestruct = if sd and (sd.paralyzer or instant) or instant
+			then { emp = sd ~= nil and sd.paralyzer == true, aoe = if sd then sd.aoe else 0, instant = instant }
 			else nil,
 		weapons = weapons,
 		dps = dps,

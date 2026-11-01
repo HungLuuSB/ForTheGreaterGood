@@ -211,22 +211,60 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("a decoy says what it passes for", function()
-		local wraith = Codex.stats(codex, "chs_wraith").decoy :: any
-		t.equal(wraith.of, defs.units.chs_wraith.spoof)
-		t.equal(wraith.commander, false)
+		local wraith = Codex.stats(codex, "chs_wraith")
+		t.equal((wraith.decoy :: any).of, defs.units.chs_wraith.spoof)
+		t.equal(wraith.disguise, nil)
 		t.equal(Codex.stats(codex, "ord_paladin").decoy, nil)
-		-- a decoy Commander (batch 2) on a fake def until the real ones land
-		local fake = { units = table.clone(defs.units), weapons = defs.weapons }
-		fake.units.ord_effigy = table.clone(defs.units.ord_mason)
-		fake.units.ord_effigy.spoof = "ord_sovereign"
-		fake.units.ord_effigy.health = defs.units.ord_sovereign.health / 4
+	end)
+
+	-- batch 2's mechanics (S-233) on stand-in defs until the real ones land:
+	-- a decoy Commander (`disguise`), a crawling bomb (a `kamikaze` weapon
+	-- and its `deathBlast`) and a spy (radar signature 0, an EMP
+	-- self-destruct with no countdown)
+	t.test("disguise, crawling bombs and spies (S-233)", function()
+		local fake = { units = table.clone(defs.units), weapons = table.clone(defs.weapons) }
+		local function unit(id: string, from: string, fields: { [string]: any })
+			local u = table.clone(defs.units[from])
+			u.id = id
+			for k, v in fields do
+				u[k] = v
+			end
+			fake.units[id] = u
+		end
+		fake.weapons.test_kamikaze = { id = "test_kamikaze", kamikaze = true, range = 6, reload = 1, damage = {}, targets = { "GROUND" } }
+		unit("ord_effigy", "ord_mason", { disguise = "ord_sovereign", health = defs.units.ord_sovereign.health / 4 })
+		unit("ord_martyr", "ord_mace", {
+			weapons = { { def = "test_kamikaze" } },
+			deathBlast = { damage = 900, aoe = 24, edge = 0.3 },
+			selfDestructSeconds = 0,
+		})
+		unit("ord_informant", "ord_mace", {
+			weapons = {},
+			sensors = { sight = 200, radarSignature = 0 },
+			selfDestructSeconds = 0,
+			selfDestructBlast = { damage = 3000, aoe = 40, edge = 0.5, paralyzer = true },
+		})
 		fake.units.ord_advbotlab = table.clone(defs.units.ord_advbotlab)
-		fake.units.ord_advbotlab.buildOptions = { "ord_effigy" }
+		fake.units.ord_advbotlab.buildOptions = { "ord_effigy", "ord_martyr", "ord_informant" }
 		local c = Codex.build(fake)
-		local d = Codex.stats(c, "ord_effigy").decoy :: any
-		t.equal(d.commander, true)
-		t.equal(d.health, 0.25)
+
+		local effigy = Codex.stats(c, "ord_effigy")
+		t.deepEqual(effigy.disguise, { of = "ord_sovereign", health = 0.25 })
+		t.equal(effigy.decoy, nil, "not a radar spoof")
+		t.equal(effigy.wreck, nil, "a disguised decoy leaves no wreck")
 		t.equal(c.entries.ord_effigy.role.name, "Decoy Commander")
+
+		local martyr = Codex.stats(c, "ord_martyr")
+		t.deepEqual(martyr.detonate, { damage = 900, aoe = 24, range = 6 })
+		t.equal(#martyr.weapons, 0, "the trigger has no weapon card")
+		t.equal(martyr.dps, 0)
+		t.deepEqual(martyr.selfDestruct, { emp = false, aoe = 0, instant = true })
+
+		local informant = Codex.stats(c, "ord_informant")
+		t.equal(informant.stealth, 0)
+		t.deepEqual(informant.selfDestruct, { emp = true, aoe = 40, instant = true })
+		t.equal(informant.detonate, nil)
+		t.equal(Codex.stats(c, "ord_titan").selfDestruct, nil, "a plain self-destruct blast needs no line")
 	end)
 
 	t.test("the firing range has a target for every weapon but anti-missile and strategic ones", function()
