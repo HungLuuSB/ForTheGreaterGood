@@ -15,6 +15,8 @@
 // "missing" in pictures.json (B keeps its live ViewportFrame for it); --check reports how many.
 // Packed pictures keep their slot: a new def takes the first free slot (in id order), so adding units
 // changes only the sheets they land on, and every other sheet keeps its uploaded image id.
+// A def with a disguise (the decoy Commanders, S-233) takes no tile: it points at its disguise's rect, so
+// the build menu can't tell them apart either, and needs no render of its own.
 // Run from the project root (once: npm install in assets/2d/tools).
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
@@ -32,8 +34,13 @@ const RENDERS = args.find((a) => !a.startsWith("--")) || "../FTGG-models/debug_o
 
 // the defs that need a picture: every def that isn't retired
 const defs = JSON.parse(execSync("lune run icon_defs", { encoding: "utf8" }))
-	.filter((d) => !/retired\s*=\s*true/.test(readFileSync(`src/shared/Defs/Units/${d.id}.luau`, "utf8")))
+	.map((d) => {
+		const src = readFileSync(`src/shared/Defs/Units/${d.id}.luau`, "utf8");
+		return { ...d, retired: /retired\s*=\s*true/.test(src), disguise: (src.match(/disguise\s*=\s*"(\w+)"/) || [])[1] };
+	})
+	.filter((d) => !d.retired)
 	.sort((a, b) => (a.id < b.id ? -1 : 1));
+const disguised = new Set(defs.filter((d) => d.disguise).map((d) => d.id));
 
 const problems = [];
 const haveRenders = existsSync(RENDERS);
@@ -52,7 +59,7 @@ function oldSlots() {
 	if (!existsSync(path)) return slots;
 	const old = JSON.parse(readFileSync(path, "utf8"));
 	if (old.tile !== TILE) return slots; // a new tile size repacks everything
-	for (const [id, u] of Object.entries(old.units)) slots.set(id, (u.sheet - 1) * PER_SHEET + Math.round(u.rect[1] / (TILE + GAP)) * PER_ROW + Math.round(u.rect[0] / (TILE + GAP)));
+	for (const [id, u] of Object.entries(old.units)) if (!disguised.has(id)) slots.set(id, (u.sheet - 1) * PER_SHEET + Math.round(u.rect[1] / (TILE + GAP)) * PER_ROW + Math.round(u.rect[0] / (TILE + GAP)));
 	return slots;
 }
 
@@ -61,6 +68,7 @@ function build(slots) {
 	const missing = [];
 	const placed = [];
 	for (const d of defs) {
+		if (d.disguise) continue;
 		const pic = haveRenders ? renderOf(d.id) : null;
 		if (pic) placed.push({ id: d.id, pic });
 		else missing.push(d.id);
@@ -92,6 +100,12 @@ function build(slots) {
 		files.set(sheet.file, png(1024, h, body));
 		sheets.push(sheet);
 	}
+	for (const d of defs) {
+		if (!d.disguise) continue;
+		if (units[d.disguise]) units[d.id] = { ...units[d.disguise] };
+		else missing.push(d.id);
+	}
+	missing.sort();
 	const json = { tile: TILE, sheets, units: Object.fromEntries(Object.entries(units).sort(([a], [b]) => (a < b ? -1 : 1))), missing };
 	files.set("pictures.json", Buffer.from(JSON.stringify(json, null, "\t") + "\n"));
 	return { files, json };
@@ -112,6 +126,10 @@ if (check) {
 		const [x, y, w, h] = u.rect;
 		if (!sh) problems.push(`${id}: sheet ${u.sheet} doesn't exist`);
 		else if (w !== json.tile || h !== json.tile || x < 0 || y < 0 || x + w > sh.size[0] || y + h > sh.size[1]) problems.push(`${id}: rect ${u.rect} is outside its sheet`);
+	}
+	for (const d of defs) {
+		const u = json.units[d.id], w = d.disguise && json.units[d.disguise];
+		if (u && w && (u.sheet !== w.sheet || String(u.rect) !== String(w.rect))) problems.push(`${d.id}: its rect isn't its disguise ${d.disguise}'s`);
 	}
 	for (const sh of json.sheets) if (!existsSync(`${OUT}/${sh.file}`)) problems.push(`${OUT}/${sh.file} is missing`);
 	if (haveRenders) {
