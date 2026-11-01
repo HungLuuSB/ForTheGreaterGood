@@ -24,6 +24,7 @@ for _, p in {
 	{ name = "gun", parent = "torso", shape = "cylinder", axis = "z", size = { 0.28, 0.28, 1 }, at = { 1.05, 3.7, -0.9 }, color = "metal" },
 	{ name = "gunTip", parent = "torso", shape = "cylinder", axis = "z", size = { 0.35, 0.35, 0.2 }, at = { 1.05, 3.7, -1.45 }, color = "dark" },
 	{ name = "chestTeam", parent = "torso", shape = "box", size = { 0.5, 0.35, 0.06 }, at = { 0.3, 4.1, -0.73 }, color = "team" },
+	{ name = "nano1", parent = "nano", shape = "ball", size = { 0.3, 0.3, 0.3 }, at = { -1.05, 3.7, -2.3 }, color = "dark" },
 } do
 	table.insert(parts, p)
 end
@@ -33,7 +34,6 @@ return {
 	parts = parts,
 	visualPieces = visual,
 	attachments = {
-		{ name = "nano1", parent = "nano", at = { -1.05, 3.7, -2.3 } },
 		{ name = "muzzle", parent = "torso", at = { 1.05, 3.7, -1.55 } },
 	},
 }

@@ -15,8 +15,9 @@ for _, p in {
 	{ name = "rib3", parent = "base", shape = "box", size = { 1.9, 0.15, 0.15 }, at = { 0, 2.05, 0.7 }, color = "metal" },
 	{ name = "hazard", parent = "base", shape = "box", size = { 1.5, 0.2, 0.08 }, at = { 0, 1, -0.94 }, color = "hazard" },
 	{ name = "teamBand", parent = "base", shape = "box", size = { 1.5, 0.2, 0.08 }, at = { 0, 1, 0.94 }, color = "team" },
-	{ name = "mandibleL", parent = "base", shape = "wedge", size = { 0.2, 0.3, 0.6 }, at = { -0.35, 0.8, -1.15 }, color = "metal" },
-	{ name = "mandibleR", parent = "base", shape = "wedge", size = { 0.2, 0.3, 0.6 }, at = { 0.35, 0.8, -1.15 }, color = "metal" },
+	{ name = "torso", parent = "base", shape = "box", size = { 0.9, 0.45, 0.4 }, at = { 0, 0.95, -1.05 }, pivot = { 0, 0.95, -0.85 }, color = "dark" },
+	{ name = "mandibleL", parent = "torso", shape = "wedge", size = { 0.2, 0.3, 0.6 }, at = { -0.35, 0.8, -1.15 }, color = "metal" },
+	{ name = "mandibleR", parent = "torso", shape = "wedge", size = { 0.2, 0.3, 0.6 }, at = { 0.35, 0.8, -1.15 }, color = "metal" },
 } do
 	table.insert(parts, p)
 end
@@ -26,6 +27,6 @@ return {
 	parts = parts,
 	visualPieces = visual,
 	attachments = {
-		{ name = "muzzle", parent = "base", at = { 0, 0.9, -1.3 } },
+		{ name = "muzzle", parent = "torso", at = { 0, 0.9, -1.3 } },
 	},
 }

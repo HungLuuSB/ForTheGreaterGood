@@ -424,8 +424,9 @@ def order():
     for s, n in ((-1, "L"), (1, "R")):
         u.part("hazard" + n, "cylinder", (0.15, 2.2, 2.2), (s * 0.85, 1.35, 0), "hazard", parent="shell", axis="x")
         u.part("cap" + n, "cylinder", (0.12, 0.8, 0.8), (s * 1.3, 1.35, 0), "glass", parent="shell", axis="x")
+    u.part("torso", "box", (0.6, 0.6, 0.6), (0, 1.35, 0), "dark", parent="base", pivot=(0, 1.35, 0))  # a hub inside the ball (the def's turret piece)
     u.visual.append("shell")
-    u.attach("muzzle", "base", (0, 1.35, -1.4))  # the trigger weapon's; never fires
+    u.attach("muzzle", "torso", (0, 1.35, -1.4))  # the trigger weapon's; never fires
     out.append(u)
 
     u = U("ord_snare", ["Snare (Order all-terrain spider with an EMP laser, T2): a light body on four", "long legs with high knees and claw tips; an EMP emitter ring on its `torso`. " + HEADER])
@@ -578,9 +579,10 @@ def chaos():
         u.part(f"rib{i + 1}", "box", (1.9, 0.15, 0.15), (0, 2.05, z), "metal", parent="base")
     u.part("hazard", "box", (1.5, 0.2, 0.08), (0, 1.0, -0.94), "hazard", parent="base")
     u.part("teamBand", "box", (1.5, 0.2, 0.08), (0, 1.0, 0.94), "team", parent="base")
-    u.part("mandibleL", "wedge", (0.2, 0.3, 0.6), (-0.35, 0.8, -1.15), "metal", parent="base")
-    u.part("mandibleR", "wedge", (0.2, 0.3, 0.6), (0.35, 0.8, -1.15), "metal", parent="base")
-    u.attach("muzzle", "base", (0, 0.9, -1.3))  # the trigger weapon's; never fires
+    u.part("torso", "box", (0.9, 0.45, 0.4), (0, 0.95, -1.05), "dark", parent="base", pivot=(0, 0.95, -0.85))  # the head
+    u.part("mandibleL", "wedge", (0.2, 0.3, 0.6), (-0.35, 0.8, -1.15), "metal")
+    u.part("mandibleR", "wedge", (0.2, 0.3, 0.6), (0.35, 0.8, -1.15), "metal")
+    u.attach("muzzle", "torso", (0, 0.9, -1.3))  # the trigger weapon's; never fires
     out.append(u)
 
     u = U("chs_cutpurse", ["Cutpurse (Chaos stealthy jamming combat engineer, T2): lean and dark, a", "hooded head with one amber eye, cloak plates over the shoulders, twin whip", "antennas, a claw arm (`nano`) on the left and a short gun on the right. " + HEADER])
@@ -677,7 +679,9 @@ def chaos():
     u.part("spine", "box", (0.2, 0.2, 2.4), (0, 2.95, 0.3), "metal", parent="base")
     u.part("hazard", "box", (1.9, 0.25, 0.08), (0, 1.2, -1.14), "hazard", parent="base")
     u.part("teamBand", "box", (1.9, 0.25, 0.08), (0, 1.2, 1.14), "team", parent="base")
-    u.attach("muzzle", "base", (0, 1.2, -1.3))  # the trigger weapon's; never fires
+    u.part("torso", "box", (1.0, 0.5, 0.4), (0, 1.15, -1.3), "dark", parent="base", pivot=(0, 1.15, -1.1))  # the head
+    u.part("eyes", "box", (0.6, 0.1, 0.05), (0, 1.25, -1.52), "glass")
+    u.attach("muzzle", "torso", (0, 1.15, -1.55))  # the trigger weapon's; never fires
     out.append(u)
 
     u = U("chs_snitch", ["Snitch (Chaos cloaked spy bot, T2): tiny and crouched, dark plates, one amber", "eye, a whip antenna and the EMP charge glowing in its back. " + HEADER])

@@ -15,6 +15,7 @@ for _, p in {
 	{ name = "capL", parent = "shell", shape = "cylinder", axis = "x", size = { 0.12, 0.8, 0.8 }, at = { -1.3, 1.35, 0 }, color = "glass" },
 	{ name = "hazardR", parent = "shell", shape = "cylinder", axis = "x", size = { 0.15, 2.2, 2.2 }, at = { 0.85, 1.35, 0 }, color = "hazard" },
 	{ name = "capR", parent = "shell", shape = "cylinder", axis = "x", size = { 0.12, 0.8, 0.8 }, at = { 1.3, 1.35, 0 }, color = "glass" },
+	{ name = "torso", parent = "base", shape = "box", size = { 0.6, 0.6, 0.6 }, at = { 0, 1.35, 0 }, pivot = { 0, 1.35, 0 }, color = "dark" },
 } do
 	table.insert(parts, p)
 end
@@ -24,6 +25,6 @@ return {
 	parts = parts,
 	visualPieces = visual,
 	attachments = {
-		{ name = "muzzle", parent = "base", at = { 0, 1.35, -1.4 } },
+		{ name = "muzzle", parent = "torso", at = { 0, 1.35, -1.4 } },
 	},
 }

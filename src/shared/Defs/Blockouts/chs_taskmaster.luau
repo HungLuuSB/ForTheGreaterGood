@@ -21,6 +21,7 @@ for _, p in {
 	{ name = "nanoClawL", parent = "nano", shape = "wedge", size = { 0.15, 0.5, 0.6 }, at = { 1.1, 6.3, -3.4 }, color = "dark" },
 	{ name = "nanoClawR", parent = "nano", shape = "wedge", size = { 0.15, 0.5, 0.6 }, at = { 1.5, 6.3, -3.4 }, color = "dark" },
 	{ name = "nanoGlow", parent = "nano", shape = "ball", size = { 0.32, 0.32, 0.32 }, at = { 1.3, 6.3, -3.45 }, color = "glass" },
+	{ name = "nano1", parent = "nano", shape = "ball", size = { 0.3, 0.3, 0.3 }, at = { 1.3, 6.3, -3.7 }, color = "dark" },
 } do
 	table.insert(parts, p)
 end
@@ -29,7 +30,4 @@ return {
 	id = "chs_taskmaster",
 	parts = parts,
 	visualPieces = visual,
-	attachments = {
-		{ name = "nano1", parent = "nano", at = { 1.3, 6.3, -3.7 } },
-	},
 }

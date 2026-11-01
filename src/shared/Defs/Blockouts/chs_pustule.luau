@@ -16,6 +16,8 @@ for _, p in {
 	{ name = "spine", parent = "base", shape = "box", size = { 0.2, 0.2, 2.4 }, at = { 0, 2.95, 0.3 }, color = "metal" },
 	{ name = "hazard", parent = "base", shape = "box", size = { 1.9, 0.25, 0.08 }, at = { 0, 1.2, -1.14 }, color = "hazard" },
 	{ name = "teamBand", parent = "base", shape = "box", size = { 1.9, 0.25, 0.08 }, at = { 0, 1.2, 1.14 }, color = "team" },
+	{ name = "torso", parent = "base", shape = "box", size = { 1, 0.5, 0.4 }, at = { 0, 1.15, -1.3 }, pivot = { 0, 1.15, -1.1 }, color = "dark" },
+	{ name = "eyes", parent = "torso", shape = "box", size = { 0.6, 0.1, 0.05 }, at = { 0, 1.25, -1.52 }, color = "glass" },
 } do
 	table.insert(parts, p)
 end
@@ -25,6 +27,6 @@ return {
 	parts = parts,
 	visualPieces = visual,
 	attachments = {
-		{ name = "muzzle", parent = "base", at = { 0, 1.2, -1.3 } },
+		{ name = "muzzle", parent = "torso", at = { 0, 1.15, -1.55 } },
 	},
 }
