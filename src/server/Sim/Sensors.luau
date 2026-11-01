@@ -678,9 +678,11 @@ end
 -- The def `team` takes enemy unit `id` for (S-109): its own when the type
 -- is known; the def it spoofs when it is an untracked radar contact with a
 -- `spoof` (the Wraith passes for a bomber); else nil (unknown, D107).
+-- A decoy Commander (S-233) passes for its `disguise` even in sight.
 function Sensors.shownDef(sim: Types.Sim, team: number, id: number, level: number, defIndex: number): number?
 	if Sensors.typeKnown(sim, team, id, level) then
-		return defIndex
+		local disguise = sim.defs.unitByIndex[defIndex].disguise
+		return if disguise then sim.defs.units[disguise].index else defIndex
 	end
 	local spoof = sim.defs.unitByIndex[defIndex].spoof
 	if spoof ~= nil and level == L.RADAR then
@@ -700,6 +702,9 @@ function Sensors.knownCategories(sim: Types.Sim, team: number, id: number, level
 	local w = sim.world
 	local landed = def.domain == "air" and w.slot[id] ~= nil and bit32.band(w.state[id], World.State.LANDED) ~= 0
 	if Sensors.typeKnown(sim, team, id, level) then
+		if def.disguise ~= nil then
+			return sim.defs.units[def.disguise].categoryMask -- a decoy Commander passes for one (S-233)
+		end
 		if landed then
 			return bit32.bor(bit32.band(def.categoryMask, bit32.bnot(AIR_BITS)), CB.GROUND)
 		end

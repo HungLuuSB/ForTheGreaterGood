@@ -57,6 +57,18 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-11-01, wreck supply bars: C-285)
+
+- **Wreck supply bars only where you reclaim (C-285, your request):** a wreck's supply bar shows once one of your workers starts reclaiming it, and stays until the wreck is gone, even if the worker stops. Wrecks worn by blasts no longer all show one. Wrecks reclaimed by allies or enemies show none; resurrect bars are unchanged. `debug_out/screens/c285_one_wreck_bar.jpg`.
+- Ready to merge: `89947ca5` (C-285)
+
+## Summary (2026-11-01, batch 2 spiders: C-284)
+
+- **All-terrain spiders lie along the ground (C-284, batch 2):** a `SPIDER` unit pitches and rolls to the drawn ground under it, up to 75°, so one on a cliff clings to it. Other ground units stay upright. Checked in Studio with Lancers standing in for spiders, through a temporary edit not committed: `debug_out/screens/c284_spider_tilt_standin.jpg`.
+- **S-232 checked:** turns draw evenly with the 16-bit heading (Commander at 86–94°/s, a 30°/s ship at 28–32°/s). A Lune run at 60 fps with jittered packets shows the render clock is smooth. No client change.
+- **Batch 2, still to come:** the decoy Commanders (agreed with sim-A: enemies get the disguise from the server; owner and allies see the Commander's model with the decoy's own name and stats); the crawling bombs' blast from `deathBlast.aoe`; rigs and piece scripts once C's models land; E's icons once approved.
+- Ready to merge: `9a0512a3` (C-284)
+
 ## Summary (2026-10-31, batch 1 pictures: C-283)
 
 - **Batch 1 build-menu pictures (C-283):** E's sheet 4 is complete, with all 31 batch 1 units. The user approved its single upload: 77607112363466.

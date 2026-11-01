@@ -10,6 +10,7 @@ local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
 local AmmoDefs = require("./Support/AmmoDefs") -- the aircraft with ammo, as before S-194
+local BlindBombers = require("./Support/BlindBombers") -- (S-234)
 local RunAll = require("./RunAll")
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
@@ -409,7 +410,7 @@ return function(t: RunAll.Context)
 	-- once is destroyed while nobody watches. Order still remembers it, so a
 	-- bomber sent later bombs the empty spot, until a spotter sees it again.
 	t.test("bombers bomb a ghost whose structure died unseen, until the spot is seen again", function()
-		local sim = Sim.new({ seed = 34, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BlindBombers.load(), seed = 34, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local plant = Spawn.unit(sim, "chs_vehplant", 2, 150, -100)
 		local spotter = Spawn.unit(sim, "ord_lancer", 1, 150, 0)
@@ -573,7 +574,7 @@ return function(t: RunAll.Context)
 	-- A Plague 600 studs east of a parked Lancer that only Chaos radar sees
 	-- (an Eye tower: radar error 45 studs, so the blip is well off the tank).
 	t.test("bombs target radar contacts and land on the wobbled position", function()
-		local sim = Sim.new({ seed = 31, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BlindBombers.load(), seed = 31, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local bomber = Spawn.unit(sim, "chs_plague", 2, 450, 0, -math.pi / 2)
 		Spawn.unit(sim, "chs_eye", 2, -50, 150) -- radar 280 reaches the target (269 studs off); sight 160 doesn't
@@ -606,7 +607,7 @@ return function(t: RunAll.Context)
 	end)
 
 	t.test("bombs target ghost structures at their last known position", function()
-		local sim = Sim.new({ seed = 32, players = PLAYERS, mapId = "flat:128" })
+		local sim = Sim.new({ defs = BlindBombers.load(), seed = 32, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local bomber = Spawn.unit(sim, "ord_absolution", 1, -450, 0, math.pi / 2)
 		local plant = Spawn.unit(sim, "chs_vehplant", 2, 150, -100)

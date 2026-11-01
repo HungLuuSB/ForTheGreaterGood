@@ -4,7 +4,7 @@
 return {
 	id = "chs_guard_laser",
 	type = "HITSCAN",
-	range = 165,
+	range = 124, -- -25% (S-234, the user; was 165)
 	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.7,
 	shotCost = { power = 18 }, -- lasers cost energy per shot (S-187, the user)

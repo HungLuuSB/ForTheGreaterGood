@@ -34,6 +34,9 @@ local classes: { [string]: MoveClass } = {
 	-- walking mechs that also walk the seafloor (S-210, the user's playtest 3
 	-- H18, H40): the Commanders, Titan and Juggernaut; submerged in deep water
 	AMPHIB_WALKER = { id = "AMPHIB_WALKER", bit = 10, surface = "amphib", maxSlope = 40, pathing = "flowfield" },
+	-- all-terrain spiders (S-233, batch 2): BAR's Recluse, Webber, Vanguard,
+	-- Termite and Karganeth climb any slope, cliffs and houses included
+	SPIDER = { id = "SPIDER", bit = 11, surface = "land", maxFord = 2, pathing = "flowfield" },
 }
 
 for _, mc in classes do

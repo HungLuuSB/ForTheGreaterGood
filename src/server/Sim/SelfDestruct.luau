@@ -21,7 +21,8 @@ function SelfDestruct.set(sim: Types.Sim, id: number, on: boolean)
 	local c = sim.combat
 	if on then
 		if c.selfDestruct[id] == nil then
-			c.selfDestruct[id] = sim.tick + SelfDestruct.TICKS
+			local seconds = sim.defs.unitByIndex[sim.world.defIndex[id]].selfDestructSeconds -- (0: at once, S-233)
+			c.selfDestruct[id] = sim.tick + (if seconds then seconds * 15 else SelfDestruct.TICKS)
 		end
 	else
 		c.selfDestruct[id] = nil

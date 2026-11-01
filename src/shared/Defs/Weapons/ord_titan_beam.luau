@@ -4,7 +4,7 @@
 return {
 	id = "ord_titan_beam",
 	type = "BEAM",
-	range = 320, -- shorter T3 range (S-213, the user): was 420
+	range = 288, -- shorter T3 range (S-213, the user): was 420; -10% (S-234): was 320
 	closeDamage = 1.5,
 	reload = 7,
 	accuracy = 0,

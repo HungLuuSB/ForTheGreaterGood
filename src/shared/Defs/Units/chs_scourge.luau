@@ -14,7 +14,7 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 320, power = 3600, buildTime = 7000 },
 	health = 2100,
 	footprint = 3, -- size shows tech level (S-104)
-	sensors = { sight = 200 },
+	sensors = { sight = 150 }, -- artillery defences -25% (S-234, the user; was 200)
 	weapons = { { def = "chs_scourge_missile", turretPiece = "launcher", muzzle = "muzzle" } },
 	pieces = { "base", "launcher", "muzzle" },
 	icon = "artillery",

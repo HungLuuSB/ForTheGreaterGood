@@ -10,7 +10,7 @@
 return {
 	id = "ord_beamer_beam",
 	type = "HITSCAN",
-	range = 220,
+	range = 165, -- -25% (S-234, the user; was 220)
 	closeDamage = 1.5, -- lasers hit harder up close (S-178, the user)
 	reload = 0.2,
 	shotCost = { power = 6 }, -- lasers cost energy per shot (S-187, the user)

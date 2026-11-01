@@ -371,6 +371,9 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 	local function simGround(gx: number, gz: number): number
 		return World.simGroundY(world, gx, gz)
 	end
+	local function drawnGround(gx: number, gz: number): number
+		return World.groundY(world, gx, gz) -- spiders lie along it (Attitude)
+	end
 	local parts, frames = r.parts, r.frames
 	table.clear(parts)
 	table.clear(frames)
@@ -440,7 +443,7 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		if au and camera then
 			au.lod = PieceAnim.lodAt((camera - Vector3.new(x, y, z)).Magnitude)
 		end
-		local roll, pitch = Attitude.step(d.attitude, d.def, x, z, heading, dt)
+		local roll, pitch = Attitude.step(d.attitude, d.def, x, z, heading, dt, drawnGround)
 		table.insert(parts, d.root)
 		local frame = CFrame.new(x, y, z) * CFrame.Angles(0, heading + math.pi, 0)
 		if roll ~= 0 or pitch ~= 0 then

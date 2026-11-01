@@ -94,7 +94,13 @@ export type UnitDef = {
 	pinpointFull: number?, -- this type's count for full precision (default Pinpoint.FULL, 6; S-62)
 	deploy: { time: number, armor: number }?, -- unpacks when it stands still: seconds each way, damage divisor deployed (S-64)
 	deathBlast: { damage: number, aoe: number, edge: number, onlyDefs: { string }?, notSelfDestruct: boolean? }?, -- explodes when killed: every unit in `aoe`, own included (S-70); onlyDefs: hurts only those defs, notSelfDestruct: no blast when self-destructed (S-209, the nano)
-	selfDestructBlast: { damage: number, aoe: number, edge: number }?, -- self-destructed: this blast instead of the scaled death blast (S-209, the Juggernaut)
+	-- a decoy Commander (S-233): enemies (their clients, sensors, AI and
+	-- targeting) take it for this def even in sight; it leaves no wreck
+	disguise: string?,
+	-- seconds of a self-destruct's countdown (default Schema.SELF_DESTRUCT_SECONDS);
+	-- 0: at once (S-233, the spies and crawling bombs)
+	selfDestructSeconds: number?,
+	selfDestructBlast: { damage: number, aoe: number, edge: number, paralyzer: boolean? }?, -- paralyzer: an EMP burst that stuns, no harm (S-233, the spies) -- self-destructed: this blast instead of the scaled death blast (S-209, the Juggernaut)
 	assistOnly: boolean?, -- a builder with no build list of its own: assists, repairs, reclaims (S-209, the nano turret)
 	-- shield dome generator (S-79; Shared/Combat/ShieldField, Sim/Shield):
 	-- a dome of `radius` round it; `capacity` charge in shell masses;
@@ -182,6 +188,10 @@ export type WeaponDef = {
 	-- `bolt` studs of, its shooter excepted; they leave no wreck. Commanders
 	-- lose a share of their health instead (Combat.BOLT_COMMANDER).
 	bolt: number?,
+	-- a crawling bomb's trigger (S-233): when it would fire, the unit
+	-- detonates instead: it dies at once, leaves no wreck, and its def's
+	-- `deathBlast` does the damage (the same blast if it is shot first)
+	kamikaze: boolean?,
 	apex: number?,
 	-- HOMING: also targets enemy strategic missiles the team detects, before
 	-- anything else; a proximity burst destroys one with `chance` (S-48).
@@ -377,7 +387,9 @@ local UNIT_SPEC: Spec = {
 		height = opt(POSITIVE),
 		muzzleHeight = opt(POSITIVE),
 		deathBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 }, onlyDefs = { kind = "list", optional = true, item = STRING, minItems = 1 }, notSelfDestruct = { kind = "boolean", optional = true } } },
-		selfDestructBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 } } },
+		disguise = opt(STRING),
+		selfDestructSeconds = opt(NON_NEGATIVE),
+		selfDestructBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 }, paralyzer = { kind = "boolean", optional = true } } },
 		assistOnly = { kind = "boolean", optional = true },
 		shield = { kind = "record", optional = true, fields = { radius = POSITIVE, capacity = POSITIVE, recharge = POSITIVE, power = NON_NEGATIVE } },
 		retract = { kind = "record", optional = true, fields = { armor = { kind = "number", min = 1 } } },
@@ -466,6 +478,7 @@ local WEAPON_SPEC: Spec = {
 		strategic = { kind = "boolean", optional = true },
 		manualFire = { kind = "boolean", optional = true },
 		bolt = opt(POSITIVE),
+		kamikaze = { kind = "boolean", optional = true },
 		apex = opt(POSITIVE),
 		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION, tactical = { kind = "boolean", optional = true } } },
 		rocket = { kind = "boolean", optional = true },
@@ -876,6 +889,9 @@ function Defs.validate(raw: RawDefs): { string }
 		end
 		if type(u.spoof) == "string" and units[u.spoof] == nil then
 			report(`spoof: unknown unit {describe(u.spoof)}`)
+		end
+		if type(u.disguise) == "string" and units[u.disguise] == nil then
+			report(`disguise: unknown unit {describe(u.disguise)}`)
 		end
 		if type(u.upgradesFrom) == "table" then
 			if u.domain ~= "structure" then
