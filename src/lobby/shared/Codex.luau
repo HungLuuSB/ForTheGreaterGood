@@ -51,21 +51,9 @@ end
 
 -- Units the sim stream announced ahead of their defs (the decision that
 -- adds them): the roles may name them before the defs reach this branch.
--- Remove each once its def is on main (batch 1's 31, S-230, are).
+-- Remove each once its def is on main (batch 1's 31, S-230, and batch 2's
+-- 43, S-233, are).
 local ANNOUNCED: { [string]: string } = {}
--- batch 2, bots (approved 2026-11-01; bar-roster-plan 2.3)
-for _, id in {
-	"ord_picket", "ord_squire", "ord_petard", "ord_draftsman", "ord_skyguard", "ord_steward",
-	"ord_effigy", "ord_sextant", "ord_informant", "ord_marshal", "ord_culverin", "ord_mariner",
-	"ord_scaler", "ord_marksman", "ord_hush", "ord_outrider", "ord_martyr", "ord_snare",
-	"ord_stormcaller", "ord_paragon", "ord_champion", "ord_monolith",
-	"chs_firebrand", "chs_taskmaster", "chs_wrath", "chs_portent", "chs_blister", "chs_changeling",
-	"chs_cutpurse", "chs_gloom", "chs_newt", "chs_pyre", "chs_gargoyle", "chs_spitter",
-	"chs_pustule", "chs_snitch", "chs_ravener", "chs_scrounger", "chs_colossus", "chs_pandemonium",
-	"chs_infernal", "chs_widowmaker", "chs_abyssal",
-} do
-	ANNOUNCED[id] = "batch 2"
-end
 Codex.ANNOUNCED = table.freeze(ANNOUNCED)
 
 -- The sim's rules the articles describe. The lobby place has no

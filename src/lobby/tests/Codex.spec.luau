@@ -89,7 +89,7 @@ return function(t: RunAll.Context)
 		t.deepEqual(codex.entries.chs_typhon.counterparts, { "ord_tempest" })
 		t.deepEqual(codex.entries.ord_hoverdock.counterparts, { "chs_skimyard" })
 		t.equal(#codex.entries.chs_glaive.counterparts, 0, "Chaos-only")
-		-- batch 2 (bots): both sides of each pair, once the defs land
+		-- batch 2 (bots, S-233)
 		for _, pair in {
 			{ "ord_magistrate", "chs_scrounger" }, { "ord_draftsman", "chs_taskmaster" }, { "ord_effigy", "chs_changeling" },
 			{ "ord_petard", "chs_firebrand" }, { "ord_culverin", "chs_spitter" }, { "ord_mariner", "chs_newt" },
@@ -97,12 +97,11 @@ return function(t: RunAll.Context)
 			{ "ord_hush", "chs_gloom" }, { "ord_informant", "chs_snitch" }, { "ord_martyr", "chs_blister" },
 			{ "ord_paragon", "chs_abyssal" },
 		} do
-			local a, b = codex.entries[pair[1]], codex.entries[pair[2]]
-			if a and b then
-				t.deepEqual(a.counterparts, { pair[2] })
-				t.deepEqual(b.counterparts, { pair[1] })
-			end
+			t.deepEqual(codex.entries[pair[1]].counterparts, { pair[2] })
+			t.deepEqual(codex.entries[pair[2]].counterparts, { pair[1] })
 		end
+		t.equal(#codex.entries.ord_snare.counterparts, 0, "Order-only")
+		t.equal(#codex.entries.chs_pustule.counterparts, 0, "Chaos-only")
 		t.deepEqual(codex.entries.ord_overwatch.counterparts, { "chs_twin_guard", "chs_geryon" })
 		t.deepEqual(codex.entries.chs_geryon.counterparts, { "ord_overwatch" })
 		t.equal(#codex.entries.ord_warden.counterparts, 0, "faction-only")
@@ -200,16 +199,6 @@ return function(t: RunAll.Context)
 		t.equal(other.stun, nil)
 	end)
 
-	t.test("batch 2 announces 43 bots, 22 Order and 21 Chaos, each named by a role", function()
-		local count = { order = 0, chaos = 0 }
-		for id in Codex.ANNOUNCED do
-			local side = if string.sub(id, 1, 4) == "ord_" then "order" else "chaos"
-			count[side] += 1
-		end
-		t.equal(count.order, 22)
-		t.equal(count.chaos, 21)
-	end)
-
 	t.test("a decoy says what it passes for", function()
 		local wraith = Codex.stats(codex, "chs_wraith")
 		t.equal((wraith.decoy :: any).of, defs.units.chs_wraith.spoof)
@@ -217,54 +206,41 @@ return function(t: RunAll.Context)
 		t.equal(Codex.stats(codex, "ord_paladin").decoy, nil)
 	end)
 
-	-- batch 2's mechanics (S-233) on stand-in defs until the real ones land:
-	-- a decoy Commander (`disguise`), a crawling bomb (a `kamikaze` weapon
-	-- and its `deathBlast`) and a spy (radar signature 0, an EMP
-	-- self-destruct with no countdown)
-	t.test("disguise, crawling bombs and spies (S-233)", function()
-		local fake = { units = table.clone(defs.units), weapons = table.clone(defs.weapons) }
-		local function unit(id: string, from: string, fields: { [string]: any })
-			local u = table.clone(defs.units[from])
-			u.id = id
-			for k, v in fields do
-				u[k] = v
-			end
-			fake.units[id] = u
+	t.test("disguise, crawling bombs, spies and spiders: batch 2's defs (S-233)", function()
+		local effigy, sovereign = defs.units.ord_effigy, defs.units.ord_sovereign
+		local s = Codex.stats(codex, "ord_effigy")
+		t.deepEqual(s.disguise, { of = "ord_sovereign", health = effigy.health / sovereign.health })
+		t.equal(s.decoy, nil, "a disguise, not a radar spoof")
+		t.equal(s.wreck, nil, "a disguised decoy leaves no wreck")
+		t.equal((Codex.stats(codex, "chs_changeling").disguise :: any).of, "chs_warlord")
+
+		local martyr = defs.units.ord_martyr
+		local bomb = Codex.stats(codex, "ord_martyr")
+		local trigger = 0
+		for _, slot in martyr.weapons do
+			local w = defs.weapons[slot.def]
+			t.expect(w.kamikaze, `{slot.def} is its trigger`)
+			trigger = math.max(trigger, w.range)
 		end
-		fake.weapons.test_kamikaze = { id = "test_kamikaze", kamikaze = true, range = 6, reload = 1, damage = {}, targets = { "GROUND" } }
-		unit("ord_effigy", "ord_mason", { disguise = "ord_sovereign", health = defs.units.ord_sovereign.health / 4 })
-		unit("ord_martyr", "ord_mace", {
-			weapons = { { def = "test_kamikaze" } },
-			deathBlast = { damage = 900, aoe = 24, edge = 0.3 },
-			selfDestructSeconds = 0,
-		})
-		unit("ord_informant", "ord_mace", {
-			weapons = {},
-			sensors = { sight = 200, radarSignature = 0 },
-			selfDestructSeconds = 0,
-			selfDestructBlast = { damage = 3000, aoe = 40, edge = 0.5, paralyzer = true },
-		})
-		fake.units.ord_advbotlab = table.clone(defs.units.ord_advbotlab)
-		fake.units.ord_advbotlab.buildOptions = { "ord_effigy", "ord_martyr", "ord_informant" }
-		local c = Codex.build(fake)
+		t.deepEqual(bomb.detonate, { damage = martyr.deathBlast.damage, aoe = martyr.deathBlast.aoe, range = trigger })
+		t.equal(#bomb.weapons, 0, "the trigger has no weapon card")
+		t.equal(bomb.dps, 0)
+		t.equal((bomb.selfDestruct :: any).instant, true)
+		t.equal((bomb.selfDestruct :: any).emp, false)
+		t.expect(Codex.stats(codex, "chs_pustule").cloak ~= nil, "the Pustule cloaks")
 
-		local effigy = Codex.stats(c, "ord_effigy")
-		t.deepEqual(effigy.disguise, { of = "ord_sovereign", health = 0.25 })
-		t.equal(effigy.decoy, nil, "not a radar spoof")
-		t.equal(effigy.wreck, nil, "a disguised decoy leaves no wreck")
-		t.equal(c.entries.ord_effigy.role.name, "Decoy Commander")
+		for _, id in { "ord_informant", "chs_snitch" } do
+			local spy = Codex.stats(codex, id)
+			t.equal(spy.stealth, 0, id)
+			t.expect(spy.cloak ~= nil, id)
+			t.deepEqual(spy.selfDestruct, { emp = true, aoe = defs.units[id].selfDestructBlast.aoe, instant = true })
+			t.equal(spy.detonate, nil)
+		end
+		t.equal(Codex.stats(codex, "ord_titan").selfDestruct, nil, "a plain self-destruct blast needs no line")
 
-		local martyr = Codex.stats(c, "ord_martyr")
-		t.deepEqual(martyr.detonate, { damage = 900, aoe = 24, range = 6 })
-		t.equal(#martyr.weapons, 0, "the trigger has no weapon card")
-		t.equal(martyr.dps, 0)
-		t.deepEqual(martyr.selfDestruct, { emp = false, aoe = 0, instant = true })
-
-		local informant = Codex.stats(c, "ord_informant")
-		t.equal(informant.stealth, 0)
-		t.deepEqual(informant.selfDestruct, { emp = true, aoe = 40, instant = true })
-		t.equal(informant.detonate, nil)
-		t.equal(Codex.stats(c, "ord_titan").selfDestruct, nil, "a plain self-destruct blast needs no line")
+		for _, id in { "ord_scaler", "chs_ravener", "ord_snare", "ord_monolith", "chs_widowmaker" } do
+			t.equal(Codex.stats(codex, id).move, "SPIDER", id)
+		end
 	end)
 
 	t.test("the firing range has a target for every weapon but anti-missile and strategic ones", function()
