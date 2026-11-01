@@ -630,6 +630,17 @@ function Codex.tierName(tier: number?): string
 	return `T{tier}`
 end
 
+-- A role name inside a sentence: "an experimental lightning tank", "an AA
+-- bot", "an MLRS". Acronyms keep their capitals and take "an" when their
+-- first letter is said with a vowel (A, E, F, H, I, L, M, N, O, R, S, X).
+function Codex.aRole(name: string): string
+	if string.match(name, "^%u%u") then
+		return (if string.find("AEFHILMNORSX", string.sub(name, 1, 1), 1, true) then "an " else "a ") .. name
+	end
+	local lower = string.lower(string.sub(name, 1, 1)) .. string.sub(name, 2)
+	return (if string.find("aeiou", string.sub(lower, 1, 1), 1, true) then "an " else "a ") .. lower
+end
+
 -- What the Units showroom's firing range (L-22) points a weapon at: "air",
 -- "sub" (on a place with water) or "ground" (a board, or a barge on
 -- water); nil when it isn't shown (anti-missile and strategic weapons).

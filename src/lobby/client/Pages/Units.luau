@@ -536,7 +536,7 @@ function Units.new(frame: Frame, _router: any): any
 		-- the counterpart
 		Kit.section(article, if #e.counterparts > 0 then `{Ui.label2(if e.faction == "order" then "chaos" else "order")} counterpart` else "Counterpart", nextOrder())
 		if #e.counterparts == 0 then
-			paragraph(article, `None: only {Ui.label2(e.faction)} has a {if e.role then string.lower(e.role.name) else "unit like this"}.`, nextOrder(), "small", Kit.COLOR.dim)
+			paragraph(article, `None: only {Ui.label2(e.faction)} has {if e.role then Codex.aRole(e.role.name) else "a unit like this"}.`, nextOrder(), "small", Kit.COLOR.dim)
 		else
 			for _, other in e.counterparts do
 				counterpartCard(article, c, other, nextOrder(), select)
