@@ -57,6 +57,17 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-11-02, FTGG-FEEDBACK-5 client items: C-292)
+
+- **Merged main 521b0b76** (models' batch 2 picture tooling).
+- **sim-A's S-236 items (C-292):**
+  - A structure killed while it is being built just vanishes: no explosion, debris or wreck.
+  - The Juggernaut's death blast (8000 over 150 studs) plays a nuke missile's detonation, crater included.
+  - The Colossus's self-firing bolt cannon is no D-Gun: no DGUN command, preview or D-Gun ring. Its bolt is drawn at its 10-stud width.
+- Studio, with sim's S-236 sources applied locally: a vehicle plant frame killed mid-build left 0 bursts; a Juggernaut went up as a nuke; the Colossus fired its bolt at enemies 270 studs off. Screenshots `debug_out/screens/c292_*.jpg`.
+- Suites (with S-236's sources): `lune run test_client` 364 / 364, `lune run build` passed (1124 scripts, 2959 requires). The Juggernaut and Colossus specs need S-236's defs, so **merge after sim's 3c4da15e**.
+- Ready to merge: `56543768` (C-292; after 3c4da15e)
+
 ## Summary (2026-11-01, fallen hulks checked, first wrecks: C-291)
 
 - **Merged main 6736ef40** (C's batch 2 meshes, wrecks and the 13 fallen hulks, approved).
