@@ -221,4 +221,4 @@ def blob(p, center, r, length, kind, slices=8, sides=16):
 def previews(height, width=None):
     """bots.previews framed on the bigger of the bot's height and (for the
     wide spiders) its spread."""
-    return bots.previews(max(height, (width or 0) * 0.65))
+    return bots.previews(max(height, (width or 0) * 0.95))
