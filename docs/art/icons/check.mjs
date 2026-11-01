@@ -31,13 +31,14 @@ for (const d of defs) {
 }
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-const PH_FRAMES = ["vehicle", "walker", "amphib", "hover", "air", "vtol", "ship", "sub", "struct", "defense"];
+const PH_FRAMES = ["vehicle", "walker", "spider", "amphib", "hover", "air", "vtol", "ship", "sub", "struct", "defense"];
 // the frame a def should have, by the placeholder rule
 function frameFor(d) {
 	if (d.domain === "structure") return d.armed ? "defense" : "struct";
 	if (d.domain === "air") return d.move === "HELI" ? "vtol" : "air";
 	if (d.domain === "naval") return d.move === "SUB" ? "sub" : "ship";
 	if (d.move === "WALKER" || d.move === "AMPHIB_WALKER") return "walker";
+	if (d.move === "SPIDER") return "spider";
 	if (d.move === "AMPHIB") return "amphib";
 	if (d.move === "HOVER") return "hover";
 	return "vehicle";
