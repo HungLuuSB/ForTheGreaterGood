@@ -657,7 +657,7 @@ function Units.new(frame: Frame, _router: any): any
 		end
 		local rules = Codex.RULES
 		if s.cloak then
-			row("Cloak", `{n(s.cloak.drain)} power/s while on. Enemy sight can't see it, only radar; an enemy within {n(s.cloak.decloak)} studs reveals it, and so does firing, for {rules.cloakQuiet} s`)
+			row("Cloak", `{n(s.cloak.drain)} power/s while on. Enemy sight can't see it, {if s.stealth == 0 then "nor radar" else "only radar"}; an enemy within {n(s.cloak.decloak)} studs reveals it, and so does firing, for {rules.cloakQuiet} s`)
 		end
 		if s.heal > 0 then
 			row("Autoheal", `+{n(s.heal)} health/s after {rules.healDelay} s without damage`)
