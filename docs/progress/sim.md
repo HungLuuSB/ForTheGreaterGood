@@ -15,7 +15,7 @@ Plan: `docs/design/bar-roster-plan.md` (the user's answers at the top). sim-A le
 | Part 3 | `docs/design/reserved-units.md`: the 65 unreachable units, drafted only (49 new names, 7 modes and events) | done |
 | Part 4 | S-227: wrecks take damage, resources follow health, scrap heaps below 40%, protocol 45 | done (sim) · C: heap meshes · B: swap and sparks (contract in net.md 7a) · E: scrap mark · D: note |
 | Batch 1 | 29 vehicles and hovercraft + 2 hover factories; S-228 cloak, S-229 EMP (protocol 46), S-230 all 31 defs, hovercraft checked, AI picks (hover factories on water maps still to do) | defs done (sim), lands through B's and C's branches · C: blockouts → meshes → wrecks, a preview for the user per unit · E: icons, pictures · B: cloak, EMP, hover effects · D: Codex |
-| Batch 2 | 43 bots (22 Order, 21 Chaos), list and names approved by the user 2026-11-01 (plan §2.3); mechanics first: `SPIDER` move class, crawling bombs, spies, decoy Commanders in sight | sim: done, S-233 (defs, `SPIDER`, bombs, spies, decoys, protocol 48) · C: blockouts → meshes → wrecks · E: icons, pictures · B: spider and bomb effects, rigs · D: Codex |
+| Batch 2 | 43 bots (22 Order, 21 Chaos), list and names approved by the user 2026-11-01 (plan §2.3); mechanics first: `SPIDER` move class, crawling bombs, spies, decoy Commanders in sight | on main at ded2eeff (2026-11-01): sim S-233, S-234 (balance), S-235 (the Lakelands loads in 1.5 s) · C: 41 meshes, wrecks and 13 fallen T3 hulks uploaded · E: icons, decoy pictures · B: icon sheets uploaded, decoy drawing, walk cycles, fallen-wreck placement · D: Codex rows. Still open: E's other batch 2 pictures |
 | Batches 3–5 | Air, naval, structures | the next batch's defs are drafted while C models the current one |
 
 
