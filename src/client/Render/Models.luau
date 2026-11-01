@@ -47,6 +47,9 @@ function Models.template(def: any): Model
 	local real = folder and folder:FindFirstChild(def.model)
 	local template: Model
 	local meshed = if Models.DETAILED then MeshModels.get(def.id) else nil
+	if Models.DETAILED then
+		MeshModels.wreck(def) -- its wreck starts building with the unit, so the first death leaves it (C-291)
+	end
 	if not Models.DETAILED then
 		real = nil
 	end
