@@ -57,6 +57,14 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-11-01, fallen hulks checked, first wrecks: C-291)
+
+- **Merged main 6736ef40** (C's batch 2 meshes, wrecks and the 13 fallen hulks, approved).
+- **Fallen hulks checked in Studio (models-C's request):** the Titan, Widowmaker and Thunderer lie on the ground at their unit's spot with joints at rest, resting on hips, belly or tracks; only the Titan's arm guns and two of the Widowmaker's shins dig in, as C intends. `debug_out/screens/c291_fallen_hulks_titan_widowmaker_thunderer.jpg`.
+- **First wrecks (C-291):** a unit type's first wreck used to be the darkened live model, because the wreck mesh only started building at that first death. It now builds when the unit type is first drawn, and pooled stand-ins give way once it's ready.
+- Suites: `lune run test_client` 361 / 361, `lune run build` passed (1123 scripts, 2950 requires).
+- Ready to merge: `637485a9` (C-291)
+
 ## Summary (2026-11-01, batch 2 walks: C-290)
 
 - **Merged main d20a633d** (S-235, C's batch 2 blockouts and fallen hulks, D's Codex rows). Studio check for S-235: the `skirmish` lobby profile starts, and a Lakelands match was playing 1.6 s after Start (`debug_out/screens/s235_lakelands_lobby_match.jpg`).
