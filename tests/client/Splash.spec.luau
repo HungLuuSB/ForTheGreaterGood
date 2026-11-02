@@ -118,4 +118,61 @@ return function(t: any)
 		t.expect(heavy, "a StructureDeath as wide as its shown blast")
 		t.expect(not nuke, "not the nuke's look")
 	end)
+
+	local function dieAndWatch(defId: string, progress: number?): ({ Effects.Burst }, World.Death?)
+		local sim = Sim.new({ seed = 4, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		local g = sim.map.layers.grid
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
+		local id = Spawn.unit(sim, defId, 1, 0, 0, 0)
+		if progress then
+			sim.world.buildProgress[id] = progress
+		end
+		local fx = Effects.new()
+		local Combat = require("../../src/server/Sim/Combat/Combat")
+		local seen: { Effects.Burst } = {}
+		local death: World.Death? = nil
+		for tick = 1, 60 do
+			if tick == 5 then
+				Combat.queueDamage(sim.combat, id, 1e7, 0)
+			end
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			death = death or world.died[1]
+			Effects.update(fx, world, tick, tick * DT, 0, 0)
+			for _, b in fx.bursts do
+				if not table.find(seen, b) then
+					table.insert(seen, b)
+				end
+			end
+			table.clear(world.died)
+		end
+		return seen, death
+	end
+
+	t.test("the Juggernaut goes up as a nuke: a nuke missile's detonation, crater and all (S-236, C-292)", function()
+		local blast = Sim.new({ seed = 4, players = { { id = 1, team = 1 } }, mapId = "flat:16", scenario = "empty" }).defs.units.chs_juggernaut.deathBlast
+		t.expect(blast.aoe >= Effects.NUKE_BLAST, `its blast is a nuke's ({blast.aoe})`)
+		local nuke: Effects.Burst? = nil
+		for _, b in (dieAndWatch("chs_juggernaut")) do
+			if b.kind == "nuke" then
+				nuke = b
+			end
+		end
+		t.expect(nuke ~= nil, "a nuke burst")
+		local b = nuke :: Effects.Burst
+		t.equal(b.radius, blast.aoe)
+		t.equal(b.life, Effects.NUKE_SECONDS)
+		t.expect(not b.noCrater, "with the nuke's crater")
+	end)
+
+	t.test("a structure killed while it is being built is just gone: no explosion, no debris (S-236, C-292)", function()
+		local bursts, death = dieAndWatch("ord_fusion", 0.6)
+		t.expect(death ~= nil and death.unfinished == true, "its DEATH says it was a frame")
+		t.equal(#bursts, 0, "nothing goes off")
+		local finished, done = dieAndWatch("ord_fusion")
+		t.expect(done ~= nil and not done.unfinished, "a finished one is no frame")
+		t.expect(#finished > 0, "and it explodes as ever")
+	end)
 end

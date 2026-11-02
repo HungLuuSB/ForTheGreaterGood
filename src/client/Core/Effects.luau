@@ -278,9 +278,11 @@ end
 Effects.LARGE_IMPACT = 1.8
 Effects.FLAME_SECONDS = 0.35 -- a flame stream's life (S-181)
 Effects.HUGE_BLAST = 90 -- studs: a death blast this wide plays the nuke's look scaled to it (F15)
+Effects.NUKE_BLAST = 150 -- studs: one as wide as a nuke's (the Juggernaut's, S-236) is a nuke's detonation, crater and all (C-292)
 Effects.HEAVY_BLAST = 50 -- studs: a death blast this wide (T3 walkers, S-217) plays models-C's heavier StructureDeath (C-270)
 Effects.BLAST_SHOWN = 0.6 -- an ordinary death blast's burst, as a share of its damage radius
 Effects.BOLT_HEIGHT = 5 -- studs a D-Gun bolt rides over the ground (the server's Combat.BOLT_HEIGHT, S-194)
+Effects.BOLT_AUTHORED = 7 -- studs: the bolt reach models-C's D-Gun effects are drawn for; a wider bolt (the Colossus's 10, S-236) scales them (C-292)
 Effects.BOLT_BEHIND = 1.5 -- seconds of a D-Gun bolt's path behind it where a death counts as its burn
 
 -- The D-Gun bolt that a unit of `def` dying at (x, z) was burned by, or nil:
@@ -925,7 +927,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		-- a D-Gun has its own (models-C's DgunMuzzle, C-266)
 		local b = if weapon.type == "HOMING" or weapon.strategic
 			then burst(fx, now, x + ox, y + oy, z + oz, weaponSize(weapon), "launch", Effects.LAUNCH_SECONDS)
-			else burst(fx, now, x + ox, y + oy, z + oz, 0.8, if weapon.bolt then "dgunMuzzle" else "muzzle", 0.12)
+			else burst(fx, now, x + ox, y + oy, z + oz, if weapon.bolt then 0.8 * weapon.bolt / Effects.BOLT_AUTHORED else 0.8, if weapon.bolt then "dgunMuzzle" else "muzzle", 0.12)
 		b.ground = World.groundY(world, x + ox, z + oz)
 		facing(b, vx, vy, vz)
 		-- a strategic missile warns even without its LAUNCH_WARNING, which
@@ -1320,6 +1322,9 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 		local d = fx.pendingDeaths[i]
 		if d.tick <= renderTick then
 			table.remove(fx.pendingDeaths, i)
+			if d.unfinished then
+				continue -- a frame killed while being built is just gone: no blast, no debris (S-236, C-292)
+			end
 			local def = if d.defIndex then world.defs.unitByIndex[d.defIndex] else nil
 			local r = (if def then def.footprint else 1) * 3 * (1 + d.severity / 255)
 			-- an aircraft falls first and explodes where it hits (C-48)
@@ -1338,7 +1343,7 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 				if bolt then
 					-- burned by a D-Gun bolt passing: its hit there too (the server
 					-- sends no IMPACT for a pass-through, S-194; C-266)
-					local h = burst(fx, now, d.x, ground + Effects.BOLT_HEIGHT, d.z, 1, "dgunHit", Effects.EXPLOSION_SECONDS)
+					local h = burst(fx, now, d.x, ground + Effects.BOLT_HEIGHT, d.z, (bolt.weapon.bolt or Effects.BOLT_AUTHORED) / Effects.BOLT_AUTHORED, "dgunHit", Effects.EXPLOSION_SECONDS)
 					h.ground = ground
 					facing(h, bolt.vx, 0, bolt.vz)
 				end
@@ -1348,14 +1353,17 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 					-- size from its def: a huge one (a Commander, a fusion reactor) as
 					-- the nuke's look scaled to its radius, smaller than a nuke's; a
 					-- heavy one (a T3 walker's, S-217) the heavier StructureDeath; others
-					-- a burst of part of the blast's reach
+					-- a burst of part of the blast's reach; and one a nuke's size (the
+					-- Juggernaut's, S-236) as a nuke missile's impact (C-292)
+					local nuke = blast.aoe >= Effects.NUKE_BLAST
 					local huge = blast.aoe >= Effects.HUGE_BLAST
 					local heavy = not huge and blast.aoe >= Effects.HEAVY_BLAST
 					local radius = if huge then blast.aoe else blast.aoe * Effects.BLAST_SHOWN
 					local kind = if huge then "nuke" elseif heavy then "structureDeath" else "impact"
-					local big = burst(fx, now, d.x, ground + 2, d.z, radius, kind, if huge or heavy then Effects.DEATH_SECONDS * 2 else Effects.EXPLOSION_SECONDS)
+					local life = if nuke then Effects.NUKE_SECONDS elseif huge or heavy then Effects.DEATH_SECONDS * 2 else Effects.EXPLOSION_SECONDS
+					local big = burst(fx, now, d.x, ground + 2, d.z, radius, kind, life)
 					big.ground = ground
-					big.noCrater = huge or nil -- a nuke's look without its crater
+					big.noCrater = (huge and not nuke) or nil -- a nuke's look without its crater
 				end
 			end
 		end

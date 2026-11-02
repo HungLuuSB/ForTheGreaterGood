@@ -177,7 +177,8 @@ export type Bolt = {
 	hits: { number }, -- the units in its way now, any team (it spares only its owner)
 }
 
--- The unit's D-Gun (a weapon with a `bolt`, S-194).
+-- The unit's D-Gun (a manual-fire weapon with a `bolt`, S-194; the Colossus's
+-- bolt cannon fires by itself and is no D-Gun, S-236).
 function AttackPreview.boltWeapon(world: World.World, u: World.Unit): any?
 	local def = World.def(world, u)
 	if def == nil then
@@ -185,7 +186,7 @@ function AttackPreview.boltWeapon(world: World.World, u: World.Unit): any?
 	end
 	for _, ws in def.weapons do
 		local w = world.defs.weaponByIndex[(ws :: any).weaponIndex]
-		if w and w.bolt then
+		if w and w.bolt and w.manualFire then
 			return w
 		end
 	end
