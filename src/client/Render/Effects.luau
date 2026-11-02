@@ -400,7 +400,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			local pos = Vector3.new(v[2], v[3], v[4])
 			local flat = Vector3.new(p.vx, 0, p.vz)
 			local frame = if flat.Magnitude > 1e-3 then CFrame.lookAt(pos, pos + flat) else CFrame.new(pos)
-			if Vfx.follow(r.vfx, p.id, "dgunBolt", frame, vt) then
+			if Vfx.follow(r.vfx, p.id, "dgunBolt", frame, vt, (p.weapon.bolt or Effects.BOLT_AUTHORED) / Effects.BOLT_AUTHORED) then -- as wide as its bolt (C-292)
 				held[p.id] = true
 				continue
 			end

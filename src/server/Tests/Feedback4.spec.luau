@@ -66,13 +66,7 @@ return function(t: RunAll.T)
 		t.expect(w.slot[plane] == nil or w.health[plane] < hp, "the Titan's missile hit the aircraft")
 	end)
 
-	t.test("Overwatch and Steadfast see and reach 25% less (the user)", function()
-		local u = Sim.new({ seed = 1, players = PLAYERS }).defs.units
-		t.equal(u.ord_overwatch.sensors.sight, 124, "Overwatch sight: 221 → 166 → 124 (S-234)")
-		t.equal(u.ord_overwatch.maxRange, 135, "Overwatch range: 240 → 180 → 135 (S-234)")
-		t.equal(u.ord_warden.sensors.sight, 210, "Steadfast sight: 280 → 210")
-		t.equal(u.ord_warden.maxRange, 210, "Steadfast range: 280 → 210")
-	end)
+	-- (Overwatch and Steadfast's 25% cut was reverted to 10%: Feedback5.spec, S-236)
 	t.test("in an 8v8 on Supreme Strait every AI factory faces the enemy side, airfields and gantries too", function()
 		local players, ai = {}, {}
 		for i = 1, 16 do

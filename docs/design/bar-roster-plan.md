@@ -253,7 +253,7 @@ While C models batch *n*, sim-A drafts batch *n + 1*'s defs (still a draft). **O
 | `corspy` Spectre | Cloaked, radar-invisible spy | T2 | **Snitch** | 100 / 5,100 / 420 / 19 |
 | `cortermite` Termite | Heavy all-terrain spider, heat ray | T2 | **Ravener** | 370 / 4,600 / 2,900 / 15 |
 | `corfast` Twitcher | Combat engineer | T2 | **Scrounger** | 140 / 2,200 / 780 / 28 |
-| `corjugg` Behemoth | Barely mobile heavy turret, three lasers | T3 | **Colossus** | 14,000 / 290,000 / 310,000 / 5.1 (compressed to about the Juggernaut's price) |
+| `corjugg` Behemoth | Barely mobile heavy turret, three lasers | T3 | **Colossus** | 14,000 / 290,000 / 310,000 / 5.1 (compressed to about the Juggernaut's price). S-236 (the user): bigger (footprint 5), 240,000 health, speed 1.5, main cannon fires a D-Gun bolt by itself (9000 to every enemy on its line, every 2 s); beats 15 Titans or 8 Juggernauts alone |
 | `corcat` Catapult | Heavy rocket mech | T3 | **Pandemonium** | 3,400 / 46,000 / 5,700 / 15 (compressed) |
 | `cordemon` Demon | Flamethrower mech with anti-air shoulder rockets | T3 | **Infernal** | 4,100 / 51,000 / 17,000 / 20 (compressed) |
 | `corkarg` Karganeth | All-terrain assault mech, missiles | T3 | **Widowmaker** | 1,700 / 32,000 / 12,000 / 14 |

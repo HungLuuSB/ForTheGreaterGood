@@ -974,7 +974,7 @@ Every domain has a **T1 worker** and an **advanced (T2) worker**. Workers build 
 | Shipyard | T1 | Naval Worker, T1 ships, submarine |
 | Advanced Shipyard | T2 | Advanced Naval Worker, T2 ships, carrier |
 
-Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-95: a factory keeps an order list for its units: move, fight, patrol, guard, repair and attack, appended with shift, replaced by a plain order, cleared by STOP; each new unit rolls out, then takes a copy, in order. It replaced S-4's single rally point. S-133: a finished unit appears on the factory's build pad (the blockout's `buildpad` attachment), facing the exit, and drives straight out through the factory's own footprint before its orders; the factory waits while a unit still stands on its pad. Aircraft appear on the airfield's pad and fly off. S-13: the REPEAT command turns repeat on or off, shown by the factory's REPEAT state bit; TOGGLE means on / off only.)
+Factories have build power and an optional rally point and repeat queue. Workers can assist factories: a worker told to guard a factory goes to it, helps build each unit it makes, and waits beside it for the next (S-236). (S-95: a factory keeps an order list for its units: move, fight, patrol, guard, repair and attack, appended with shift, replaced by a plain order, cleared by STOP; each new unit rolls out, then takes a copy, in order. It replaced S-4's single rally point. S-133: a finished unit appears on the factory's build pad (the blockout's `buildpad` attachment), facing the exit, and drives straight out through the factory's own footprint before its orders; the factory waits while a unit still stands on its pad. Aircraft appear on the airfield's pad and fly off. S-13: the REPEAT command turns repeat on or off, shown by the factory's REPEAT state bit; TOGGLE means on / off only.)
 
 ### 9.3 Build rules
 
@@ -1393,13 +1393,13 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Mobile IR SAM | T1 | **Halo** | **Gadfly** (was Hornet, S-225) |
 | Mobile radar | T1 | **Scryer** (was Oracle, S-225) | **Gazer** (was Watcher, S-225) |
 | Main battle tank | T2 | **Vindicator** (was Paladin, S-225) | **Goliath** (`chs_goliath`, raises arms to fire; retired by S-213, back since S-224, new model to come) |
-| Experimental assault walker (S-209) | T3 | **Titan** (`ord_titan`; beam 288, one small heat-seeking missile 351 against ground and air but not submarines, sight 234, S-213, S-231, S-234) | **Juggernaut** (`chs_juggernaut`, was `chs_korgoth`; heat ray 230, missiles 520, S-213) |
+| Experimental assault walker (S-209) | T3 | **Titan** (`ord_titan`; beam 288, one small heat-seeking missile 351 against ground and air but not submarines, sight 234, S-213, S-231, S-234) | **Juggernaut** (`chs_juggernaut`, was `chs_korgoth`; heat ray 230, missiles 520, S-213; killed or self-destructed it goes up in a nuke's blast, 8000 over 150 studs, S-236) |
 | MLRS | T2 | **Judgement** (precise) | **Hydra** (large salvo) |
 | Mobile radar SAM | T2 | **Seraph** | **Medusa** (was Gorgon, S-225) |
 | Mobile jammer | T2 | **Mantle** (was Veil, S-225) (short range) | **Murk** (was Shroud, S-225) (long range) |
 | Mobile fire-control radar | T2 | **Assessor** (was Arbiter, S-225) (precise) | **Stalker** (cheaper, weaker) |
 | Amphibious tank | T2 | **Tideguard** | **Mire** |
-| Deployable gun (faction-only) | T2 | **Steadfast** (was Warden, S-225): unpacks in 4 s whenever it stands still; deployed it fires (range 210, sight 210: 25% off, S-231), can't move and takes damage / 1.5; packed it can't fire (S-64) | — |
+| Deployable gun (faction-only) | T2 | **Steadfast** (was Warden, S-225): unpacks in 4 s whenever it stands still; deployed it fires (range 252, sight 252: 10% off, S-236; S-231's 25% reverted), can't move and takes damage / 1.5; packed it can't fire (S-64) | — |
 | Siege ram (faction-only) | T2 | — | **Minotaur**: +50% gun damage to structures and a 30-stud demolition charge (3,000 to a structure, every 20 s) (S-64) |
 | Swarm tank (faction-only) | T1 | — | **Locust**: very cheap (value 150) and fast (45), a 120-stud autocannon (S-75) |
 | Siege mortar (faction-only) | T2 | — | **Demolisher** (was Cyclops, S-225): structures only, range 520, 1,200 a shell every 8 s; can't fire at units (S-75) |
@@ -1433,7 +1433,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 |---|---|---|---|---|
 | Laser tower (S-157) | T1 | **Sentry** (`ord_sentry_tower`, red; range 143) | **Guard** (red; range 124) | Command, Ground |
 | Ramping beam tower (S-157) | T1 | **Beamer** (blue; 10 → 50 a hit over 4 s on one target; range 165) | — | Ground |
-| Heavy laser tower (S-157) | T1 | **Overwatch** (2 green barrels in turn; range 135, sight 124 since S-234) | **Twin Guard** (2 red barrels; range 146) and **Geryon** (3-barrel drum, green; more damage, range 161) | Ground |
+| Heavy laser tower (S-157) | T1 | **Overwatch** (2 green barrels in turn; range 216, sight 199 since S-236: 10% off, S-231's and S-234's 25% cuts reverted) | **Twin Guard** (2 red barrels; range 146) and **Geryon** (3-barrel drum, green; more damage, range 161) | Ground |
 | Lobbing gun (S-157) | T1 | **Gauntlet** (high arc, 315 since S-234) | **Talos** (high arc, 270 since S-234) | Ground |
 | ~~Gun turret~~ (retired, S-157) | T1 | ~~Bulwark~~ (`ord_bulwark`) | ~~Spike~~ (`chs_spike`) | — |
 | Heavy turret | T2 | **Bastion** | **Maw** | Adv. Ground |

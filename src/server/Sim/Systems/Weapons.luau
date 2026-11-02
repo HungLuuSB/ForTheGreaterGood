@@ -559,7 +559,7 @@ return function(sim: Types.Sim)
 			-- ordered spot for a bomber's attack-ground.
 			local kx, kz, defIndex = nil, nil, nil
 			local projTarget = 0
-			if weapon.bolt then
+			if weapon.bolt and weapon.manualFire then
 				-- the D-Gun (S-194): only at its DGUN point
 				local dx = sim.orders.dgunX[id]
 				if dx ~= nil then
@@ -808,7 +808,7 @@ return function(sim: Types.Sim)
 					if salvo and salvo.count > 1 then
 						w.wSalvo[key], w.wSalvoWait[key] = salvo.count - 1, salvo.delay
 					end
-					if weapon.bolt then
+					if weapon.bolt and weapon.manualFire then
 						sim.orders.dgunX[id], sim.orders.dgunZ[id] = nil, nil -- one bolt per DGUN order (S-194)
 						if sim.orders.dgunWalk[id] then
 							sim.orders.dgunWalk[id] = nil

@@ -354,8 +354,8 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		if t < 0 or death.tick <= t then
 			table.remove(r.dying, i)
 			local d = dying.drawn
-			if t < 0 or hidden then
-				release(d) -- nothing to watch
+			if t < 0 or hidden or death.unfinished then
+				release(d) -- nothing to watch, or a frame killed while being built: just gone (S-236, C-292)
 			else
 				-- the burst comes from Effects; the shake or the flung pieces and the wreck
 				-- from here, or an aircraft's fall (C-48)

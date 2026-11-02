@@ -516,7 +516,22 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		-- builds: its frame, or the factory production it assists (S-128, the
 		-- user; never repairs or stockpiles); otherwise it follows it
 		local b = sim.build
-		if def(sim, id).buildPower and def(sim, t).buildOptions and def(sim, t).domain ~= "structure" then
+		local td = def(sim, t)
+		if def(sim, id).buildPower and td.buildOptions and td.domain == "structure" then
+			-- guarding a factory (S-236, the user's FTGG-FEEDBACK-5): it helps
+			-- build each unit the factory makes, then waits beside it for the
+			-- next one; an unfinished factory it helps finish
+			local q = b.queue[t]
+			local unfinished = w.buildProgress[t] < 1
+			if unfinished or (q ~= nil and #q > 0) then
+				if (b.target[id] or 0) ~= t or b.repair[id] or b.assist[id] ~= not unfinished then
+					Build.commandAssist(sim, { id }, t)
+				end
+				return true -- Build walks it into range and builds
+			elseif (b.target[id] or 0) ~= 0 and not b.repair[id] then
+				BuildState.idle(b, id) -- the queue is empty: wait for the next one
+			end
+		elseif def(sim, id).buildPower and td.buildOptions then
 			local lt = b.target[t] or 0
 			local helping = lt ~= 0 and World.isRef(w, lt, b.targetGen[t]) and not b.repair[t]
 				and (w.buildProgress[lt] < 1 or b.assist[t] == true)

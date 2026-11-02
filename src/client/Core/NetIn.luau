@@ -132,6 +132,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 					alt = u.alt,
 					vx = vx,
 					vz = vz,
+					unfinished = (u.build ~= nil and u.build < 1) or nil, -- a frame: it just vanishes (S-236, C-292)
 				})
 				world.dying[id] = { unit = u, tick = tick } -- still a missile's target until the death is drawn (C-50)
 				world.units[id] = nil

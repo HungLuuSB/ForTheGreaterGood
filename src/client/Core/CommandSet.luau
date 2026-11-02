@@ -52,7 +52,7 @@ end
 function CommandSet.hasDgun(def: any, all: any?): boolean
 	for _, ws in def.weapons or {} do
 		local w = all and all.weaponByIndex and all.weaponByIndex[(ws :: any).weaponIndex]
-		if w and w.fx and w.fx.trail == "dgun" then
+		if w and w.fx and w.fx.trail == "dgun" and w.manualFire then -- (not the Colossus's self-firing bolt, S-236)
 			return true
 		end
 	end

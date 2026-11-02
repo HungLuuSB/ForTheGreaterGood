@@ -2749,3 +2749,24 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
 - `Render/Deaths.wreckModel` marks each wreck with `WreckMesh`. Once the wreck mesh is ready, pooled stand-ins of that type are destroyed instead of reused.
 - Studio on main 6736ef40 (C's batch 2 meshes): a fresh Titan, Widowmaker and Thunderer destroyed 6 s after spawning all left their fallen hulks on the first death, with joints at rest. Earlier the same check left stand-ins for the Titan and Widowmaker.
 - The fallen hulks lie at their unit's spot: the Titan face down on its hips and thighs (arm guns 4 studs into the ground, as C intends), the Widowmaker belly down with its legs sprawled, the Thunderer slumped on its tracks (`debug_out/screens/c291_fallen_hulks_titan_widowmaker_thunderer.jpg`).
+
+### C-292 — FTGG-FEEDBACK-5: unfinished frames vanish, the Juggernaut goes up as a nuke, the Colossus's bolt isn't a D-Gun (2026-11-01, S-236)
+
+- **A frame killed while being built is just gone.** NetIn's death record carries `unfinished` when the unit's build progress was under 1. Effects skips its death burst, deathBlast burst and D-Gun hit. The renderer releases the model with no shake, fling or wreck. The sim sends no BLAST and no wreck for it.
+- **A death blast as wide as a nuke's is a nuke's detonation.** This applies to the Juggernaut (8000 over 150 studs, S-236) and to any blast of `Effects.NUKE_BLAST` = 150 studs or more, which also takes in the advanced fusion reactors' 180. Such a blast plays the same burst as a strategic missile's IMPACT: kind `nuke`, radius aoe, `NUKE_SECONDS`, crater included. Blasts from 90 studs up to 150 keep F15's nuke look without the crater.
+- **A bolt without `manualFire` is not a D-Gun.** The Colossus's `chs_colossus_fire` (bolt 10, fires by itself) gets no DGUN command, no bolt preview and no D-Gun range ring. `AttackPreview.boltWeapon`, `CommandSet.hasDgun` and `Ranges` now require `manualFire`.
+- The bolt's effects (models-C's DgunBolt, DgunMuzzle, DgunHit) scale by `bolt / Effects.BOLT_AUTHORED` (7), so the Colossus's 10-stud bolt is drawn 1.43× the Commander's.
+- Studio (sim's S-236 sources applied locally, Coastline):
+  - A vehicle plant frame killed mid-build left nothing on the client: 0 bursts in the next 2 s, model released. A finished plant killed the same way exploded as before (`c292_frame_at_kill.jpg`, `c292_frame_just_gone.jpg`).
+  - A Juggernaut killed in view played the nuke's fireball (`c292_juggernaut_nuke.jpg`). No crater: Coastline's ground is a mesh, and nuke missiles don't dig there either.
+  - The Colossus fired its bolt on its own at a Ravager row and a Goliath 270 studs off, with the D-Gun trail at the wider scale (`c292_colossus_bolt.jpg`).
+
+### C-293 — Batch 2 build-menu pictures: sheet 4 re-uploaded, sheet 5 added (2026-11-02, E-15)
+
+- E's E-15 packed the 41 batch 2 bot pictures: 23 fill sheet 4's free slots and 18 go on a new sheet 5 (1024 × 382). Sheets 1–3 are unchanged.
+- Uploaded with the user's approval, which also covers E's future sheets:
+  - sheet 4 `113290129817271` (sha256 b4951cbc…), replacing `77607112363466`;
+  - sheet 5 `98129651343691` (sha256 4a4cebf0…).
+- `tools/icons/assets.json` has the new ids, and `node tools/icons/pictures.mjs` regenerated `UnitPictures`: 276 pictures on 5 sheets, all uploaded, none missing.
+- E's commits weren't on main yet, so this branch merges E's Ready commit 51da4165 to get the sheets and `pictures.json`.
+- Studio: an Advanced Bot Lab's build menu showed the batch 2 bots from sheets 4 and 5, and every on-screen picture loaded (`debug_out/screens/c293_pictures_sheets_4_5_advbotlab.jpg`).
