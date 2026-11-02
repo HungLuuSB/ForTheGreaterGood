@@ -1,7 +1,38 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 3516 triangles, glow share 0.4%",
+  "revision": "Colossus remodel (S-236), approved and uploaded with the user's approval 2026-11-02: 4884 triangles, glow share 2.3%",
   "bar": {
+    "model": "rbxassetid://76235066450727",
+    "meshes": {
+      "base": "rbxassetid://89970040756403",
+      "base_glow_head": "rbxassetid://137299042857204",
+      "base_glow_power": "rbxassetid://84726251595844",
+      "legBL": "rbxassetid://113802401721795",
+      "legBR": "rbxassetid://81465924979745",
+      "legFL": "rbxassetid://86645288981687",
+      "legFR": "rbxassetid://115295587781303",
+      "torso": "rbxassetid://84166722474270",
+      "torso_glow_head": "rbxassetid://93250557186379",
+      "torso_glow_power": "rbxassetid://127619936603692",
+      "torso_glow_weapon": "rbxassetid://126171546710157"
+    },
+    "decals": {
+      "ALB": "rbxassetid://71267391023251",
+      "RGH": "rbxassetid://98996906505898",
+      "NOR": "rbxassetid://81116379107632",
+      "MTL": "rbxassetid://102730516734352",
+      "EMI": "rbxassetid://110414714108214"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://109267837807912",
+      "NOR": "rbxassetid://112194681130526",
+      "RGH": "rbxassetid://138656958975727",
+      "MTL": "rbxassetid://140524195301293",
+      "EMI": "rbxassetid://139572695068408"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_colossus_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://129189996961795",
     "meshes": {
       "base": "rbxassetid://86222643032189",
@@ -29,9 +60,36 @@
       "MTL": "rbxassetid://110189323576367",
       "EMI": "rbxassetid://126234142971649"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_colossus_bar in FTGG Art"
+    "note": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 3516 triangles, glow share 0.4%"
   },
   "wreck": {
+    "model": "rbxassetid://76643962985278",
+    "meshes": {
+      "base": "rbxassetid://78540931168728",
+      "legBL": "rbxassetid://134959257051896",
+      "legBR": "rbxassetid://124044630777616",
+      "legFL": "rbxassetid://102740754220108",
+      "legFR": "rbxassetid://92236551121360",
+      "torso": "rbxassetid://81070810188331"
+    },
+    "decals": {
+      "ALB": "rbxassetid://86986914972590",
+      "RGH": "rbxassetid://91957317357912",
+      "NOR": "rbxassetid://75248064888223",
+      "MTL": "rbxassetid://92673501954256",
+      "EMI": "rbxassetid://77297011494488"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://80905854792289",
+      "NOR": "rbxassetid://71680362580522",
+      "RGH": "rbxassetid://79561921648405",
+      "MTL": "rbxassetid://82444086116764",
+      "EMI": "rbxassetid://77581296899649"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_colossus_wreck_bar in FTGG Art",
+    "revision": "Colossus remodel (S-236), approved and uploaded with the user's approval 2026-11-02: 3296 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://139036583681737",
     "meshes": {
       "base": "rbxassetid://85741586704432",
