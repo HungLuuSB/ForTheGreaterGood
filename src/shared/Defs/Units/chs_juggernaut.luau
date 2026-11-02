@@ -6,8 +6,8 @@
 -- shotgun cannons, long-range vertical-launch missiles. Short-ranged for its
 -- size: focused long-range fire takes it down. Walks under water.
 -- Self-destructed or killed, it goes up in a
--- blast a third of a nuke's that can't kill a Commander (S-217, the user;
--- it was almost a nuke, 220 studs, H40). (S-225, the user) A big mech that
+-- nuke's blast (S-236, the user's FTGG-FEEDBACK-5; S-217 had cut it to a
+-- third of a nuke's that couldn't kill a Commander). (S-225, the user) A big mech that
 -- takes on two Titans: 1.5× the Titan's price, 1.8× its health, 2.2× its DPS.
 local Templates = require("../Templates")
 
@@ -33,8 +33,8 @@ return Templates.extend(Templates.Unit, {
 		{ def = "chs_juggernaut_missiles", turretPiece = "torso", muzzle = "missile_pod" },
 	},
 	pieces = { "base", "thighL", "shinL", "footL", "thighR", "shinR", "footR", "torso", "ray_arm", "ray_muzzle", "gunL", "gunL_muzzle1", "gunL_muzzle2", "gunR", "gunR_muzzle1", "gunR_muzzle2", "missile_pod" },
-	selfDestructBlast = { damage = 480, aoe = 52, edge = 0.25 }, -- (S-217, the user) 35% of a nuke's 150 studs; about 15% of a Commander's health
-	deathBlast = { damage = 480, aoe = 52, edge = 0.25 }, -- killed, the same: no larger than its self-destruct (S-217)
+	selfDestructBlast = { damage = 8000, aoe = 150, edge = 0.05 }, -- (S-236, the user) the nuke's (chs_nuke): 8000 at the centre, 400 at the rim
+	deathBlast = { damage = 8000, aoe = 150, edge = 0.05 }, -- killed, the same
 	icon = "experimental",
 	model = "chs_juggernaut",
 })
