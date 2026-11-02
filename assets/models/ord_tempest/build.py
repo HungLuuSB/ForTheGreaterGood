@@ -66,9 +66,13 @@ def no_details(p):
     pass
 
 
+# its wreck lies slumped on its skirt, the turret skewed, the barrel drooping (S-234)
+FALLEN = unit.Fallen(body=[("z", 6), ("x", -4)],
+                     joints={"turret": [("y", -45)], "barrel": [("x", -8)]}, dig=("barrel",), sink=0.4)
+
 unit.run(__file__, "ord_tempest", "order", footprint=3,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
                  unit.PieceSpec("turret", "base", TURRET, build_turret, no_details),
                  unit.PieceSpec("barrel", "turret", BARREL, build_barrel, no_details)],
          attachments={"muzzle": {"parent": "barrel", "at": [0, BARREL[1], BARREL[2] - 6.8]}},
-         budget=5000)
+         budget=5000, fallen=FALLEN)

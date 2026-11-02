@@ -18,6 +18,9 @@
 -- variant = size 1..4) once approved and built, its ground patch tinted to
 -- the terrain (C-281); else a stand-in of scattered charred bars, swapped
 -- for C's when it's built.
+-- Heavy T3 wrecks (Core/Deaths.FALLEN, S-234, C-286) lie down along the
+-- ground's slope: walkers on a side, the rest slumped and sunk in, until
+-- models-C's fallen-hulk meshes land.
 -- Aircraft that die in the air fall out of the sky instead (C-48,
 -- Core/Deaths.crash), burning and trailing smoke, and leave nothing: the
 -- ground explosion comes from Effects when they hit.
@@ -68,6 +71,7 @@ export type State = {
 	features: { [number]: { model: Model, kind: number, real: boolean } }, -- map features by wreck ID (S-197): uncapped, apart from the wrecks
 	toHeap: { [number]: boolean }, -- wrecks that became scrap heaps before their wreck was placed (S-227)
 	featureVersion: number, -- MeshModels.fxVersion when the placeholders were last checked
+	world: any?, -- the client world, for the ground under a fallen wreck (C-286)
 	folder: Folder,
 	stats: { shakes: number, flings: number, wrecks: number, crashes: number },
 }
@@ -82,24 +86,81 @@ function RenderDeaths.new(): State
 	return { playing = {}, wrecks = {}, byWreck = {}, pending = {}, reclaimed = {}, free = {}, features = {}, toHeap = {}, featureVersion = -1, folder = folder, stats = { shakes = 0, flings = 0, wrecks = 0, crashes = 0 } }
 end
 
+-- Each wreck model's part corners and box in its root's space, with its
+-- joints as knocked askew, by model. Worked out through the joints: a
+-- placed model's jointed parts move only on the next physics step. The
+-- corners, not the box, find a tipped model's lowest point: a tipped box
+-- reaches far below any part.
+type Extent = { corners: { Vector3 }, lo: Vector3, hi: Vector3 }
+local extents: { [Model]: Extent } = setmetatable({}, { __mode = "k" }) :: any
+
+local function measure(model: Model): Extent
+	local rootPart = model.PrimaryPart :: BasePart
+	local root = rootPart.CFrame
+	local joints: { [BasePart]: JointInstance } = {}
+	for _, d in model:GetDescendants() do
+		if d:IsA("JointInstance") and d.Part0 and d.Part1 then
+			joints[d.Part1 :: BasePart] = d
+		end
+	end
+	local frames: { [BasePart]: CFrame } = { [rootPart] = CFrame.identity }
+	local function frame(part: BasePart, depth: number): CFrame
+		local known = frames[part]
+		if known then
+			return known
+		end
+		local j = joints[part]
+		local f = if j and depth < 32
+			then frame(j.Part0 :: BasePart, depth + 1) * j.C0 * (if j:IsA("Motor6D") then j.Transform else CFrame.identity) * j.C1:Inverse()
+			else root:ToObjectSpace(part.CFrame)
+		frames[part] = f
+		return f
+	end
+	local corners = {}
+	local lo, hi = Vector3.one * math.huge, -Vector3.one * math.huge
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and d.Transparency < 1 then
+			local cf, h = frame(d, 0), d.Size / 2
+			for i = 0, 7 do
+				local c = cf * Vector3.new(if i % 2 == 0 then -h.X else h.X, if i % 4 < 2 then -h.Y else h.Y, if i < 4 then -h.Z else h.Z)
+				table.insert(corners, c)
+				lo, hi = lo:Min(c), hi:Max(c)
+			end
+		end
+	end
+	return { corners = corners, lo = lo, hi = hi }
+end
+
 local function wreckModel(s: State, def: any, id: number): Model
+	local meshed = MeshModels.wreck(def)
 	local list = s.free[def.id]
 	if list and #list > 0 then
-		return table.remove(list) :: Model
+		-- darkened stand-ins pooled before the wreck mesh was ready give way to it (C-291)
+		if meshed == nil or list[#list]:GetAttribute("WreckMesh") == true then
+			return table.remove(list) :: Model
+		end
+		for _, old in list do
+			old:Destroy()
+		end
+		table.clear(list)
 	end
-	local meshed = MeshModels.wreck(def)
 	local model = (meshed or Models.template(def)):Clone()
+	model:SetAttribute("WreckMesh", meshed ~= nil)
+	-- a fallen hulk's lying pose is baked into its meshes (C-289): joints stay at rest
+	local fallen = meshed ~= nil and MeshModels.wreckFallen(def)
+	model:SetAttribute("FallenMesh", fallen)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") and not meshed then
 			d.Color = d.Color:Lerp(RenderDeaths.CHAR, RenderDeaths.CHAR_AMOUNT)
 			d.Material = Enum.Material.CorrodedMetal
 			d.CastShadow = true
-		elseif d:IsA("Motor6D") then
+		elseif d:IsA("Motor6D") and not fallen then
 			-- knocked askew: turrets turned, barrels drooping
 			local rng = Prng.new(id + #d.Name)
 			d.Transform = CFrame.Angles(math.rad(rng:nextNumber(-25, -5)), math.rad(rng:nextNumber(-60, 60)), 0)
 		end
 	end
+	extents[model] = measure(model)
 	return model
 end
 
@@ -116,7 +177,44 @@ local function pool(s: State, w: Wreck)
 	end
 end
 
-local function placeWreck(s: State, id: number, def: any, base: CFrame, wreckId: number)
+-- The ground under `at` with `at`'s heading: flat (`here`), and turned up
+-- along the slope under the footprint (`slope`).
+local function groundFrames(world: any, def: any, at: CFrame): (CFrame, CFrame)
+	local function ground(x: number, z: number): number
+		return World.groundY(world, x, z)
+	end
+	local p, look = at.Position, at.LookVector
+	local here = CFrame.new(p.X, ground(p.X, p.Z), p.Z) * CFrame.Angles(0, math.atan2(-look.X, -look.Z), 0)
+	local n = Vector3.new(Deaths.groundNormal(ground, p.X, p.Z, math.max(2, (def.footprint or 1) * 4)))
+	local right = here.RightVector
+	return here, CFrame.fromMatrix(here.Position, (right - n * right:Dot(n)).Unit, n)
+end
+
+-- The root frame of a wreck lying down (`fall`) where `base` stood: on the
+-- ground's slope under its footprint, turned by the fall, its lowest point
+-- sunk in; a toppled one shifted back over where it died.
+local function lieDown(world: any, def: any, model: Model, base: CFrame, fall: Deaths.Fall): CFrame?
+	local e = extents[model]
+	if world == nil or e == nil or e.lo.X > e.hi.X then
+		return nil
+	end
+	local here, slope = groundFrames(world, def, base)
+	local pose = CFrame.Angles(fall.pitch, 0, fall.roll) * here:ToObjectSpace(base)
+	local lo, hi = Vector3.one * math.huge, -Vector3.one * math.huge
+	for _, corner in e.corners do
+		local c = pose * corner
+		lo, hi = lo:Min(c), hi:Max(c)
+	end
+	local sink = fall.sink + fall.sinkShare * (e.hi.Y - e.lo.Y)
+	local shift = if fall.center then Vector3.new(-(lo.X + hi.X) / 2, 0, -(lo.Z + hi.Z) / 2) else Vector3.zero
+	return slope * CFrame.new(shift + Vector3.new(0, -lo.Y - sink, 0)) * pose
+end
+
+-- `unit`: the unit's frame (position, heading + pi); `liveOffset`: the live
+-- model's RootOffset, so the wreck's root takes the dying root's place. A
+-- fallen hulk (C-289) is placed by its own RootOffset instead: its base lies
+-- lower and off to one side, and the mesh already sits on the ground.
+local function placeWreck(s: State, id: number, def: any, unit: CFrame, liveOffset: CFrame, wreckId: number)
 	if wreckId ~= 0 and (s.byWreck[wreckId] or s.reclaimed[wreckId]) then
 		s.reclaimed[wreckId] = nil -- already there, or reclaimed while the death played
 		return
@@ -126,7 +224,15 @@ local function placeWreck(s: State, id: number, def: any, base: CFrame, wreckId:
 	local tilt = CFrame.Angles(math.rad(rng:nextNumber(-4, 4)), 0, math.rad(rng:nextNumber(-4, 4)))
 	local root = model.PrimaryPart :: BasePart
 	model.Parent = s.folder
-	root.CFrame = base * tilt - Vector3.new(0, RenderDeaths.SINK, 0)
+	if model:GetAttribute("FallenMesh") == true then
+		local ground = if s.world then select(2, groundFrames(s.world, def, unit)) else unit
+		root.CFrame = ground * tilt * ((model:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity)
+	else
+		local base = unit * liveOffset
+		local e = extents[model]
+		local fall = Deaths.fall(id, def, false, e and e.hi.Y - e.lo.Y, e and e.hi.X - e.lo.X, e and e.hi.Z - e.lo.Z)
+		root.CFrame = (if fall then lieDown(s.world, def, model, base, fall) else nil) or base * tilt - Vector3.new(0, RenderDeaths.SINK, 0)
+	end
 	local w = { id = id, defId = def.id, model = model, wreckId = wreckId }
 	table.insert(s.wrecks, w)
 	if wreckId ~= 0 then
@@ -296,7 +402,10 @@ end
 
 -- `now`: render-clock seconds; `speed`: the sim speed (a falling aircraft's
 -- flames and smoke run at it, at most 1, like the other effects).
-function RenderDeaths.step(s: State, now: number, speed: number?)
+function RenderDeaths.step(s: State, now: number, speed: number?, world: any?)
+	if world then
+		s.world = world
+	end
 	local timeScale = math.clamp(speed or 1, 0, 1)
 	for i = #s.playing, 1, -1 do
 		local p = s.playing[i]
@@ -306,7 +415,7 @@ function RenderDeaths.step(s: State, now: number, speed: number?)
 				p.fire:Destroy() -- its smoke stays in the air and fades
 			end
 			if p.plan.wreck then
-				placeWreck(s, p.id, p.def, p.base, p.wreckId) -- same model geometry: the wreck's root takes the dying root's place
+				placeWreck(s, p.id, p.def, p.base * p.rootOffset:Inverse(), p.rootOffset, p.wreckId)
 			end
 			table.remove(s.playing, i)
 			if p.done then
@@ -416,6 +525,7 @@ local function placeFeature(s: State, world: any, wid: number, rec: any)
 end
 
 function RenderDeaths.syncWrecks(s: State, world: any, t: number)
+	s.world = world
 	for _, wid in world.wreckGone do
 		local f = s.features[wid]
 		if f then
@@ -501,7 +611,7 @@ function RenderDeaths.syncWrecks(s: State, world: any, t: number)
 		elseif def then
 			local offset = (Models.template(def):GetAttribute("RootOffset") :: CFrame?) or CFrame.identity
 			local y = World.groundY(world, rec.x, rec.z)
-			placeWreck(s, wid, def, CFrame.new(rec.x, y, rec.z) * CFrame.Angles(0, rec.heading + math.pi, 0) * offset, wid)
+			placeWreck(s, wid, def, CFrame.new(rec.x, y, rec.z) * CFrame.Angles(0, rec.heading + math.pi, 0), offset, wid)
 		end
 		s.pending[wid] = nil
 	end

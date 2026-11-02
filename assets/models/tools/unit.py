@@ -189,6 +189,120 @@ def wreck_look(look, edges=False):
 
 
 @dataclass
+class Fallen:
+    """A fallen hulk (S-234, sim.md models item 6): how a heavy T3's wreck
+    lies on the ground instead of standing. Only used with FTGG_WRECK=1.
+    Turns are (axis, degrees), the axis "x" / "y" / "z" or a vector, Roblox
+    model space, final (scaled) studs:
+    - `joints`: piece -> turns about its own pivot, children following
+      (legs folded, turret skewed, barrel drooping), applied first;
+    - `body`: turns of the whole hulk about the origin ("z" rolls it onto
+      a side, "x" negative pitches it onto its face);
+    - `off`: piece -> (move, turns): knocked off, lying apart; the turns
+      about its posed pivot, then the move (children follow);
+    - then the hulk drops until its lowest point (`dig` pieces aside,
+      which may cut into the ground) sits `sink` studs under it, and each
+      knocked-off part settles the same way on its own. With `rest`, only
+      those pieces' lowest point counts (a belly or hips on the ground):
+      the rest may cut in (guns buried, legs dug in).
+    The pose is baked into the meshes, so the rig says `fallen`: the
+    client places the wreck by its own base and keeps every joint at rest."""
+    joints: dict = field(default_factory=dict)
+    body: list = field(default_factory=list)
+    off: dict = field(default_factory=dict)
+    dig: tuple = ()
+    rest: tuple = ()
+    sink: float = 0.15
+    previews: list | None = None
+
+
+def _turn(turns, about=(0.0, 0.0, 0.0)):
+    """Blender-space matrix: `turns` in order about the Roblox point `about`."""
+    from mathutils import Matrix
+    m = Matrix.Identity(4)
+    for axis, deg in turns:
+        v = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}.get(axis, axis)
+        m = Matrix.Rotation(math.radians(deg), 4, lib.R(*v).normalized()) @ m
+    c = lib.R(*about)
+    return Matrix.Translation(c) @ m @ Matrix.Translation(-c)
+
+
+def _pose(built, fallen):
+    """Bakes `fallen` into the built pieces [(spec, low, high)] in place."""
+    import bmesh
+    from mathutils import Matrix
+    rest = {spec.name: tuple(p.pivot) for spec, p, _ in built}
+    parent = {spec.name: spec.parent for spec, _, _ in built}
+    unknown = (set(fallen.joints) | set(fallen.off) | set(fallen.rest)) - set(rest)
+    if unknown:
+        raise SystemExit(f"fallen pose names pieces that aren't PieceSpecs: {sorted(unknown)}")
+    world = {}
+
+    def w(name):
+        if name not in world:
+            local = _turn(fallen.joints.get(name, []), rest[name])
+            world[name] = (w(parent[name]) if parent[name] else Matrix.Identity(4)) @ local
+        return world[name]
+    body = _turn(fallen.body)
+    final = {name: body @ w(name) for name in rest}
+    def under(name):  # the piece and everything under it
+        out = []
+        for n in rest:
+            a = n
+            while a and a != name:
+                a = parent[a]
+            if a == name:
+                out.append(n)
+        return out
+    for name, (move, turns) in fallen.off.items():
+        piv = final[name] @ lib.R(*rest[name])
+        extra = Matrix.Translation(lib.R(*move)) @ _turn(turns, lib.to_roblox(piv))
+        for n in under(name):
+            final[n] = extra @ final[n]
+
+    def apply(piece, m):
+        bmesh.ops.transform(piece.bm, matrix=m, verts=piece.bm.verts)
+        piece.pivot = tuple(lib.to_roblox(m @ lib.R(*piece.pivot)))
+        for child in piece.subs.values():
+            apply(child, m)
+
+    for spec, p, h in built:
+        apply(p, final[spec.name])
+        apply(h, final[spec.name])
+
+    def lowest(piece):
+        return min([v.co.z for v in piece.bm.verts] + [lowest(c) for c in piece.subs.values()] + [1e9])
+    groups = [under(name) for name in fallen.off]  # each knocked-off part settles on its own
+    loose = {n for g in groups for n in g}
+    groups.append([n for n in rest if n not in loose])
+    by = {spec.name: (p, h) for spec, p, h in built}
+    for i, g in enumerate(groups):
+        main = i == len(groups) - 1
+        floor = min(lowest(by[n][0]) for n in g
+                    if (n not in fallen.dig and (not main or not fallen.rest or n in fallen.rest)) or len(g) == 1)
+        drop = Matrix.Translation((0, 0, -floor - fallen.sink))
+        for n in g:
+            apply(by[n][0], drop)
+            apply(by[n][1], drop)
+
+
+def _hulk_previews(objs):
+    """Preview cameras framed on a fallen hulk: low and spread out, so on
+    its whole ground plan rather than its height."""
+    bpy.context.view_layer.update()  # new objects' matrix_world
+    bs = [lib.bounds(o) for o in objs]
+    lo = [min(b["center"][i] - b["size"][i] / 2 for b in bs) for i in range(3)]
+    hi = [max(b["center"][i] + b["size"][i] / 2 for b in bs) for i in range(3)]
+    cx, cz = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2
+    s = max(hi[0] - lo[0], hi[2] - lo[2], (hi[1] - lo[1]) * 1.5)
+    y = (hi[1] - lo[1]) * 0.4
+    return [("35", (cx - 1.9 * s, 1.5 * s, cz - 2.2 * s), (cx, y, cz), 50),
+            ("side", (cx + 2.8 * s, 0.5 * s, cz), (cx, y, cz), 50),
+            ("80", (cx, 3.2 * s, cz + 0.6 * s), (cx, 0, cz), 50),
+            ("close", (cx - 1.0 * s, 0.8 * s, cz - 1.2 * s), (cx, y, cz), 35)]
+
+
+@dataclass
 class Rec:
     """A piece in rig order (specs and their animated sub-pieces)."""
     name: str
@@ -337,7 +451,7 @@ def surface_stats(objs, glow_objs):
 
 def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_pieces=None,
         budget=4000, tex=1024, samples=32, upload_rev=0, preview_size=None, scale=None,
-        previews=None, glow_strength=None):
+        previews=None, glow_strength=None, fallen=None):
     lib.UPLOAD_REV = upload_rev
     here = os.path.dirname(os.path.abspath(build_file))
     out = os.path.join(here, "export")
@@ -360,6 +474,7 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
     order = []  # Rec(name, parent, pivot, anim)
     low, high = [], []
     piece_anim = animate.for_unit(live_id)
+    built = []
     for spec in pieces:
         p = lib.Piece(spec.name, KINDS, spec.pivot)
         spec.build(p)
@@ -370,8 +485,13 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
         spec.details(h)
         if scale:
             h.scale(scale)
-        order.append(Rec(spec.name, spec.parent, lib.scaled(spec.pivot, scale) if scale else spec.pivot,
-                         piece_anim.get(spec.name), False))
+        built.append((spec, p, h))
+    fallen = fallen if wreck else None
+    if fallen:
+        _pose(built, fallen)
+        previews = fallen.previews
+    for spec, p, h in built:
+        order.append(Rec(spec.name, spec.parent, tuple(p.pivot), piece_anim.get(spec.name), False))
         low.append(p.to_object(materials, col))
         high.append(h.to_object(materials, col))
         for name, child in p.subs.items():
@@ -380,8 +500,22 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
         for name, child in h.subs.items():
             high.append(child.to_object(materials, col, name=name + "_hi"))
     pivots = {r.name: r.pivot for r in order}
+    if fallen and not previews:
+        previews = _hulk_previews(low)
     if scale and attachments:
         attachments = {k: {**a, "at": list(lib.scaled(a["at"], scale))} for k, a in attachments.items()}
+
+    if fallen and os.environ.get("FTGG_POSE"):
+        # quick look at a fallen pose without the bake: plain grey previews in export_wreck/pose_*.png
+        plain = bpy.data.materials.new("pose_plain")
+        plain.use_nodes = True
+        plain.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.35, 0.34, 0.32, 1.0)
+        lib.assign_single_material(low, plain)
+        lib.preview_lighting()
+        for name, cam, at, lens in previews:
+            lib.render_preview(os.path.join(out, f"pose_{name}.png"), cam, at, size=(640, 360), samples=8, lens=lens)
+        print(f"[{unit_id}] pose previews: {out}")
+        return
 
     if os.environ.get("FTGG_MEASURE"):
         # quick check without the bake: glow share per channel
@@ -464,6 +598,7 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
     lib.write_json(os.path.join(out, "rig.json"), {
         "id": unit_id,
         **({"wreckOf": live_id} if wreck else {}),
+        **({"fallen": True} if fallen else {}),
         "footprintStuds": footprint * 8,
         "variants": {"bar": look["label"]},
         "pieces": rig_pieces,

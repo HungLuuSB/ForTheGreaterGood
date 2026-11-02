@@ -53,4 +53,70 @@ function Bots.legs(parts: { any }, o: LegOptions): { string }
 	return names
 end
 
+-- Spider legs for the all-terrain bots (batch 2, moveClass SPIDER): legs
+-- splayed round the body, each a `thigh<tag>` rising from the hip to a knee
+-- high over the body, a `shin<tag>` down to the ankle and a thin claw tip to
+-- the ground, so they read as able to grip a cliff. Thigh and shin are
+-- client pieces that swing about X like the Skitter's (tags FL, ML, BL, FR,
+-- MR, BR; ML / MR only on six legs: a tripod gait, FL MR BL against FR ML
+-- BR). Yaw 0 points the leg back (+Z), 90 right (+X).
+export type SpiderOptions = {
+	legs: number, -- 4 or 6
+	hipR: number, -- hips: distance out from the body's axis
+	hipY: number,
+	kneeR: number, -- knees: out and up
+	kneeY: number,
+	footR: number, -- claw tips on the ground
+	thick: number,
+	color: string, -- thigh color
+	shin: string?, -- shin color (default "metal")
+	claw: string?, -- claw color (default "dark")
+	team: boolean?, -- a team band on each thigh
+}
+
+local SPIDER_YAWS = {
+	[4] = { { "FL", 225 }, { "FR", 135 }, { "BL", 315 }, { "BR", 45 } },
+	[6] = { { "FL", 215 }, { "ML", 270 }, { "BL", 325 }, { "FR", 145 }, { "MR", 90 }, { "BR", 35 } },
+}
+
+function Bots.spider(parts: { any }, o: SpiderOptions): { string }
+	local names = {}
+	-- one segment from (r0, y0) to (r1, y1) on the leg's vertical plane at yaw:
+	-- a box whose Y axis runs between them
+	local function segment(name: string, parent: string, yaw: number, r0: number, y0: number, r1: number, y1: number, w: number, color: string, pivot: boolean)
+		local u = { math.sin(math.rad(yaw)), math.cos(math.rad(yaw)) }
+		local dr, dy = r1 - r0, y1 - y0
+		local rm, ym = (r0 + r1) / 2, (y0 + y1) / 2
+		table.insert(parts, {
+			name = name,
+			parent = parent,
+			shape = "box",
+			size = { w, math.sqrt(dr * dr + dy * dy), w },
+			at = { u[1] * rm, ym, u[2] * rm },
+			rot = { math.deg(math.atan2(dr, dy)), yaw, 0 },
+			pivot = if pivot then { u[1] * r0, y0, u[2] * r0 } else nil,
+			color = color,
+			anim = if pivot then SWING else nil,
+		})
+	end
+	local t = o.thick
+	local ankleR = o.kneeR + (o.footR - o.kneeR) * 0.8
+	local ankleY = o.kneeY * 0.3
+	for _, leg in SPIDER_YAWS[o.legs] do
+		local tag, yaw = leg[1], leg[2]
+		local u = { math.sin(math.rad(yaw)), math.cos(math.rad(yaw)) }
+		segment(`thigh{tag}`, "base", yaw, o.hipR, o.hipY, o.kneeR, o.kneeY, t, o.color, true)
+		table.insert(parts, { name = `hip{tag}`, parent = `thigh{tag}`, shape = "ball", size = { t * 1.5, t * 1.5, t * 1.5 }, at = { u[1] * o.hipR, o.hipY, u[2] * o.hipR }, color = "metal" })
+		if o.team then
+			segment(`thighTeam{tag}`, `thigh{tag}`, yaw, o.hipR + (o.kneeR - o.hipR) * 0.3, o.hipY + (o.kneeY - o.hipY) * 0.3 + t * 0.52, o.hipR + (o.kneeR - o.hipR) * 0.75, o.hipY + (o.kneeY - o.hipY) * 0.75 + t * 0.52, t * 0.7, "team", false)
+		end
+		segment(`shin{tag}`, `thigh{tag}`, yaw, o.kneeR, o.kneeY, ankleR, ankleY, t * 0.85, o.shin or "metal", true)
+		table.insert(parts, { name = `knee{tag}`, parent = `shin{tag}`, shape = "ball", size = { t * 1.3, t * 1.3, t * 1.3 }, at = { u[1] * o.kneeR, o.kneeY, u[2] * o.kneeR }, color = "dark" })
+		segment(`claw{tag}`, `shin{tag}`, yaw, ankleR, ankleY, o.footR, 0.05, t * 0.5, o.claw or "dark", false)
+		table.insert(names, `thigh{tag}`)
+		table.insert(names, `shin{tag}`)
+	end
+	return names
+end
+
 return Bots

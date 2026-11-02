@@ -1,0 +1,67 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2116 triangles, glow share 2.3%",
+  "bar": {
+    "model": "rbxassetid://86595629036799",
+    "meshes": {
+      "base": "rbxassetid://132686017893751",
+      "footL": "rbxassetid://75682223411128",
+      "footL_glow_running": "rbxassetid://96807548094033",
+      "footR": "rbxassetid://124118689484525",
+      "footR_glow_running": "rbxassetid://75269775101684",
+      "shinL": "rbxassetid://132733028710802",
+      "shinR": "rbxassetid://73844480249445",
+      "thighL": "rbxassetid://96504269497647",
+      "thighL_glow_running": "rbxassetid://85084855216970",
+      "thighR": "rbxassetid://121385233759748",
+      "thighR_glow_running": "rbxassetid://89224620825292",
+      "torso": "rbxassetid://105553498865940",
+      "torso_glow_head": "rbxassetid://112091740278296",
+      "torso_glow_power": "rbxassetid://87554911653207"
+    },
+    "decals": {
+      "ALB": "rbxassetid://99578929843861",
+      "RGH": "rbxassetid://72889509305009",
+      "NOR": "rbxassetid://80669944200627",
+      "MTL": "rbxassetid://120700930209194",
+      "EMI": "rbxassetid://134786093484592"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75144990385436",
+      "NOR": "rbxassetid://82907332108818",
+      "RGH": "rbxassetid://94936236802003",
+      "MTL": "rbxassetid://96569700637005",
+      "EMI": "rbxassetid://92351431514608"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_hush_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://124672480177702",
+    "meshes": {
+      "base": "rbxassetid://86212754862333",
+      "footL": "rbxassetid://96641934702524",
+      "footR": "rbxassetid://133068467674810",
+      "shinL": "rbxassetid://95436461776676",
+      "shinR": "rbxassetid://89888408199562",
+      "thighL": "rbxassetid://87207965311246",
+      "thighR": "rbxassetid://93441498193627",
+      "torso": "rbxassetid://113693713064790"
+    },
+    "decals": {
+      "ALB": "rbxassetid://91017271166948",
+      "RGH": "rbxassetid://82042362749553",
+      "NOR": "rbxassetid://90925861565339",
+      "MTL": "rbxassetid://135840041968460",
+      "EMI": "rbxassetid://134468844917010"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75285663540249",
+      "NOR": "rbxassetid://124675539363438",
+      "RGH": "rbxassetid://90780922454616",
+      "MTL": "rbxassetid://92637797656577",
+      "EMI": "rbxassetid://72981858314786"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_hush_wreck_bar in FTGG Art",
+    "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 1644 triangles"
+  }
+}

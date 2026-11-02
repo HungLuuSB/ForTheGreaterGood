@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 1306 triangles, glow share 4.0%",
+  "bar": {
+    "model": "rbxassetid://126787051373885",
+    "meshes": {
+      "base": "rbxassetid://137023422945087",
+      "shell": "rbxassetid://105480284121354",
+      "shell_glow_power": "rbxassetid://107105980275199",
+      "torso": "rbxassetid://136285196051108"
+    },
+    "decals": {
+      "ALB": "rbxassetid://117374572966066",
+      "RGH": "rbxassetid://87717348214823",
+      "NOR": "rbxassetid://106180458296464",
+      "MTL": "rbxassetid://111598262375607",
+      "EMI": "rbxassetid://117471074814369"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75921125460656",
+      "NOR": "rbxassetid://118392418521030",
+      "RGH": "rbxassetid://121629711930766",
+      "MTL": "rbxassetid://96140610073108",
+      "EMI": "rbxassetid://110109287639775"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_martyr_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://104667145210924",
+    "meshes": {
+      "base": "rbxassetid://75913007728503",
+      "shell": "rbxassetid://73415451607517",
+      "torso": "rbxassetid://93573832444436"
+    },
+    "decals": {
+      "ALB": "rbxassetid://70690308070774",
+      "RGH": "rbxassetid://109513293855377",
+      "NOR": "rbxassetid://80983862325428",
+      "MTL": "rbxassetid://89997070347998",
+      "EMI": "rbxassetid://78745941210437"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://108749343561184",
+      "NOR": "rbxassetid://73169972201435",
+      "RGH": "rbxassetid://103245770844248",
+      "MTL": "rbxassetid://130944313230095",
+      "EMI": "rbxassetid://119071260347008"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_martyr_wreck_bar in FTGG Art",
+    "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 1456 triangles"
+  }
+}

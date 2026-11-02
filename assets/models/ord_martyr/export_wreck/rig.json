@@ -1,0 +1,110 @@
+{
+  "id": "ord_martyr_wreck",
+  "wreckOf": "ord_martyr",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0348,
+        0.314,
+        0.0169
+      ],
+      "size": [
+        1.3358,
+        0.6715,
+        1.2634
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        -0.0339,
+        1.3,
+        0.0341
+      ],
+      "size": [
+        2.293,
+        0.6711,
+        0.6262
+      ],
+      "pivot": [
+        0.0,
+        1.35,
+        0.0
+      ]
+    },
+    "shell": {
+      "parent": "base",
+      "center": [
+        -0.0349,
+        1.3351,
+        0.0195
+      ],
+      "size": [
+        2.6292,
+        2.6526,
+        2.5704
+      ],
+      "pivot": [
+        0.0,
+        1.35,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "torso",
+      "at": [
+        0.0,
+        1.35,
+        -1.4
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "shell": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 44,
+    "torso": 180,
+    "shell": 1232,
+    "total": 1456
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

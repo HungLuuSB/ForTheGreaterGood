@@ -1,0 +1,619 @@
+{
+  "id": "chs_widowmaker",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        5.0835,
+        0.5558
+      ],
+      "size": [
+        4.32,
+        3.9569,
+        9.3284
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0,
+        6.57,
+        -0.72
+      ],
+      "size": [
+        6.12,
+        2.52,
+        3.24
+      ],
+      "pivot": [
+        0.0,
+        5.3100000000000005,
+        -0.36000000000000004
+      ]
+    },
+    "thighFL": {
+      "parent": "base",
+      "center": [
+        -2.0181,
+        5.7783,
+        -2.9022
+      ],
+      "size": [
+        2.8448,
+        4.0313,
+        3.6405
+      ],
+      "pivot": [
+        -1.1356813439750715,
+        4.32,
+        -1.621921047692204
+      ]
+    },
+    "shinFL": {
+      "parent": "thighFL",
+      "center": [
+        -3.4484,
+        4.2793,
+        -4.9508
+      ],
+      "size": [
+        1.5539,
+        8.5055,
+        2.0009
+      ],
+      "pivot": [
+        -2.9940689977524606,
+        7.38,
+        -4.275973671188537
+      ]
+    },
+    "thighML": {
+      "parent": "base",
+      "center": [
+        -3.5532,
+        5.7783,
+        0.0
+      ],
+      "size": [
+        4.2264,
+        4.0313,
+        1.08
+      ],
+      "pivot": [
+        -1.9800000000000002,
+        4.32,
+        -3.637200993467639e-16
+      ]
+    },
+    "shinML": {
+      "parent": "thighML",
+      "center": [
+        -6.1008,
+        4.2792,
+        0.0
+      ],
+      "size": [
+        2.3045,
+        8.5057,
+        0.5752
+      ],
+      "pivot": [
+        -5.22,
+        7.38,
+        -9.588984437323776e-16
+      ]
+    },
+    "thighBL": {
+      "parent": "base",
+      "center": [
+        -2.0181,
+        5.7783,
+        2.9022
+      ],
+      "size": [
+        2.8448,
+        4.0313,
+        3.6405
+      ],
+      "pivot": [
+        -1.1356813439750721,
+        4.32,
+        1.6219210476922035
+      ]
+    },
+    "shinBL": {
+      "parent": "thighBL",
+      "center": [
+        -3.4484,
+        4.2793,
+        4.9508
+      ],
+      "size": [
+        1.5539,
+        8.5055,
+        2.0009
+      ],
+      "pivot": [
+        -2.994068997752463,
+        7.38,
+        4.275973671188535
+      ]
+    },
+    "thighFR": {
+      "parent": "base",
+      "center": [
+        2.0181,
+        5.7783,
+        -2.9022
+      ],
+      "size": [
+        2.8448,
+        4.0313,
+        3.6405
+      ],
+      "pivot": [
+        1.135681343975071,
+        4.32,
+        -1.6219210476922041
+      ]
+    },
+    "shinFR": {
+      "parent": "thighFR",
+      "center": [
+        3.4484,
+        4.2793,
+        -4.9508
+      ],
+      "size": [
+        1.5539,
+        8.5055,
+        2.0009
+      ],
+      "pivot": [
+        2.99406899775246,
+        7.38,
+        -4.275973671188538
+      ]
+    },
+    "thighMR": {
+      "parent": "base",
+      "center": [
+        3.5532,
+        5.7783,
+        0.0
+      ],
+      "size": [
+        4.2264,
+        4.0313,
+        1.08
+      ],
+      "pivot": [
+        1.9800000000000002,
+        4.32,
+        1.21240033115588e-16
+      ]
+    },
+    "shinMR": {
+      "parent": "thighMR",
+      "center": [
+        6.1008,
+        4.2792,
+        0.0
+      ],
+      "size": [
+        2.3045,
+        8.5057,
+        0.5752
+      ],
+      "pivot": [
+        5.22,
+        7.38,
+        3.196328145774592e-16
+      ]
+    },
+    "thighBR": {
+      "parent": "base",
+      "center": [
+        2.0181,
+        5.7783,
+        2.9022
+      ],
+      "size": [
+        2.8448,
+        4.0313,
+        3.6405
+      ],
+      "pivot": [
+        1.1356813439750713,
+        4.32,
+        1.621921047692204
+      ]
+    },
+    "shinBR": {
+      "parent": "thighBR",
+      "center": [
+        3.4484,
+        4.2793,
+        4.9508
+      ],
+      "size": [
+        1.5539,
+        8.5055,
+        2.0009
+      ],
+      "pivot": [
+        2.99406899775246,
+        7.38,
+        4.275973671188537
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "torso",
+      "at": [
+        2.3400000000000003,
+        6.3,
+        -2.43
+      ]
+    },
+    "muzzle2": {
+      "parent": "torso",
+      "at": [
+        -2.3400000000000003,
+        6.3,
+        -2.43
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "torso",
+    "thighFL",
+    "shinFL",
+    "thighML",
+    "shinML",
+    "thighBL",
+    "shinBL",
+    "thighFR",
+    "shinFR",
+    "thighMR",
+    "shinMR",
+    "thighBR",
+    "shinBR"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "thighFL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinFL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighML": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinML": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighBL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinBL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighFR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinFR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighMR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinMR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighBR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinBR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        5.796,
+        3.6
+      ],
+      "size": [
+        2.52,
+        0.108,
+        1.8
+      ]
+    },
+    {
+      "name": "torso_glow_head",
+      "piece": "torso",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        6.66,
+        -2.376
+      ],
+      "size": [
+        2.16,
+        0.27,
+        0.072
+      ]
+    },
+    {
+      "name": "torso_glow_weapon",
+      "piece": "torso",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        6.3,
+        -2.169
+      ],
+      "size": [
+        5.724,
+        1.0228,
+        0.09
+      ]
+    },
+    {
+      "name": "shinFL_glow_running",
+      "piece": "shinFL",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -3.0973,
+        6.3,
+        -4.4234
+      ],
+      "size": [
+        0.18,
+        0.126,
+        0.18
+      ]
+    },
+    {
+      "name": "shinML_glow_running",
+      "piece": "shinML",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -5.4,
+        6.3,
+        0.0
+      ],
+      "size": [
+        0.18,
+        0.126,
+        0.18
+      ]
+    },
+    {
+      "name": "shinBL_glow_running",
+      "piece": "shinBL",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -3.0973,
+        6.3,
+        4.4234
+      ],
+      "size": [
+        0.18,
+        0.126,
+        0.18
+      ]
+    },
+    {
+      "name": "shinFR_glow_running",
+      "piece": "shinFR",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        3.0973,
+        6.3,
+        -4.4234
+      ],
+      "size": [
+        0.18,
+        0.126,
+        0.18
+      ]
+    },
+    {
+      "name": "shinMR_glow_running",
+      "piece": "shinMR",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        5.4,
+        6.3,
+        0.0
+      ],
+      "size": [
+        0.18,
+        0.126,
+        0.18
+      ]
+    },
+    {
+      "name": "shinBR_glow_running",
+      "piece": "shinBR",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        3.0973,
+        6.3,
+        4.4234
+      ],
+      "size": [
+        0.18,
+        0.126,
+        0.18
+      ]
+    }
+  ],
+  "glowShare": 0.0199,
+  "triangles": {
+    "base": 392,
+    "torso": 1304,
+    "thighFL": 400,
+    "shinFL": 196,
+    "thighML": 400,
+    "shinML": 196,
+    "thighBL": 400,
+    "shinBL": 196,
+    "thighFR": 400,
+    "shinFR": 196,
+    "thighMR": 400,
+    "shinMR": 196,
+    "thighBR": 400,
+    "shinBR": 196,
+    "total": 5272
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

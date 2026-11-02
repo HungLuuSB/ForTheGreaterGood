@@ -1,0 +1,135 @@
+{
+  "id": "ord_martyr",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        0.35,
+        0.0
+      ],
+      "size": [
+        1.2,
+        0.5,
+        1.2
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0,
+        1.35,
+        0.0
+      ],
+      "size": [
+        2.3,
+        0.6,
+        0.6
+      ],
+      "pivot": [
+        0.0,
+        1.35,
+        0.0
+      ]
+    },
+    "shell": {
+      "parent": "base",
+      "center": [
+        0.0,
+        1.35,
+        0.0
+      ],
+      "size": [
+        2.44,
+        2.6,
+        2.6
+      ],
+      "pivot": [
+        0.0,
+        1.35,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "torso",
+      "at": [
+        0.0,
+        1.35,
+        -1.4
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "torso",
+    "shell"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "shell": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "shell_glow_power",
+      "piece": "shell",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.35,
+        0.0
+      ],
+      "size": [
+        2.52,
+        0.938,
+        0.938
+      ]
+    }
+  ],
+  "glowShare": 0.0403,
+  "triangles": {
+    "base": 44,
+    "torso": 216,
+    "shell": 1046,
+    "total": 1306
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

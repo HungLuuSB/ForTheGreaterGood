@@ -1,0 +1,272 @@
+{
+  "id": "chs_cutpurse_wreck",
+  "wreckOf": "chs_cutpurse",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0593,
+        2.7763,
+        -0.0039
+      ],
+      "size": [
+        1.4444,
+        0.8463,
+        1.2807
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0108,
+        5.0519,
+        -0.2617
+      ],
+      "size": [
+        2.5794,
+        3.802,
+        2.386
+      ],
+      "pivot": [
+        0.0,
+        3.2,
+        0.0
+      ]
+    },
+    "nano": {
+      "parent": "torso",
+      "center": [
+        -0.9851,
+        3.6304,
+        -1.1485
+      ],
+      "size": [
+        0.6523,
+        0.7614,
+        2.4654
+      ],
+      "pivot": [
+        -1.05,
+        3.7,
+        -0.2
+      ]
+    },
+    "thighL": {
+      "parent": "base",
+      "center": [
+        -0.5255,
+        1.9752,
+        -0.0847
+      ],
+      "size": [
+        0.6802,
+        1.7279,
+        0.7379
+      ],
+      "pivot": [
+        -0.6,
+        2.6,
+        0.0
+      ]
+    },
+    "shinL": {
+      "parent": "thighL",
+      "center": [
+        -0.5586,
+        0.8571,
+        -0.0244
+      ],
+      "size": [
+        0.5133,
+        1.2051,
+        0.7892
+      ],
+      "pivot": [
+        -0.6,
+        1.352,
+        -0.225
+      ]
+    },
+    "footL": {
+      "parent": "shinL",
+      "center": [
+        -0.5677,
+        0.2497,
+        -0.0769
+      ],
+      "size": [
+        0.669,
+        0.5067,
+        1.3236
+      ],
+      "pivot": [
+        -0.6,
+        0.45,
+        0.1
+      ]
+    },
+    "thighR": {
+      "parent": "base",
+      "center": [
+        0.6335,
+        1.9355,
+        -0.0636
+      ],
+      "size": [
+        0.5973,
+        1.7568,
+        0.7303
+      ],
+      "pivot": [
+        0.6,
+        2.6,
+        0.0
+      ]
+    },
+    "shinR": {
+      "parent": "thighR",
+      "center": [
+        0.6132,
+        0.8207,
+        0.0201
+      ],
+      "size": [
+        0.439,
+        1.203,
+        0.743
+      ],
+      "pivot": [
+        0.6,
+        1.352,
+        -0.225
+      ]
+    },
+    "footR": {
+      "parent": "shinR",
+      "center": [
+        0.6316,
+        0.2077,
+        -0.064
+      ],
+      "size": [
+        0.6657,
+        0.5411,
+        1.3596
+      ],
+      "pivot": [
+        0.6,
+        0.45,
+        0.1
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "torso",
+      "at": [
+        1.05,
+        3.7,
+        -1.5
+      ]
+    },
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        -1.05,
+        3.7,
+        -2.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "thighL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 248,
+    "torso": 396,
+    "nano": 336,
+    "thighL": 260,
+    "shinL": 168,
+    "footL": 120,
+    "thighR": 328,
+    "shinR": 176,
+    "footR": 88,
+    "total": 2120
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

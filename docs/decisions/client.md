@@ -2686,3 +2686,66 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - Six Lancers' wrecks, worn by each other's death blasts, showed no bars. A fully reclaimed one gave +425 supply, not 510.
   - A Mason started reclaiming one wreck and was stopped after about a second. Only that wreck shows its bar, and it stays (`debug_out/screens/c285_one_wreck_bar.jpg`).
   - No new console errors.
+
+### C-286 — Heavy T3 wrecks lie on the ground (2026-11-01)
+
+- The user (S-234): "Wreck for heavy T3 should be laying on the ground, not a standing still piece of metal wrecks." C is making fallen-hulk wreck meshes. Until they land, the client lays these 13 wrecks down itself (`Core/Deaths.FALLEN`): Titan, Juggernaut, Thunderer, Tempest, Typhon, Paragon, Champion, Monolith, Colossus, Pandemonium, Infernal, Widowmaker, Abyssal.
+- `Core/Deaths.fall` picks the pose, the same on every client (seeded by the unit id):
+  - **Walkers** (WALKER, AMPHIB_WALKER) topple about 84°. They fall onto their front or back when the model is shallower than it is wide (the Titan's shoulders), else onto a side.
+  - A walker no taller than that slumps instead. Tipping a squat model (the Colossus blockout) would stand it on its edge like a wall.
+  - **Tanks, hovers and spiders** slump: up to 5° of skew, sunk 0.6 studs. A spider sinks a further 30% of its height (legs folded under it).
+- `Render/Deaths.lieDown` places the wreck:
+  - It follows the ground's slope under the footprint (`Deaths.groundNormal`), leaning at most 35° (`MAX_LEAN`), so a wreck on a cliff doesn't cling to the rock face.
+  - The lowest point is found from every part's corners, worked out through the joints as knocked askew. A tipped bounding box reaches far below any part, and a placed model's joints move only on the next physics step. Both errors left the first tries floating.
+  - A toppled wreck is shifted back over where the unit died.
+- A manifest wreck entry with `fallen = true` (C's meshes, `MeshModels.wreckFallen`) is drawn as modelled, not tipped again.
+- The death's shake still plays upright, then the wreck appears lying down.
+- Spec `Deaths`: the poses by move class and model shape, the same pose every time, the fallen-mesh opt-out, the slope normal and the lean cap.
+- Studio, Coastline, a Titan, Colossus, Typhon, Monolith and Juggernaut destroyed with a small overkill:
+  - the Titan lies on its back, resting on the ground;
+  - the Colossus blockout and the Typhon lie flat;
+  - the Monolith slumped into the ridge slope;
+  - `debug_out/screens/c286_heavy_wrecks_lying.jpg`, `c286_titan_fallen_side.jpg`;
+  - no console errors.
+- The Titan's model is about as deep as it is tall, so even lying down it stands 16 studs high. C's fallen hulk will be lower.
+
+### C-287 — Decoy Commanders look like the Commander to their own side too (2026-11-01)
+
+- S-233: enemies are sent the disguise (Sovereign or Warlord) and draw it unchanged. The owner, allies and spectators get the real def (`ord_effigy`, `chs_changeling`).
+- `Render/UnitRenderer.look` draws a unit with `def.disguise`'s model, piece script and death. The panel, stats and icon keep the decoy's own def.
+- The redraw checks compare against the same look, so a decoy isn't redrawn every frame.
+- Crawling bombs needed nothing new. Their kamikaze sends no FIRE, and their DEATH (severity 255, no wreck) plays the existing death-blast burst sized from `deathBlast.aoe`.
+- Studio: an own Effigy drew with the Sovereign's model (`debug_out/screens/c287_effigy_as_sovereign.jpg`).
+
+### C-288 — Batch 2 icons: sheets 2 and 3 uploaded (E-15, 2026-11-01)
+
+- Merged E's batch 2 icon branch (054278e0) and re-ran `tools/icons/render.mjs`: all 281 unit defs map to 174 catalogue icons (11 placeholders), 185 tiles over three sheets. Sheet 2 is full (90 tiles); sheet 3 is new (5 tiles).
+- The user approved the upload; the ids and pixel hashes are in `tools/icons/assets.json` (sheet 2 `139572992631212`, sheet 3 `130431554234464`), and `UI/IconAtlas` is regenerated with them. Sheet 1 is unchanged.
+- `Core/Icons.placeholderFrame` gets a `spider` fallback frame for move class `SPIDER`. It is only a fallback: all five spiders have drawn tiles (E: `rocket_spider_t2`, `emp_spider_t2`, `heat_ray_spider_t2`, `artillery_spider_t3`, `missile_spider_t3`), and the 11 placeholder tiles are per-frame fallbacks that no def uses.
+- The decoy Commanders (`ord_effigy`, `chs_changeling`) use the Sovereign's and Warlord's icon tiles, so the icon doesn't give them away either.
+- Studio: all three sheet ids fetch, and 60 tiles from sheets 2 and 3 draw and tint correctly (`debug_out/screens/c288_batch2_icons_sheets_2_3.jpg`).
+
+### C-289 — Fallen-hulk wreck meshes lie as modelled (models-C request 17, 2026-11-01)
+
+- C's fallen-hulk wrecks for the 13 heavy T3s (S-234) bake the lying pose into the meshes, and their manifest wreck says `fallen = true` (C-286 already skips its lay-down for them).
+- `Render/Deaths.wreckModel` leaves a fallen hulk's joints at rest: no knocked-askew `Transform`s, which wouldn't fit the baked pieces.
+- `placeWreck` now takes the unit's frame (position, heading + pi) and the live model's `RootOffset`, not the dying root's frame. A standing or stopgap wreck still takes the dying root's place (`unit * liveOffset`). A fallen hulk is placed by its own `RootOffset`, on the ground's slope under its footprint (the C-286 normal, capped at 35°), with the small random tilt: its base lies lower and off to one side of the live pelvis or hull, and the mesh already sits on the ground with a small sink.
+- Both callers pass the unit frame: a death in view gives `base * rootOffset:Inverse()`, and a wreck first seen in the wreck table gives the record's position and heading.
+- Studio, with a temporary `fallen = true` on the Lancer's approved wreck (reverted): three wrecks had 0 askew joints and lay on the ground at their units' positions (`debug_out/screens/c289_fallen_mesh_rest_rootoffset.jpg`). C's real hulks are still `review` and not on this branch, so they're unchecked in game.
+
+### C-290 — Batch 2 walks: any unit on swinging legs walks, spiders step in tripods, the Martyr rolls (S-233, 2026-11-01)
+
+- C's batch 2 blockouts (main 7a3a096d) bring 41 legged units, none of them in the piece-script registry. Rather than list them, `PieceScripts/Registry.forDef` falls back to Bot for any unit whose blockout or mesh has swinging legs (`thighL`, `thighFL` or `legFL`, via `PieceMotion`), so later walkers walk without a registry line.
+- `Bot.gait` now reads the leg pieces: `legFL` walks on trunks (Mammoth, now also the Colossus), the spider kit's `thighFL` walks as a spider, the Skitter keeps its quad gait, and the rest are bipeds.
+- Spider gait (Blockouts/Bots.spider legs): each thigh sweeps 16° forward or back about its hip, and the stepping set lifts 14° about the horizontal axis across the leg. With six legs, FL MR BL step against FR ML BR; with four, the diagonals step together. The spider kit's leg yaws are copied into Bot.
+- `Bot.hip`: a `HIP` override, else the blockout's hip pivot, else 2.5. `Bot.scale`: a `SCALE` override, else 0.6 for hips of 6 studs or more (the T3 walkers, models-C's advice for heavy, slow strides).
+- `Ambient`: a rolling bomb's `shell` (the Martyr) rolls at 720°/s while it moves, like a wheel. No other unit's shell spins.
+- Studio: Scaler, Widowmaker, Monolith, Colossus, Champion, Martyr and Pustule walked in the lobby preview, legs moving in their sets and the shell rolling (`debug_out/screens/c290_batch2_walking.jpg`).
+
+### C-291 — The first wreck of a unit type is its wreck mesh too (2026-11-01)
+
+- Wreck meshes were built on demand, starting at a unit type's first death, so the first wreck of every type was the darkened live model (for the heavy T3s, C-286's lay-down stopgap instead of C's fallen hulk). The pool then kept handing out that stand-in after the mesh was ready.
+- `Render/Models.template` now starts the wreck build (`MeshModels.wreck`) the first time a unit type is drawn, before its live mesh is ready.
+- `Render/Deaths.wreckModel` marks each wreck with `WreckMesh`. Once the wreck mesh is ready, pooled stand-ins of that type are destroyed instead of reused.
+- Studio on main 6736ef40 (C's batch 2 meshes): a fresh Titan, Widowmaker and Thunderer destroyed 6 s after spawning all left their fallen hulks on the first death, with joints at rest. Earlier the same check left stand-ins for the Titan and Widowmaker.
+- The fallen hulks lie at their unit's spot: the Titan face down on its hips and thighs (arm guns 4 studs into the ground, as C intends), the Widowmaker belly down with its legs sprawled, the Thunderer slumped on its tracks (`debug_out/screens/c291_fallen_hulks_titan_widowmaker_thunderer.jpg`).

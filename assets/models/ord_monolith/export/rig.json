@@ -1,0 +1,519 @@
+{
+  "id": "ord_monolith",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        5.125,
+        -0.3878
+      ],
+      "size": [
+        5.6,
+        3.05,
+        7.1757
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0,
+        7.4,
+        -0.05
+      ],
+      "size": [
+        4.4,
+        2.2,
+        6.3
+      ],
+      "pivot": [
+        0.0,
+        6.3,
+        0.6
+      ]
+    },
+    "barrel": {
+      "parent": "torso",
+      "center": [
+        0.0,
+        7.6,
+        -4.5069
+      ],
+      "size": [
+        2.6,
+        1.8,
+        9.5863
+      ],
+      "pivot": [
+        0.0,
+        7.6,
+        -0.6
+      ]
+    },
+    "thighFL": {
+      "parent": "base",
+      "center": [
+        -2.9048,
+        6.6497,
+        -2.9048
+      ],
+      "size": [
+        3.9155,
+        3.9993,
+        3.9155
+      ],
+      "pivot": [
+        -1.6970562748477138,
+        5.2,
+        -1.6970562748477145
+      ]
+    },
+    "shinFL": {
+      "parent": "thighFL",
+      "center": [
+        -4.7517,
+        4.0684,
+        -4.7517
+      ],
+      "size": [
+        2.2369,
+        8.0748,
+        2.2369
+      ],
+      "pivot": [
+        -4.242640687119285,
+        8.0,
+        -4.242640687119286
+      ]
+    },
+    "thighFR": {
+      "parent": "base",
+      "center": [
+        2.9048,
+        6.6497,
+        -2.9048
+      ],
+      "size": [
+        3.9155,
+        3.9993,
+        3.9155
+      ],
+      "pivot": [
+        1.697056274847714,
+        5.2,
+        -1.6970562748477138
+      ]
+    },
+    "shinFR": {
+      "parent": "thighFR",
+      "center": [
+        4.7517,
+        4.0684,
+        -4.7517
+      ],
+      "size": [
+        2.2369,
+        8.0748,
+        2.2369
+      ],
+      "pivot": [
+        4.242640687119286,
+        8.0,
+        -4.242640687119285
+      ]
+    },
+    "thighBL": {
+      "parent": "base",
+      "center": [
+        -2.9048,
+        6.6497,
+        2.9048
+      ],
+      "size": [
+        3.9155,
+        3.9993,
+        3.9155
+      ],
+      "pivot": [
+        -1.6970562748477145,
+        5.2,
+        1.6970562748477136
+      ]
+    },
+    "shinBL": {
+      "parent": "thighBL",
+      "center": [
+        -4.7517,
+        4.0684,
+        4.7517
+      ],
+      "size": [
+        2.2369,
+        8.0748,
+        2.2369
+      ],
+      "pivot": [
+        -4.242640687119286,
+        8.0,
+        4.242640687119284
+      ]
+    },
+    "thighBR": {
+      "parent": "base",
+      "center": [
+        2.9048,
+        6.6497,
+        2.9048
+      ],
+      "size": [
+        3.9155,
+        3.9993,
+        3.9155
+      ],
+      "pivot": [
+        1.697056274847714,
+        5.2,
+        1.697056274847714
+      ]
+    },
+    "shinBR": {
+      "parent": "thighBR",
+      "center": [
+        4.7517,
+        4.0684,
+        4.7517
+      ],
+      "size": [
+        2.2369,
+        8.0748,
+        2.2369
+      ],
+      "pivot": [
+        4.242640687119286,
+        8.0,
+        4.242640687119286
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        7.6,
+        -9.4
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "torso",
+    "barrel",
+    "thighFL",
+    "shinFL",
+    "thighFR",
+    "shinFR",
+    "thighBL",
+    "shinBL",
+    "thighBR",
+    "shinBR"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "thighFL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinFL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighFR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinFR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighBL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinBL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighBR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinBR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        5.5,
+        -3.72
+      ],
+      "size": [
+        2.8,
+        0.24,
+        0.08
+      ]
+    },
+    {
+      "name": "torso_glow_running",
+      "piece": "torso",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        7.3,
+        0.6
+      ],
+      "size": [
+        4.5,
+        0.2,
+        3.6
+      ]
+    },
+    {
+      "name": "torso_glow_power",
+      "piece": "torso",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        7.7,
+        3.12
+      ],
+      "size": [
+        2.0,
+        0.2,
+        0.06
+      ]
+    },
+    {
+      "name": "barrel_glow_power",
+      "piece": "barrel",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        7.6,
+        -4.75
+      ],
+      "size": [
+        1.6,
+        1.6,
+        1.9
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        7.6,
+        -9.27
+      ],
+      "size": [
+        0.96,
+        0.936,
+        0.06
+      ]
+    },
+    {
+      "name": "thighFL_glow_running",
+      "piece": "thighFL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -2.9699,
+        5.98,
+        -2.9699
+      ],
+      "size": [
+        1.8355,
+        2.865,
+        1.8355
+      ]
+    },
+    {
+      "name": "thighFR_glow_running",
+      "piece": "thighFR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        2.9699,
+        5.98,
+        -2.9699
+      ],
+      "size": [
+        1.8355,
+        2.865,
+        1.8355
+      ]
+    },
+    {
+      "name": "thighBL_glow_running",
+      "piece": "thighBL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -2.9699,
+        5.98,
+        2.9699
+      ],
+      "size": [
+        1.8355,
+        2.865,
+        1.8355
+      ]
+    },
+    {
+      "name": "thighBR_glow_running",
+      "piece": "thighBR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        2.9699,
+        5.98,
+        2.9699
+      ],
+      "size": [
+        1.8355,
+        2.865,
+        1.8355
+      ]
+    }
+  ],
+  "glowShare": 0.0347,
+  "triangles": {
+    "base": 340,
+    "torso": 184,
+    "barrel": 548,
+    "thighFL": 324,
+    "shinFL": 176,
+    "thighFR": 324,
+    "shinFR": 176,
+    "thighBL": 324,
+    "shinBL": 176,
+    "thighBR": 324,
+    "shinBR": 176,
+    "total": 3072
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

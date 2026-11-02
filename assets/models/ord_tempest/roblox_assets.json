@@ -32,6 +32,33 @@
     "modelPath": "ReplicatedStorage.ModelReview.ord_tempest_bar in FTGG Art"
   },
   "wreck": {
+    "model": "rbxassetid://112712122349100",
+    "meshes": {
+      "barrel": "rbxassetid://99938862354377",
+      "base": "rbxassetid://85530444618831",
+      "fan1": "rbxassetid://96683815003187",
+      "fan2": "rbxassetid://94199555198017",
+      "fan3": "rbxassetid://96515380377543",
+      "turret": "rbxassetid://73704709615558"
+    },
+    "decals": {
+      "ALB": "rbxassetid://136004748047803",
+      "RGH": "rbxassetid://110906187890062",
+      "NOR": "rbxassetid://108607230242197",
+      "MTL": "rbxassetid://84672404428695",
+      "EMI": "rbxassetid://108060020475399"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://123244809043656",
+      "NOR": "rbxassetid://79890878614474",
+      "RGH": "rbxassetid://120414698204369",
+      "MTL": "rbxassetid://98324634258748",
+      "EMI": "rbxassetid://99599225284108"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_tempest_wreck_bar in FTGG Art",
+    "revision": "Fallen-hulk wreck (S-234), uploaded with the user's approval 2026-11-01: 1340 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://123896308087849",
     "meshes": {
       "barrel": "rbxassetid://102015553823052",

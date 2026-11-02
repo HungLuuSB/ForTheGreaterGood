@@ -1,0 +1,68 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2400 triangles, glow share 2.2%",
+  "bar": {
+    "model": "rbxassetid://130961881135524",
+    "meshes": {
+      "base": "rbxassetid://127923469794072",
+      "footL": "rbxassetid://137680734288819",
+      "footL_glow_running": "rbxassetid://118919498873637",
+      "footR": "rbxassetid://124553083589747",
+      "footR_glow_running": "rbxassetid://108498999059193",
+      "shinL": "rbxassetid://87190422127058",
+      "shinR": "rbxassetid://132136351011151",
+      "thighL": "rbxassetid://138048013062415",
+      "thighL_glow_running": "rbxassetid://108504240728656",
+      "thighR": "rbxassetid://128967260912268",
+      "thighR_glow_running": "rbxassetid://136415587449806",
+      "torso": "rbxassetid://92511065106974",
+      "torso_glow_head": "rbxassetid://131924758811163",
+      "torso_glow_running": "rbxassetid://94227461121022",
+      "torso_glow_weapon": "rbxassetid://117581325508210"
+    },
+    "decals": {
+      "ALB": "rbxassetid://115875559652997",
+      "RGH": "rbxassetid://77158102788793",
+      "NOR": "rbxassetid://93909302019941",
+      "MTL": "rbxassetid://137944790760576",
+      "EMI": "rbxassetid://76532253921895"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://127002796618636",
+      "NOR": "rbxassetid://96525212691570",
+      "RGH": "rbxassetid://114852029292398",
+      "MTL": "rbxassetid://116490407468893",
+      "EMI": "rbxassetid://104984935031428"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_petard_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://134052451924286",
+    "meshes": {
+      "base": "rbxassetid://74968861385757",
+      "footL": "rbxassetid://96097822334782",
+      "footR": "rbxassetid://104333815109457",
+      "shinL": "rbxassetid://90610560423636",
+      "shinR": "rbxassetid://139387663929869",
+      "thighL": "rbxassetid://86592031217428",
+      "thighR": "rbxassetid://130866728584321",
+      "torso": "rbxassetid://88955439629738"
+    },
+    "decals": {
+      "ALB": "rbxassetid://87955721228541",
+      "RGH": "rbxassetid://100580935193736",
+      "NOR": "rbxassetid://91976255676364",
+      "MTL": "rbxassetid://118339742729964",
+      "EMI": "rbxassetid://118072202449732"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://129320119657265",
+      "NOR": "rbxassetid://111937684559351",
+      "RGH": "rbxassetid://88034451936292",
+      "MTL": "rbxassetid://131298034056149",
+      "EMI": "rbxassetid://132291763866373"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_petard_wreck_bar in FTGG Art",
+    "revision": "Batch 2 (S-233), uploaded with the user's approval 2026-11-01: 2012 triangles"
+  }
+}

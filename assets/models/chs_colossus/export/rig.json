@@ -1,0 +1,298 @@
+{
+  "id": "chs_colossus",
+  "footprintStuds": 32,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        11.25,
+        -1.2747
+      ],
+      "size": [
+        17.2,
+        11.3,
+        19.7494
+      ]
+    },
+    "legFL": {
+      "parent": "base",
+      "center": [
+        -6.4,
+        3.8,
+        -6.2827
+      ],
+      "size": [
+        6.0,
+        7.6,
+        6.5653
+      ],
+      "pivot": [
+        -6.4,
+        6.4,
+        -6.0
+      ]
+    },
+    "legFR": {
+      "parent": "base",
+      "center": [
+        6.4,
+        3.8,
+        -6.2827
+      ],
+      "size": [
+        6.0,
+        7.6,
+        6.5653
+      ],
+      "pivot": [
+        6.4,
+        6.4,
+        -6.0
+      ]
+    },
+    "legBL": {
+      "parent": "base",
+      "center": [
+        -6.4,
+        3.8,
+        5.7173
+      ],
+      "size": [
+        6.0,
+        7.6,
+        6.5653
+      ],
+      "pivot": [
+        -6.4,
+        6.4,
+        6.0
+      ]
+    },
+    "legBR": {
+      "parent": "base",
+      "center": [
+        6.4,
+        3.8,
+        5.7173
+      ],
+      "size": [
+        6.0,
+        7.6,
+        6.5653
+      ],
+      "pivot": [
+        6.4,
+        6.4,
+        6.0
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0,
+        16.7,
+        -1.94
+      ],
+      "size": [
+        7.2,
+        5.4,
+        13.48
+      ],
+      "pivot": [
+        0.0,
+        14.0,
+        1.2
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "torso",
+      "at": [
+        0.0,
+        16.0,
+        -8.8
+      ]
+    },
+    "muzzle2": {
+      "parent": "base",
+      "at": [
+        -5.8,
+        15.2,
+        -10.0
+      ]
+    },
+    "muzzle3": {
+      "parent": "base",
+      "at": [
+        5.8,
+        15.2,
+        -10.0
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "legFL",
+    "legFR",
+    "legBL",
+    "legBR",
+    "torso"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "legFL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "legFR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "legBL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "legBR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        12.4223,
+        -8.3229
+      ],
+      "size": [
+        12.8,
+        6.7953,
+        2.6458
+      ]
+    },
+    {
+      "name": "base_glow_weapon",
+      "piece": "base",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        15.2,
+        -9.89
+      ],
+      "size": [
+        12.384,
+        0.784,
+        0.06
+      ]
+    },
+    {
+      "name": "torso_glow_head",
+      "piece": "torso",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        17.24,
+        -0.8
+      ],
+      "size": [
+        1.8,
+        0.24,
+        0.08
+      ]
+    },
+    {
+      "name": "torso_glow_weapon",
+      "piece": "torso",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        16.0,
+        -8.69
+      ],
+      "size": [
+        1.26,
+        1.26,
+        0.06
+      ]
+    }
+  ],
+  "glowShare": 0.0038,
+  "triangles": {
+    "base": 1508,
+    "legFL": 384,
+    "legFR": 384,
+    "legBL": 384,
+    "legBR": 384,
+    "torso": 472,
+    "total": 3516
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
