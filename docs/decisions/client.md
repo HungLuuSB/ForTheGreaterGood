@@ -2760,3 +2760,13 @@ models-C's rig notes for the 21 units of S-209, approved by the user with their 
   - A vehicle plant frame killed mid-build left nothing on the client: 0 bursts in the next 2 s, model released. A finished plant killed the same way exploded as before (`c292_frame_at_kill.jpg`, `c292_frame_just_gone.jpg`).
   - A Juggernaut killed in view played the nuke's fireball (`c292_juggernaut_nuke.jpg`). No crater: Coastline's ground is a mesh, and nuke missiles don't dig there either.
   - The Colossus fired its bolt on its own at a Ravager row and a Goliath 270 studs off, with the D-Gun trail at the wider scale (`c292_colossus_bolt.jpg`).
+
+### C-293 — Batch 2 build-menu pictures: sheet 4 re-uploaded, sheet 5 added (2026-11-02, E-15)
+
+- E's E-15 packed the 41 batch 2 bot pictures: 23 fill sheet 4's free slots and 18 go on a new sheet 5 (1024 × 382). Sheets 1–3 are unchanged.
+- Uploaded with the user's approval, which also covers E's future sheets:
+  - sheet 4 `113290129817271` (sha256 b4951cbc…), replacing `77607112363466`;
+  - sheet 5 `98129651343691` (sha256 4a4cebf0…).
+- `tools/icons/assets.json` has the new ids, and `node tools/icons/pictures.mjs` regenerated `UnitPictures`: 276 pictures on 5 sheets, all uploaded, none missing.
+- E's commits weren't on main yet, so this branch merges E's Ready commit 51da4165 to get the sheets and `pictures.json`.
+- Studio: an Advanced Bot Lab's build menu showed the batch 2 bots from sheets 4 and 5, and every on-screen picture loaded (`debug_out/screens/c293_pictures_sheets_4_5_advbotlab.jpg`).

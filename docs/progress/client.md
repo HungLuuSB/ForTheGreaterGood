@@ -57,6 +57,13 @@ Written for a new session (the project is moving to another Claude account). Eve
   - An `execute_luau` call gives up before about 20 s, so keep waits short.
 - **New unit IDs:** when sim-A adds units, B gives them icons; C (model) and D (Codex) are told too.
 
+## Summary (2026-11-02, batch 2 build-menu pictures: C-293)
+
+- **Merged E's 51da4165** (E-15: batch 2 build-menu pictures). It wasn't on main yet, and the wiring needs its sheets, so it reaches main with this branch.
+- **Picture sheets uploaded (C-293), with the user's approval, which also covers E's future sheets:** sheet 4 `113290129817271` (replaces `77607112363466`) and a new sheet 5 `98129651343691`. `UnitPictures` now has 276 pictures on 5 sheets, none missing. In Studio, an Advanced Bot Lab's build menu shows the batch 2 bots (`debug_out/screens/c293_pictures_sheets_4_5_advbotlab.jpg`).
+- Suites: `lune run test_client` 362 / 364. The 2 failures are C-292's Juggernaut and Colossus specs, which need sim's S-236 defs; they passed with S-236 applied. `lune run build` passed (1123 scripts, 2950 requires).
+- Ready to merge: `5fd55bc1` (C-293 and C-292, with E's 51da4165; **after sim's 3c4da15e**)
+
 ## Summary (2026-11-02, FTGG-FEEDBACK-5 client items: C-292)
 
 - **Merged main 521b0b76** (models' batch 2 picture tooling).
