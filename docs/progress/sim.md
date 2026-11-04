@@ -15,7 +15,7 @@ Plan: `docs/design/bar-roster-plan.md` (the user's answers at the top). sim-A le
 | Part 3 | `docs/design/reserved-units.md`: the 65 unreachable units, drafted only (49 new names, 7 modes and events) | done |
 | Part 4 | S-227: wrecks take damage, resources follow health, scrap heaps below 40%, protocol 45 | done (sim) · C: heap meshes · B: swap and sparks (contract in net.md 7a) · E: scrap mark · D: note |
 | Batch 1 | 29 vehicles and hovercraft + 2 hover factories; S-228 cloak, S-229 EMP (protocol 46), S-230 all 31 defs, hovercraft checked, AI picks (hover factories on water maps still to do) | defs done (sim), lands through B's and C's branches · C: blockouts → meshes → wrecks, a preview for the user per unit · E: icons, pictures · B: cloak, EMP, hover effects · D: Codex |
-| Batch 2 | 43 bots (22 Order, 21 Chaos), list and names approved by the user 2026-11-01 (plan §2.3); mechanics first: `SPIDER` move class, crawling bombs, spies, decoy Commanders in sight | on main at ded2eeff (2026-11-01): sim S-233, S-234 (balance), S-235 (the Lakelands loads in 1.5 s) · C: 41 meshes, wrecks and 13 fallen T3 hulks uploaded · E: icons, decoy pictures · B: icon sheets uploaded, decoy drawing, walk cycles, fallen-wreck placement · D: Codex rows. Still open: E's other batch 2 pictures |
+| Batch 2 | 43 bots (22 Order, 21 Chaos), list and names approved by the user 2026-11-01 (plan §2.3); mechanics first: `SPIDER` move class, crawling bombs, spies, decoy Commanders in sight | done, on main at a3ad2797 (2026-11-02): sim S-233, S-234 (balance), S-235 (the Lakelands loads in 1.5 s), S-236 (FEEDBACK-5, the Colossus) · C: 41 meshes, wrecks and 13 fallen T3 hulks uploaded · E: icons, build-menu pictures (276/276, sheets uploaded by B, C-293) · B: icon sheets uploaded, decoy drawing, walk cycles, fallen-wreck placement · D: Codex rows. |
 | Batches 3–5 | Air, naval, structures | the next batch's defs are drafted while C models the current one |
 
 
@@ -747,6 +747,21 @@ Requests from the sim stream to session E (2D assets, `FTGG-2d`, branch `2d`). E
 
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
 
+- **2026-11-01 to 11-02, batch 2 and FTGG-FEEDBACK-5: 22 merges, all passed every suite, no failures or conflicts.** One `integrate.sh` at a time, chained with `&&`.
+  - **11-01:**
+    - sim S-232, then batch 2's approval, S-233 + S-234 (`4fa0a642`) and S-235 (`349f5d4c`);
+    - lobby: aRole, D's ready work, Codex batch 2 rows (`8028034a`), the S-235 check (`d20a633d`);
+    - 2D: batch 2 icons (`7ccc1a2e`);
+    - client: C-284/C-285, C-286/C-287 (`d7e15030`), C-288/C-289 (`171832b5`), C-290 (`49ab2ffd`), C-291 (`ded2eeff`);
+    - models: batch 2 blockouts and wrecks (`7a3a096d`), then meshes and fallen hulks (`6736ef40`).
+  - **11-02:**
+    - models request 18 (`86a3124c`);
+    - 2D batch 2 build-menu pictures (`1c675d6a`);
+    - sim S-236 (`3371d5f3`; slow 15/0);
+    - client C-292 (`a17d7318`, after S-236: its specs read S-236's defs) and C-293 (`f8e859f7`, the picture sheets);
+    - models: the Colossus remodel (`a3ad2797`).
+  - **The freeze (11-02, the user):** C's request 18 run was stopped during its checks, before the push, by killing its bash and lune processes. The integration worktree was then reset to `origin/main`, dropping the unpushed merge `521b0b76`. It was re-run after the freeze as `86a3124c`. B's branch had already picked up `521b0b76` from the shared local `main`, so it reached main again through C-293: an identical tree, a duplicate merge commit in history, nothing rewritten.
+  - Last checks on `a3ad2797`: test 670/0, slow 15/0, client 364/0, lobby 72/0, build 1124 scripts / 2959 requires.
 - **2026-10-31, the roster program's first merges:**
   - **C-278 failed:** client 3ce46fa1, carrying sim fbfc8d95 (S-226, S-227), failed only the slow suite's 192×192 AI match. It didn't end in 60 minutes on that tree. On m-sim-2 with S-228..S-230 the same match ends at 20.8 minutes (seed 1), so the outcome hangs on the seed's path. Watch it: autoheal makes damaged armies last longer.
   - **A race:** stopping a queued `integrate.sh` wrapper (TaskStop) didn't stop the script once it had started. C-279's run went on and merged in the worktree, and D's run started over it, so two runs tested at once. C's 4f4edffb, tried alone between them, conflicted in `.gitignore`. All were stopped and the worktree reset to origin/main; nothing unpushed survived.
